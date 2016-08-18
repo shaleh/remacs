@@ -1533,7 +1533,7 @@ ns_popup_dialog (struct frame *f, Lisp_Object header, Lisp_Object contents)
   [img autorelease];
   [imgView autorelease];
 
-  aStyle = NSWindowStyleMaskTitled|NSWindowStyleMaskClosable|NSWindowStyleMaskUtilityWindow;
+  aStyle = NSWindowStyleMaskTitled|NSWindowStyleMaskClosable|NSUtilityWindowMask;
   flag = YES;
   rows = 0;
   cols = 1;

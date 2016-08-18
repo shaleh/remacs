@@ -2978,25 +2978,18 @@ ns_draw_fringe_bitmap (struct window *w, struct glyph_row *row,
             [img setXBMColor: bm_color];
           }
 
-#ifdef NS_IMPL_COCOA
-          // Note: For periodic images, the full image height is "h + hd".
-          // By using the height h, a suitable part of the image is used.
-          NSRect fromRect = NSMakeRect(0, 0, p->wd, p->h);
-
-          NSTRACE_RECT ("fromRect", fromRect);
-
-          [img drawInRect: imageRect
-                 fromRect: fromRect
-                operation: NSCompositingOperationSourceOver
-                 fraction: 1.0
-               respectFlipped: YES
-                    hints: nil];
+      [img drawInRect: r
+              fromRect: fromRect
+             operation: NSCompositingOperationSourceOver
+              fraction: 1.0
+           respectFlipped: YES
+                hints: nil];
 #else
-          {
-            NSPoint pt = imageRect.origin;
-            pt.y += p->h;
-            [img compositeToPoint: pt operation: NSCompositingOperationSourceOver];
-          }
+      {
+        NSPoint pt = r.origin;
+        pt.y += p->h;
+        [img compositeToPoint: pt operation: NSCompositingOperationSourceOver];
+      }
 #endif
         }
       ns_reset_clipping (f);
@@ -6294,6 +6287,31 @@ not_in_argv (NSString *arg)
 }
 
 
+#ifdef NS_IMPL_COCOA
+/* Needed to pick up Ctrl-tab and possibly other events that Mac OS X
+   decided not to send key-down for.
+   See http://osdir.com/ml/editors.vim.mac/2007-10/msg00141.html
+   This only applies on Tiger and earlier.
+   If it matches one of these, send it on to keyDown. */
+-(void)keyUp: (NSEvent *)theEvent
+{
+  int flags = [theEvent modifierFlags];
+  int code = [theEvent keyCode];
+
+  NSTRACE ("[EmacsView keyUp:]");
+
+  if (floor (NSAppKitVersionNumber) <= 824 /*NSAppKitVersionNumber10_4*/ &&
+      code == 0x30 && (flags & NSEventModifierFlagControl) && !(flags & NSEventModifierFlagCommand))
+    {
+      if (NS_KEYLOG)
+        fprintf (stderr, "keyUp: passed test");
+      ns_fake_keydown = YES;
+      [self keyDown: theEvent];
+    }
+}
+#endif
+
+
 /* <NSTextInput> implementation (called through super interpretKeyEvents:]). */
 
 
@@ -7289,9 +7307,12 @@ not_in_argv (NSString *arg)
 
   win = [[EmacsWindow alloc]
             initWithContentRect: r
-                      styleMask: (FRAME_UNDECORATED (f)
-                                  ? FRAME_UNDECORATED_FLAGS
-                                  : FRAME_DECORATED_FLAGS)
+                      styleMask: (NSWindowStyleMaskResizable |
+#if MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_7
+                                  NSWindowStyleMaskTitled |
+#endif
+                                  NSWindowStyleMaskMiniaturizable |
+                                  NSWindowStyleMaskClosable)
                         backing: NSBackingStoreBuffered
                           defer: YES];
 
@@ -7747,7 +7768,7 @@ not_in_argv (NSString *arg)
     }
   else
     {
-#if MAC_OS_X_VERSION_MAX_ALLOWED >= 1070
+#ifdef HAVE_NATIVE_FS
       res = (([[self window] styleMask] & NSWindowStyleMaskFullScreen) != 0);
 #else
       res = NO;
@@ -8661,21 +8682,12 @@ not_in_argv (NSString *arg)
   /* TODO: if we want to allow variable widths, this is the place to do it,
            however neither GNUstep nor Cocoa support it very well */
   CGFloat r;
-#if defined (NS_IMPL_COCOA) \
-  && MAC_OS_X_VERSION_MAX_ALLOWED >= 1070
-#if MAC_OS_X_VERSION_MIN_REQUIRED < 1070
-  if ([NSScroller respondsToSelector:
-                    @selector(scrollerWidthForControlSize:scrollerStyle:)])
-#endif
-    r = [NSScroller scrollerWidthForControlSize: NSControlSizeRegular
-                                  scrollerStyle: NSScrollerStyleLegacy];
-#if MAC_OS_X_VERSION_MIN_REQUIRED < 1070
-  else
-#endif
-#endif /* MAC_OS_X_VERSION_MAX_ALLOWED >= 1070 */
-#if MAC_OS_X_VERSION_MIN_REQUIRED < 1070 \
-  || defined (NS_IMPL_GNUSTEP)
-    r = [NSScroller scrollerWidth];
+#if !defined (NS_IMPL_COCOA) || \
+  MAC_OS_X_VERSION_MAX_ALLOWED < MAC_OS_X_VERSION_10_7
+  r = [NSScroller scrollerWidth];
+#else
+  r = [NSScroller scrollerWidthForControlSize: NSControlSizeRegular
+                                scrollerStyle: NSScrollerStyleLegacy];
 #endif
   return r;
 }
