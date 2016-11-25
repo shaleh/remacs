@@ -180,16 +180,6 @@ circular_list (Lisp_Object list)
 
 
 
-Lisp_Object rust_return_t();
-
-DEFUN ("rust-hello", Frust_hello, Srust_hello, 0, 0, 0,
-       doc: /* Call rust_return_t via FFI. */
-       attributes: const)
-    ()
-{
-  return rust_return_t();
-}
-
 /* Data type predicates.  */
 
 DEFUN ("eq", Feq, Seq, 2, 2, 0,
@@ -3607,11 +3597,15 @@ A is a bool vector, B is t or nil, and I is an index into A.  */)
   return make_number (count);
 }
 
+void rust_init_syms();
+
 
 void
 syms_of_data (void)
 {
   Lisp_Object error_tail, arith_tail;
+  printf("in syms_of_data\n");
+  rust_init_syms();
 
   DEFSYM (Qquote, "quote");
   DEFSYM (Qlambda, "lambda");
@@ -3789,7 +3783,6 @@ syms_of_data (void)
 
   defsubr (&Sindirect_variable);
   defsubr (&Sinteractive_form);
-  defsubr (&Srust_hello);
   defsubr (&Seq);
   defsubr (&Snull);
   defsubr (&Stype_of);
