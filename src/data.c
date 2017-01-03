@@ -337,16 +337,8 @@ DEFUN ("nlistp", Fnlistp, Snlistp, 1, 1, 0,
   return Qt;
 }
 
-DEFUN ("symbolp", Fsymbolp, Ssymbolp, 1, 1, 0,
-       doc: /* Return t if OBJECT is a symbol.  */
-       attributes: const)
-  (Lisp_Object object)
-{
-  if (SYMBOLP (object))
-    return Qt;
-  return Qnil;
-}
-
+/* Define this in C to avoid unnecessarily consing up the symbol
+   name.  */
 DEFUN ("keywordp", Fkeywordp, Skeywordp, 1, 1, 0,
        doc: /* Return t if OBJECT is a keyword.
 This means that it is a symbol with a print name beginning with `:'
@@ -3747,7 +3739,6 @@ syms_of_data (void)
   defsubr (&Snumber_or_marker_p);
   defsubr (&Sfloatp);
   defsubr (&Snatnump);
-  defsubr (&Ssymbolp);
   defsubr (&Skeywordp);
   defsubr (&Sstringp);
   defsubr (&Smultibyte_string_p);
