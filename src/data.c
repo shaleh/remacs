@@ -2770,7 +2770,7 @@ enum arithop
     Alogxor
   };
 
-static Lisp_Object float_arith_driver (double, ptrdiff_t, enum arithop,
+Lisp_Object float_arith_driver (double, ptrdiff_t, enum arithop,
                                        ptrdiff_t, Lisp_Object *);
 Lisp_Object
 arith_driver (enum arithop code, ptrdiff_t nargs, Lisp_Object *args)
@@ -2864,7 +2864,7 @@ arith_driver (enum arithop code, ptrdiff_t nargs, Lisp_Object *args)
 # define isnan(x) ((x) != (x))
 #endif
 
-static Lisp_Object
+Lisp_Object
 float_arith_driver (double accum, ptrdiff_t argnum, enum arithop code,
 		    ptrdiff_t nargs, Lisp_Object *args)
 {
