@@ -2772,8 +2772,6 @@ enum arithop
 
 Lisp_Object float_arith_driver (double, ptrdiff_t, enum arithop,
                                        ptrdiff_t, Lisp_Object *);
-Lisp_Object
-arith_driver (enum arithop code, ptrdiff_t nargs, Lisp_Object *args);
 
 #ifndef isnan
 # define isnan(x) ((x) != (x))
@@ -2829,21 +2827,6 @@ float_arith_driver (double accum, ptrdiff_t argnum, enum arithop code,
     }
 
   return make_float (accum);
-}
-
-DEFUN ("/", Fquo, Squo, 1, MANY, 0,
-       doc: /* Divide number by divisors and return the result.
-With two or more arguments, return first argument divided by the rest.
-With one argument, return 1 divided by the argument.
-The arguments must be numbers or markers.
-usage: (/ NUMBER &rest DIVISORS)  */)
-  (ptrdiff_t nargs, Lisp_Object *args)
-{
-  ptrdiff_t argnum;
-  for (argnum = 2; argnum < nargs; argnum++)
-    if (FLOATP (args[argnum]))
-      return float_arith_driver (0, 0, Adiv, nargs, args);
-  return arith_driver (Adiv, nargs, args);
 }
 
 DEFUN ("%", Frem, Srem, 2, 2, 0,
@@ -3646,7 +3629,6 @@ syms_of_data (void)
   defsubr (&Sleq);
   defsubr (&Sgeq);
   defsubr (&Sneq);
-  defsubr (&Squo);
   defsubr (&Srem);
   defsubr (&Slsh);
   defsubr (&Sash);
