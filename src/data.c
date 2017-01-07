@@ -3524,7 +3524,6 @@ void
 syms_of_data (void)
 {
   Lisp_Object error_tail, arith_tail;
-  printf("in syms_of_data\n");
   rust_init_syms();
 
   DEFSYM (Qquote, "quote");
