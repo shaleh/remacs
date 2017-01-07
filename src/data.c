@@ -296,16 +296,6 @@ for example, (type-of 1) returns `integer'.  */)
     }
 }
 
-DEFUN ("consp", Fconsp, Sconsp, 1, 1, 0,
-       doc: /* Return t if OBJECT is a cons cell.  */
-       attributes: const)
-  (Lisp_Object object)
-{
-  if (CONSP (object))
-    return Qt;
-  return Qnil;
-}
-
 DEFUN ("atom", Fatom, Satom, 1, 1, 0,
        doc: /* Return t if OBJECT is not a cons cell.  This includes nil.  */
        attributes: const)
@@ -3559,7 +3549,6 @@ syms_of_data (void)
   defsubr (&Stype_of);
   defsubr (&Slistp);
   defsubr (&Snlistp);
-  defsubr (&Sconsp);
   defsubr (&Satom);
   defsubr (&Sintegerp);
   defsubr (&Sinteger_or_marker_p);
