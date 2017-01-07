@@ -2970,35 +2970,11 @@ usage: (min NUMBER-OR-MARKER &rest NUMBERS-OR-MARKERS)  */)
   return minmax_driver (nargs, args, ARITH_LESS);
 }
 
-DEFUN ("logand", Flogand, Slogand, 0, MANY, 0,
-       doc: /* Return bitwise-and of all the arguments.
-Arguments may be integers, or markers converted to integers.
-usage: (logand &rest INTS-OR-MARKERS)  */)
-  (ptrdiff_t nargs, Lisp_Object *args)
-{
-  return arith_driver (Alogand, nargs, args);
-}
-
-DEFUN ("logior", Flogior, Slogior, 0, MANY, 0,
-       doc: /* Return bitwise-or of all the arguments.
-Arguments may be integers, or markers converted to integers.
-usage: (logior &rest INTS-OR-MARKERS)  */)
-  (ptrdiff_t nargs, Lisp_Object *args)
-{
-  return arith_driver (Alogior, nargs, args);
-}
-
-DEFUN ("logxor", Flogxor, Slogxor, 0, MANY, 0,
-       doc: /* Return bitwise-exclusive-or of all the arguments.
-Arguments may be integers, or markers converted to integers.
-usage: (logxor &rest INTS-OR-MARKERS)  */)
-  (ptrdiff_t nargs, Lisp_Object *args)
-{
-  return arith_driver (Alogxor, nargs, args);
-}
-
-static Lisp_Object
-ash_lsh_impl (Lisp_Object value, Lisp_Object count, bool lsh)
+DEFUN ("ash", Fash, Sash, 2, 2, 0,
+       doc: /* Return VALUE with its bits shifted left by COUNT.
+If COUNT is negative, shifting is actually to the right.
+In this case, the sign bit is duplicated.  */)
+  (register Lisp_Object value, Lisp_Object count)
 {
   /* This code assumes that signed right shifts are arithmetic.  */
   verify ((EMACS_INT) -1 >> 1 == -1);
@@ -3781,9 +3757,6 @@ syms_of_data (void)
   defsubr (&Srem);
   defsubr (&Smax);
   defsubr (&Smin);
-  defsubr (&Slogand);
-  defsubr (&Slogior);
-  defsubr (&Slogxor);
   defsubr (&Slsh);
   defsubr (&Sash);
   defsubr (&Sadd1);
