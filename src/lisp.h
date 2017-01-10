@@ -4745,6 +4745,40 @@ maybe_gc (void)
     Fgarbage_collect ();
 }
 
+INLINE bool
+functionp (Lisp_Object object)
+{
+  if (SYMBOLP (object) && !NILP (Ffboundp (object)))
+    {
+      object = Findirect_function (object, Qt);
+
+      if (CONSP (object) && EQ (XCAR (object), Qautoload))
+	{
+	  /* Autoloaded symbols are functions, except if they load
+	     macros or keymaps.  */
+	  int i;
+	  for (i = 0; i < 4 && CONSP (object); i++)
+	    object = XCDR (object);
+
+	  return ! (CONSP (object) && !NILP (XCAR (object)));
+	}
+    }
+
+  if (SUBRP (object))
+    return XSUBR (object)->max_args != UNEVALLED;
+  else if (COMPILEDP (object))
+    return true;
+  else if (CONSP (object))
+    {
+      Lisp_Object car = XCAR (object);
+      return EQ (car, Qlambda) || EQ (car, Qclosure);
+    }
+  else
+    return false;
+}
+
+Lisp_Object Fsetcar(Lisp_Object, Lisp_Object);
+
 INLINE_HEADER_END
 
 #endif /* EMACS_LISP_H */
