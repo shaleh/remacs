@@ -546,6 +546,8 @@ pub struct Lisp_Float {
     pub data: [u8; EMACS_FLOAT_SIZE as usize],
 }
 
+pub union Lisp_Cons_Cdr {}
+
 /// Represents a cons cell, or GC bookkeeping for cons cells.
 ///
 /// A cons cell is pair of two pointers, used to build linked lists in
