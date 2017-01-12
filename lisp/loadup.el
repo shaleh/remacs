@@ -360,7 +360,7 @@ lost after dumping")))
 (if (and (equal (last command-line-args) '("dump"))
          (fboundp 'dump-emacs)
 	 (not (eq system-type 'ms-dos)))
-    (let* ((base (concat "emacs-" emacs-version "."))
+    (let* ((base (concat "remacs-" emacs-version "."))
 	   (exelen (if (eq system-type 'windows-nt) -4))
 	   (files (file-name-all-completions base default-directory))
 	   (versions (mapcar (function
@@ -456,20 +456,20 @@ lost after dumping")))
       (setq exec-path nil)
       (message "Dumping under the name emacs")
       (condition-case ()
-	  (delete-file "emacs")
+	  (delete-file "remacs")
 	(file-error nil))
       ;; We used to dump under the name xemacs, but that occasionally
       ;; confused people installing Emacs (they'd install the file
       ;; under the name `xemacs'), and it's inconsistent with every
       ;; other GNU program's build process.
-      (dump-emacs "emacs" "temacs")
+      (dump-emacs "remacs" "temacs")
       (message "%d pure bytes used" pure-bytes-used)
       ;; Recompute NAME now, so that it isn't set when we dump.
       (if (not (or (eq system-type 'ms-dos)
                    ;; Don't bother adding another name if we're just
                    ;; building bootstrap-emacs.
                    (equal (last command-line-args) '("bootstrap"))))
-	  (let ((name (format "emacs-%s.%d" emacs-version emacs-build-number))
+	  (let ((name (concat "remacs-" emacs-version))
 		(exe (if (eq system-type 'windows-nt) ".exe" "")))
 	    (while (string-match "[^-+_.a-zA-Z0-9]+" name)
 	      (setq name (concat (downcase (substring name 0 (match-beginning 0)))
@@ -479,7 +479,7 @@ lost after dumping")))
             (message "Adding name %s" name)
 	    ;; When this runs on Windows, invocation-directory is not
 	    ;; necessarily the current directory.
-	    (add-name-to-file (expand-file-name (concat "emacs" exe)
+	    (add-name-to-file (expand-file-name (concat "remacs" exe)
 						invocation-directory)
 			      (expand-file-name name invocation-directory)
 			      t)))

@@ -437,17 +437,7 @@ otherobj= $(TERMCAP_OBJ) $(PRE_ALLOC_OBJ) $(GMALLOC_OBJ) $(RALLOC_OBJ) \
 FIRSTFILE_OBJ=@FIRSTFILE_OBJ@
 ALLOBJS = $(FIRSTFILE_OBJ) $(VMLIMIT_OBJ) $(obj) $(otherobj)
 
-AUTO_DEPEND = @AUTO_DEPEND@
-DEPDIR = deps
-ifeq ($(AUTO_DEPEND),yes)
-  DEPFLAGS = -MMD -MF $(DEPDIR)/$*.d -MP
-  -include $(ALLOBJS:%.o=$(DEPDIR)/%.d)
-else
-  DEPFLAGS =
-  include $(srcdir)/deps.mk
-endif
-
-all: emacs$(EXEEXT) $(OTHER_FILES)
+all: remacs$(EXEEXT) $(OTHER_FILES)
 .PHONY: all
 
 ## This is the list of all Lisp files that might be loaded into the
@@ -529,8 +519,8 @@ ${lispintdir}/characters.elc: ${charscript:.el=.elc}
 ## Strictly speaking, emacs does not depend directly on all of $lisp,
 ## since not all pieces are used on all platforms.  But DOC depends
 ## on all of $lisp, and emacs depends on DOC, so it is ok to use $lisp here.
-emacs$(EXEEXT): temacs$(EXEEXT) \
-                lisp.mk $(etc)/DOC $(lisp) \
+remacs$(EXEEXT): temacs$(EXEEXT) \
+                lisp.mk $(etc)/DOC $(lisp) $(leimdir)/leim-list.el \
                 $(lispsource)/international/charprop.el ${charsets}
 ifeq ($(CANNOT_DUMP),yes)
 	ln -f temacs$(EXEEXT) $@
@@ -629,7 +619,7 @@ emacs.res: FORCE
 	$(MAKE) -C ../nt ../src/emacs.res
 
 .PHONY: ns-app
-ns-app: emacs$(EXEEXT)
+ns-app: remacs$(EXEEXT)
 	$(MAKE) -C ../nextstep all
 
 .PHONY: mostlyclean clean bootstrap-clean distclean maintainer-clean
@@ -638,12 +628,13 @@ ns-app: emacs$(EXEEXT)
 mostlyclean:
 	rm -f temacs$(EXEEXT) core *.core \#* *.o
 	rm -f ../etc/DOC
-	rm -f bootstrap-emacs$(EXEEXT) emacs-$(version)$(EXEEXT)
+	rm -f bootstrap-emacs$(EXEEXT) remacs-$(version)$(EXEEXT)
 	rm -f buildobj.h
 	rm -f globals.h gl-stamp
 	rm -f *.res *.tmp
 clean: mostlyclean
-	rm -f emacs-*.*.*[0-9]$(EXEEXT) emacs$(EXEEXT) $(DEPDIR)/*
+	rm -f remacs-*.*.*$(EXEEXT) remacs$(EXEEXT)
+	-rm -rf $(DEPDIR)
 
 ## bootstrap-clean is used to clean up just before a bootstrap.
 ## It should remove all files generated during a compilation/bootstrap,
@@ -663,7 +654,7 @@ distclean: bootstrap-clean
 maintainer-clean: distclean
 	rm -f TAGS
 versionclean:
-	-rm -f emacs$(EXEEXT) emacs-*.*.*[0-9]$(EXEEXT) ../etc/DOC*
+	-rm -f remacs$(EXEEXT) remacs-*.*.*$(EXEEXT) ../etc/DOC*
 extraclean: distclean
 	-rm -f *~ \#*
 
@@ -744,9 +735,9 @@ else
 	unset EMACS_HEAP_EXEC; \
 	$(RUN_TEMACS) --batch $(BUILD_DETAILS) --load loadup bootstrap
   ifneq ($(PAXCTL_dumped),)
-	$(PAXCTL_dumped) emacs$(EXEEXT)
+	$(PAXCTL_dumped) remacs$(EXEEXT)
   endif
-	mv -f emacs$(EXEEXT) $@
+	mv -f remacs$(EXEEXT) $@
 endif
 	@: Compile some files earlier to speed up further compilation.
 	$(MAKE) -C ../lisp compile-first EMACS="$(bootstrap_exe)"
