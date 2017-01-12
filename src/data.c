@@ -182,16 +182,6 @@ circular_list (Lisp_Object list)
 
 /* Data type predicates.  */
 
-DEFUN ("eq", Feq, Seq, 2, 2, 0,
-       doc: /* Return t if the two args are the same Lisp object.  */
-       attributes: const)
-  (Lisp_Object obj1, Lisp_Object obj2)
-{
-  if (EQ (obj1, obj2))
-    return Qt;
-  return Qnil;
-}
-
 DEFUN ("null", Fnull, Snull, 1, 1, 0,
        doc: /* Return t if OBJECT is nil, and return nil otherwise.  */
        attributes: const)
@@ -3506,7 +3496,6 @@ syms_of_data (void)
 
   defsubr (&Sindirect_variable);
   defsubr (&Sinteractive_form);
-  defsubr (&Seq);
   defsubr (&Snull);
   defsubr (&Stype_of);
   defsubr (&Slistp);
