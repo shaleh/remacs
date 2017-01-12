@@ -836,7 +836,7 @@ mostlyclean: $(mostlyclean_dirs:=_mostlyclean)
 ###      with them.
 ###
 ###      Delete '.dvi' files here if they are not part of the distribution.
-clean_dirs = $(mostlyclean_dirs) nextstep
+clean_dirs = $(mostlyclean_dirs) nextstep lisp admin/unidata
 
 $(foreach dir,$(clean_dirs),$(eval $(call submake_template,$(dir),clean)))
 
@@ -845,6 +845,7 @@ clean: $(clean_dirs:=_clean)
 	[ ! -d test ] || $(MAKE) -C test $@
 	-rm -f *.tmp etc/*.tmp*
 	-rm -rf info-dir.*
+	-rm -rf *.elc
 
 ### 'bootclean'
 ###      Delete all files that need to be remade for a clean bootstrap.
