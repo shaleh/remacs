@@ -42,14 +42,6 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 #include "coding.h"
 #include "regex.h"
 
-#ifdef MSDOS
-#include "msdos.h"	/* for fstatat */
-#endif
-
-#ifdef WINDOWSNT
-extern int is_slow_fs (const char *);
-#endif
-
 static ptrdiff_t scmp (const char *, const char *, ptrdiff_t);
 static Lisp_Object file_attributes (int, char const *, Lisp_Object,
 				    Lisp_Object, Lisp_Object);
@@ -820,13 +812,15 @@ scmp (const char *s1, const char *s2, ptrdiff_t len)
 static bool
 file_name_completion_dirp (int fd, struct dirent *dp, ptrdiff_t len)
 {
-  USE_SAFE_ALLOCA;
-  char *subdir_name = SAFE_ALLOCA (len + 2);
-  memcpy (subdir_name, dp->d_name, len);
-  strcpy (subdir_name + len, "/");
-  bool dirp = faccessat (fd, subdir_name, F_OK, AT_EACCESS) == 0;
-  SAFE_FREE ();
-  return dirp;
+  int value;
+
+  /* We want to return success if a link points to a nonexistent file,
+     but we want to return the status for what the link points to,
+     in case it is a directory.  */
+  value = fstatat (fd, dp->d_name, st_addr, AT_SYMLINK_NOFOLLOW);
+  if (value == 0 && S_ISLNK (st_addr->st_mode))
+    fstatat (fd, dp->d_name, st_addr, 0);
+  return value;
 }
 
 static char *

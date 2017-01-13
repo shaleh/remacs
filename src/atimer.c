@@ -31,10 +31,6 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 # include <sys/timerfd.h>
 #endif
 
-#ifdef MSDOS
-#include "msdos.h"
-#endif
-
 /* Free-list of atimer structures.  */
 
 static struct atimer *free_atimers;
