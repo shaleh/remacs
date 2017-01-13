@@ -182,16 +182,6 @@ circular_list (Lisp_Object list)
 
 /* Data type predicates.  */
 
-DEFUN ("null", Fnull, Snull, 1, 1, 0,
-       doc: /* Return t if OBJECT is nil, and return nil otherwise.  */
-       attributes: const)
-  (Lisp_Object object)
-{
-  if (NILP (object))
-    return Qt;
-  return Qnil;
-}
-
 DEFUN ("type-of", Ftype_of, Stype_of, 1, 1, 0,
        doc: /* Return a symbol representing the type of OBJECT.
 The symbol returned names the object's basic type;
@@ -3485,7 +3475,6 @@ syms_of_data (void)
 
   defsubr (&Sindirect_variable);
   defsubr (&Sinteractive_form);
-  defsubr (&Snull);
   defsubr (&Stype_of);
   defsubr (&Slistp);
   defsubr (&Snlistp);
