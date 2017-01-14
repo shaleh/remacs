@@ -18,9 +18,7 @@ mod numbers;
 mod strings;
 mod symbols;
 mod globals;
-mod character;
-
-pub use self::lisp::deprecated::{XFASTINT};
+mod fns;
 
 use lisp::LispSubr;
 
@@ -82,9 +80,6 @@ pub extern "C" fn rust_init_syms() {
         defsubr(&*lists::Scdr);
         defsubr(&*strings::Sstringp);
         defsubr(&*strings::Seq);
-        defsubr(&*strings::Snull);
-        defsubr(&*character::Smax_char);
-
-        floatfns::init_float_syms();
+        defsubr(&*fns::Sbase64EncodeString);
     }
 }

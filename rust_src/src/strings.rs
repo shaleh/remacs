@@ -3,7 +3,16 @@ use std::ptr;
 
 extern crate libc;
 
-use lisp::{LispObject, LispSubr, Qnil, STRINGP};
+use lisp::{XTYPE, LispObject, LispType, LispSubr, Qnil, VectorLikeHeader, PvecType,
+           PSEUDOVECTOR_AREA_BITS};
+
+extern "C" {
+    static Qt: LispObject;
+}
+
+pub fn STRINGP(value: LispObject) -> bool {
+    XTYPE(value) == LispType::Lisp_String
+}
 
 fn Fstringp(object: LispObject) -> LispObject {
     if STRINGP(object) { LispObject::constant_t() } else { Qnil }
