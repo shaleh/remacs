@@ -18,7 +18,7 @@ mod numbers;
 mod strings;
 mod symbols;
 mod globals;
-mod fns;
+mod atom;
 
 use lisp::LispSubr;
 
@@ -80,6 +80,9 @@ pub extern "C" fn rust_init_syms() {
         defsubr(&*lists::Scdr);
         defsubr(&*strings::Sstringp);
         defsubr(&*strings::Seq);
-        defsubr(&*fns::Sbase64EncodeString);
+        defsubr(&*strings::Sbase64_encode_string);
+        defsubr(&*strings::Snull);
+
+        floatfns::init_float_syms();
     }
 }
