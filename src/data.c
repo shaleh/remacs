@@ -3248,7 +3248,7 @@ A is a bool vector, B is t or nil, and I is an index into A.  */)
   return make_number (count);
 }
 
-void rust_init_syms();
+void rust_init_syms(void);
 
 
 void
