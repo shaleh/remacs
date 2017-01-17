@@ -32,6 +32,7 @@ pub use math::Fmax;
 pub use math::Fmin;
 pub use math::Fquo;
 pub use numbers::Fintegerp;
+pub use numbers::Finteger_or_marker_p;
 pub use numbers::Ffloatp;
 pub use numbers::Fnatnump;
 pub use numbers::Fnumberp;
@@ -72,6 +73,7 @@ pub extern "C" fn rust_init_syms() {
         defsubr(&*math::Smax);
         defsubr(&*math::Smin);
         defsubr(&*numbers::Sintegerp);
+        defsubr(&*numbers::Sinteger_or_marker_p);
         defsubr(&*numbers::Sfloatp);
         defsubr(&*numbers::Snatnump);
         defsubr(&*numbers::Snumberp);
