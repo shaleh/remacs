@@ -1263,6 +1263,7 @@ child_setup (int in, int out, int err, char **new_argv, bool set_pgrp,
   int errnum = emacs_exec_file (new_argv[0], new_argv, env);
   exec_failed (new_argv[0], errnum);
 
+#endif  /* MSDOS */
 #endif  /* not WINDOWSNT */
 }
 

@@ -76,6 +76,9 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 #ifdef DOS_NT
 /* On Windows, drive letters must be alphabetic - on DOS, the Netware
    redirector allows the six letters between 'Z' and 'a' as well.  */
+#ifdef WINDOWSNT
+#define IS_DRIVE(x) c_isalpha (x)
+#endif
 /* Need to lower-case the drive letter, or else expanded
    filenames will sometimes compare unequal, because
    `expand-file-name' doesn't always down-case the drive letter.  */
@@ -127,7 +130,8 @@ static bool a_write (int, Lisp_Object, ptrdiff_t, ptrdiff_t,
 static bool e_write (int, Lisp_Object, ptrdiff_t, ptrdiff_t,
 		     struct coding_system *);
 
-
+
+
 /* Return true if FILENAME exists.  */
 
 static bool
@@ -167,7 +171,8 @@ check_writable (const char *filename, int amode)
 #endif /* CYGWIN */
   return res;
 }
-
+
+
 /* Signal a file-access failure.  STRING describes the failure,
    NAME the file involved, and ERRORNO the errno value.
 
@@ -248,7 +253,8 @@ restore_point_unwind (Lisp_Object location)
   unchain_marker (XMARKER (location));
 }
 
-
+
+
 DEFUN ("find-file-name-handler", Ffind_file_name_handler,
        Sfind_file_name_handler, 2, 2, 0,
        doc: /* Return FILENAME's handler function for OPERATION, if it has one.
@@ -309,7 +315,8 @@ use the standard functions without calling themselves recursively.  */)
     }
   return result;
 }
-
+
+
 DEFUN ("file-name-directory", Ffile_name_directory, Sfile_name_directory,
        1, 1, 0,
        doc: /* Return the directory component in file name FILENAME.
@@ -545,7 +552,8 @@ is already present.  */)
   SAFE_FREE ();
   return val;
 }
-
+
+
 /* Convert from directory name SRC of length SRCLEN to file name in
    DST.  MULTIBYTE non-zero means the file name in SRC is a multibyte
    string.  On UNIX, just make sure there isn't a terminating /.
@@ -1613,7 +1621,8 @@ See also the function `substitute-in-file-name'.")
   return make_string (target, o - target);
 }
 #endif
-
+
+
 /* If /~ or // appears, discard everything through first slash.  */
 static bool
 file_name_absolute_p (const char *filename)
@@ -1778,7 +1787,8 @@ those `/' is discarded.  */)
   SAFE_FREE ();
   return filename;
 }
-
+
+
 /* A slightly faster and more convenient way to get
    (directory-file-name (expand-file-name FOO)).  */
 
@@ -1796,7 +1806,8 @@ expand_and_dir_to_file (Lisp_Object filename)
     absname = Fdirectory_file_name (absname);
   return absname;
 }
-
+
+
 /* Signal an error if the file ABSNAME already exists.
    If KNOWN_TO_EXIST, the file is known to exist.
    QUERYSTRING is a name for the action that is being considered
@@ -2102,7 +2113,8 @@ permissions.  */)
 
   return Qnil;
 }
-
+
+
 DEFUN ("make-directory-internal", Fmake_directory_internal,
        Smake_directory_internal, 1, 1, 0,
        doc: /* Create a new directory named DIRECTORY.  */)
@@ -2205,7 +2217,8 @@ internal_delete_file (Lisp_Object filename)
 				   Qt, internal_delete_file_1);
   return NILP (tem);
 }
-
+
+
 /* Filesystems are case-sensitive on all supported systems except
    MS-Windows, MS-DOS, Cygwin, and Mac OS X.  They are always
    case-insensitive on the first two, but they may or may not be
@@ -2494,7 +2507,8 @@ This happens for interactive use with M-x.  */)
   report_file_error ("Making symbolic link", list2 (target, linkname));
 }
 
-
+
+
 DEFUN ("file-name-absolute-p", Ffile_name_absolute_p, Sfile_name_absolute_p,
        1, 1, 0,
        doc: /* Return t if FILENAME is an absolute file name or starts with `~'.
@@ -2504,7 +2518,8 @@ On Unix, absolute file names start with `/'.  */)
   CHECK_STRING (filename);
   return file_name_absolute_p (SSDATA (filename)) ? Qt : Qnil;
 }
-
+
+
 DEFUN ("file-exists-p", Ffile_exists_p, Sfile_exists_p, 1, 1, 0,
        doc: /* Return t if file FILENAME exists (whether or not you can read it).
 See also `file-readable-p' and `file-attributes'.
@@ -2614,7 +2629,8 @@ DEFUN ("file-writable-p", Ffile_writable_p, Sfile_writable_p, 1, 1, 0,
   return check_writable (SSDATA (dir), W_OK | X_OK) ? Qt : Qnil;
 #endif
 }
-
+
+
 DEFUN ("access-file", Faccess_file, Saccess_file, 2, 2, 0,
        doc: /* Access file FILENAME, and get an error if that does not work.
 The second argument STRING is prepended to the error message.
@@ -2641,7 +2657,8 @@ If there is no error, returns nil.  */)
 
   return Qnil;
 }
-
+
+
 /* Relative to directory FD, return the symbolic link value of FILENAME.
    On failure, return nil.  */
 Lisp_Object
@@ -2850,7 +2867,8 @@ See `file-symlink-p' to distinguish symlinks.  */)
   return S_ISREG (st.st_mode) ? Qt : Qnil;
 #endif
 }
-
+
+
 DEFUN ("file-selinux-context", Ffile_selinux_context,
        Sfile_selinux_context, 1, 1, 0,
        doc: /* Return SELinux context of file named FILENAME.
@@ -2898,7 +2916,8 @@ or if SELinux is disabled, or if Emacs lacks SELinux support.  */)
 
   return list4 (user, role, type, range);
 }
-
+
+
 DEFUN ("set-file-selinux-context", Fset_file_selinux_context,
        Sset_file_selinux_context, 2, 2, 0,
        doc: /* Set SELinux context of file named FILENAME to CONTEXT.
@@ -2983,7 +3002,8 @@ or if Emacs was not compiled with SELinux support.  */)
 
   return Qnil;
 }
-
+
+
 DEFUN ("file-acl", Ffile_acl, Sfile_acl, 1, 1, 0,
        doc: /* Return ACL entries of file named FILENAME.
 The entries are returned in a format suitable for use in `set-file-acl'
@@ -3085,7 +3105,8 @@ support.  */)
 
   return Qnil;
 }
-
+
+
 DEFUN ("file-modes", Ffile_modes, Sfile_modes, 1, 1, 0,
        doc: /* Return mode bits of file named FILENAME, as an integer.
 Return nil, if file does not exist or is not accessible.  */)
@@ -3175,7 +3196,8 @@ The value is an integer.  */)
   XSETINT (value, (~ realmask) & 0777);
   return value;
 }
-
+
+
 
 DEFUN ("set-file-times", Fset_file_times, Sset_file_times, 1, 2, 0,
        doc: /* Set times of file FILENAME to TIMESTAMP.
@@ -3208,7 +3230,8 @@ Use the current time if TIMESTAMP is nil.  TIMESTAMP is in the format of
 
   return Qt;
 }
-
+
+
 #ifdef HAVE_SYNC
 DEFUN ("unix-sync", Funix_sync, Sunix_sync, 0, 0, "",
        doc: /* Tell Unix to finish all pending disk updates.  */)
@@ -3255,8 +3278,13 @@ otherwise, if FILE2 does not exist, the answer is t.  */)
   return (timespec_cmp (get_stat_mtime (&st2), get_stat_mtime (&st1)) < 0
 	  ? Qt : Qnil);
 }
-
-enum { READ_BUF_SIZE = MAX_ALLOCA };
+
+
+#ifndef READ_BUF_SIZE
+#define READ_BUF_SIZE (64 << 10)
+#endif
+/* Some buffer offsets are stored in 'int' variables.  */
+verify (READ_BUF_SIZE <= INT_MAX);
 
 /* This function is called after Lisp functions to decide a coding
    system are called, or when they cause an error.  Before they are
@@ -4549,7 +4577,8 @@ by calling `format-decode', which see.  */)
 
   return unbind_to (count, val);
 }
-
+
+
 static Lisp_Object build_annotations (Lisp_Object, Lisp_Object);
 
 static void
@@ -5065,7 +5094,8 @@ write_region (Lisp_Object start, Lisp_Object end, Lisp_Object filename,
 
   return Qnil;
 }
-
+
+
 DEFUN ("car-less-than-car", Fcar_less_than_car, Scar_less_than_car, 2, 2, 0,
        doc: /* Return t if (car A) is numerically less than (car B).  */)
   (Lisp_Object a, Lisp_Object b)
@@ -5156,7 +5186,8 @@ build_annotations (Lisp_Object start, Lisp_Object end)
   return annotations;
 }
 
-
+
+
 /* Write to descriptor DESC the NCHARS chars starting at POS of STRING.
    If STRING is nil, POS is the character position in the current buffer.
    Intersperse with them the annotations from *ANNOT
@@ -5313,7 +5344,8 @@ e_write (int desc, Lisp_Object string, ptrdiff_t start, ptrdiff_t end,
 
   return 1;
 }
-
+
+
 DEFUN ("verify-visited-file-modtime", Fverify_visited_file_modtime,
        Sverify_visited_file_modtime, 0, 1, 0,
        doc: /* Return t if last mod time of BUF's visited file matches what BUF records.
@@ -5417,7 +5449,8 @@ An argument specifies the modification time value to use
 
   return Qnil;
 }
-
+
+
 static Lisp_Object
 auto_save_error (Lisp_Object error_val)
 {
@@ -5752,7 +5785,8 @@ before any other event (mouse or keypress) is handled.  */)
   return Qnil;
 }
 
-
+
+
 DEFUN ("set-binary-mode", Fset_binary_mode, Sset_binary_mode, 2, 2, 0,
        doc: /* Switch STREAM to binary I/O mode or text I/O mode.
 STREAM can be one of the symbols `stdin', `stdout', or `stderr'.
@@ -5793,7 +5827,8 @@ effect except for flushing STREAM's data.  */)
 
   return (set_binary_mode (fileno (fp), binmode) == O_BINARY) ? Qt : Qnil;
 }
-
+
+
 void
 init_fileio (void)
 {

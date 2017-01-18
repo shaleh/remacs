@@ -117,7 +117,8 @@ enum no_color_bit
 
 static int max_frame_cols;
 
-
+
+
 
 #ifdef HAVE_GPM
 #include <sys/fcntl.h>
@@ -271,7 +272,8 @@ tty_set_scroll_region (struct frame *f, int start, int stop)
   losecursor (tty);
 }
 
-
+
+
 static void
 tty_turn_on_insert (struct tty_display_info *tty)
 {
@@ -287,7 +289,8 @@ tty_turn_off_insert (struct tty_display_info *tty)
     OUTPUT (tty, tty->TS_end_insert_mode);
   tty->insert_mode = 0;
 }
-
+
+
 /* Handle highlighting.  */
 
 static void
@@ -375,7 +378,8 @@ tty_highlight_if_desired (struct tty_display_info *tty)
   else
     tty_turn_off_highlight (tty);
 }
-
+
+
 
 /* Move cursor to row/column position VPOS/HPOS.  HPOS/VPOS are
    frame-relative coordinates.  */
@@ -416,7 +420,8 @@ tty_raw_cursor_to (struct frame *f, int row, int col)
     tty_turn_off_insert (tty);
   cmgoto (tty, row, col);
 }
-
+
+
 /* Erase operations */
 
 /* Clear from cursor to end of frame on a termcap device. */
@@ -503,7 +508,8 @@ tty_clear_end_of_line (struct frame *f, int first_unused_hpos)
       cmplus (tty, first_unused_hpos - curX (tty));
     }
 }
-
+
+
 /* Buffers to store the source and result of code conversion for terminal.  */
 static unsigned char *encode_terminal_src;
 static unsigned char *encode_terminal_dst;
@@ -969,7 +975,8 @@ tty_delete_glyphs (struct frame *f, int n)
   if (!tty->delete_in_insert_mode)
     OUTPUT_IF (tty, tty->TS_end_delete_mode);
 }
-
+
+
 /* An implementation of ins_del_lines for termcap frames. */
 
 static void
@@ -1036,7 +1043,8 @@ tty_ins_del_lines (struct frame *f, int vpos, int n)
       clear_to_end (f);
     }
 }
-
+
+
 /* Compute cost of sending "str", in characters,
    not counting any line-dependent padding.  */
 
@@ -1204,7 +1212,8 @@ calculate_costs (struct frame *frame)
       cmcostinit (FRAME_TTY (frame)); /* set up cursor motion costs */
     }
 }
-
+
+
 struct fkey_table {
   const char *cap, *name;
 };
@@ -1439,7 +1448,8 @@ term_get_fkeys_1 (void)
 }
 #endif /* not DOS_NT */
 
-
+
+
 /***********************************************************************
 		       Character Display Information
  ***********************************************************************/
@@ -1880,7 +1890,8 @@ produce_glyphless_glyph (struct it *it, Lisp_Object acronym)
     append_glyphless_glyph (it, face_id, str);
 }
 
-
+
+
 /***********************************************************************
 				Faces
  ***********************************************************************/
@@ -2215,7 +2226,8 @@ top-most frame on the text terminal.  */)
   return Qnil;
 }
 
-
+
+
 
 DEFUN ("suspend-tty", Fsuspend_tty, Ssuspend_tty, 0, 1, 0,
        doc: /* Suspend the terminal device TTY.
@@ -2350,7 +2362,8 @@ frame's terminal). */)
   return Qnil;
 }
 
-
+
+
 /***********************************************************************
 			       Mouse
  ***********************************************************************/
@@ -2657,7 +2670,8 @@ DEFUN ("gpm-mouse-stop", Fgpm_mouse_stop, Sgpm_mouse_stop,
 }
 #endif /* HAVE_GPM */
 
-
+
+
 /***********************************************************************
 			       Menus
  ***********************************************************************/
@@ -3757,7 +3771,8 @@ tty_menu_show (struct frame *f, int x, int y, int menuflags,
   return entry;
 }
 
-
+
+
 /***********************************************************************
 			    Initialization
  ***********************************************************************/
@@ -3787,7 +3802,8 @@ tty_free_frame_resources (struct frame *f)
   xfree (f->output_data.tty);
 }
 
-
+
+
 /* Reset the hooks in TERMINAL.  */
 
 static void
@@ -4152,18 +4168,6 @@ use the Bourne shell command 'TERM=...; export TERM' (C-shell:\n\
     FRAME_HAS_HORIZONTAL_SCROLL_BARS (f) = 0;
     tty->char_ins_del_ok = 1;
     baud_rate = 19200;
-  }
-  {
-    int height, width;
-    if (strcmp (terminal_type, "internal") == 0)
-      terminal->type = output_msdos_raw;
-    initialize_msdos_display (terminal);
-
-    get_tty_size (fileno (tty->input), &width, &height);
-    FrameCols (tty) = width;
-    FrameRows (tty) = height;
-    tty->char_ins_del_ok = 0;
-    init_baud_rate (fileno (tty->input));
   }
 #endif	/* WINDOWSNT */
   tty->output = stdout;
