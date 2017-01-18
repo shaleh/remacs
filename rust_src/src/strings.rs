@@ -4,13 +4,17 @@ use std::ptr;
 extern crate libc;
 
 use lisp::{LispObject, LispSubr, Qnil, SBYTES, SSDATA, STRING_MULTIBYTE, STRINGP};
-use lists::{NILP};
+use lists::NILP;
 
 extern "C" {
     static Qt: LispObject;
     fn make_unibyte_string(s: *const libc::c_char, length: libc::ptrdiff_t) -> LispObject;
-    fn base64_encode_1(from: *const libc::c_char, to: *mut libc::c_char, length: libc::ptrdiff_t,
-                       line_break: bool, multibyte: bool) -> libc::ptrdiff_t;
+    fn base64_encode_1(from: *const libc::c_char,
+                       to: *mut libc::c_char,
+                       length: libc::ptrdiff_t,
+                       line_break: bool,
+                       multibyte: bool)
+                       -> libc::ptrdiff_t;
     fn error(m: *const u8, ...);
 }
 
@@ -21,14 +25,24 @@ pub fn STRINGP(value: LispObject) -> bool {
 }
 
 fn Fstringp(object: LispObject) -> LispObject {
-    if STRINGP(object) { LispObject::constant_t() } else { Qnil }
+    if STRINGP(object) {
+        LispObject::constant_t()
+    } else {
+        Qnil
+    }
 }
 
-defun!("stringp", Fstringp, Sstringp, 1, 1, ptr::null(), "Return t if OBJECT is a string.
+defun!("stringp",
+       Fstringp,
+       Sstringp,
+       1,
+       1,
+       ptr::null(),
+       "Return t if OBJECT is a string.
 
 (fn OBJECT)");
 
-fn Feq (firstObject: LispObject, secondObject: LispObject) -> LispObject {
+fn Feq(firstObject: LispObject, secondObject: LispObject) -> LispObject {
     if firstObject == secondObject {
         LispObject::constant_t()
     } else {
@@ -36,7 +50,13 @@ fn Feq (firstObject: LispObject, secondObject: LispObject) -> LispObject {
     }
 }
 
-defun!("eq", Feq, Seq, 2, 2, ptr::null(), "Return t if the two args are the same Lisp object.
+defun!("eq",
+       Feq,
+       Seq,
+       2,
+       2,
+       ptr::null(),
+       "Return t if the two args are the same Lisp object.
 
 (fn OBJECT OBJECT)");
 
@@ -48,12 +68,18 @@ fn Fnull(object: LispObject) -> LispObject {
     }
 }
 
-defun!("null", Fnull, Snull, 1, 1, ptr::null(), "Return t if OBJECT is nil, and return nil otherwise.
+defun!("null",
+       Fnull,
+       Snull,
+       1,
+       1,
+       ptr::null(),
+       "Return t if OBJECT is nil, and return nil otherwise.
 
 (fn OBJECT)");
 
 
-fn Fbase64_encode_string (string: LispObject, noLineBreak: LispObject) -> LispObject {
+fn Fbase64_encode_string(string: LispObject, noLineBreak: LispObject) -> LispObject {
     debug_assert!(STRINGP(string));
 
     // We need to allocate enough room for the encoded text
@@ -68,8 +94,11 @@ fn Fbase64_encode_string (string: LispObject, noLineBreak: LispObject) -> LispOb
     let mut buffer: Vec<libc::c_char> = Vec::with_capacity(allength as usize);
     unsafe {
         let encoded = buffer.as_mut_ptr();
-        let encodedLength = base64_encode_1(SSDATA(string), encoded, length,
-                                            NILP(noLineBreak), STRING_MULTIBYTE(string));
+        let encodedLength = base64_encode_1(SSDATA(string),
+                                            encoded,
+                                            length,
+                                            NILP(noLineBreak),
+                                            STRING_MULTIBYTE(string));
 
         if encodedLength > allength {
             panic!("base64 encoded length is larger then allocated buffer");
@@ -78,12 +107,17 @@ fn Fbase64_encode_string (string: LispObject, noLineBreak: LispObject) -> LispOb
         if encodedLength < 0 {
             error("Multibyte character in data for base64 encoding\0".as_ptr());
         }
-        
+
         make_unibyte_string(encoded, encodedLength)
     }
 }
 
-defun!("base64-encode-string", Fbase64_encode_string, Sbase64_encode_string, 1, 2, ptr::null(),
+defun!("base64-encode-string",
+       Fbase64_encode_string,
+       Sbase64_encode_string,
+       1,
+       2,
+       ptr::null(),
        "Base64-encode STRING and return the result.
        Optional second argument NO-LINE-BREAK means do not break long lines
        into shorter lines.
