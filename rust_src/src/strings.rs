@@ -3,8 +3,8 @@ use std::ptr;
 
 extern crate libc;
 
-use lisp::{XTYPE, LispObject, LispType, LispSubr, Qnil, SBYTES, SSDATA, STRING_MULTIBYTE};
-use cons::NILP;
+use lisp::{LispObject, LispSubr, Qnil, SBYTES, SSDATA, STRING_MULTIBYTE, STRINGP};
+use lists::{NILP};
 
 extern "C" {
     static Qt: LispObject;
