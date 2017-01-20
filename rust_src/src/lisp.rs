@@ -162,6 +162,11 @@ impl LispObject {
 
 // Symbol support (LispType == Lisp_Symbol == 0)
 
+impl LispObject {
+    pub fn is_symbol(self) -> bool {
+        self.get_type() == LispType::Lisp_Symbol
+    }
+}
 
 // Misc support (LispType == Lisp_Misc == 1)
 
@@ -379,7 +384,23 @@ impl LispObject {
     }
 }
 
+// String support (LispType == 4)
 
+/// Represents a string value in elisp
+#[repr(C)]
+pub struct LispString {
+    pub size: libc::ptrdiff_t,
+    pub size_byte: libc::ptrdiff_t,
+    pub intervals: *mut libc::c_void, // @TODO implement
+    pub data: *mut libc::c_char,
+}
+
+impl LispObject {
+    #[inline]
+    pub fn is_string(self) -> bool {
+        XTYPE(self) == LispType::Lisp_String
+    }
+}
 
 // Other functions
 
@@ -387,11 +408,6 @@ impl LispObject {
     #[inline]
     pub fn is_number(self) -> bool {
         self.is_integer() || self.is_float()
-    }
-
-    #[inline]
-    pub fn is_string(self) -> bool {
-        XTYPE(self) == LispType::Lisp_String
     }
 }
 
@@ -570,6 +586,7 @@ impl Debug for LispObject {
 mod deprecated {
     use super::*;
     use ::libc;
+    use ::std;
 
     /// Convert a LispObject to an EmacsInt.
     #[allow(non_snake_case)]
@@ -630,6 +647,18 @@ mod deprecated {
         assert!(!INTEGERP(Qnil));
         assert!(INTEGERP(make_number(1)));
         assert!(INTEGERP(make_natnum(1)));
+    }
+
+    /// Is this LispObject a symbol?
+    #[allow(non_snake_case)]
+    #[allow(dead_code)]    
+    pub fn SYMBOLP(a: LispObject) -> bool {
+        a.is_symbol()
+    }
+
+    #[test]
+    fn test_symbolp() {
+        assert!(SYMBOLP(Qnil));
     }
 
 
@@ -743,6 +772,16 @@ mod deprecated {
         assert!(NUMBERP(make_natnum(1)));
     }
 
+    pub fn XSTRING(a: LispObject) -> *mut LispString {
+        debug_assert!(STRINGP(a));
+        unsafe { std::mem::transmute(XUNTAG(a, LispType::Lisp_String)) }
+    }
+
+    pub fn SBYTES(string: LispObject) -> libc::ptrdiff_t {
+        unsafe { STRING_BYTES(XSTRING(string)) }
+    }
+
+
     /// Convert a tagged pointer to a normal C pointer.
     ///
     /// See the docstring for `LispType` for more information on tagging.
@@ -791,104 +830,6 @@ pub fn CHECK_TYPE(ok: bool, predicate: LispObject, x: LispObject) {
 }
 
 /// Raise an error if `x` is not lisp string.
-#[allow(non_snake_case)]
-fn MISCP(a: LispObject) -> bool {
-    XTYPE(a) == LispType::Lisp_Misc
-}
-
-#[test]
-fn test_miscp() {
-    assert!(!MISCP(Qnil));
-}
-
-/// Convert a tagged pointer to a normal C pointer.
-///
-/// See the docstring for `LispType` for more information on tagging.
-#[allow(non_snake_case)]
-pub fn XUNTAG(a: LispObject, ty: LispType) -> *const libc::c_void {
-    let tagged_ptr = XLI(a) as libc::intptr_t;
-    let tag = ty as libc::intptr_t;
-    // Since pointers are aligned to 8 bytes, we can simply subtract
-    // the bit pattern to obtain a valid pointer.
-    (tagged_ptr - tag) as *const libc::c_void
-}
-
-/// Represents a string value in elisp
-#[repr(C)]
-pub struct LispString {
-    pub size: libc::ptrdiff_t,
-    pub size_byte: libc::ptrdiff_t,
-    pub intervals: *mut libc::c_void, // @TODO implement
-    pub data: *mut libc::c_char,
-}
-
-pub fn XSTRING(a: LispObject) -> *mut LispString {
-    debug_assert!(STRINGP(a));
-    unsafe { mem::transmute(XUNTAG(a, LispType::Lisp_String)) }
-}
-
-pub fn SBYTES(string: LispObject) -> libc::ptrdiff_t {
-    unsafe { STRING_BYTES(XSTRING(string)) }
-}
-
-/// Represents a floating point value in elisp, or GC bookkeeping for
-/// floats.
-///
-/// # Porting from C
-///
-/// `Lisp_Float` in C uses a union between a `double` and a
-/// pointer. We assume a double, as that's the common case, and
-/// require callers to transmute to a `LispFloatChain` if they need
-/// the pointer.
-///
-/// As a result, `foo->u.data` in C should be written
-/// `ptr::read(foo).u` in Rust.
-#[repr(C)]
-pub struct LispFloat {
-    u: f64,
-}
-
-#[test]
-fn test_lisp_float_size() {
-    let double_size = mem::size_of::<f64>();
-    let ptr_size = mem::size_of::<*const LispFloat>();
-
-    assert!(mem::size_of::<LispFloat>() == max(double_size, ptr_size));
-}
-
-#[repr(C)]
-#[allow(dead_code)]
-pub struct LispFloatChain {
-    chain: *const LispFloat,
-}
-
-// lisp.h uses a union for Lisp_Misc, which we emulate with an opaque
-// struct.
-#[repr(C)]
-pub struct LispMisc {
-    _ignored: i64,
-}
-
-// Supertype of all Misc types.
-#[repr(C)]
-pub struct LispMiscAny {
-    pub ty: LispMiscType,
-    // This is actually a GC marker bit plus 15 bits of padding, but
-    // we don't care right now.
-    padding: u16,
-}
-
-#[test]
-fn test_lisp_misc_any_size() {
-    // Should be 32 bits, which is 4 bytes.
-    assert!(mem::size_of::<LispMiscAny>() == 4);
-}
-
-#[allow(non_snake_case)]
-pub fn XMISC(a: LispObject) -> LispMisc {
-    unsafe { mem::transmute(XUNTAG(a, LispType::Lisp_Misc)) }
-}
-
 #[allow(non_snake_case)]
 pub fn XMISCANY(a: LispObject) -> *const LispMiscAny {
     debug_assert!(MISCP(a));
