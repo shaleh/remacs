@@ -1158,9 +1158,7 @@ endif
 ## begin gnulib module crypto/sha1
 ifeq (,$(OMIT_GNULIB_MODULE_crypto/sha1))
 
-libgnu_a_SOURCES += sha1.c
-
-EXTRA_DIST += gl_openssl.h sha1.h
+EXTRA_DIST += sha1.h
 
 endif
 ## end   gnulib module crypto/sha1
@@ -1174,24 +1172,6 @@ EXTRA_DIST += gl_openssl.h sha256.h
 
 endif
 ## end   gnulib module crypto/sha256
-
-## begin gnulib module crypto/sha512
-ifeq (,$(OMIT_GNULIB_MODULE_crypto/sha512))
-
-libgnu_a_SOURCES += sha512.c
-
-EXTRA_DIST += gl_openssl.h sha512.h
-
-endif
-## end   gnulib module crypto/sha512
-
-## begin gnulib module diffseq
-ifeq (,$(OMIT_GNULIB_MODULE_diffseq))
-
-libgnu_a_SOURCES += diffseq.h
-
-endif
-## end   gnulib module diffseq
 
 ## begin gnulib module dirent
 ifeq (,$(OMIT_GNULIB_MODULE_dirent))
