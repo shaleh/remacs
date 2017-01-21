@@ -89,7 +89,11 @@ impl LispObject {
 
     #[inline]
     pub fn from_bool(v: bool) -> LispObject {
-        if v { unsafe { Qt } } else { Qnil }
+        if v {
+            unsafe { Qt }
+        } else {
+            Qnil
+        }
     }
 
     #[inline]
@@ -423,7 +427,7 @@ pub struct LispString {
 impl LispObject {
     #[inline]
     pub fn is_string(self) -> bool {
-        XTYPE(self) == LispType::Lisp_String
+        self.get_type() == LispType::Lisp_String
     }
 }
 
@@ -568,7 +572,8 @@ impl Debug for LispObject {
             write!(f,
                    "#<INVALID-OBJECT @ {:#X}: VAL({:#X})>",
                    self_ptr,
-                   self.to_raw())?;
+                   self.to_raw())
+                ?;
             return Ok(());
         }
         match ty {
@@ -585,7 +590,8 @@ impl Debug for LispObject {
                 write!(f,
                        "#<VECTOR-LIKE @ {:#X}: VAL({:#X})>",
                        self_ptr,
-                       self.to_raw())?;
+                       self.to_raw())
+                    ?;
             }
             LispType::Lisp_Int0 |
             LispType::Lisp_Int1 => {
@@ -853,27 +859,9 @@ pub fn CHECK_TYPE(ok: bool, predicate: LispObject, x: LispObject) {
 
 /// Raise an error if `x` is not lisp string.
 #[allow(non_snake_case)]
-pub fn XMISCANY(a: LispObject) -> *const LispMiscAny {
-    debug_assert!(MISCP(a));
-    unsafe { mem::transmute(XMISC(a)) }
-}
-
-// TODO: we should do some sanity checking, because we're currently
-// exposing a safe API that dereferences raw pointers.
-#[allow(non_snake_case)]
-pub fn XMISCTYPE(a: LispObject) -> LispMiscType {
-    unsafe { ptr::read(XMISCANY(a)).ty }
-}
-
-#[allow(non_snake_case)]
-pub fn XFLOAT(a: LispObject) -> *const LispFloat {
-    debug_assert!(FLOATP(a));
-    unsafe { mem::transmute(XUNTAG(a, LispType::Lisp_Float)) }
-}
-
-#[allow(non_snake_case)]
-pub fn XFLOAT_DATA(f: LispObject) -> f64 {
-    unsafe { ptr::read(XFLOAT(f)).u }
+#[no_mangle]
+pub extern "C" fn CHECK_STRING(x: LispObject) {
+    CHECK_TYPE(x.is_string(), unsafe { Qstringp }, x);
 }
 
 #[allow(non_snake_case)]
