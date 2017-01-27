@@ -26,11 +26,7 @@ mod numbers;
 mod strings;
 mod symbols;
 mod character;
-mod base64;
-mod crypto;
-mod str2sig;
-
-use remacs_sys::Lisp_Subr;
+mod files;
 
 pub use base64::base64_encode_1;
 pub use base64::base64_decode_1;
@@ -71,6 +67,9 @@ pub use marker::CHECK_MARKER;
 
 // Defined in lisp.h and widely used in the C codebase.
 pub use lisp::CHECK_STRING;
+
+// Used for creating temporary files in emacs
+pub use files::mkrstemp;
 
 extern "C" {
     fn defsubr(sname: *const Lisp_Subr);
