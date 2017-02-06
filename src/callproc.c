@@ -54,7 +54,7 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 #include "nsterm.h"
 #endif
 
-int rust_make_temp(char *template, int flags, int *errorcode);
+#include "rust-temp.h"
 
 /* Pattern used by call-process-region to make temp files.  */
 static Lisp_Object Vtemp_file_name_pattern;
