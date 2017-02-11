@@ -7,7 +7,7 @@ use lists::NILP;
 use remacs_sys::Lisp_Object;
 
 extern "C" {
-    fn make_unibyte_string(s: *const libc::c_char, length: libc::ptrdiff_t) -> Lisp_Object;
+    fn make_string(s: *const libc::c_char, length: libc::ptrdiff_t) -> LispObject;
     fn base64_encode_1(from: *const libc::c_char,
                        to: *mut libc::c_char,
                        length: libc::ptrdiff_t,
@@ -23,7 +23,7 @@ extern "C" {
     fn error(m: *const u8, ...);
 }
 
-static MIME_LINE_LENGTH: isize = 76;
+pub static MIME_LINE_LENGTH: isize = 76;
 
 fn stringp(object: LispObject) -> LispObject {
     LispObject::from_bool(object.is_string())
@@ -100,7 +100,7 @@ fn base64_encode_string(string: LispObject, noLineBreak: LispObject) -> LispObje
             error("Multibyte character in data for base64 encoding\0".as_ptr());
         }
 
-        LispObject::from_raw(make_unibyte_string(encoded, encodedLength))
+        make_string(encoded, encodedLength)
     }
 }
 
@@ -126,16 +126,13 @@ fn base64_decode_string(string: LispObject) -> LispObject {
 
     unsafe {
         let decoded = buffer.as_mut_ptr();
-        let decoded_length = base64_decode_1(SSDATA(string.to_raw()),
-                                             decoded,
-                                             length,
-                                             false,
-                                             ptr::null_mut());
+        let decoded_length =
+            base64_decode_1(SSDATA(string), decoded, length, false, ptr::null_mut());
 
         if decoded_length > length {
             panic!("Decoded length is above length");
         } else if decoded_length >= 0 {
-            decoded_string = LispObject::from_raw(make_unibyte_string(decoded, decoded_length));
+            decoded_string = make_string(decoded, decoded_length);
         }
 
         if !STRINGP(decoded_string) {
