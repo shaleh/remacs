@@ -24868,7 +24868,6 @@ decode_mode_spec (struct window *w, register int c, int field_width,
 				     p, eol_flag);
 
 #if false /* This proves to be annoying; I think we can do without. -- rms.  */
-#ifdef subprocesses
 	obj = Fget_buffer_process (Fcurrent_buffer ());
 	if (PROCESSP (obj))
 	  {
@@ -24877,7 +24876,6 @@ decode_mode_spec (struct window *w, register int c, int field_width,
 	    p = decode_mode_spec_coding
 	      (XPROCESS (obj)->encode_coding_system, p, eol_flag);
 	  }
-#endif /* subprocesses */
 #endif /* false */
 	*p = 0;
 	return decode_mode_spec_buf;
