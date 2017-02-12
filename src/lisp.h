@@ -4429,7 +4429,7 @@ extern void syms_of_profiler (void);
 
 
 #ifdef DOS_NT
-/* Defined in msdos.c, w32.c.  */
+/* Defined in w32.c.  */
 extern char *emacs_root_dir (void);
 #endif /* DOS_NT */
 
