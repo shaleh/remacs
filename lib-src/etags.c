@@ -91,20 +91,11 @@ char pot_etags_version[] = "@(#) pot revision number is 17.38.1.4";
 #include <config.h>
 
 /* WIN32_NATIVE is for XEmacs.
-   MSDOS, WINDOWSNT, DOS_NT are for Emacs. */
+   WINDOWSNT, DOS_NT are for Emacs. */
 #ifdef WIN32_NATIVE
-# undef MSDOS
 # undef  WINDOWSNT
 # define WINDOWSNT
 #endif /* WIN32_NATIVE */
-
-#ifdef MSDOS
-# undef MSDOS
-# define MSDOS true
-# include <sys/param.h>
-#else
-# define MSDOS false
-#endif /* MSDOS */
 
 #ifdef WINDOWSNT
 # include <direct.h>
@@ -1431,14 +1422,12 @@ get_compressor_from_suffix (char *file, char **extptr)
     *extptr = suffix;
   suffix += 1;
   /* Let those poor souls who live with DOS 8+3 file name limits get
-     some solace by treating foo.cgz as if it were foo.c.gz, etc.
-     Only the first do loop is run if not MSDOS */
+     some solace by treating foo.cgz as if it were foo.c.gz, etc.  */
   do
     {
       for (compr = compressors; compr->suffix != NULL; compr++)
 	if (streq (compr->suffix, suffix))
 	  return compr;
-      if (!MSDOS)
 	break;			/* do it only once: not really a loop */
       if (extptr != NULL)
 	*extptr = ++suffix;
@@ -1599,23 +1588,6 @@ process_file_name (char *file, language *lang)
 		  real_name = compressed_name;
 		  break;
 		}
-	      if (MSDOS)
-		{
-		  char *suf = compressed_name + strlen (file);
-		  size_t suflen = strlen (compr->suffix) + 1;
-		  for ( ; suf[1]; suf++, suflen--)
-		    {
-		      memmove (suf, suf + 1, suflen);
-		      inf = fopen (compressed_name, "r" FOPEN_BINARY);
-		      if (inf)
-			{
-			  real_name = compressed_name;
-			  break;
-			}
-		    }
-		  if (inf)
-		    break;
-		}
 	      free (compressed_name);
 	      compressed_name = NULL;
 	    }
@@ -1636,7 +1608,7 @@ process_file_name (char *file, language *lang)
 	inf = NULL;
       else
 	{
-#if MSDOS || defined (DOS_NT)
+#if defined (DOS_NT)
 	  char *cmd1 = concat (compr->command, " \"", real_name);
 	  char *cmd = concat (cmd1, "\" > ", tmp_name);
 #else
@@ -7063,7 +7035,7 @@ etags_mktmp (void)
   const char *tmpdir = getenv ("TMPDIR");
   const char *slash = "/";
 
-#if MSDOS || defined (DOS_NT)
+#if defined (DOS_NT)
   if (!tmpdir)
     tmpdir = getenv ("TEMP");
   if (!tmpdir)
