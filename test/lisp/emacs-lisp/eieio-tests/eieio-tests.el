@@ -903,8 +903,9 @@ Subclasses to override slot attributes.")
   (list newname 2))
 
 (ert-deftest eieio-test-37-obsolete-name-in-constructor ()
-  ;; FIXME repeated intermittent failures on hydra and elsewhere (bug#24503).
-  :tags '(:unstable)
+  ;; Skipping on Remacs as this fails non-deterministically on Travis
+  ;; https://github.com/Wilfred/remacs/issues/159
+  (skip-unless (equal invocation-name "emacs"))
   (should (equal (eieio--testing "toto") '("toto" 2))))
 
 (ert-deftest eieio-autoload ()
