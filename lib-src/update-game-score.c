@@ -52,7 +52,7 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 #include "ntlib.h"
 #endif
 
-#include "rust-temp.h"
+#include "remacs-lib.h"
 
 #ifndef min
 # define min(a,b) ((a) < (b) ? (a) : (b))
@@ -434,14 +434,11 @@ write_scores (const char *filename, mode_t mode,
   int fd;
   FILE *f;
   ptrdiff_t i;
-  int errcode;
   char *tempfile = malloc (strlen (filename) + strlen (".tempXXXXXX") + 1);
   if (!tempfile)
     return -1;
   strcpy (stpcpy (tempfile, filename), ".tempXXXXXX");
-  fd = rust_make_temp (tempfile, 0, &errcode);
-  if (errcode != 0)
-    errno = errcode;
+  fd = rust_make_temp (tempfile, 0);
   if (fd < 0)
     return -1;
 #ifndef DOS_NT
