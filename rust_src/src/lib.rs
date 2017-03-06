@@ -12,6 +12,7 @@ extern crate alloc_unexecmacosx;
 extern crate lazy_static;
 
 extern crate remacs_sys;
+extern crate remacs_lib;
 extern crate libc;
 extern crate sha1;
 extern crate sha2;
@@ -26,7 +27,9 @@ mod numbers;
 mod strings;
 mod symbols;
 mod character;
-mod files;
+mod base64;
+
+use remacs_sys::Lisp_Subr;
 
 pub use base64::base64_encode_1;
 pub use base64::base64_decode_1;
@@ -67,9 +70,6 @@ pub use marker::CHECK_MARKER;
 
 // Defined in lisp.h and widely used in the C codebase.
 pub use lisp::CHECK_STRING;
-
-// Used for creating temporary files in emacs
-pub use files::rust_make_temp;
 
 extern "C" {
     fn defsubr(sname: *const Lisp_Subr);
