@@ -38,10 +38,10 @@ GNULIB_MODULES='
   ignore-value intprops largefile lstat
   manywarnings memrchr minmax mkostemp mktime nstrftime
   pipe2 pselect pthread_sigmask putenv qcopy-acl readlink readlinkat
-  sig2str socklen stat-time std-gnu11 stdalign stddef stdio
-  stpcpy strtoimax symlink sys_stat sys_time
-  tempname time time_r time_rz timegm timer-time timespec-add timespec-sub
-  update-copyright unlocked-io utimens
+  socklen stat-time std-gnu11 stdalign stddef stdio
+  stpcpy strftime strtoimax strtoumax symlink sys_stat
+  sys_time time time_r time_rz timegm timer-time timespec-add timespec-sub
+  unsetenv update-copyright utimens
   vla warnings
 '
 
