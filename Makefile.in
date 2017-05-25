@@ -881,7 +881,7 @@ top_distclean=\
 	rm -f config.status config.log~ \
 	  Makefile lib/gnulib.mk ${SUBDIR_MAKEFILES}
 
-distclean_dirs = $(clean_dirs) leim lisp
+distclean_dirs = $(clean_dirs) leim
 
 $(foreach dir,$(distclean_dirs),$(eval $(call submake_template,$(dir),distclean)))
 
