@@ -736,6 +736,10 @@ Returns a list of the form (REAL-FUNCTION DEF ALIASED REAL-DEF)."
                    ((invalid-function void-function) doc-raw))))
         (run-hook-with-args 'help-fns-describe-function-functions function)
         (insert "\n" (or doc "Not documented.")))
+      (when (or (function-get function 'pure)
+                (function-get function 'side-effect-free))
+        (insert "\nThis function does not change global state, "
+                "including the match data."))
       ;; Avoid asking the user annoying questions if she decides
       ;; to save the help buffer, when her locale's codeset
       ;; isn't UTF-8.
