@@ -433,14 +433,6 @@ Return SYMBOL.  */)
   return symbol;
 }
 
-DEFUN ("symbol-function", Fsymbol_function, Ssymbol_function, 1, 1, 0,
-       doc: /* Return SYMBOL's function definition, or nil if that is void.  */)
-  (Lisp_Object symbol)
-{
-  CHECK_SYMBOL (symbol);
-  return XSYMBOL (symbol)->u.s.function;
-}
-
 DEFUN ("symbol-plist", Fsymbol_plist, Ssymbol_plist, 1, 1, 0,
        doc: /* Return SYMBOL's property list.  */)
   (Lisp_Object symbol)
@@ -3159,20 +3151,6 @@ syms_of_data (void)
   defsubr (&Sinteractive_form);
   defsubr (&Stype_of);
   defsubr (&Skeywordp);
-  defsubr (&Svectorp);
-  defsubr (&Schar_table_p);
-  defsubr (&Svector_or_char_table_p);
-  defsubr (&Sbool_vector_p);
-  defsubr (&Sarrayp);
-  defsubr (&Ssequencep);
-  defsubr (&Sbufferp);
-  defsubr (&Ssubrp);
-  defsubr (&Sbyte_code_function_p);
-  defsubr (&Schar_or_string_p);
-  defsubr (&Sthreadp);
-  defsubr (&Smutexp);
-  defsubr (&Scondition_variable_p);
-  defsubr (&Ssymbol_function);
   defsubr (&Sindirect_function);
   defsubr (&Ssymbol_plist);
   defsubr (&Smakunbound);
