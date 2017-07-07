@@ -433,14 +433,6 @@ Return SYMBOL.  */)
   return symbol;
 }
 
-DEFUN ("symbol-plist", Fsymbol_plist, Ssymbol_plist, 1, 1, 0,
-       doc: /* Return SYMBOL's property list.  */)
-  (Lisp_Object symbol)
-{
-  CHECK_SYMBOL (symbol);
-  return XSYMBOL (symbol)->u.s.plist;
-}
-
 DEFUN ("fset", Ffset, Sfset, 2, 2, 0,
        doc: /* Set SYMBOL's function definition to DEFINITION, and return DEFINITION.  */)
   (register Lisp_Object symbol, Lisp_Object definition)
@@ -3152,7 +3144,6 @@ syms_of_data (void)
   defsubr (&Stype_of);
   defsubr (&Skeywordp);
   defsubr (&Sindirect_function);
-  defsubr (&Ssymbol_plist);
   defsubr (&Smakunbound);
   defsubr (&Sfmakunbound);
   defsubr (&Sboundp);
