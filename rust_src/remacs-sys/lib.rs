@@ -701,6 +701,7 @@ extern "C" {
     pub static Qwholenump: Lisp_Object;
     pub static Qvectorp: Lisp_Object;
     pub static Qsequencep: Lisp_Object;
+    pub static Qcharacterp: Lisp_Object;
 
     pub static Qinteger: Lisp_Object;
     pub static Qsymbol: Lisp_Object;
