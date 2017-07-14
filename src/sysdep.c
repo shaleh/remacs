@@ -583,7 +583,9 @@ struct save_signal
   struct sigaction action;
 };
 
+#ifdef DOS_NT
 static void save_signal_handlers (struct save_signal *);
+#endif
 static void restore_signal_handlers (struct save_signal *);
 
 /* Suspend the Emacs process; give terminal to its superior.  */
@@ -684,6 +686,7 @@ sys_subshell (void)
   restore_signal_handlers (saved_handlers);
 }
 
+#ifdef DOS_NT
 static void
 save_signal_handlers (struct save_signal *saved_handlers)
 {
@@ -695,6 +698,7 @@ save_signal_handlers (struct save_signal *saved_handlers)
       saved_handlers++;
     }
 }
+#endif
 
 static void
 restore_signal_handlers (struct save_signal *saved_handlers)

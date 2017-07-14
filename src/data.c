@@ -2525,11 +2525,8 @@ Both must be integers or markers.  */)
   return val;
 }
 
-DEFUN ("ash", Fash, Sash, 2, 2, 0,
-       doc: /* Return VALUE with its bits shifted left by COUNT.
-If COUNT is negative, shifting is actually to the right.
-In this case, the sign bit is duplicated.  */)
-  (register Lisp_Object value, Lisp_Object count)
+static Lisp_Object
+ash_lsh_impl (Lisp_Object value, Lisp_Object count, bool lsh)
 {
   /* This code assumes that signed right shifts are arithmetic.  */
   verify ((EMACS_INT) -1 >> 1 == -1);
