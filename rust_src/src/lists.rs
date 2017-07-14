@@ -175,7 +175,13 @@ fn assoc(key: LispObject, list: LispObject) -> LispObject {
     for tail in list.iter_tails() {
         let item = tail.car();
         if let Some(item_cons) = item.as_cons() {
-            if key.eq(item_cons.car()) || key.equal(item_cons.car()) {
+            let is_equal = if testfn.is_nil() {
+                key.eq(item_cons.car()) || key.equal(item_cons.car())
+            } else {
+                let res = unsafe { call2(testfn.to_raw(), key.to_raw(), item_cons.car().to_raw()) };
+                !LispObject::from_raw(res).is_nil()
+            };
+            if is_equal {
                 return item;
             }
         }

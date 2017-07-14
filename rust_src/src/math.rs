@@ -258,6 +258,57 @@ fn logxor(args: &mut [LispObject]) -> LispObject {
     arith_driver(ArithOp::Logxor, args)
 }
 
+fn minmax_driver(args: &[LispObject], greater: bool) -> LispObject {
+    assert!(args.len() > 0);
+    let mut accum = check_number_coerce_marker(args[0]);
+    for &arg in &args[1..] {
+        // TODO: this is arithcompare inlined, remove it once the PR is merged
+        let arg = check_number_coerce_marker(arg);
+        let i1;
+        let i2;
+        let f1;
+        let f2;
+        let fneq;
+        if arg.is_float() {
+            f1 = arg.as_float_or_error();
+            if accum.is_float() {
+                i1 = 0;
+                i2 = 0;
+                f2 = accum.as_float_or_error();
+            } else {
+                i2 = accum.as_fixnum_or_error();
+                f2 = i2 as f64; // NB: order of assignment and rounding is important here!
+                i1 = f2 as EmacsInt;
+            }
+            fneq = f1 != f2;
+        } else {
+            i1 = arg.as_fixnum_or_error();
+            if accum.is_float() {
+                f1 = i1 as f64; // NB: order of assignment and rounding is important here!
+                i2 = f1 as EmacsInt;
+                f2 = accum.as_float_or_error();
+            } else {
+                f1 = 0.;
+                f2 = 0.;
+                i2 = accum.as_fixnum_or_error();
+            }
+            fneq = f1 != f2;
+        }
+        let take_arg = if greater {
+            if fneq { f1 > f2 } else { i1 > i2 }
+        } else {
+            if fneq { f1 < f2 } else { i1 < i2 }
+        };
+        if take_arg {
+            accum = arg;
+        }
+        if accum.as_float().map_or(false, |f| f.is_nan()) {
+            return accum;
+        }
+    }
+    accum
+}
+
 /// Return largest of all the arguments (which must be numbers or markers).
 /// The value is always a number; markers are converted to numbers.
 /// usage: (fn NUMBER-OR-MARKER &rest NUMBERS-OR-MARKERS)
