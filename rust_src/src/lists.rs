@@ -273,7 +273,7 @@ where
 
 /// Extract a value from a property list.
 /// PLIST is a property list, which is a list of the form
-/// \(PROP1 VALUE1 PROP2 VALUE2...).  This function returns the value
+/// (PROP1 VALUE1 PROP2 VALUE2...).  This function returns the value
 /// corresponding to the given PROP, or nil if PROP is not one of the
 /// properties on the list.  This function never signals an error.
 #[lisp_fn]
@@ -283,7 +283,7 @@ fn plist_get(plist: LispObject, prop: LispObject) -> LispObject {
 
 /// Extract a value from a property list, comparing with `equal'.
 /// PLIST is a property list, which is a list of the form
-/// \(PROP1 VALUE1 PROP2 VALUE2...).  This function returns the value
+/// (PROP1 VALUE1 PROP2 VALUE2...).  This function returns the value
 /// corresponding to the given PROP, or nil if PROP is not
 /// one of the properties on the list.
 #[lisp_fn]
@@ -293,7 +293,7 @@ fn lax_plist_get(plist: LispObject, prop: LispObject) -> LispObject {
 
 /// Return non-nil if PLIST has the property PROP.
 /// PLIST is a property list, which is a list of the form
-/// \(PROP1 VALUE1 PROP2 VALUE2 ...).  PROP is a symbol.
+/// (PROP1 VALUE1 PROP2 VALUE2 ...).  PROP is a symbol.
 /// Unlike `plist-get', this allows you to distinguish between a missing
 /// property and a property with the value nil.
 /// The value is actually the tail of PLIST whose car is PROP.
@@ -350,7 +350,7 @@ where
 
 /// Change value in PLIST of PROP to VAL.
 /// PLIST is a property list, which is a list of the form
-/// \(PROP1 VALUE1 PROP2 VALUE2 ...).  PROP is a symbol and VAL is any object.
+/// (PROP1 VALUE1 PROP2 VALUE2 ...).  PROP is a symbol and VAL is any object.
 /// If PROP is already a property on the list, its value is set to VAL,
 /// otherwise the new PROP VAL pair is added.  The new plist is returned;
 /// use `(setq x (plist-put x prop val))' to be sure to use the new value.
@@ -362,7 +362,7 @@ fn plist_put(plist: LispObject, prop: LispObject, val: LispObject) -> LispObject
 
 /// Change value in PLIST of PROP to VAL, comparing with `equal'.
 /// PLIST is a property list, which is a list of the form
-/// \(PROP1 VALUE1 PROP2 VALUE2 ...).  PROP and VAL are any objects.
+/// (PROP1 VALUE1 PROP2 VALUE2 ...).  PROP and VAL are any objects.
 /// If PROP is already a property on the list, its value is set to VAL,
 /// otherwise the new PROP VAL pair is added.  The new plist is returned;
 /// use `(setq x (lax-plist-put x prop val))' to be sure to use the new value.
