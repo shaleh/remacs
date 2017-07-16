@@ -1391,31 +1391,6 @@ See also the function `nreverse', which is used more often.  */)
     wrong_type_argument (Qsequencep, seq);
   return new;
 }
-
-
-DEFUN ("get", Fget, Sget, 2, 2, 0,
-       doc: /* Return the value of SYMBOL's PROPNAME property.
-This is the last value stored with `(put SYMBOL PROPNAME VALUE)'.  */)
-  (Lisp_Object symbol, Lisp_Object propname)
-{
-  CHECK_SYMBOL (symbol);
-  Lisp_Object propval = Fplist_get (CDR (Fassq (symbol, Voverriding_plist_environment)),
-                                    propname);
-  if (!NILP (propval))
-    return propval;
-  return Fplist_get (XSYMBOL (symbol)->u.s.plist, propname);
-}
-
-DEFUN ("put", Fput, Sput, 3, 3, 0,
-       doc: /* Store SYMBOL's PROPNAME property with value VALUE.
-It can be retrieved with `(get SYMBOL PROPNAME)'.  */)
-  (Lisp_Object symbol, Lisp_Object propname, Lisp_Object value)
-{
-  CHECK_SYMBOL (symbol);
-  set_symbol_plist
-    (symbol, Fplist_put (XSYMBOL (symbol)->u.s.plist, propname, value));
-  return value;
-}
 
 /* Return true if O1 and O2 are equal.  EQUAL_KIND specifies what kind
    of equality test to use: if it is EQUAL_NO_QUIT, do not check for
@@ -4126,8 +4101,6 @@ this variable.  */);
   defsubr (&Sdelete);
   defsubr (&Snreverse);
   defsubr (&Sreverse);
-  defsubr (&Sget);
-  defsubr (&Sput);
   defsubr (&Sfillarray);
   defsubr (&Sclear_string);
   defsubr (&Snconc);
