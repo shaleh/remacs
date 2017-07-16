@@ -35,7 +35,7 @@ GNULIB_MODULES='
   filemode filevercmp flexmember fpieee fstatat fsync
   getloadavg getopt-gnu gettime gettimeofday gitlog-to-changelog
   ignore-value intprops largefile lstat
-  manywarnings memrchr minmax mkostemp mktime nstrftime
+  manywarnings memrchr minmax mktime
   pipe2 pselect pthread_sigmask putenv qcopy-acl readlink readlinkat
   socklen stat-time std-gnu11 stdalign stddef stdio
   stpcpy strftime strtoimax strtoumax symlink sys_stat
