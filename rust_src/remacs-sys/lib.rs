@@ -1040,6 +1040,7 @@ extern "C" {
     pub static Qvectorp: Lisp_Object;
     pub static Qsequencep: Lisp_Object;
     pub static Qcharacterp: Lisp_Object;
+    pub static Qminus: Lisp_Object;
 
     pub static Qinteger: Lisp_Object;
     pub static Qsymbol: Lisp_Object;
