@@ -25,6 +25,8 @@ extern crate remacs_lib;
 extern crate remacs_macros;
 extern crate remacs_sys;
 
+extern crate itertools;
+
 #[cfg(test)]
 extern crate mock_derive;
 
