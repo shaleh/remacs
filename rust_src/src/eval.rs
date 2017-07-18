@@ -49,29 +49,17 @@ macro_rules! call {
     }}
 }
 
-/// Macro to format an error message.
-/// Replaces error() in the C layer.
-macro_rules! error {
-    ($str:expr) => {{
-        let strobj = unsafe {
-            ::remacs_sys::make_string($str.as_ptr() as *const i8,
-                                      $str.len() as ::libc::ptrdiff_t)
-        };
-        xsignal!(::remacs_sys::Qerror, $crate::lisp::LispObject::from_raw(strobj));
-    }};
-    ($fmtstr:expr, $($arg:expr),*) => {{
-        let formatted = format!($fmtstr, $($arg),*);
-        let strobj = unsafe {
-            ::remacs_sys::make_string(formatted.as_ptr() as *const i8,
-                                      formatted.len() as ::libc::ptrdiff_t)
-        };
-        xsignal!(::remacs_sys::Qerror, $crate::lisp::LispObject::from_raw(strobj));
-    }}
+/// Convenience function for calling `xsignal` with a one-element list.
+pub fn xsignal1(error_symbol: LispObject, arg1: LispObject) -> ! {
+    xsignal(
+        error_symbol,
+        LispObject::cons(arg1, LispObject::constant_nil()),
+    )
 }
-
-/// Macro to format a "wrong argument type" error message.
-macro_rules! wrong_type {
-    ($pred:expr, $arg:expr) => {{
-        xsignal!(::remacs_sys::Qwrong_type_argument, LispObject::from_raw(unsafe { $pred }), $arg);
-    }}
+/// Convenience function for calling `xsignal` with a two-element list.
+pub fn xsignal2(error_symbol: LispObject, arg1: LispObject, arg2: LispObject) -> ! {
+    xsignal(
+        error_symbol,
+        LispObject::cons(arg1, LispObject::cons(arg2, LispObject::constant_nil())),
+    )
 }

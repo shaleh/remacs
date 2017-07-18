@@ -114,8 +114,12 @@ impl LispObject {
     }
 
     #[inline]
-    pub fn get_untaggedptr(self) -> *mut c_void {
-        (self.to_raw() & VALMASK) as intptr_t as *mut c_void
+    pub fn check_type_or_error(self, ok: bool, predicate: CLisp_Object) -> () {
+        if !ok {
+            unsafe {
+                wrong_type_argument(predicate, self.to_raw());
+            }
+        }
     }
 }
 
