@@ -933,22 +933,11 @@ free_dns_request (Lisp_Object proc)
 }
 #endif
 
-
 DEFUN ("processp", Fprocessp, Sprocessp, 1, 1, 0,
        doc: /* Return t if OBJECT is a process.  */)
   (Lisp_Object object)
 {
   return PROCESSP (object) ? Qt : Qnil;
-}
-
-DEFUN ("get-process", Fget_process, Sget_process, 1, 1, 0,
-       doc: /* Return the process named NAME, or nil if there is none.  */)
-  (register Lisp_Object name)
-{
-  if (PROCESSP (name))
-    return name;
-  CHECK_STRING (name);
-  return Fcdr (Fassoc (name, Vprocess_alist, Qnil));
 }
 
 /* This is how commands for the user decode process arguments.  It
@@ -7998,7 +7987,6 @@ returns non-`nil'.  */);
   DEFSYM (Qinterrupt_process_functions, "interrupt-process-functions");
 
   defsubr (&Sprocessp);
-  defsubr (&Sget_process);
   defsubr (&Sdelete_process);
   defsubr (&Sprocess_status);
   defsubr (&Sprocess_exit_status);
