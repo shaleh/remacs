@@ -192,7 +192,8 @@
 (ert-deftest eieio-test-method-order-list-6 ()
   ;; FIXME repeated intermittent failures on hydra (bug#24503)
   ;; ((:STATIC C) (:STATIC C-base1) (:STATIC C-base2)) != ((:STATIC C))")
-  :tags '(:unstable)
+  (skip-unless (not (getenv "NIX_STORE")))
+  (skip-unless (equal invocation-name "emacs"))
   (let ((eieio-test-method-order-list nil)
 	(ans '(
 	       (:STATIC C)
