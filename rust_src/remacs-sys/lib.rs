@@ -1174,6 +1174,7 @@ extern "C" {
     pub static Qhash_table_p: Lisp_Object;
     pub static lispsym: Lisp_Symbol;
     pub static Vbuffer_alist: Lisp_Object;
+    pub static Vprocess_alist: Lisp_Object;
 
     pub fn Fcons(car: Lisp_Object, cdr: Lisp_Object) -> Lisp_Object;
     pub fn Fcurrent_buffer() -> Lisp_Object;
