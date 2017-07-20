@@ -114,7 +114,7 @@ impl LispObject {
     }
 
     #[inline]
-    pub fn check_type_or_error(self, ok: bool, predicate: CLisp_Object) -> () {
+    pub fn check_type_or_error(self, ok: bool, predicate: Lisp_Object) -> () {
         if !ok {
             unsafe {
                 wrong_type_argument(predicate, self.to_raw());
