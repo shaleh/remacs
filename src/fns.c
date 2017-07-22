@@ -3692,7 +3692,5 @@ this variable.  */);
   defsubr (&Swidget_apply);
   defsubr (&Sbase64_encode_region);
   defsubr (&Sbase64_decode_region);
-//  defsubr (&Smd5);
-//  defsubr (&Ssecure_hash);
   defsubr (&Slocale_info);
 }
