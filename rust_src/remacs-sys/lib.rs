@@ -1231,7 +1231,7 @@ pub struct Lisp_Hash_Table {
 
 extern "C" {
     pub static mut globals: emacs_globals;
-    pub static current_thread: *const thread_state;
+    pub static current_thread: *mut thread_state;
     pub static Qt: Lisp_Object;
     pub static Qerror: Lisp_Object;
     pub static Qarith_error: Lisp_Object;
