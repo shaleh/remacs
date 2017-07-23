@@ -46,7 +46,7 @@ mod process;
 mod fonts;
 mod threads;
 mod chartable;
-mod category;
+mod obarray;
 
 #[cfg(all(not(test), target_os = "macos"))]
 use alloc_unexecmacosx::OsxUnexecAlloc;
@@ -122,6 +122,7 @@ pub use vectors::Fsort;
 pub use lists::merge;
 pub use buffers::Fget_buffer;
 pub use buffers::Fcurrent_buffer;
+pub use obarray::intern_1;
 
 // Used in fileio.c
 pub use editfns::Fpoint;
