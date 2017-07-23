@@ -1127,8 +1127,10 @@ pub struct Lisp_Hash_Table {
 extern "C" {
     pub static mut globals: emacs_globals;
     pub static Qt: Lisp_Object;
+    pub static Qerror: Lisp_Object;
     pub static Qarith_error: Lisp_Object;
     pub static Qrange_error: Lisp_Object;
+    pub static Qwrong_type_argument: Lisp_Object;
     pub static Qnumber_or_marker_p: Lisp_Object;
     pub static Qinteger_or_marker_p: Lisp_Object;
     pub static Qconsp: Lisp_Object;
@@ -1179,7 +1181,7 @@ extern "C" {
     pub fn Fcons(car: Lisp_Object, cdr: Lisp_Object) -> Lisp_Object;
     pub fn Fcurrent_buffer() -> Lisp_Object;
     pub fn Fsignal(error_symbol: Lisp_Object, data: Lisp_Object) -> !;
-    pub fn Fcopy_sequence(seq: Lisp_Object) -> Lisp_Object;
+    pub fn Ffuncall(nargs: ptrdiff_t, args: *mut Lisp_Object) -> Lisp_Object;
 
     pub fn make_float(float_value: c_double) -> Lisp_Object;
     pub fn make_string(s: *const c_char, length: ptrdiff_t) -> Lisp_Object;
@@ -1203,11 +1205,6 @@ extern "C" {
 
     // These signal an error, therefore are marked as non-returning.
     pub fn circular_list(tail: Lisp_Object) -> !;
-    pub fn wrong_type_argument(predicate: Lisp_Object, value: Lisp_Object) -> !;
-    // defined in eval.c, where it can actually take an arbitrary
-    // number of arguments.
-    // TODO: define a Rust version of this that uses Rust strings.
-    pub fn error(m: *const u8, ...) -> !;
     pub fn nsberror(spec: Lisp_Object) -> !;
 
     pub fn emacs_abort() -> !;
