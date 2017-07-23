@@ -933,13 +933,6 @@ free_dns_request (Lisp_Object proc)
 }
 #endif
 
-DEFUN ("processp", Fprocessp, Sprocessp, 1, 1, 0,
-       doc: /* Return t if OBJECT is a process.  */)
-  (Lisp_Object object)
-{
-  return PROCESSP (object) ? Qt : Qnil;
-}
-
 /* This is how commands for the user decode process arguments.  It
    accepts a process, a process name, a buffer, a buffer name, or nil.
    Buffers denote the first process in the buffer, and nil denotes the
@@ -7975,18 +7968,6 @@ non-nil value means that the delay is not reset on write.
 The variable takes effect when `start-process' is called.  */);
   Vprocess_adaptive_read_buffering = Qt;
 
-  DEFVAR_LISP ("interrupt-process-functions", Vinterrupt_process_functions,
-	       doc: /* List of functions to be called for `interrupt-process'.
-The arguments of the functions are the same as for `interrupt-process'.
-These functions are called in the order of the list, until one of them
-returns non-`nil'.  */);
-  Vinterrupt_process_functions = list1 (Qinternal_default_interrupt_process);
-
-  DEFSYM (Qinternal_default_interrupt_process,
-	  "internal-default-interrupt-process");
-  DEFSYM (Qinterrupt_process_functions, "interrupt-process-functions");
-
-  defsubr (&Sprocessp);
   defsubr (&Sdelete_process);
   defsubr (&Sprocess_status);
   defsubr (&Sprocess_exit_status);

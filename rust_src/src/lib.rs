@@ -151,6 +151,7 @@ pub extern "C" fn rust_init_syms() {
         defsubr(&*buffers::Sget_buffer);
         defsubr(&*windows::Swindowp);
         defsubr(&*process::Sget_process);
+        defsubr(&*process::Sprocessp);
         defsubr(&*lists::Satom);
         defsubr(&*lists::Slistp);
         defsubr(&*lists::Snlistp);
