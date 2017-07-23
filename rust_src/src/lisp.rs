@@ -9,7 +9,7 @@ use std::mem;
 use std::slice;
 use std::ops::{Deref, DerefMut};
 use std::fmt::{Debug, Formatter, Error};
-use libc::{c_void, intptr_t, uintptr_t};
+use libc::{c_char, c_void, intptr_t, ptrdiff_t, uintptr_t};
 
 use multibyte::{Codepoint, LispStringRef, MAX_CHAR};
 use symbols::LispSymbolRef;
@@ -19,6 +19,7 @@ use windows::LispWindowRef;
 use marker::LispMarkerRef;
 use fonts::LispFontRef;
 use chartable::LispCharTableRef;
+use obarray::LispObarrayRef;
 
 use remacs_sys::{EmacsInt, EmacsUint, EmacsDouble, VALMASK, VALBITS, INTTYPEBITS, INTMASK,
                  USE_LSB_TAG, MOST_POSITIVE_FIXNUM, MOST_NEGATIVE_FIXNUM, Lisp_Type,
@@ -1015,4 +1016,14 @@ impl Debug for LispObject {
         }
         Ok(())
     }
+}
+
+/// Intern (e.g. create a symbol from) a string.
+pub fn intern<T: AsRef<str>>(string: T) -> LispObject {
+    let s = string.as_ref();
+    LispObarrayRef::constant_obarray().intern_cstring(
+        s.as_ptr() as
+            *const c_char,
+        s.len() as ptrdiff_t,
+    )
 }
