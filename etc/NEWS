@@ -250,12 +250,13 @@ following variables nil: 'emacs-build-system', 'emacs-build-time',
 ---
 ** Emacs can now be built with support for Little CMS.
 
-If the lcms2 library is installed, Emacs will enable features built on
-top of that library.  The new configure option '--without-lcms2' can
-be used to build without lcms2 support even if it is installed.  Emacs
-linked to Little CMS exposes color management functions in Lisp: the
-color metrics 'lcms-cie-de2000' and 'lcms-cam02-ucs', as well as
-functions for conversion to and from CIE CAM02 and CAM02-UCS.
++++
+** The new user option 'electric-quote-replace-double' controls
+whether " is also replaced in 'electric-quote-mode'.  If non-nil, " is
+replaced by a double typographic quote.
+
+
+* Changes in Specialized Modes and Packages in Emacs 27.1
 
 ** The configure option '--with-gameuser' now defaults to 'no',
 as this appears to be the most common configuration in practice.
