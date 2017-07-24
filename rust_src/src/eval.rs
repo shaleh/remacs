@@ -63,3 +63,12 @@ pub fn xsignal2(error_symbol: LispObject, arg1: LispObject, arg2: LispObject) ->
         LispObject::cons(arg1, LispObject::cons(arg2, LispObject::constant_nil())),
     )
 }
+
+macro_rules! args_out_of_range {
+    ($arg1:expr, $arg2:expr) => {{
+        xsignal!(::remacs_sys::Qargs_out_of_range, $arg1, $arg2);
+    }};
+    ($arg1:expr, $arg2:expr, $arg3:expr) => {{
+        xsignal!(::remacs_sys::Qargs_out_of_range, $arg1, $arg2, $arg3);
+    }}
+}
