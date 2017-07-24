@@ -10,8 +10,7 @@ use eval::xsignal1;
 use libc;
 use lisp::{LispObject, LispNumber};
 use multibyte::LispStringRef;
-use remacs_sys::{error, nsberror, Fcurrent_buffer, EmacsInt, make_uninit_string,
-                 make_specified_string};
+use remacs_sys::{nsberror, Fcurrent_buffer, EmacsInt, make_uninit_string, make_specified_string};
 use remacs_sys::{preferred_coding_system, Fcoding_system_p, code_convert_string,
                  validate_subarray, string_char_to_byte, wrong_type_argument};
 use remacs_sys::{current_thread, record_unwind_current_buffer, set_buffer_internal,
@@ -139,20 +138,16 @@ fn get_coding_system_for_buffer(
            default value of buffer-file-coding-system. */
         return LispObject::from_raw(buffer.buffer_file_coding_system);
     }
-    if fboundp(LispObject::from_raw(
-        unsafe { globals.f_Vselect_safe_coding_system_function },
-    )).is_not_nil()
-    {
+    let sscsf = LispObject::from_raw(unsafe { globals.f_Vselect_safe_coding_system_function });
+    if fboundp(sscsf).is_not_nil() {
         /* Confirm that VAL can surely encode the current region. */
-        return LispObject::from_raw(unsafe {
-            call4(
-                globals.f_Vselect_safe_coding_system_function,
-                LispObject::from_natnum(start_byte as EmacsInt).to_raw(),
-                LispObject::from_natnum(end_byte as EmacsInt).to_raw(),
-                coding_system.to_raw(),
-                LispObject::constant_nil().to_raw(),
-            )
-        });
+        return call!(
+            sscsf,
+            LispObject::from_natnum(start_byte as EmacsInt),
+            LispObject::from_natnum(end_byte as EmacsInt),
+            coding_system,
+            LispObject::constant_nil()
+        );
     }
     LispObject::constant_nil()
 }
