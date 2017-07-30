@@ -1295,6 +1295,7 @@ extern "C" {
     pub static Qsequencep: Lisp_Object;
     pub static Qcharacterp: Lisp_Object;
     pub static Qchar_table_p: Lisp_Object;
+    pub static Qbufferp: Lisp_Object;
     pub static Qminus: Lisp_Object;
 
     pub static Qinteger: Lisp_Object;
@@ -1343,7 +1344,7 @@ extern "C" {
     pub fn Fcons(car: Lisp_Object, cdr: Lisp_Object) -> Lisp_Object;
     pub fn Fcurrent_buffer() -> Lisp_Object;
     pub fn Fsignal(error_symbol: Lisp_Object, data: Lisp_Object) -> !;
-    pub fn Fbuffer_file_name(buffer: Lisp_Object) -> Lisp_Object;
+    pub fn Fcopy_sequence(seq: Lisp_Object) -> Lisp_Object;
     pub fn Ffind_operation_coding_system(nargs: ptrdiff_t, args: *mut Lisp_Object) -> Lisp_Object;
     pub fn Flocal_variable_p(variable: Lisp_Object, buffer: Lisp_Object) -> Lisp_Object;
 

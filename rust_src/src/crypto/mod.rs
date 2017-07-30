@@ -5,8 +5,7 @@ use std;
 use std::slice;
 use libc::ptrdiff_t;
 
-use buffers::{LispBufferRef, get_buffer};
-use eval::xsignal1;
+use buffers::{LispBufferRef, get_buffer, buffer_file_name};
 use libc;
 use lisp::{LispObject, LispNumber};
 use multibyte::LispStringRef;
@@ -14,8 +13,8 @@ use remacs_sys::{nsberror, Fcurrent_buffer, EmacsInt, make_uninit_string, make_s
 use remacs_sys::{preferred_coding_system, Fcoding_system_p, code_convert_string,
                  validate_subarray, string_char_to_byte, wrong_type_argument};
 use remacs_sys::{current_thread, record_unwind_current_buffer, set_buffer_internal,
-                 make_buffer_string, call4};
-use remacs_sys::{globals, Fbuffer_file_name, Ffind_operation_coding_system, Flocal_variable_p};
+                 make_buffer_string};
+use remacs_sys::{globals, Ffind_operation_coding_system, Flocal_variable_p};
 use remacs_sys::{Qmd5, Qsha1, Qsha224, Qsha256, Qsha384, Qsha512, Qstringp, Qraw_text,
                  Qcoding_system_error, Qwrite_region, Qbuffer_file_coding_system};
 use remacs_macros::lisp_fn;
@@ -118,13 +117,13 @@ fn get_coding_system_for_buffer(
             return LispObject::from_raw(unsafe { Qraw_text });
         }
     }
-    if LispObject::from_raw(unsafe { Fbuffer_file_name(object.to_raw()) }).is_not_nil() {
+    if buffer_file_name(object).is_not_nil() {
         /* Check file-coding-system-alist. */
         let mut args = [
             unsafe { Qwrite_region },
             start.to_raw(),
             end.to_raw(),
-            unsafe { Fbuffer_file_name(object.to_raw()) },
+            buffer_file_name(object).to_raw(),
         ];
         let val = LispObject::from_raw(unsafe {
             Ffind_operation_coding_system(4, args.as_mut_ptr())
