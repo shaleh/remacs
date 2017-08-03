@@ -46,6 +46,7 @@ mod process;
 mod fonts;
 mod threads;
 mod chartable;
+mod editfns;
 
 #[cfg(all(not(test), target_os = "macos"))]
 use alloc_unexecmacosx::OsxUnexecAlloc;
@@ -120,6 +121,7 @@ pub use vectors::Fsort;
 pub use lists::merge;
 pub use buffers::Fget_buffer;
 pub use buffers::Fcurrent_buffer;
+pub use editfns::Fpoint;
 
 // used in chartab.c
 pub use chartable::Fset_char_table_parent;
@@ -284,5 +286,6 @@ pub extern "C" fn rust_init_syms() {
         defsubr(&*floatfns::Sfloor);
         defsubr(&*floatfns::Sround);
         defsubr(&*floatfns::Struncate);
+        defsubr(&*editfns::Spoint);
     }
 }
