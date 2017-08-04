@@ -31,7 +31,7 @@ pub fn buffer_size(object: LispObject) -> LispObject {
     } else {
         ThreadState::current_buffer()
     };
-    LispObject::from_natnum((buffer_ref.z() - buffer_ref.beg()) as EmacsInt)
+    LispObject::from_natnum((buffer_ref.z() - buffer_ref.beg_byte()) as EmacsInt)
 }
 
 /// Return t if point is at the end of the buffer.
