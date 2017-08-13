@@ -1086,15 +1086,6 @@ is first appended to NAME, to speed up finding a non-existent buffer.  */)
 }
 
 
-DEFUN ("buffer-name", Fbuffer_name, Sbuffer_name, 0, 1, 0,
-       doc: /* Return the name of BUFFER, as a string.
-BUFFER defaults to the current buffer.
-Return nil if BUFFER has been killed.  */)
-  (register Lisp_Object buffer)
-{
-  return BVAR (decode_buffer (buffer), name);
-}
-
 DEFUN ("buffer-base-buffer", Fbuffer_base_buffer, Sbuffer_base_buffer,
        0, 1, 0,
        doc: /* Return the base buffer of indirect buffer BUFFER.
@@ -6180,7 +6171,6 @@ since either may lead to infinite recursion.  */);
   defsubr (&Sget_buffer_create);
   defsubr (&Smake_indirect_buffer);
   defsubr (&Sgenerate_new_buffer_name);
-  defsubr (&Sbuffer_name);
   defsubr (&Sbuffer_base_buffer);
   defsubr (&Sbuffer_local_value);
   defsubr (&Sbuffer_local_variables);
