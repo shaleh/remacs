@@ -49,12 +49,24 @@ macro_rules! call {
     }}
 }
 
-/// Convenience function for calling `xsignal` with a one-element list.
-pub fn xsignal1(error_symbol: LispObject, arg1: LispObject) -> ! {
-    xsignal(
-        error_symbol,
-        LispObject::cons(arg1, LispObject::constant_nil()),
-    )
+/// Macro to format an error message.
+/// Replaces error() in the C layer.
+macro_rules! error {
+    ($str:expr) => {{
+        let strobj = unsafe {
+            ::remacs_sys::make_string($str.as_ptr() as *const ::libc::c_char,
+                                      $str.len() as ::libc::ptrdiff_t)
+        };
+        xsignal!(::remacs_sys::Qerror, $crate::lisp::LispObject::from_raw(strobj));
+    }};
+    ($fmtstr:expr, $($arg:expr),*) => {{
+        let formatted = format!($fmtstr, $($arg),*);
+        let strobj = unsafe {
+            ::remacs_sys::make_string(formatted.as_ptr() as *const ::libc::c_char,
+                                      formatted.len() as ::libc::ptrdiff_t)
+        };
+        xsignal!(::remacs_sys::Qerror, $crate::lisp::LispObject::from_raw(strobj));
+    }}
 }
 /// Convenience function for calling `xsignal` with a two-element list.
 pub fn xsignal2(error_symbol: LispObject, arg1: LispObject, arg2: LispObject) -> ! {
