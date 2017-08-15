@@ -1168,16 +1168,6 @@ At the beginning of the buffer or accessible region, return 0.  */)
   return temp;
 }
 
-DEFUN ("bobp", Fbobp, Sbobp, 0, 0, 0,
-       doc: /* Return t if point is at the beginning of the buffer.
-If the buffer is narrowed, this means the beginning of the narrowed part.  */)
-  (void)
-{
-  if (PT == BEGV)
-    return Qt;
-  return Qnil;
-}
-
 DEFUN ("bolp", Fbolp, Sbolp, 0, 0, 0,
        doc: /* Return t if point is at the beginning of a line.  */)
   (void)
@@ -5521,7 +5511,6 @@ functions if all the text being accessed has this property.  */);
   defsubr (&Sposition_bytes);
   defsubr (&Sbyte_to_position);
 
-  defsubr (&Sbobp);
   defsubr (&Sbolp);
   defsubr (&Seolp);
   defsubr (&Sfollowing_char);
