@@ -51,6 +51,8 @@ mod fonts;
 mod threads;
 mod chartable;
 mod obarray;
+mod editfns;
+mod util;
 
 #[cfg(all(not(test), target_os = "macos"))]
 use alloc_unexecmacosx::OsxUnexecAlloc;
@@ -63,6 +65,8 @@ use remacs_sys::Lisp_Subr;
 
 pub use base64::base64_encode_1;
 pub use base64::base64_decode_1;
+
+pub use util::clip_to_bounds;
 
 // Used in buffer.c
 pub use buffers::Fbuffer_live_p;
