@@ -3984,6 +3984,25 @@ buffer.  */)
 
 /* Overlay dissection functions.  */
 
+DEFUN ("overlay-end", Foverlay_end, Soverlay_end, 1, 1, 0,
+       doc: /* Return the position at which OVERLAY ends.  */)
+  (Lisp_Object overlay)
+{
+  CHECK_OVERLAY (overlay);
+
+  return (Fmarker_position (OVERLAY_END (overlay)));
+}
+
+DEFUN ("overlay-buffer", Foverlay_buffer, Soverlay_buffer, 1, 1, 0,
+       doc: /* Return the buffer OVERLAY belongs to.
+Return nil if OVERLAY has been deleted.  */)
+  (Lisp_Object overlay)
+{
+  CHECK_OVERLAY (overlay);
+
+  return Fmarker_buffer (OVERLAY_START (overlay));
+}
+
 DEFUN ("overlay-properties", Foverlay_properties, Soverlay_properties, 1, 1, 0,
        doc: /* Return a list of the properties on OVERLAY.
 This is a copy of OVERLAY's plist; modifying its conses has no effect on
@@ -6124,6 +6143,8 @@ since either may lead to infinite recursion.  */);
   defsubr (&Sdelete_overlay);
   defsubr (&Sdelete_all_overlays);
   defsubr (&Smove_overlay);
+  defsubr (&Soverlay_end);
+  defsubr (&Soverlay_buffer);
   defsubr (&Soverlay_properties);
   defsubr (&Soverlays_at);
   defsubr (&Soverlays_in);

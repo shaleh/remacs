@@ -170,7 +170,6 @@ pub use multibyte::str_to_unibyte;
 
 // Used in xdisp.c
 pub use buffers::Foverlay_start;
-pub use buffers::Foverlay_end;
 
 // Used in window.c, macros.c
 pub use interactive::Fprefix_numeric_value;
@@ -194,8 +193,6 @@ pub extern "C" fn rust_init_syms() {
         defsubr(&*buffers::Sbuffer_chars_modified_tick);
         defsubr(&*buffers::Sbuffer_name);
         defsubr(&*buffers::Soverlay_start);
-        defsubr(&*buffers::Soverlay_end);
-        defsubr(&*buffers::Soverlay_buffer);
         defsubr(&*windows::Swindowp);
         defsubr(&*process::Sget_process);
         defsubr(&*process::Sprocessp);

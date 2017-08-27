@@ -8,7 +8,7 @@ use remacs_sys::{Lisp_Object, EmacsInt, Lisp_Buffer, Lisp_Overlay, Lisp_Type, Vb
 use strings::string_equal;
 use lists::{car, cdr};
 use threads::ThreadState;
-use marker::{marker_position, marker_buffer};
+use marker::marker_position;
 
 use std::mem;
 
@@ -136,6 +136,14 @@ impl LispOverlayRef {
     }
 }
 
+impl LispOverlayRef {
+    #[inline]
+    pub fn start(&self) -> LispObject {
+        LispObject::from_raw(self.start)
+
+    }
+}
+
 impl LispObject {
     /// Return SELF as a struct buffer pointer, defaulting to the current buffer.
     /// Same as the decode_buffer function in buffer.h
@@ -260,21 +268,6 @@ fn buffer_chars_modified_tick(buffer: LispObject) -> LispObject {
 fn overlay_start(overlay: LispObject) -> LispObject {
     let marker = overlay.as_overlay_or_error().start();
     marker_position(marker)
-}
-
-/// Return the position at which OVERLAY ends.
-#[lisp_fn]
-fn overlay_end(overlay: LispObject) -> LispObject {
-    let marker = overlay.as_overlay_or_error().end();
-    marker_position(marker)
-}
-
-/// Return the buffer OVERLAY belongs to.
-/// Return nil if OVERLAY has been deleted.
-#[lisp_fn]
-fn overlay_buffer(overlay: LispObject) -> LispObject {
-    let marker = overlay.as_overlay_or_error().start();
-    marker_buffer(marker)
 }
 
 #[no_mangle]
