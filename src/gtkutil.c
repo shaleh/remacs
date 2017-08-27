@@ -568,6 +568,14 @@ xg_check_special_colors (struct frame *f,
   if (! FRAME_GTK_WIDGET (f) || ! (get_bg || get_fg))
     return success_p;
 
+#if GTK_CHECK_VERSION (3, 16, 0)
+  if (get_bg)
+    /* gtk_style_context_get_background_color is deprecated in
+       GTK+ 3.16.  New versions of GTK+ don't use the concept of a
+       single background color any more, so we can't query for it.  */
+    return false;
+#endif
+
   block_input ();
   {
 #ifdef HAVE_GTK3
@@ -579,18 +587,12 @@ xg_check_special_colors (struct frame *f,
     if (get_fg)
       gtk_style_context_get_color (gsty, state, &col);
     else
-      {
-        GdkRGBA *c;
-        /* FIXME: Retrieving the background color is deprecated in
-           GTK+ 3.16.  New versions of GTK+ don't use the concept of a
-           single background color any more, so we shouldn't query for
-           it.  */
-        gtk_style_context_get (gsty, state,
-                               GTK_STYLE_PROPERTY_BACKGROUND_COLOR, &c,
-                               NULL);
-        col = *c;
-        gdk_rgba_free (c);
-      }
+#if GTK_CHECK_VERSION (3, 16, 0)
+      /* We can't get here.  */
+      emacs_abort ();
+#else
+      gtk_style_context_get_background_color (gsty, state, &col);
+#endif
 
     unsigned short
       r = col.red * 65535,
