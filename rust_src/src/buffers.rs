@@ -140,8 +140,13 @@ impl LispOverlayRef {
     #[inline]
     pub fn start(&self) -> LispObject {
         LispObject::from_raw(self.start)
-
     }
+
+    #[inline]
+    pub fn end(&self) -> LispObject {
+        LispObject::from_raw(self.end)
+    }
+    
 }
 
 impl LispObject {
@@ -267,6 +272,13 @@ fn buffer_chars_modified_tick(buffer: LispObject) -> LispObject {
 #[lisp_fn]
 fn overlay_start(overlay: LispObject) -> LispObject {
     let marker = overlay.as_overlay_or_error().start();
+    marker_position(marker)
+}
+
+/// Return the position at which OVERLAY ends.
+#[lisp_fn]
+fn overlay_end(overlay: LispObject) -> LispObject {
+    let marker = overlay.as_overlay_or_error().end();
     marker_position(marker)
 }
 
