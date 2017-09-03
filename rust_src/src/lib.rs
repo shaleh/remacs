@@ -52,7 +52,7 @@ mod threads;
 mod chartable;
 mod obarray;
 mod editfns;
-mod util;
+mod minibuf;
 
 #[cfg(all(not(test), target_os = "macos"))]
 use alloc_unexecmacosx::OsxUnexecAlloc;
@@ -336,9 +336,6 @@ pub extern "C" fn rust_init_syms() {
         defsubr(&*editfns::Sbuffer_size);
         defsubr(&*editfns::Seobp);
         defsubr(&*editfns::Sbobp);
-        defsubr(&*editfns::Sbolp);
-        defsubr(&*editfns::Seolp);
-        defsubr(&*editfns::Spoint_min);
-        defsubr(&*editfns::Spoint_max);
+        defsubr(&*minibuf::Sminibufferp);
     }
 }
