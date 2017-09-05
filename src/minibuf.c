@@ -108,14 +108,6 @@ choose_minibuf_frame (void)
   }
 }
 
-DEFUN ("active-minibuffer-window", Factive_minibuffer_window,
-       Sactive_minibuffer_window, 0, 0, 0,
-       doc: /* Return the currently active minibuffer window, or nil if none.  */)
-     (void)
-{
-  return minibuf_level ? minibuf_window : Qnil;
-}
-
 DEFUN ("set-minibuffer-window", Fset_minibuffer_window,
        Sset_minibuffer_window, 1, 1, 0,
        doc: /* Specify which minibuffer window to use for the minibuffer.
@@ -2096,7 +2088,6 @@ This variable also overrides the default character that `read-passwd'
 uses to hide passwords.  */);
   Vread_hide_char = Qnil;
 
-  defsubr (&Sactive_minibuffer_window);
   defsubr (&Sset_minibuffer_window);
   defsubr (&Sread_from_minibuffer);
   defsubr (&Sread_string);
