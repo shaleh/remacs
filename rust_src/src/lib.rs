@@ -53,6 +53,7 @@ mod chartable;
 mod obarray;
 mod editfns;
 mod minibuf;
+mod fns;
 
 #[cfg(all(not(test), target_os = "macos"))]
 use alloc_unexecmacosx::OsxUnexecAlloc;
@@ -95,6 +96,7 @@ pub use math::Fleq;
 pub use math::arithcompare;
 pub use editfns::Feobp;
 pub use editfns::Fbobp;
+pub use fns::Felt;
 
 // Widely used in the C codebase.
 pub use lists::Fsetcar;
@@ -343,5 +345,6 @@ pub extern "C" fn rust_init_syms() {
         defsubr(&*editfns::Sbobp);
         defsubr(&*minibuf::Sminibufferp);
         defsubr(&*minibuf::Sactive_minibuffer_window);
+        defsubr(&*fns::Selt);
     }
 }
