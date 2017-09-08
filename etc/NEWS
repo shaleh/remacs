@@ -419,6 +419,12 @@ sets the XTerm window title.  The default is to set the window title.
 
 * Changes in Emacs 27.1 on Non-Free Operating Systems
 
+---
+** Mousewheel and trackpad scrolling on macOS 10.7+ now behaves more
+like the macOS default.  The new variables
+'ns-use-system-mwheel-acceleration', 'ns-touchpad-scroll-line-height'
+and 'ns-touchpad-use-momentum' can be used to customise the behavior.
+
 
 ----------------------------------------------------------------------
 This file is part of GNU Emacs.
