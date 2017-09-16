@@ -480,18 +480,9 @@ which see.  */)
 
 DEFUN ("lcms-cam02-ucs", Flcms_cam02_ucs, Slcms_cam02_ucs, 2, 4, 0,
        doc: /* Compute CAM02-UCS metric distance between COLOR1 and COLOR2.
-Each color is a list of XYZ tristimulus values, with Y scaled about unity.
-Optional argument WHITEPOINT is the XYZ white point, which defaults to
-illuminant D65.
-Optional argument VIEW is a list containing the viewing conditions, and
-is of the form (YB LA SURROUND DVALUE) where SURROUND corresponds to
-  1   AVG_SURROUND
-  2   DIM_SURROUND
-  3   DARK_SURROUND
-  4   CUTSHEET_SURROUND
-The default viewing conditions are (20 100 1 1).  */)
-  (Lisp_Object color1, Lisp_Object color2, Lisp_Object whitepoint,
-   Lisp_Object view)
+Each color is a list of XYZ coordinates, with Y scaled about unity.
+Optional argument is the XYZ white point, which defaults to illuminant D65. */)
+  (Lisp_Object color1, Lisp_Object color2, Lisp_Object whitepoint)
 {
   cmsViewingConditions vc;
   cmsJCh jch1, jch2;
@@ -514,17 +505,38 @@ The default viewing conditions are (20 100 1 1).  */)
   if (!(CONSP (color2) && parse_xyz_list (color2, &xyz2)))
     signal_error ("Invalid color", color2);
   if (NILP (whitepoint))
-    xyzw = illuminant_d65;
+    parse_xyz_list (Vlcms_d65_xyz, &xyzw);
   else if (!(CONSP (whitepoint) && parse_xyz_list (whitepoint, &xyzw)))
     signal_error ("Invalid white point", whitepoint);
-  if (NILP (view))
-    default_viewing_conditions (&xyzw, &vc);
-  else if (!(CONSP (view) && parse_viewing_conditions (view, &xyzw, &vc)))
-    signal_error ("Invalid view conditions", view);
 
-  xyz_to_jch (&xyz1, &jch1, &vc);
-  xyz_to_jch (&xyz2, &jch2, &vc);
+  vc.whitePoint.X = xyzw.X;
+  vc.whitePoint.Y = xyzw.Y;
+  vc.whitePoint.Z = xyzw.Z;
+  vc.Yb = 20;
+  vc.La = 100;
+  vc.surround = AVG_SURROUND;
+  vc.D_value = 1.0;
 
+  h1 = cmsCIECAM02Init (0, &vc);
+  h2 = cmsCIECAM02Init (0, &vc);
+  cmsCIECAM02Forward (h1, &xyz1, &jch1);
+  cmsCIECAM02Forward (h2, &xyz2, &jch2);
+  cmsCIECAM02Done (h1);
+  cmsCIECAM02Done (h2);
+
+  /* Now have colors in JCh, need to calculate J'a'b'
+
+     M = C * F_L^0.25
+     J' = 1.7 J / (1 + 0.007 J)
+     M' = 43.86 ln(1 + 0.0228 M)
+     a' = M' cos(h)
+     b' = M' sin(h)
+
+     where
+
+     F_L = 0.2 k^4 (5 L_A) + 0.1 (1 - k^4)^2 (5 L_A)^(1/3),
+     k = 1/(5 L_A + 1)
+  */
   k = 1.0 / (1.0 + (5.0 * vc.La));
   k4 = k * k * k * k;
   FL = vc.La * k4 + 0.1 * (1 - k4) * (1 - k4) * cbrt (5.0 * vc.La);
@@ -589,6 +601,12 @@ DEFUN ("lcms2-available-p", Flcms2_available_p, Slcms2_available_p, 0, 0, 0,
 void
 syms_of_lcms2 (void)
 {
+  DEFVAR_LISP ("lcms-d65-xyz", Vlcms_d65_xyz,
+               doc: /* D65 illuminant as a CIE XYZ triple. */);
+  Vlcms_d65_xyz = list3 (make_float (0.950455),
+                         make_float (1.0),
+                         make_float (1.088753));
+
   defsubr (&Slcms_cie_de2000);
   defsubr (&Slcms_xyz_to_jch);
   defsubr (&Slcms_jch_to_xyz);

@@ -51,20 +51,14 @@ B is considered the exact value."
         (lcms-approx-p a2 b2 delta)
         (lcms-approx-p a3 b3 delta))))
 
-(defun lcms-rgb255->xyz (rgb)
-  "Return XYZ tristimulus values corresponding to RGB."
-  (let ((rgb1 (mapcar (lambda (x) (/ x 255.0)) rgb)))
-    (apply #'color-srgb-to-xyz rgb1)))
-
 (ert-deftest lcms-cri-cam02-ucs ()
   "Test use of `lcms-cam02-ucs'."
-  (skip-unless (featurep 'lcms2))
   (should-error (lcms-cam02-ucs '(0 0 0) '(0 0 0) "error"))
   (should-error (lcms-cam02-ucs '(0 0 0) 'error))
   (should-not
    (lcms-approx-p
-    (let ((wp '(0.44757 1.0 0.40745)))
-      (lcms-cam02-ucs '(0.5 0.5 0.5) '(0 0 0) wp))
+    (let ((lcms-d65-xyz '(0.44757 1.0 0.40745)))
+      (lcms-cam02-ucs '(0.5 0.5 0.5) '(0 0 0)))
     (lcms-cam02-ucs '(0.5 0.5 0.5) '(0 0 0))))
   (should (eql 0.0 (lcms-cam02-ucs '(0.5 0.5 0.5) '(0.5 0.5 0.5))))
   (should
