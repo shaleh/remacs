@@ -481,7 +481,7 @@ which see.  */)
 DEFUN ("lcms-cam02-ucs", Flcms_cam02_ucs, Slcms_cam02_ucs, 2, 4, 0,
        doc: /* Compute CAM02-UCS metric distance between COLOR1 and COLOR2.
 Each color is a list of XYZ coordinates, with Y scaled about unity.
-Optional argument is the XYZ white point, which defaults to illuminant D65. */)
+Optional argument is the XYZ white point, which defaults to illuminant D65.  */)
   (Lisp_Object color1, Lisp_Object color2, Lisp_Object whitepoint)
 {
   cmsViewingConditions vc;
@@ -602,7 +602,7 @@ void
 syms_of_lcms2 (void)
 {
   DEFVAR_LISP ("lcms-d65-xyz", Vlcms_d65_xyz,
-               doc: /* D65 illuminant as a CIE XYZ triple. */);
+               doc: /* D65 illuminant as a CIE XYZ triple.  */);
   Vlcms_d65_xyz = list3 (make_float (0.950455),
                          make_float (1.0),
                          make_float (1.088753));
