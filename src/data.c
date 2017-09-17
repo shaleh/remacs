@@ -2047,7 +2047,6 @@ If the base used is not 10, STRING is always parsed as an integer.  */)
   return NILP (val) ? make_number (0) : val;
 }
 
-
 static Lisp_Object
 ash_lsh_impl (Lisp_Object value, Lisp_Object count, bool lsh)
 {
