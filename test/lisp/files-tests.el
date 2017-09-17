@@ -401,31 +401,11 @@ name (Bug#28412)."
 	 (dirname (file-name-as-directory dir))
 	 (source (concat dirname "source"))
 	 (dest (concat dirname "dest/new/directory/"))
-	 (file (concat (file-name-as-directory source) "file"))
-	 (source2 (concat dirname "source2"))
-	 (dest2 (concat dirname "dest/new2")))
+	 (file (concat (file-name-as-directory source) "file")))
     (make-directory source)
     (write-region "" nil file)
     (copy-directory source dest t t t)
-    (should (file-exists-p (concat dest "file")))
-    (make-directory (concat (file-name-as-directory source2) "a") t)
-    (copy-directory source2 dest2)
-    (should (file-directory-p (concat (file-name-as-directory dest2) "a")))
-    (delete-directory dir 'recursive)))
-
-(ert-deftest files-test-abbreviated-home-dir ()
-  "Test that changing HOME does not confuse `abbreviate-file-name'.
-See <https://debbugs.gnu.org/19657#20>."
-  (let* ((homedir temporary-file-directory)
-         (process-environment (cons (format "HOME=%s" homedir)
-                                    process-environment))
-         (abbreviated-home-dir nil)
-         (testfile (expand-file-name "foo" homedir))
-         (old (file-truename (abbreviate-file-name testfile)))
-         (process-environment (cons (format "HOME=%s"
-                                            (expand-file-name "bar" homedir))
-                                    process-environment)))
-    (should (equal old (file-truename (abbreviate-file-name testfile))))))
+    (should (file-exists-p (concat dest "file")))))
 
 (provide 'files-tests)
 ;;; files-tests.el ends here
