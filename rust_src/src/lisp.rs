@@ -105,16 +105,15 @@ impl LispObject {
 
     pub fn tag_ptr<T>(external: ExternalPtr<T>, ty: Lisp_Type) -> LispObject {
         let raw = external.as_ptr() as intptr_t;
-        let res;
-        if USE_LSB_TAG {
+        let res = if USE_LSB_TAG {
             let ptr = raw as intptr_t;
             let tag = ty as intptr_t;
-            res = (ptr + tag) as EmacsInt;
+            (ptr + tag) as EmacsInt
         } else {
             let ptr = raw as EmacsUint as uintptr_t;
             let tag = ty as EmacsUint as uintptr_t;
-            res = ((tag << VALBITS) + ptr) as EmacsInt;
-        }
+            ((tag << VALBITS) + ptr) as EmacsInt
+        };
 
         LispObject::from_raw(res)
     }
@@ -259,7 +258,7 @@ impl LispObject {
 // Fixnum(Integer) support (LispType == Lisp_Int0 | Lisp_Int1 == 2 | 6(LSB) )
 
 /// Fixnums are inline integers that fit directly into Lisp's tagged word.
-/// There's two LispType variants to provide an extra bit.
+/// There's two `LispType` variants to provide an extra bit.
 
 /// Natnums(natural number) are the non-negative fixnums.
 /// There were special branches in the original code for better performance.
@@ -597,7 +596,7 @@ impl LispObject {
 
 // Cons support (LispType == 6 | 3)
 
-/// From FOR_EACH_TAIL_INTERNAL in lisp.h
+/// From `FOR_EACH_TAIL_INTERNAL in lisp.h`
 pub struct TailsIter {
     list: LispObject,
     safe: bool,
@@ -627,7 +626,7 @@ impl TailsIter {
                 circular_list(self.tail.to_raw());
             }
         } else {
-            return None;
+            None
         }
     }
 }
@@ -638,12 +637,10 @@ impl Iterator for TailsIter {
     fn next(&mut self) -> Option<Self::Item> {
         match self.tail.as_cons() {
             None => {
-                if !self.safe {
-                    if self.tail.is_not_nil() {
-                        wrong_type!(Qlistp, self.list)
-                    }
+                if !self.safe && self.tail.is_not_nil() {
+                    wrong_type!(Qlistp, self.list)
                 }
-                return None;
+                None
             }
             Some(tail_cons) => {
                 self.tail = tail_cons.cdr();
