@@ -36,6 +36,7 @@ fn lisp_mod(x: LispObject, y: LispObject) -> LispObject {
 }
 
 #[repr(C)]
+#[derive(Clone, Copy)]
 pub enum ArithOp {
     Add,
     Sub,
@@ -55,8 +56,8 @@ pub enum ArithOp {
 /// arithmetic operation specified.
 ///
 /// Modifies the array in place.
-fn arith_driver(code: &ArithOp, args: &[LispObject]) -> LispObject {
-    let mut accum: EmacsInt = match *code {
+fn arith_driver(code: ArithOp, args: &[LispObject]) -> LispObject {
+    let mut accum: EmacsInt = match code {
         ArithOp::Add | ArithOp::Sub | ArithOp::Logior | ArithOp::Logxor => 0,
         ArithOp::Logand => -1,
         _ => 1,
@@ -78,7 +79,7 @@ fn arith_driver(code: &ArithOp, args: &[LispObject]) -> LispObject {
                 return floatfns::float_arith_driver(ok_accum as f64, ok_args, code, args);
             }
             LispNumber::Fixnum(next) => {
-                match *code {
+                match code {
                     ArithOp::Add => {
                         if accum.checked_add(next).is_none() {
                             overflow = true;
@@ -143,7 +144,7 @@ fn arith_driver(code: &ArithOp, args: &[LispObject]) -> LispObject {
 /// usage: (fn &rest NUMBERS-OR-MARKERS)
 #[lisp_fn(name = "+")]
 fn plus(args: &mut [LispObject]) -> LispObject {
-    arith_driver(&ArithOp::Add, args)
+    arith_driver(ArithOp::Add, args)
 }
 
 /// Negate number or subtract numbers or markers and return the result.
@@ -152,14 +153,14 @@ fn plus(args: &mut [LispObject]) -> LispObject {
 /// usage: (fn &optional NUMBER-OR-MARKER &rest MORE-NUMBERS-OR-MARKERS)
 #[lisp_fn(name = "-")]
 fn minus(args: &mut [LispObject]) -> LispObject {
-    arith_driver(&ArithOp::Sub, args)
+    arith_driver(ArithOp::Sub, args)
 }
 
 /// Return product of any number of arguments, which are numbers or markers.
 /// usage: (fn &rest NUMBER-OR-MARKERS)
 #[lisp_fn(name = "*")]
 fn times(args: &mut [LispObject]) -> LispObject {
-    arith_driver(&ArithOp::Mult, args)
+    arith_driver(ArithOp::Mult, args)
 }
 
 /// Divide number by divisors and return the result.
@@ -172,10 +173,10 @@ fn quo(args: &mut [LispObject]) -> LispObject {
     for argnum in 2..args.len() {
         let arg = args[argnum];
         if arg.is_float() {
-            return floatfns::float_arith_driver(0.0, 0, &ArithOp::Div, args);
+            return floatfns::float_arith_driver(0.0, 0, ArithOp::Div, args);
         }
     }
-    arith_driver(&ArithOp::Div, args)
+    arith_driver(ArithOp::Div, args)
 }
 
 /// Return bitwise-and of all the arguments.
@@ -183,7 +184,7 @@ fn quo(args: &mut [LispObject]) -> LispObject {
 /// usage: (fn &rest INTS-OR-MARKERS)
 #[lisp_fn]
 fn logand(args: &mut [LispObject]) -> LispObject {
-    arith_driver(&ArithOp::Logand, args)
+    arith_driver(ArithOp::Logand, args)
 }
 
 /// Return bitwise-or of all the arguments.
@@ -191,7 +192,7 @@ fn logand(args: &mut [LispObject]) -> LispObject {
 /// usage: (fn &rest INTS-OR-MARKERS)
 #[lisp_fn]
 fn logior(args: &mut [LispObject]) -> LispObject {
-    arith_driver(&ArithOp::Logior, args)
+    arith_driver(ArithOp::Logior, args)
 }
 
 /// Return bitwise-exclusive-or of all the arguments.
@@ -199,7 +200,7 @@ fn logior(args: &mut [LispObject]) -> LispObject {
 /// usage: (fn &rest INTS-OR-MARKERS)
 #[lisp_fn]
 fn logxor(args: &mut [LispObject]) -> LispObject {
-    arith_driver(&ArithOp::Logxor, args)
+    arith_driver(ArithOp::Logxor, args)
 }
 
 fn minmax_driver(args: &[LispObject], comparison: ArithComparison) -> LispObject {
