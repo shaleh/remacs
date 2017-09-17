@@ -168,7 +168,7 @@ is consulted."
      ("pdf"
       (viewer . pdf-view-mode)
       (type . "application/pdf")
-      (test . window-system))
+      (test . (eq window-system 'x)))
      ("pdf"
       (viewer . doc-view-mode)
       (type . "application/pdf")
