@@ -290,70 +290,6 @@ interned in the initial obarray.  */)
   return Qnil;
 }
 
-DEFUN ("vectorp", Fvectorp, Svectorp, 1, 1, 0,
-       doc: /* Return t if OBJECT is a vector.  */)
-  (Lisp_Object object)
-{
-  if (VECTORP (object))
-    return Qt;
-  return Qnil;
-}
-
-DEFUN ("char-table-p", Fchar_table_p, Schar_table_p, 1, 1, 0,
-       doc: /* Return t if OBJECT is a char-table.  */)
-  (Lisp_Object object)
-{
-  if (CHAR_TABLE_P (object))
-    return Qt;
-  return Qnil;
-}
-
-DEFUN ("vector-or-char-table-p", Fvector_or_char_table_p,
-       Svector_or_char_table_p, 1, 1, 0,
-       doc: /* Return t if OBJECT is a char-table or vector.  */)
-  (Lisp_Object object)
-{
-  if (VECTORP (object) || CHAR_TABLE_P (object))
-    return Qt;
-  return Qnil;
-}
-
-DEFUN ("bool-vector-p", Fbool_vector_p, Sbool_vector_p, 1, 1, 0,
-       doc: /* Return t if OBJECT is a bool-vector.  */)
-  (Lisp_Object object)
-{
-  if (BOOL_VECTOR_P (object))
-    return Qt;
-  return Qnil;
-}
-
-DEFUN ("arrayp", Farrayp, Sarrayp, 1, 1, 0,
-       doc: /* Return t if OBJECT is an array (string or vector).  */)
-  (Lisp_Object object)
-{
-  if (ARRAYP (object))
-    return Qt;
-  return Qnil;
-}
-
-DEFUN ("sequencep", Fsequencep, Ssequencep, 1, 1, 0,
-       doc: /* Return t if OBJECT is a sequence (list or array).  */)
-  (register Lisp_Object object)
-{
-  if (CONSP (object) || NILP (object) || ARRAYP (object))
-    return Qt;
-  return Qnil;
-}
-
-DEFUN ("bufferp", Fbufferp, Sbufferp, 1, 1, 0,
-       doc: /* Return t if OBJECT is an editor buffer.  */)
-  (Lisp_Object object)
-{
-  if (BUFFERP (object))
-    return Qt;
-  return Qnil;
-}
-
 #ifdef HAVE_MODULES
 DEFUN ("user-ptrp", Fuser_ptrp, Suser_ptrp, 1, 1, 0,
        doc: /* Return t if OBJECT is a module user pointer.  */)
@@ -506,15 +442,6 @@ The return value is undefined.  */)
      to a call to `defalias', we return `symbol' for backward compatibility
      (bug#11686).  */
   return symbol;
-}
-
-DEFUN ("setplist", Fsetplist, Ssetplist, 2, 2, 0,
-       doc: /* Set SYMBOL's property list to NEWPLIST, and return NEWPLIST.  */)
-  (register Lisp_Object symbol, Lisp_Object newplist)
-{
-  CHECK_SYMBOL (symbol);
-  set_symbol_plist (symbol, newplist);
-  return newplist;
 }
 
 DEFUN ("subr-arity", Fsubr_arity, Ssubr_arity, 1, 1, 0,
@@ -2922,13 +2849,13 @@ syms_of_data (void)
   defsubr (&Sinteractive_form);
   defsubr (&Stype_of);
   defsubr (&Skeywordp);
+  defsubr (&Smodule_function_p);
   defsubr (&Sindirect_function);
   defsubr (&Smakunbound);
   defsubr (&Sfmakunbound);
   defsubr (&Sboundp);
   defsubr (&Sfset);
   defsubr (&Sdefalias);
-  defsubr (&Ssetplist);
   defsubr (&Ssymbol_value);
   defsubr (&Sset);
   defsubr (&Sdefault_boundp);
