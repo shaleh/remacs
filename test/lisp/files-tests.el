@@ -405,7 +405,8 @@ name (Bug#28412)."
     (make-directory source)
     (write-region "" nil file)
     (copy-directory source dest t t t)
-    (should (file-exists-p (concat dest "file")))))
+    (should (file-exists-p (concat dest "file")))
+    (delete-directory dir 'recursive)))
 
 (provide 'files-tests)
 ;;; files-tests.el ends here
