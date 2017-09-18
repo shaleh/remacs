@@ -50,8 +50,8 @@ You can now find them here :
 - https://github.com/org-mime/org-mime
 
 *** Change ~org-texinfo-classes~ value
-The value cannot support functions to create sectioning commands
-anymore.  Also, the sectioning commands should include commands for
+The value cannot support functions to create sectionning commands
+anymore.  Also, the sectionning commands should include commands for
 appendices.  See the docstring for more information.
 *** Removal of ~:sitemap-sans-extension~
 
@@ -148,7 +148,7 @@ directories in published site-maps.
 **** Scheme: support for tables
 **** Scheme: new variable: ~org-babel-scheme-null-to~
 
-This new custom option allows you to use an empty list or null symbol to
+This new custom option allows to use a empty list or null symbol to
 format the table output, initially assigned to ~hlines~.
 
 **** Scheme: new header ~:prologue~
@@ -159,7 +159,7 @@ developers to prepend code to the scheme block being processed.
 Multiple ~:prologue~ headers can be added each of them using a string
 with the content to be added.
 
-The scheme blocks are prepared by surrounding the code in the block
+The scheme blocks are prepared by surronding the code in the block
 with a let form. The content of the ~:prologue~ headers are prepended
 before this let form.
 
@@ -211,8 +211,8 @@ this ~:prologue "fpprintprec: 2; linel: 50;"~ for presenting Maxima
 results in a beamer presentation.
 **** PlantUML: add support for header arguments
 
-[[http://plantuml.com/][Plantuml]] source blocks now support the [[https://orgmode.org/manual/prologue.html#prologue][~:prologue~]], [[https://orgmode.org/manual/epilogue.html#epilogue][~:epilogue~]] and
-[[https://orgmode.org/manual/var.html#var][~:var~]] header arguments.
+[[http://plantuml.com/][Plantuml]] source blocks now support the [[http://orgmode.org/manual/prologue.html#prologue][~:prologue~]], [[http://orgmode.org/manual/epilogue.html#epilogue][~:epilogue~]] and
+[[http://orgmode.org/manual/var.html#var][~:var~]] header arguments.
 
 **** SQL: new engine added ~sqsh~
 
@@ -266,7 +266,7 @@ using ~:namespaces~:
 - ~:flags~ passes arguments to the compiler
 - ~:cmdline~ passes commandline arguments to the generated executable
 
-Support for [[https://orgmode.org/manual/var.html#var][~:var~]] does not exist yet, also there is no [[https://orgmode.org/manual/session.html#session][~:session~]]
+Support for [[http://orgmode.org/manual/var.html#var][~:var~]] does not exist yet, also there is no [[http://orgmode.org/manual/session.html#session][~:session~]]
 support because Vala is a compiled language.
 
 The Vala compiler binary can be changed via the ~defcustom~
@@ -280,7 +280,7 @@ argument for the scope of the clock table.
 Global table of contents are generated using vanilla Markdown syntax
 instead of HTML.  Also #+TOC keyword, including local table of
 contents, are now supported.
-**** Add Slovenian translations
+**** Add Slovanian translations
 **** Implement ~org-export-insert-image-links~
 This new function is meant to be used in back-ends supporting images
 as descriptions of links, a.k.a. image links.  See its docstring for
@@ -436,9 +436,9 @@ Call ~org-agenda-set-restriction-lock~ from the agenda.
 
 The library-of-babel.org used to be accessible from the =doc/=
 directory, distributed with Org’s core.  It is now accessible
-from the Worg community-driven documentation [[https://orgmode.org/worg/library-of-babel.html][here]].
+from the Worg community-driven documentation [[http://orgmode.org/worg/library-of-babel.html][here]].
 
-If you want to contribute to it, please see [[https://orgmode.org/worg/org-contribute.html][how to contribute]].
+If you want to contribute to it, please see [[http://orgmode.org/worg/org-contribute.html][how to contribute]].
 
 *** Allow multiple columns view
 
@@ -467,7 +467,7 @@ far away in the future.
 *** Save point before opening a file with an unknown search option
 
 When following a file link with a search option (e.g., =::#custom-id=)
-that doesn't exist in the target file, save position before raising an
+that doesn't exist in the target file, save positon before raising an
 error.  As a consequence, it is possible to jump back to the original
 document with ~org-mark-ring-goto~ (default binding =C-c &=).
 
@@ -479,7 +479,7 @@ See docstring for details.
 
 This variable is a ~defcustom~ and replaces the variable
 ~org-babel-capitalize-example-region-markers~, which is a ~defvar~ and
-is now obsolete.
+is now obselete.
 *** =INCLUDE= keywords in commented trees are now ignored.
 *** Default value for ~org-texinfo-text-markup-alist~ changed.
 
@@ -492,6 +492,9 @@ It used to be ~@samp~ but ~@asis~ is neutral and, therefore, more
 suitable as a default value.
 *** Texinfo default process includes ~--no-split~ option
 *** New entities : ~\dollar~ and ~\USD~
+*** ~org-parse-time-string~ accepts a new optional argument
+=ZONE= specifies the current time zone.
+*** ~org-time-string-to-seconds~ now accepts an optional =ZONE= argument
 *** Support for date style URLs in =org-protocol://open-source=
     URLs like =https://cool-blog.com/2017/05/20/cool-post/= are
     covered by rewrite rules.

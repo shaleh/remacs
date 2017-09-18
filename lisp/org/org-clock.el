@@ -513,15 +513,6 @@ cannot be translated."
 	   (assoc-string language org-clock-clocktable-language-setup t))
       s))
 
-(defun org-clock--mode-line-heading ()
-  "Return currently clocked heading, formatted for mode line."
-  (cond ((functionp org-clock-heading-function)
-	 (funcall org-clock-heading-function))
-	((org-before-first-heading-p) "???")
-	(t (replace-regexp-in-string
-	    org-bracket-link-analytic-regexp "\\5"
-	    (org-no-properties (org-get-heading t t t t))))))
-
 (defun org-clock-menu ()
   (interactive)
   (popup-menu
@@ -670,18 +661,19 @@ If not, show simply the clocked time like 01:50."
     (if org-clock-effort
 	(let* ((effort-in-minutes (org-duration-to-minutes org-clock-effort))
 	       (work-done-str
-		(propertize (org-duration-from-minutes clocked-time)
-			    'face
-			    (if (and org-clock-task-overrun
-				     (not org-clock-task-overrun-text))
-				'org-mode-line-clock-overrun
-			      'org-mode-line-clock)))
-	       (effort-str (org-duration-from-minutes effort-in-minutes)))
-	  (format (propertize " [%s/%s] (%s)" 'face 'org-mode-line-clock)
-		  work-done-str effort-str org-clock-heading))
-      (format (propertize " [%s] (%s)" 'face 'org-mode-line-clock)
-	      (org-duration-from-minutes clocked-time)
-	      org-clock-heading))))
+		(propertize
+		 (org-duration-from-minutes clocked-time)
+		 'face (if (and org-clock-task-overrun (not org-clock-task-overrun-text))
+			   'org-mode-line-clock-overrun 'org-mode-line-clock)))
+	       (effort-str (org-duration-from-minutes effort-in-minutes))
+	       (clockstr (propertize
+			  (concat  " [%s/" effort-str
+				   "] (" (replace-regexp-in-string "%" "%%" org-clock-heading) ")")
+			  'face 'org-mode-line-clock)))
+	  (format clockstr work-done-str))
+      (propertize (concat " [" (org-duration-from-minutes clocked-time)
+			  "]" (format " (%s)" org-clock-heading))
+		  'face 'org-mode-line-clock))))
 
 (defun org-clock-get-last-clock-out-time ()
   "Get the last clock-out time for the current subtree."
@@ -1685,8 +1677,8 @@ Optional argument N tells to change by that many units."
 	      (begts (if updatets1 begts1 begts2)))
 	  (setq tdiff
 		(time-subtract
-		 (org-time-string-to-time org-last-changed-timestamp)
-		 (org-time-string-to-time ts)))
+		 (org-time-string-to-time org-last-changed-timestamp t)
+		 (org-time-string-to-time ts t)))
 	  (save-excursion
 	    (goto-char begts)
 	    (org-timestamp-change
@@ -1924,17 +1916,15 @@ Use `\\[org-clock-remove-overlays]' to remove the subtree times."
 	;; Arrange to remove the overlays upon next change.
 	(when org-remove-highlights-with-change
 	  (add-hook 'before-change-functions 'org-clock-remove-overlays
-		    nil 'local))))
-    (let* ((h (/ org-clock-file-total-minutes 60))
-	   (m (- org-clock-file-total-minutes (* 60 h))))
-      (message (concat (format "Total file time%s: "
-			       (cond (todayp " for today")
-				     (customp " (custom)")
-				     (t "")))
-		       (org-duration-from-minutes
-			org-clock-file-total-minutes)
-		       " (%d hours and %d minutes)")
-	       h m))))
+			nil 'local))))
+    (message (concat (format "Total file time%s: "
+			     (cond (todayp " for today")
+				   (customp " (custom)")
+				   (t "")))
+		     (org-duration-from-minutes
+		      org-clock-file-total-minutes)
+		     " (%d hours and %d minutes)")
+	     h m)))
 
 (defvar-local org-clock-overlays nil)
 

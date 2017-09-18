@@ -1093,8 +1093,20 @@ INFO is a plist holding contextual information.  See
 			       (org-element-type
 				(org-element-property :parent destination))))))
 	   (let ((headline (org-element-lineage destination '(headline) t)))
-	     (org-texinfo--@ref headline desc info)))
-	  (_ (org-texinfo--@ref destination desc info)))))
+	     (org-texinfo--@ref
+	      headline
+	      (or desc (org-texinfo--sanitize-title
+			(org-element-property :title headline) info))
+	      info)))
+	  (_
+	   (org-texinfo--@ref
+	    destination
+	    (or desc
+		(pcase (org-export-get-ordinal destination info)
+		  ((and (pred integerp) n) (number-to-string n))
+		  ((and (pred consp) n) (mapconcat #'number-to-string n "."))
+		  (_ "???")))		;cannot guess the description
+	    info)))))
      ((string= type "mailto")
       (format "@email{%s}"
 	      (concat (org-texinfo--sanitize-content path)

@@ -174,6 +174,7 @@
     (:html-klipsify-src nil nil org-html-klipsify-src)
     (:html-klipse-css nil nil org-html-klipse-css)
     (:html-klipse-js nil nil org-html-klipse-js)
+    (:html-klipse-keep-old-src nil nil org-html-keep-old-src)
     (:html-klipse-selection-script nil nil org-html-klipse-selection-script)
     (:infojs-opt "INFOJS_OPT" nil nil)
     ;; Redefine regular options.
@@ -1571,6 +1572,12 @@ https://developer.mozilla.org/en-US/docs/Mozilla/Mobile/Viewport_meta_tag"
   :package-version '(Org . "9.1")
   :type 'string)
 
+(defcustom org-html-keep-old-src nil
+  "When non-nil, use <pre class=\"\"> instead of <pre><code class=\"\">."
+  :group 'org-export-html
+  :package-version '(Org . "9.1")
+  :type 'boolean)
+
 
 ;;;; Todos
 
@@ -2154,14 +2161,13 @@ CODE is a string representing the source code to colorize.  LANG
 is the language used for CODE, as a string, or nil."
   (when code
     (cond
-     ;; No language.  Possibly an example block.
-     ((not lang) (org-html-encode-plain-text code))
-     ;; Plain text explicitly set.
-     ((not org-html-htmlize-output-type) (org-html-encode-plain-text code))
-     ;; No htmlize library or an inferior version of htmlize.
+     ;; Case 1: No lang.  Possibly an example block.
+     ((not lang)
+      ;; Simple transcoding.
+      (org-html-encode-plain-text code))
+     ;; Case 2: No htmlize or an inferior version of htmlize
      ((not (and (or (require 'htmlize nil t)
-		    (error "Please install htmlize from \
-https://github.com/hniksic/emacs-htmlize"))
+		    (error "Please install htmlize from https://github.com/hniksic/emacs-htmlize"))
 		(fboundp 'htmlize-region-for-paste)))
       ;; Emit a warning.
       (message "Cannot fontify src block (htmlize.el >= 1.34 required)")
@@ -3385,16 +3391,12 @@ contextual information."
 			      listing-number
 			      (org-trim (org-export-data caption info))))))
 		;; Contents.
-		(if klipsify
-		    (format "<pre><code class=\"src src-%s\"%s%s>%s</code></pre>"
-			    lang
-			    label
-			    (if (string= lang "html")
-				" data-editor-type=\"html\""
-			      "")
-			    code)
-		  (format "<pre class=\"src src-%s\"%s>%s</pre>"
-                          lang label code)))))))
+		(let ((open (if org-html-keep-old-src "<pre" "<pre><code"))
+		      (close (if org-html-keep-old-src "</pre>" "</code></pre>")))
+		  (format "%s class=\"src src-%s\"%s%s>%s%s"
+			  open lang label (if (and klipsify (string= lang "html"))
+					      " data-editor-type=\"html\"" "")
+			  code close)))))))
 
 ;;;; Statistics Cookie
 

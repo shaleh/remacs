@@ -5699,7 +5699,6 @@ them."
      ("zh-TW" :html "&#20316;&#32773;" :utf-8 "作者"))
     ("Continued from previous page"
      ("ar" :default "تتمة الصفحة السابقة")
-     ("cs" :default "Pokračování z předchozí strany")
      ("de" :default "Fortsetzung von vorheriger Seite")
      ("es" :html "Contin&uacute;a de la p&aacute;gina anterior" :ascii "Continua de la pagina anterior" :default "Continúa de la página anterior")
      ("fr" :default "Suite de la page précédente")
@@ -5712,7 +5711,6 @@ them."
      ("sl" :default "Nadaljevanje s prejšnje strani"))
     ("Continued on next page"
      ("ar" :default "التتمة في الصفحة التالية")
-     ("cs" :default "Pokračuje na další stránce")
      ("de" :default "Fortsetzung nächste Seite")
      ("es" :html "Contin&uacute;a en la siguiente p&aacute;gina" :ascii "Continua en la siguiente pagina" :default "Continúa en la siguiente página")
      ("fr" :default "Suite page suivante")
@@ -5724,7 +5722,6 @@ them."
       :utf-8 "(Продолжение следует)")
      ("sl" :default "Nadaljevanje na naslednji strani"))
     ("Created"
-     ("cs" :default "Vytvořeno")
      ("sl" :default "Ustvarjeno"))
     ("Date"
      ("ar" :default "بتاريخ")
@@ -5754,7 +5751,6 @@ them."
      ("zh-TW" :html "&#26085;&#26399;" :utf-8 "日期"))
     ("Equation"
      ("ar" :default "معادلة")
-     ("cs" :default "Rovnice")
      ("da" :default "Ligning")
      ("de" :default "Gleichung")
      ("es" :ascii "Ecuacion" :html "Ecuaci&oacute;n" :default "Ecuación")
@@ -5773,7 +5769,6 @@ them."
      ("zh-CN" :html "&#26041;&#31243;" :utf-8 "方程"))
     ("Figure"
      ("ar" :default "شكل")
-     ("cs" :default "Obrázek")
      ("da" :default "Figur")
      ("de" :default "Abbildung")
      ("es" :default "Figura")
@@ -5789,7 +5784,6 @@ them."
      ("zh-CN" :html "&#22270;" :utf-8 "图"))
     ("Figure %d:"
      ("ar" :default "شكل %d:")
-     ("cs" :default "Obrázek %d:")
      ("da" :default "Figur %d")
      ("de" :default "Abbildung %d:")
      ("es" :default "Figura %d:")
@@ -5835,7 +5829,6 @@ them."
      ("zh-TW" :html "&#33139;&#35387;" :utf-8 "腳註"))
     ("List of Listings"
      ("ar" :default "قائمة بالبرامج")
-     ("cs" :default "Seznam programů")
      ("da" :default "Programmer")
      ("de" :default "Programmauflistungsverzeichnis")
      ("es" :ascii "Indice de Listados de programas" :html "&Iacute;ndice de Listados de programas" :default "Índice de Listados de programas")
@@ -5850,7 +5843,6 @@ them."
      ("zh-CN" :html "&#20195;&#30721;&#30446;&#24405;" :utf-8 "代码目录"))
     ("List of Tables"
      ("ar" :default "قائمة بالجداول")
-     ("cs" :default "Seznam tabulek")
      ("da" :default "Tabeller")
      ("de" :default "Tabellenverzeichnis")
      ("es" :ascii "Indice de tablas" :html "&Iacute;ndice de tablas" :default "Índice de tablas")
@@ -5869,7 +5861,6 @@ them."
      ("zh-CN" :html "&#34920;&#26684;&#30446;&#24405;" :utf-8 "表格目录"))
     ("Listing"
      ("ar" :default "برنامج")
-     ("cs" :default "Program")
      ("da" :default "Program")
      ("de" :default "Programmlisting")
      ("es" :default "Listado de programa")
@@ -5885,7 +5876,6 @@ them."
      ("zh-CN" :html "&#20195;&#30721;" :utf-8 "代码"))
     ("Listing %d:"
      ("ar" :default "برنامج %d:")
-     ("cs" :default "Program %d:")
      ("da" :default "Program %d")
      ("de" :default "Programmlisting %d")
      ("es" :default "Listado de programa %d")
@@ -5901,7 +5891,6 @@ them."
      ("zh-CN" :html "&#20195;&#30721;%d&nbsp;" :utf-8 "代码%d "))
     ("References"
      ("ar" :default "المراجع")
-     ("cs" :default "Reference")
      ("fr" :ascii "References" :default "Références")
      ("de" :default "Quellen")
      ("es" :default "Referencias")
@@ -5918,7 +5907,6 @@ them."
      ("sl" :default "Glej izpis programa %s"))
     ("See section %s"
      ("ar" :default "انظر قسم %s")
-     ("cs" :default "Viz sekce %s")
      ("da" :default "jævnfør afsnit %s")
      ("de" :default "siehe Abschnitt %s")
      ("es" :ascii "Vea seccion %s" :html "Vea secci&oacute;n %s" :default "Vea sección %s")
@@ -5938,7 +5926,6 @@ them."
      ("sl" :default "Glej tabelo %s"))
     ("Table"
      ("ar" :default "جدول")
-     ("cs" :default "Tabulka")
      ("de" :default "Tabelle")
      ("es" :default "Tabla")
      ("et" :default "Tabel")
@@ -5951,7 +5938,6 @@ them."
      ("zh-CN" :html "&#34920;" :utf-8 "表"))
     ("Table %d:"
      ("ar" :default "جدول %d:")
-     ("cs" :default "Tabulka %d:")
      ("da" :default "Tabel %d")
      ("de" :default "Tabelle %d")
      ("es" :default "Tabla %d")

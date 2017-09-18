@@ -183,8 +183,7 @@ Stars are put in group 1 and the trimmed body in group 2.")
 (declare-function org-export-get-environment "ox" (&optional backend subtreep ext-plist))
 (declare-function org-latex-make-preamble "ox-latex" (info &optional template snippet?))
 
-(defvar ffap-url-regexp)
-(defvar org-element-paragraph-separate)
+(defvar ffap-url-regexp)		;Silence byte-compiler
 
 (defsubst org-uniquify (list)
   "Non-destructively remove duplicate elements from LIST."
@@ -5308,8 +5307,7 @@ is available.  This option applies only if FILE is a URL."
 	;; Move point to after the url-retrieve header.
 	(search-forward "\n\n" nil :move)
 	;; Search for the success code only in the url-retrieve header.
-	(if (save-excursion
-	      (re-search-backward "HTTP.*\\s-+200\\s-OK" nil :noerror))
+	(if (save-excursion (re-search-backward "HTTP.*\\s-+200\\s-OK" nil :noerror))
 	    ;; Update the cache `org--file-cache' and return contents.
 	    (puthash file
 		     (buffer-substring-no-properties (point) (point-max))
@@ -5319,14 +5317,13 @@ is available.  This option applies only if FILE is a URL."
 		   file))))
      (t
       (with-temp-buffer
-        (condition-case nil
+        (condition-case err
 	    (progn
 	      (insert-file-contents file)
 	      (buffer-string))
 	  (file-error
            (funcall (if noerror #'message #'user-error)
-		    "Unable to read file %S"
-		    file))))))))
+		    (error-message-string err)))))))))
 
 (defun org-extract-log-state-settings (x)
   "Extract the log state setting from a TODO keyword string.
@@ -5770,27 +5767,18 @@ This should be called after the variable `org-link-parameters' has changed."
 	       (verbatim? (member marker '("~" "="))))
 	  (when (save-excursion
 		  (goto-char (match-beginning 0))
+		  ;; Do not match headline stars.  Do not consider
+		  ;; stars of a headline as closing marker for bold
+		  ;; markup either.  Do not match table hlines.
 		  (and
-		   ;; Do not match table hlines.
+		   (not (looking-at-p org-outline-regexp-bol))
 		   (not (and (equal marker "+")
 			     (org-match-line
-			      "[ \t]*\\(|[-+]+|?\\|\\+[-+]+\\+\\)[ \t]*$")))
-		   ;; Do not match headline stars.  Do not consider
-		   ;; stars of a headline as closing marker for bold
-		   ;; markup either.
-		   (not (and (equal marker "*")
-			     (save-excursion
-			       (forward-char)
-			       (skip-chars-backward "*")
-			       (looking-at-p org-outline-regexp-bol))))
-		   ;; Match full emphasis markup regexp.
+			      "^[ \t]*\\(|[-+]+|?\\|\\+[-+]+\\+\\)[ \t]*$")))
 		   (looking-at (if verbatim? org-verbatim-re org-emph-re))
-		   ;; Do not span over paragraph boundaries.
-		   (not (string-match-p org-element-paragraph-separate
-					(match-string 2)))
-		   ;; Do not span over cells in table rows.
-		   (not (and (save-match-data (org-match-line "[ \t]*|"))
-			     (string-match-p "|" (match-string 4))))))
+		   (not (string-match-p
+			 (concat org-outline-regexp-bol "\\'")
+			 (match-string 0)))))
 	    (pcase-let ((`(,_ ,face ,_) (assoc marker org-emphasis-alist)))
 	      (font-lock-prepend-text-property
 	       (match-beginning 2) (match-end 2) 'face face)
@@ -9973,12 +9961,6 @@ according to FMT (default from `org-email-link-description-format')."
 		   (reverse (nthcdr (- (length slines) lines)
 				    (reverse slines))) "\n")))))
     (mapconcat #'identity (split-string s) " ")))
-
-(defconst org-link-escape-chars
-  ;;%20 %5B %5D %25
-  '(?\s ?\[ ?\] ?%)
-  "List of characters that should be escaped in a link when stored to Org.
-This is the list that is used for internal purposes.")
 
 (defun org-make-link-string (link &optional description)
   "Make a link with brackets, consisting of LINK and DESCRIPTION."
@@ -17413,8 +17395,8 @@ both scheduled and deadline timestamps."
 			   'timestamp)
 		     (org-at-planning-p))
 		   (time-less-p
-		    (org-time-string-to-time match)
-		    (org-time-string-to-time d)))))))
+		    (org-time-string-to-time match t)
+		    (org-time-string-to-time d t)))))))
     (message "%d entries before %s"
 	     (org-occur regexp nil callback)
 	     d)))
@@ -17435,8 +17417,8 @@ both scheduled and deadline timestamps."
 			   'timestamp)
 		     (org-at-planning-p))
 		   (not (time-less-p
-			 (org-time-string-to-time match)
-			 (org-time-string-to-time d))))))))
+			 (org-time-string-to-time match t)
+			 (org-time-string-to-time d t))))))))
     (message "%d entries after %s"
 	     (org-occur regexp nil callback)
 	     d)))
@@ -17459,11 +17441,11 @@ both scheduled and deadline timestamps."
 			'timestamp)
 		  (org-at-planning-p))
 		(not (time-less-p
-		      (org-time-string-to-time match)
-		      (org-time-string-to-time start-date)))
+		      (org-time-string-to-time match t)
+		      (org-time-string-to-time start-date t)))
 		(time-less-p
-		 (org-time-string-to-time match)
-		 (org-time-string-to-time end-date))))))))
+		 (org-time-string-to-time match t)
+		 (org-time-string-to-time end-date t))))))))
     (message "%d entries between %s and %s"
 	     (org-occur regexp nil callback) start-date end-date)))
 
@@ -17548,13 +17530,19 @@ days in order to avoid rounding problems."
       (push m l))
     (apply 'format fmt (nreverse l))))
 
-(defun org-time-string-to-time (s)
-  "Convert timestamp string S into internal time."
-  (apply #'encode-time (org-parse-time-string s)))
+(defun org-time-string-to-time (s &optional zone)
+  "Convert timestamp string S into internal time.
+The optional ZONE is omitted or nil for Emacs local time, t for
+Universal Time, ‘wall’ for system wall clock time, or a string as
+in the TZ environment variable."
+  (apply #'encode-time (org-parse-time-string s nil zone)))
 
-(defun org-time-string-to-seconds (s)
-  "Convert a timestamp string S into a number of seconds."
-  (float-time (org-time-string-to-time s)))
+(defun org-time-string-to-seconds (s &optional zone)
+  "Convert a timestamp string S into a number of seconds.
+The optional ZONE is omitted or nil for Emacs local time, t for
+Universal Time, ‘wall’ for system wall clock time, or a string as
+in the TZ environment variable."
+  (float-time (org-time-string-to-time s zone)))
 
 (org-define-error 'org-diary-sexp-no-match "Unable to match diary sexp")
 
@@ -19361,9 +19349,9 @@ boundaries."
 	    ;; "file:" links.  Also check link abbreviations since
 	    ;; some might expand to "file" links.
 	    (file-types-re (format "[][]\\[\\(?:file\\|[./~]%s\\)"
-				   (if (not link-abbrevs) ""
-				     (format "\\|\\(?:%s:\\)"
-					     (regexp-opt link-abbrevs))))))
+				   (and link-abbrevs
+					(format "\\|\\(?:%s:\\)"
+						(regexp-opt link-abbrevs))))))
        (while (re-search-forward file-types-re end t)
 	 (let ((link (save-match-data (org-element-context))))
 	   ;; Check if we're at an inline image, i.e., an image file
@@ -19517,6 +19505,7 @@ COMMANDS is a list of alternating OLDDEF NEWDEF command names."
 
 (org-defkey org-mode-map [(shift return)]   'org-table-copy-down)
 (org-defkey org-mode-map [(meta shift return)] 'org-insert-todo-heading)
+(org-defkey org-mode-map [(meta return)]       'org-meta-return)
 (org-defkey org-mode-map (kbd "M-RET") #'org-meta-return)
 
 ;; Cursor keys with modifiers
@@ -20969,8 +20958,7 @@ Use `\\[org-edit-special]' to edit table.el tables"))
 	     (cond (arg (call-interactively #'org-table-recalculate))
 		   ((org-table-maybe-recalculate-line))
 		   (t (org-table-align))))))
-	((or `timestamp (and `planning (guard (org-at-timestamp-p 'lax))))
-	 (org-timestamp-change 0 'day))
+	(`timestamp (org-timestamp-change 0 'day))
 	((and `nil (guard (org-at-heading-p)))
 	 ;; When point is on an unsupported object type, we can miss
 	 ;; the fact that it also is at a heading.  Handle it here.
@@ -23666,9 +23654,7 @@ depending on context."
 					(skip-chars-forward " \r\t\n"))))
 	    (narrow-to-region (org-element-property :contents-begin element)
 			      contents-end))
-	  ;; End of heading is considered as the end of a sentence.
-	  (let ((sentence-end (concat (sentence-end) "\\|^\\*+ .*$")))
-	    (call-interactively #'forward-sentence)))))))
+	  (call-interactively #'forward-sentence))))))
 
 (define-key org-mode-map "\M-a" 'org-backward-sentence)
 (define-key org-mode-map "\M-e" 'org-forward-sentence)
