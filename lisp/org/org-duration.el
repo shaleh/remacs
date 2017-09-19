@@ -1,24 +1,22 @@
 ;;; org-duration.el --- Library handling durations   -*- lexical-binding: t; -*-
 
-;; Copyright (C) 2017-2019 Free Software Foundation, Inc.
+;; Copyright (C) 2017  Free Software Foundation, Inc.
 
 ;; Author: Nicolas Goaziou <mail@nicolasgoaziou.fr>
 ;; Keywords: outlines, hypermedia, calendar, wp
 
-;; This file is part of GNU Emacs.
-
-;; GNU Emacs is free software: you can redistribute it and/or modify
+;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
 ;; the Free Software Foundation, either version 3 of the License, or
 ;; (at your option) any later version.
 
-;; GNU Emacs is distributed in the hope that it will be useful,
+;; This program is distributed in the hope that it will be useful,
 ;; but WITHOUT ANY WARRANTY; without even the implied warranty of
 ;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 ;; GNU General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.
+;; along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 ;;; Commentary:
 
@@ -51,7 +49,7 @@
 
 (require 'cl-lib)
 (require 'org-macs)
-(declare-function org-trim "org" (s &optional keep-lead))
+(declare-function org-trim "org-trim" (s &optional keep-lead))
 
 
 ;;; Public variables
@@ -99,8 +97,8 @@ sure to call the following command:
   :set (lambda (var val) (set-default var val) (org-duration-set-regexps))
   :initialize 'custom-initialize-changed
   :type '(choice
-	  (const :tag "H:MM" h:mm)
-	  (const :tag "H:MM:SS" h:mm:ss)
+	  (const :tag "H:MM" 'h:mm)
+	  (const :tag "H:MM:SS" 'h:mm:ss)
 	  (alist :key-type (string :tag "Unit")
 		 :value-type (number :tag "Modifier"))))
 

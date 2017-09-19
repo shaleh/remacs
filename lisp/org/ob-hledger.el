@@ -1,10 +1,10 @@
-;;  ob-hledger.el --- Babel Functions for hledger      -*- lexical-binding: t; -*-
+;;  ob-ledger.el --- Babel Functions for hledger      -*- lexical-binding: t; -*-
 
-;; Copyright (C) 2010-2019 Free Software Foundation, Inc.
+;; Copyright (C) 2010-2017 Free Software Foundation, Inc.
 
 ;; Author: Simon Michael
 ;; Keywords: literate programming, reproducible research, plain text accounting
-;; Homepage: https://orgmode.org
+;; Homepage: http://orgmode.org
 
 ;; This file is part of GNU Emacs.
 
