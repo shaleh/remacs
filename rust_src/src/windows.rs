@@ -29,8 +29,8 @@ impl LispWindowRef {
     }
 
     #[inline]
-    pub fn is_minibuffer(&self) -> bool {
-        self.flags & FLAG_MINI != 0
+    pub fn start_marker(self) -> LispObject {
+        LispObject::from_raw(self.start)
     }
 }
 
@@ -111,5 +111,5 @@ pub fn window_valid_p(object: LispObject) -> LispObject {
 /// This is updated by redisplay or by calling `set-window-start'.
 #[lisp_fn]
 pub fn window_start(window: LispObject) -> LispObject {
-    marker_position(LispObject::from_raw(window.as_live_window_or_error().start))
+    marker_position(window.as_live_window_or_error().start_marker())
 }
