@@ -215,6 +215,11 @@ state to take effect (making a frame visible, for example).
 
 * Changes in Specialized Modes and Packages in Emacs 27.1
 
+** Enhanced xterm support
+
+*** New variable 'xterm-set-window-title' controls whether Emacs
+sets the XTerm window title.  The default is to set the window title.
+
 
 * New Modes and Packages in Emacs 27.1
 
