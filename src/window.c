@@ -1497,15 +1497,6 @@ WINDOW must be a live window and defaults to the selected one.  */)
   return Fmarker_position (decode_live_window (window)->old_pointm);
 }
 
-DEFUN ("window-start", Fwindow_start, Swindow_start, 0, 1, 0,
-       doc: /* Return position at which display currently starts in WINDOW.
-WINDOW must be a live window and defaults to the selected one.
-This is updated by redisplay or by calling `set-window-start'.  */)
-  (Lisp_Object window)
-{
-  return Fmarker_position (decode_live_window (window)->start);
-}
-
 /* This is text temporarily removed from the doc string below.
 
 This function returns nil if the position is not currently known.
@@ -7761,7 +7752,6 @@ displayed after a scrolling operation to be somewhat inaccurate.  */);
   defsubr (&Scoordinates_in_window_p);
   defsubr (&Swindow_at);
   defsubr (&Swindow_old_point);
-  defsubr (&Swindow_start);
   defsubr (&Swindow_end);
   defsubr (&Sset_window_point);
   defsubr (&Sset_window_start);
