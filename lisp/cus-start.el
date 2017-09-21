@@ -226,10 +226,11 @@ Leaving \"Default\" unchecked is equivalent with specifying a default of
              ;; doc.c
              (text-quoting-style display
                                  (choice
-                                  (const :tag "Prefer \\=‘curved\\=’ quotes, if possible" nil)
+                                  (const :tag "No translation" nil)
+                                  (const :tag "Prefer \\=‘curved\\=’ quotes, if possible" t)
                                   (const :tag "\\=‘Curved\\=’ quotes" curved)
                                   (const :tag "\\='Straight\\=' quotes" straight)
-                                  (const :tag "\\=`Grave\\=' quotes (no translation)" grave)))
+                                  (const :tag "\\=`Grave\\=' quotes" grave)))
 
              ;; dosfns.c
 	     (dos-display-scancodes display boolean)

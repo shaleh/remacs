@@ -1547,9 +1547,9 @@ characters more prominent on display.  @xref{Glyphless Chars,,
 Glyphless Character Display, elisp, The Emacs Lisp Reference Manual},
 for details.
 
-@cindex curly quotes, and terminal capabilities
-@cindex curved quotes, and terminal capabilities
-@cindex @code{homoglyph} face
+@cindex curly quotes
+@cindex curved quotes
+@cindex homoglyph face
 
 Emacs tries to determine if the curved quotes @samp{‘} and @samp{’}
 can be displayed on the current display.  By default, if this seems to
@@ -1559,11 +1559,11 @@ curved quotes.  You can influence or inhibit this translation by
 customizing the user option @code{text-quoting-style} (@pxref{Keys in
 Documentation,,, elisp, The Emacs Lisp Reference Manual}).
 
-  If the curved quotes @t{‘}, @t{’}, @t{“}, and @t{”} are
+  If the curved quotes @samp{‘}, @samp{’}, @samp{“}, and @samp{”} are
 known to look just like @acronym{ASCII} characters, they are shown
 with the @code{homoglyph} face.  Curved quotes that are known not to
 be displayable are shown as their @acronym{ASCII} approximations
-@t{`}, @t{'}, and @t{"} with the @code{homoglyph} face.
+@samp{`}, @samp{'}, and @samp{"} with the @code{homoglyph} face.
 
 @node Cursor Display
 @section Displaying the Cursor
