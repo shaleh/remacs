@@ -788,6 +788,13 @@ sets the XTerm window title.  The default is to set the window title.
 
 * Lisp Changes in Emacs 27.1
 
+---
+** New functions to set region from secondary selection and vice versa.
+The new functions 'secondary-selection-to-region' and
+'secondary-selection-from-region' let you set the beginning and the
+end of the region from those of the secondary selection and vise
+versa.
+
 
 * Changes in Emacs 27.1 on Non-Free Operating Systems
 
