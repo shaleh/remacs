@@ -122,9 +122,16 @@ If ELT is of the form ((EXPR)), listify (EXPR) with a dummy symbol."
             bindings)))
 
 (defmacro if-let* (varlist then &rest else)
-  "Bind variables according to VARLIST and evaluate THEN or ELSE.
-This is like `if-let' but doesn't handle a VARLIST of the form
-\(SYMBOL SOMETHING) specially."
+  "Bind variables according to VARLIST and eval THEN or ELSE.
+Each binding is evaluated in turn, and evaluation stops if a
+binding value is nil.  If all are non-nil, the value of THEN is
+returned, or the last form in ELSE is returned.
+
+Each element of VARLIST is a list (SYMBOL VALUEFORM) which binds
+SYMBOL to the value of VALUEFORM.  An element can additionally
+be of the form (VALUEFORM), which is evaluated and checked for
+nil; i.e. SYMBOL can be omitted if only the test result is of
+interest."
   (declare (indent 2)
            (debug ((&rest [&or symbolp (symbolp form) (form)])
                    form body)))
