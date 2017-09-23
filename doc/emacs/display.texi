@@ -1765,8 +1765,8 @@ Any other non-@code{nil} value is treated as @code{t}.
 @findex display-line-numbers-mode
 @findex global-display-line-numbers-mode
 @vindex display-line-numbers-type
-The command @kbd{M-x display-line-numbers-mode} provides a
-convenient way to turn on display of line numbers.  This mode has a globalized
+A convenient way of turning on display of line numbers is @w{@kbd{M-x
+display-line-numbers-mode @key{RET}}}.  This mode has a globalized
 variant, @code{global-display-line-numbers-mode}.  The user option
 @code{display-line-numbers-type} controls which sub-mode of
 line-number display, described above, will these modes activate.
@@ -1805,7 +1805,7 @@ may wish to customize the variables
 @code{display-line-numbers-width} to a large enough value, to avoid
 occasional miscalculations of space reserved for the line numbers.
 
-@cindex @code{line-number} face
+@cindex line-number face
 The line numbers are displayed in a special face @code{line-number}.
 The current line number is displayed in a different face,
 @code{line-number-current-line}, so you can make the current line's
