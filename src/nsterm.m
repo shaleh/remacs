@@ -7307,9 +7307,13 @@ not_in_argv (NSString *arg)
 
   win = [[EmacsWindow alloc]
             initWithContentRect: r
-                      styleMask: (NSWindowStyleMaskResizable |
-#if MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_7
-                                  NSWindowStyleMaskTitled |
+                      styleMask: ((FRAME_UNDECORATED (f)
+                                   ? FRAME_UNDECORATED_FLAGS
+                                   : FRAME_DECORATED_FLAGS)
+#ifdef NS_IMPL_COCOA
+                                  | NSWindowStyleMaskResizable
+                                  | NSWindowStyleMaskMiniaturizable
+                                  | NSWindowStyleMaskClosable
 #endif
                                   NSWindowStyleMaskMiniaturizable |
                                   NSWindowStyleMaskClosable)
