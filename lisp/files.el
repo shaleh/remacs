@@ -153,11 +153,7 @@ Do so even if the buffer is not visiting a file.
 Automatically local in all buffers.
 
 Set to the symbol `always' to offer to save buffer whenever
-`save-some-buffers' is called.
-
-Note that this option has no effect on `kill-buffer';
-if you want to control what happens when a buffer is killed,
-use `kill-buffer-query-functions'."
+`save-some-buffers' is called."
   :type '(choice (const :tag "Never" nil)
                  (const :tag "On Emacs exit" t)
                  (const :tag "Whenever save-some-buffers is called" always))
@@ -5316,7 +5312,6 @@ change the additional actions you can take on files."
 	       (and (buffer-live-p buffer)
 		    (buffer-modified-p buffer)
                     (not (buffer-base-buffer buffer))
-                    (not (eq (aref (buffer-name buffer) 0) ?\s))
                     (or
                      (buffer-file-name buffer)
                      (with-current-buffer buffer
