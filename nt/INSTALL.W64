@@ -141,7 +141,8 @@ directories located in your C:\msys64 directory, but this is not recommended.
 Note also that we need to disable Imagemagick and D-Bus because Emacs
 does not yet support them on Windows.
 
-  ./configure --prefix=/c/emacs/emacs-26 --without-imagemagick --without-dbus
+  PKG_CONFIG_PATH=/mingw64/lib/pkgconfig \
+  ./configure --prefix=/c/emacs/emacs-26 --without-imagemagick
 
 ** Run make
 
