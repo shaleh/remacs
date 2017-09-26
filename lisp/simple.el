@@ -53,10 +53,9 @@ restores the buffer position before the command."
   :version "26.1")
 
 (defvar shell-command-saved-pos nil
-  "Record of point positions in output buffers after command completion.
-The value is an alist whose elements are of the form (BUFFER . POS),
-where BUFFER is the output buffer, and POS is the point position
-in BUFFER once the command finishes.
+  "Point position in the output buffer after command completes.
+It is an alist of (BUFFER . POS), where BUFFER is the output
+buffer, and POS is the point position in BUFFER once the command finishes.
 This variable is used when `shell-command-dont-erase-buffer' is non-nil.")
 
 (defcustom idle-update-delay 0.5
@@ -1010,17 +1009,14 @@ instead of deleted."
        (t
         (filter-buffer-substring (region-beginning) (region-end) method)))))
   "Function to get the region's content.
-Called with one argument METHOD which can be:
-- nil: return the content as a string (list of strings for
-  non-contiguous regions).
-- `delete-only': delete the region; the return value is undefined.
-- `bounds': return the boundaries of the region as a list of one
-  or more cons cells of the form (START . END).
-- anything else: delete the region and return its content
-  as a string (or list of strings for non-contiguous regions),
-  after filtering it with `filter-buffer-substring', which
-  is called, for each contiguous sub-region, with METHOD as its
-  3rd argument.")
+Called with one argument METHOD.
+If METHOD is `delete-only', then delete the region; the return value
+is undefined.  If METHOD is nil, then return the content as a string.
+If METHOD is `bounds', then return the boundaries of the region
+as a pair of (START . END) positions.
+If METHOD is anything else, delete the region and return its content
+as a string, after filtering it with `filter-buffer-substring', which
+is called with METHOD as its 3rd argument.")
 
 (defvar region-insert-function
   (lambda (lines)
@@ -5518,10 +5514,7 @@ also checks the value of `use-empty-active-region'."
        (progn (cl-assert (mark)) t)))
 
 (defun region-bounds ()
-  "Return the boundaries of the region.
-Value is a list of one or more cons cells of the form (START . END).
-It will have more than one cons cell when the region is non-contiguous,
-see `region-noncontiguous-p' and `extract-rectangle-bounds'."
+  "Return the boundaries of the region as a pair of (START . END) positions."
   (funcall region-extract-function 'bounds))
 
 (defun region-noncontiguous-p ()
