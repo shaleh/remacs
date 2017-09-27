@@ -4180,7 +4180,6 @@ styled_format (ptrdiff_t nargs, Lisp_Object *args, bool message,
 		      multibyte = true;
 		      goto retry;
 		    }
-		  new_result = false;
 		}
 	      conversion = 's';
 	    }
