@@ -215,7 +215,12 @@ expression.  A match indicates `:warning' type, otherwise
     (flymake-log 3 "file %s, init=%s" file-name (car mode-and-masks))
     mode-and-masks))
 
-(defun flymake-proc--get-init-function (file-name)
+(defun flymake-can-syntax-check-file (file-name)
+  "Determine whether we can syntax check FILE-NAME.
+Return nil if we cannot, non-nil if we can."
+  (if (flymake-get-init-function file-name) t nil))
+
+(defun flymake-get-init-function (file-name)
   "Return init function to be used for the file."
   (let* ((init-f  (nth 0 (flymake-proc--get-file-name-mode-and-masks file-name))))
     ;;(flymake-log 0 "calling %s" init-f)
@@ -728,6 +733,82 @@ May only be called in a dynamic environment where
     (error
      (flymake-log 1 "Failed to delete dir %s, error ignored" dir-name))))
 
+(defun flymake-start-syntax-check ()
+  "Start syntax checking for current buffer."
+  (interactive)
+  (flymake-log 3 "flymake is running: %s" flymake-is-running)
+  (when (and (not flymake-is-running)
+             (flymake-can-syntax-check-file buffer-file-name))
+    (when (or (not flymake-compilation-prevents-syntax-check)
+              (not (flymake-compilation-is-running))) ;+ (flymake-rep-ort-status buffer "COMP")
+      (flymake-clear-buildfile-cache)
+      (flymake-clear-project-include-dirs-cache)
+
+      (setq flymake-check-was-interrupted nil)
+
+      (let* ((source-file-name  buffer-file-name)
+             (init-f (flymake-get-init-function source-file-name))
+             (cleanup-f (flymake-get-cleanup-function source-file-name))
+             (cmd-and-args (funcall init-f))
+             (cmd          (nth 0 cmd-and-args))
+             (args         (nth 1 cmd-and-args))
+             (dir          (nth 2 cmd-and-args)))
+        (if (not cmd-and-args)
+            (progn
+              (flymake-log 0 "init function %s for %s failed, cleaning up" init-f source-file-name)
+              (funcall cleanup-f))
+          (progn
+            (setq flymake-last-change-time nil)
+            (flymake-start-syntax-check-process cmd args dir)))))))
+
+(defun flymake-start-syntax-check-process (cmd args dir)
+  "Start syntax check process."
+  (condition-case err
+      (let* ((process
+              (let ((default-directory (or dir default-directory)))
+                (when dir
+                  (flymake-log 3 "starting process on dir %s" dir))
+                (apply 'start-file-process
+                       "flymake-proc" (current-buffer) cmd args))))
+        (set-process-sentinel process 'flymake-process-sentinel)
+        (set-process-filter process 'flymake-process-filter)
+        (set-process-query-on-exit-flag process nil)
+        (push process flymake-processes)
+
+        (setq flymake-is-running t)
+        (setq flymake-last-change-time nil)
+        (setq flymake-check-start-time (float-time))
+
+        (flymake-report-status nil "*")
+        (flymake-log 2 "started process %d, command=%s, dir=%s"
+                     (process-id process) (process-command process)
+                     default-directory)
+        process)
+    (error
+     (let* ((err-str
+             (format-message
+              "Failed to launch syntax check process `%s' with args %s: %s"
+              cmd args (error-message-string err)))
+            (source-file-name buffer-file-name)
+            (cleanup-f        (flymake-get-cleanup-function source-file-name)))
+       (flymake-log 0 err-str)
+       (funcall cleanup-f)
+       (flymake-report-fatal-status "PROCERR" err-str)))))
+
+(defun flymake-kill-process (proc)
+  "Kill process PROC."
+  (kill-process proc)
+  (let* ((buf (process-buffer proc)))
+    (when (buffer-live-p buf)
+      (with-current-buffer buf
+	(setq flymake-check-was-interrupted t))))
+  (flymake-log 1 "killed process %d" (process-id proc)))
+
+(defun flymake-stop-all-syntax-checks ()
+  "Kill all syntax check processes."
+  (interactive)
+  (while flymake-processes
+    (flymake-kill-process (pop flymake-processes))))
 
 (defun flymake-proc-legacy-flymake (report-fn &rest args)
   "Flymake backend based on the original Flymake implementation.
@@ -1125,70 +1206,6 @@ Use CREATE-TEMP-F for creating temp copy."
   (list flymake-proc-xml-program
         (list "val" (flymake-proc-init-create-temp-buffer-copy
                      'flymake-proc-create-temp-inplace))))
-
-
-;;;; Hook onto flymake-ui
-(add-hook 'flymake-diagnostic-functions 'flymake-proc-legacy-flymake)
-
-
-;;;;
-
-(define-obsolete-variable-alias 'flymake-check-file-limit
-  'flymake-proc-check-file-limit "26.1")
-(define-obsolete-function-alias 'flymake-reformat-err-line-patterns-from-compile-el
-  'flymake-proc-reformat-err-line-patterns-from-compile-el "26.1")
-(define-obsolete-variable-alias 'flymake-err-line-patterns
-  'flymake-proc-err-line-patterns "26.1")
-(define-obsolete-function-alias 'flymake-parse-line
-  'flymake-proc-parse-line "26.1")
-(define-obsolete-function-alias 'flymake-get-include-dirs
-  'flymake-proc-get-include-dirs "26.1")
-(define-obsolete-function-alias 'flymake-stop-all-syntax-checks
-  'flymake-proc-stop-all-syntax-checks "26.1")
-(define-obsolete-function-alias 'flymake-compile
-  'flymake-proc-compile "26.1")
-(define-obsolete-function-alias 'flymake-create-temp-inplace
-  'flymake-proc-create-temp-inplace "26.1")
-(define-obsolete-function-alias 'flymake-create-temp-with-folder-structure
-  'flymake-proc-create-temp-with-folder-structure "26.1")
-(define-obsolete-function-alias 'flymake-init-create-temp-buffer-copy
-  'flymake-proc-init-create-temp-buffer-copy "26.1")
-(define-obsolete-function-alias 'flymake-simple-cleanup
-  'flymake-proc-simple-cleanup "26.1")
-(define-obsolete-function-alias 'flymake-get-real-file-name
-  'flymake-proc-get-real-file-name "26.1")
-(define-obsolete-function-alias 'flymake-master-cleanup
-  'flymake-proc-master-cleanup "26.1")
-(define-obsolete-function-alias 'flymake-get-make-cmdline
-  'flymake-proc-get-make-cmdline "26.1")
-(define-obsolete-function-alias 'flymake-get-ant-cmdline
-  'flymake-proc-get-ant-cmdline "26.1")
-(define-obsolete-function-alias 'flymake-simple-make-init-impl
-  'flymake-proc-simple-make-init-impl "26.1")
-(define-obsolete-function-alias 'flymake-simple-make-init
-  'flymake-proc-simple-make-init "26.1")
-(define-obsolete-function-alias 'flymake-master-make-init
-  'flymake-proc-master-make-init "26.1")
-(define-obsolete-function-alias 'flymake-find-make-buildfile
-  'flymake-proc--find-make-buildfile "26.1")
-(define-obsolete-function-alias 'flymake-master-make-header-init
-  'flymake-proc-master-make-header-init "26.1")
-(define-obsolete-function-alias 'flymake-simple-make-java-init
-  'flymake-proc-simple-make-java-init "26.1")
-(define-obsolete-function-alias 'flymake-simple-ant-java-init
-  'flymake-proc-simple-ant-java-init "26.1")
-(define-obsolete-function-alias 'flymake-simple-java-cleanup
-  'flymake-proc-simple-java-cleanup "26.1")
-(define-obsolete-function-alias 'flymake-perl-init
-  'flymake-proc-perl-init "26.1")
-(define-obsolete-function-alias 'flymake-php-init
-  'flymake-proc-php-init "26.1")
-(define-obsolete-function-alias 'flymake-simple-tex-init
-  'flymake-proc-simple-tex-init "26.1")
-(define-obsolete-function-alias 'flymake-master-tex-init
-  'flymake-proc-master-tex-init "26.1")
-(define-obsolete-function-alias 'flymake-xml-init
-  'flymake-proc-xml-init "26.1")
 
 (provide 'flymake-proc)
 ;;; flymake-proc.el ends here
