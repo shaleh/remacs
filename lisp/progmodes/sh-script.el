@@ -3594,6 +3594,10 @@ so that `occur-next' and `occur-prev' will work."
 (defun sh-learn-buffer-indent (&optional arg)
   "Learn how to indent the buffer the way it currently is.
 
+If `sh-use-smie' is non-nil, call `smie-config-guess'.
+Otherwise, run the sh-script specific indent learning command, as
+described below.
+
 Output in buffer \"*indent*\" shows any lines which have conflicting
 values of a variable, and the final value of all variables learned.
 When called interactively, pop to this buffer automatically if

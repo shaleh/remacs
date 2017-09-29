@@ -2719,9 +2719,11 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
 	      (funcall
 	       (if quoted 'tramp-compat-file-name-unquote 'identity)
 	       (file-remote-p tmp-name1 'localname))
-	      (file-symlink-p
-	       (expand-file-name
-		(file-name-nondirectory tmp-name1) tmp-name4)))))
+	      (file-symlink-p tmp-name5)))
+	    ;; `smbclient' does not show symlinks in directories, so
+	    ;; we cannot delete a non-empty directory.  We delete the
+	    ;; file explicitly.
+	    (delete-file tmp-name5))
 
 	;; Cleanup.
 	(ignore-errors
