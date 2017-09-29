@@ -951,6 +951,175 @@ about.
 *** New variable 'xterm-set-window-title' controls whether Emacs
 sets the XTerm window title.  The default is to set the window title.
 
+** Package
+
++++
+*** The new variable 'package-gnupghome-dir' has been added to control
+where the GnuPG home directory (used for signature verification) is
+located and whether GnuPG's option "--homedir" is used or not.
+
+---
+*** Deleting a package no longer respects 'delete-by-moving-to-trash'.
+
+** Tramp
+
++++
+*** The method part of remote file names is mandatory now.
+A valid remote file name starts with "/method:host:" or
+"/method:user@host:".
+
++++
+*** The new pseudo method "-" is a marker for the default method.
+"/-::" is the shortest remote file name then.
+
++++
+*** The command 'tramp-change-syntax' allows to choose an alternative
+remote file name syntax.
+
++++
+*** New connection method "sg", which supports editing files under a
+different group ID.
+
++++
+*** New connection method "doas" for OpenBSD hosts.
+
++++
+*** New connection method "gdrive", which allows to access Google
+Drive onsite repositories.
+
++++
+*** Gateway methods in Tramp have been removed.
+Instead, the Tramp manual documents how to configure ssh and PuTTY
+accordingly.
+
++++
+*** Setting the "ENV" environment variable in
+'tramp-remote-process-environment' enables reading of shell
+initialization files.
+
+---
+*** Tramp is able now to send SIGINT to remote asynchronous processes.
+
+---
+*** Variable 'tramp-completion-mode' is obsoleted.
+
+---
+** 'auto-revert-use-notify' is set back to t in 'global-auto-revert-mode'.
+
+** JS mode
+
+---
+*** JS mode now sets 'comment-multi-line' to t.
+
+---
+*** New variable 'js-indent-align-list-continuation', when set to nil,
+will not align continuations of bracketed lists, but will indent them
+by the fixed width 'js-indent-level'.
+
+** CSS mode
+
+---
+*** Support for completing attribute values, at-rules, bang-rules,
+HTML tags, classes and IDs using the 'completion-at-point' command.
+Completion candidates for HTML classes and IDs are retrieved from open
+HTML mode buffers.
+
+---
+*** CSS mode now binds 'C-h S' to a function that will show
+information about a CSS construct (an at-rule, property, pseudo-class,
+pseudo-element, with the default being guessed from context).  By
+default the information is looked up on the Mozilla Developer Network,
+but this can be customized using 'css-lookup-url-format'.
+
+---
+*** CSS colors are fontified using the color they represent as the
+background.  For instance, #ff0000 would be fontified with a red
+background.
+
++++
+** Emacs now supports character name escape sequences in character and
+string literals.  The syntax variants \N{character name} and
+\N{U+code} are supported.
+
++++
+** Prog mode has some support for multi-mode indentation.
+This allows better indentation support in modes that support multiple
+programming languages in the same buffer, like literate programming
+environments or ANTLR programs with embedded Python code.
+
+A major mode can provide indentation context for a sub-mode through
+the 'prog-indentation-context' variable.  To support this, modes that
+provide indentation should use 'prog-widen' instead of 'widen' and
+'prog-first-column' instead of a literal zero.  See the node
+"Mode-Specific Indent" in the ELisp manual for more details.
+
+** ERC
+
+---
+*** New variable 'erc-default-port-tls' used to connect to TLS IRC
+servers.
+
+** URL
+
++++
+*** The new function 'url-cookie-delete-cookie' can be used to
+programmatically delete all cookies, or cookies from a specific
+domain.
+
++++
+*** 'url-retrieve-synchronously' now takes an optional timeout parameter.
+
+---
+*** The URL package now support HTTPS over proxies supporting CONNECT.
+
++++
+*** 'url-user-agent' now defaults to 'default', and the User-Agent
+string is computed dynamically based on 'url-privacy-level'.
+
+** VC and related modes
+
+---
+*** The VC state indicator in the mode line now defaults to more
+colorful faces to make it more obvious to the user what the state is.
+See the 'vc-faces' customization group.
+
++++
+*** 'vc-dir-mode' now binds 'vc-log-outgoing' to 'O'; and has various
+branch-related commands on a keymap bound to 'B'.
+
+---
+*** 'vc-region-history' is now bound to 'C-x v h', replacing the older
+'vc-insert-headers' binding.
+
+** CC mode
+
+---
+*** Opening a .h file will turn C or C++ mode depending on language used.
+This is done with the help of 'c-or-c++-mode' function which analyses
+contents of the buffer to determine whether it's a C or C++ source
+file.
+
+---
+** New DNS mode command 'dns-mode-ipv6-to-nibbles' to convert IPv6 addresses
+to a format suitable for reverse lookup zone files.
+
+** Ispell
+
++++
+*** Enchant is now supported as a spell-checker.
+
+Enchant is a meta-spell-checker that uses providers
+such as Hunspell to do the actual checking.  With it, users can use
+spell-checkers not directly supported by Emacs, such as Voikko, Hspell
+and AppleSpell, more easily share personal word-lists with other
+programs, and configure different spelling-checkers for different
+languages.  (Version 2.1.0 or later of Enchant is required.)
+
+** Flymake
+
++++
+*** Emacs no longer prompts the user before killing Flymake processes on exit.
+
 
 * New Modes and Packages in Emacs 27.1
 
