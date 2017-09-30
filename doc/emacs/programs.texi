@@ -721,7 +721,9 @@ argument moves the previous balanced expression backwards across those
 before it.  An argument of zero, rather than doing nothing, transposes
 the balanced expressions ending at or after point and the mark.
 
+@kindex C-M-@@
 @kindex C-M-SPC
+@findex mark-sexp
   To operate on balanced expressions with a command which acts on the
 region, type @kbd{C-M-@key{SPC}} (@code{mark-sexp}).  This sets the
 mark where @kbd{C-M-f} would move to.  While the mark is active, each
@@ -1749,17 +1751,17 @@ preprocessor commands.
 @item C-c C-@key{DEL}
 @itemx C-c @key{DEL}
 @findex c-hungry-delete-backwards
-@kindex C-c C-DEL @r{(C Mode)}
-@kindex C-c DEL @r{(C Mode)}
+@kindex C-c C-DEL (C Mode)
+@kindex C-c DEL (C Mode)
 Delete the entire block of whitespace preceding point (@code{c-hungry-delete-backwards}).
 
 @item C-c C-d
 @itemx C-c C-@key{Delete}
 @itemx C-c @key{Delete}
 @findex c-hungry-delete-forward
-@kindex C-c C-d @r{(C Mode)}
-@kindex C-c C-Delete @r{(C Mode)}
-@kindex C-c Delete @r{(C Mode)}
+@kindex C-c C-d (C Mode)
+@kindex C-c C-Delete (C Mode)
+@kindex C-c Delete (C Mode)
 Delete the entire block of whitespace after point (@code{c-hungry-delete-forward}).
 @end table
 
