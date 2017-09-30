@@ -196,6 +196,9 @@ build-time.  See nextstep/INSTALL for details.
 (This change was actually made in Emacs 26.1, but was undocumented and
 not called out in its NEWS.)
 
++++
+** New function 'logcount' calculates an integer's Hamming weight.
+
 
 * Installation Changes in Emacs 26.1
 

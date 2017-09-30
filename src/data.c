@@ -1531,6 +1531,66 @@ If the base used is not 10, STRING is always parsed as an integer.  */)
 }
 
 
+#if GNUC_PREREQ (4, 1, 0)
+#define HAVE_BUILTIN_POPCOUNTLL
+#endif
+
+#ifndef HAVE_BUILTIN_POPCOUNTLL
+static uint32_t
+logcount32 (uint32_t b)
+{
+  b -= (b >> 1) & 0x55555555;
+  b = (b & 0x33333333) + ((b >> 2) & 0x33333333);
+  b = (b + (b >> 4)) & 0x0f0f0f0f;
+  return (b * 0x01010101) >> 24;
+}
+
+static uint64_t
+logcount64 (uint64_t b)
+{
+  b -= (b >> 1) & 0x5555555555555555ULL;
+  b = (b & 0x3333333333333333ULL) + ((b >> 2) & 0x3333333333333333ULL);
+  b = (b + (b >> 4)) & 0x0f0f0f0f0f0f0f0fULL;
+  return (b * 0x0101010101010101ULL) >> 56;
+}
+#endif /* HAVE_BUILTIN_POPCOUNTLL */
+
+DEFUN ("logcount", Flogcount, Slogcount, 1, 1, 0,
+       doc: /* Return population count of VALUE.
+If VALUE is negative, the count is of its two's complement representation.  */)
+  (register Lisp_Object value)
+{
+  Lisp_Object res;
+  EMACS_UINT v;
+
+  CHECK_NUMBER (value);
+
+  v = XUINT (value);
+#ifdef HAVE_BUILTIN_POPCOUNTLL
+  if (v <= UINT_MAX)
+    XSETINT (res, __builtin_popcount (v));
+  else if (v <= ULONG_MAX)
+    XSETINT (res, __builtin_popcountl (v));
+  else if (v <= ULONG_LONG_MAX)
+    XSETINT (res, __builtin_popcountll (v));
+#else  /* HAVE_BUILTIN_POPCOUNTLL */
+  if (v <= UINT_MAX)
+    XSETINT (res, logcount32 (v));
+  else if (v <= ULONG_MAX || v <= ULONG_LONG_MAX)
+    XSETINT (res, logcount64 (v));
+#endif /* HAVE_BUILTIN_POPCOUNTLL */
+  else
+    {
+      unsigned int count;
+      for (count = 0; v; count++)
+        {
+          v &= v - 1;
+        }
+      XSETINT (res, count);
+    }
+  return res;
+}
+
 static Lisp_Object
 ash_lsh_impl (Lisp_Object value, Lisp_Object count, bool lsh)
 {
@@ -2112,6 +2172,24 @@ syms_of_data (void)
 #endif
   defsubr (&Snumber_to_string);
   defsubr (&Sstring_to_number);
+  defsubr (&Seqlsign);
+  defsubr (&Slss);
+  defsubr (&Sgtr);
+  defsubr (&Sleq);
+  defsubr (&Sgeq);
+  defsubr (&Sneq);
+  defsubr (&Splus);
+  defsubr (&Sminus);
+  defsubr (&Stimes);
+  defsubr (&Squo);
+  defsubr (&Srem);
+  defsubr (&Smod);
+  defsubr (&Smax);
+  defsubr (&Smin);
+  defsubr (&Slogand);
+  defsubr (&Slogior);
+  defsubr (&Slogxor);
+  defsubr (&Slogcount);
   defsubr (&Slsh);
   defsubr (&Sash);
 #ifdef HAVE_MODULES
