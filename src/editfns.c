@@ -721,6 +721,266 @@ usage: (save-current-buffer &rest BODY)  */)
   return unbind_to (count, Fprogn (args));
 }
 
+DEFUN ("buffer-size", Fbuffer_size, Sbuffer_size, 0, 1, 0,
+       doc: /* Return the number of characters in the current buffer.
+If BUFFER is not nil, return the number of characters in that buffer
+instead.
+
+This does not take narrowing into account; to count the number of
+characters in the accessible portion of the current buffer, use
+`(- (point-max) (point-min))', and to count the number of characters
+in some other BUFFER, use
+`(with-current-buffer BUFFER (- (point-max) (point-min)))'.  */)
+  (Lisp_Object buffer)
+{
+  if (NILP (buffer))
+    return make_number (Z - BEG);
+  else
+    {
+      CHECK_BUFFER (buffer);
+      return make_number (BUF_Z (XBUFFER (buffer))
+			  - BUF_BEG (XBUFFER (buffer)));
+    }
+}
+
+DEFUN ("point-min", Fpoint_min, Spoint_min, 0, 0, 0,
+       doc: /* Return the minimum permissible value of point in the current buffer.
+This is 1, unless narrowing (a buffer restriction) is in effect.  */)
+  (void)
+{
+  Lisp_Object temp;
+  XSETFASTINT (temp, BEGV);
+  return temp;
+}
+
+DEFUN ("point-min-marker", Fpoint_min_marker, Spoint_min_marker, 0, 0, 0,
+       doc: /* Return a marker to the minimum permissible value of point in this buffer.
+This is the beginning, unless narrowing (a buffer restriction) is in effect.  */)
+  (void)
+{
+  return build_marker (current_buffer, BEGV, BEGV_BYTE);
+}
+
+DEFUN ("point-max", Fpoint_max, Spoint_max, 0, 0, 0,
+       doc: /* Return the maximum permissible value of point in the current buffer.
+This is (1+ (buffer-size)), unless narrowing (a buffer restriction)
+is in effect, in which case it is less.  */)
+  (void)
+{
+  Lisp_Object temp;
+  XSETFASTINT (temp, ZV);
+  return temp;
+}
+
+DEFUN ("point-max-marker", Fpoint_max_marker, Spoint_max_marker, 0, 0, 0,
+       doc: /* Return a marker to the maximum permissible value of point in this buffer.
+This is (1+ (buffer-size)), unless narrowing (a buffer restriction)
+is in effect, in which case it is less.  */)
+  (void)
+{
+  return build_marker (current_buffer, ZV, ZV_BYTE);
+}
+
+DEFUN ("gap-position", Fgap_position, Sgap_position, 0, 0, 0,
+       doc: /* Return the position of the gap, in the current buffer.
+See also `gap-size'.  */)
+  (void)
+{
+  Lisp_Object temp;
+  XSETFASTINT (temp, GPT);
+  return temp;
+}
+
+DEFUN ("gap-size", Fgap_size, Sgap_size, 0, 0, 0,
+       doc: /* Return the size of the current buffer's gap.
+See also `gap-position'.  */)
+  (void)
+{
+  Lisp_Object temp;
+  XSETFASTINT (temp, GAP_SIZE);
+  return temp;
+}
+
+DEFUN ("position-bytes", Fposition_bytes, Sposition_bytes, 1, 1, 0,
+       doc: /* Return the byte position for character position POSITION.
+If POSITION is out of range, the value is nil.  */)
+  (Lisp_Object position)
+{
+  CHECK_NUMBER_COERCE_MARKER (position);
+  if (XINT (position) < BEG || XINT (position) > Z)
+    return Qnil;
+  return make_number (CHAR_TO_BYTE (XINT (position)));
+}
+
+DEFUN ("byte-to-position", Fbyte_to_position, Sbyte_to_position, 1, 1, 0,
+       doc: /* Return the character position for byte position BYTEPOS.
+If BYTEPOS is out of range, the value is nil.  */)
+  (Lisp_Object bytepos)
+{
+  ptrdiff_t pos_byte;
+
+  CHECK_NUMBER (bytepos);
+  pos_byte = XINT (bytepos);
+  if (pos_byte < BEG_BYTE || pos_byte > Z_BYTE)
+    return Qnil;
+  if (Z != Z_BYTE)
+    /* There are multibyte characters in the buffer.
+       The argument of BYTE_TO_CHAR must be a byte position at
+       a character boundary, so search for the start of the current
+       character.  */
+    while (!CHAR_HEAD_P (FETCH_BYTE (pos_byte)))
+      pos_byte--;
+  return make_number (BYTE_TO_CHAR (pos_byte));
+}
+
+DEFUN ("following-char", Ffollowing_char, Sfollowing_char, 0, 0, 0,
+       doc: /* Return the character following point, as a number.
+At the end of the buffer or accessible region, return 0.  */)
+  (void)
+{
+  Lisp_Object temp;
+  if (PT >= ZV)
+    XSETFASTINT (temp, 0);
+  else
+    XSETFASTINT (temp, FETCH_CHAR (PT_BYTE));
+  return temp;
+}
+
+DEFUN ("preceding-char", Fprevious_char, Sprevious_char, 0, 0, 0,
+       doc: /* Return the character preceding point, as a number.
+At the beginning of the buffer or accessible region, return 0.  */)
+  (void)
+{
+  Lisp_Object temp;
+  if (PT <= BEGV)
+    XSETFASTINT (temp, 0);
+  else if (!NILP (BVAR (current_buffer, enable_multibyte_characters)))
+    {
+      ptrdiff_t pos = PT_BYTE;
+      DEC_POS (pos);
+      XSETFASTINT (temp, FETCH_CHAR (pos));
+    }
+  else
+    XSETFASTINT (temp, FETCH_BYTE (PT_BYTE - 1));
+  return temp;
+}
+
+DEFUN ("bobp", Fbobp, Sbobp, 0, 0, 0,
+       doc: /* Return t if point is at the beginning of the buffer.
+If the buffer is narrowed, this means the beginning of the narrowed part.  */)
+  (void)
+{
+  if (PT == BEGV)
+    return Qt;
+  return Qnil;
+}
+
+DEFUN ("eobp", Feobp, Seobp, 0, 0, 0,
+       doc: /* Return t if point is at the end of the buffer.
+If the buffer is narrowed, this means the end of the narrowed part.  */)
+  (void)
+{
+  if (PT == ZV)
+    return Qt;
+  return Qnil;
+}
+
+DEFUN ("bolp", Fbolp, Sbolp, 0, 0, 0,
+       doc: /* Return t if point is at the beginning of a line.  */)
+  (void)
+{
+  if (PT == BEGV || FETCH_BYTE (PT_BYTE - 1) == '\n')
+    return Qt;
+  return Qnil;
+}
+
+DEFUN ("eolp", Feolp, Seolp, 0, 0, 0,
+       doc: /* Return t if point is at the end of a line.
+`End of a line' includes point being at the end of the buffer.  */)
+  (void)
+{
+  if (PT == ZV || FETCH_BYTE (PT_BYTE) == '\n')
+    return Qt;
+  return Qnil;
+}
+
+DEFUN ("char-after", Fchar_after, Schar_after, 0, 1, 0,
+       doc: /* Return character in current buffer at position POS.
+POS is an integer or a marker and defaults to point.
+If POS is out of range, the value is nil.  */)
+  (Lisp_Object pos)
+{
+  register ptrdiff_t pos_byte;
+
+  if (NILP (pos))
+    {
+      pos_byte = PT_BYTE;
+      if (pos_byte < BEGV_BYTE || pos_byte >= ZV_BYTE)
+        return Qnil;
+    }
+  else if (MARKERP (pos))
+    {
+      pos_byte = marker_byte_position (pos);
+      if (pos_byte < BEGV_BYTE || pos_byte >= ZV_BYTE)
+	return Qnil;
+    }
+  else
+    {
+      CHECK_NUMBER_COERCE_MARKER (pos);
+      if (XINT (pos) < BEGV || XINT (pos) >= ZV)
+	return Qnil;
+
+      pos_byte = CHAR_TO_BYTE (XINT (pos));
+    }
+
+  return make_number (FETCH_CHAR (pos_byte));
+}
+
+DEFUN ("char-before", Fchar_before, Schar_before, 0, 1, 0,
+       doc: /* Return character in current buffer preceding position POS.
+POS is an integer or a marker and defaults to point.
+If POS is out of range, the value is nil.  */)
+  (Lisp_Object pos)
+{
+  register Lisp_Object val;
+  register ptrdiff_t pos_byte;
+
+  if (NILP (pos))
+    {
+      pos_byte = PT_BYTE;
+      XSETFASTINT (pos, PT);
+    }
+
+  if (MARKERP (pos))
+    {
+      pos_byte = marker_byte_position (pos);
+
+      if (pos_byte <= BEGV_BYTE || pos_byte > ZV_BYTE)
+	return Qnil;
+    }
+  else
+    {
+      CHECK_NUMBER_COERCE_MARKER (pos);
+
+      if (XINT (pos) <= BEGV || XINT (pos) > ZV)
+	return Qnil;
+
+      pos_byte = CHAR_TO_BYTE (XINT (pos));
+    }
+
+  if (!NILP (BVAR (current_buffer, enable_multibyte_characters)))
+    {
+      DEC_POS (pos_byte);
+      XSETFASTINT (val, FETCH_CHAR (pos_byte));
+    }
+  else
+    {
+      pos_byte--;
+      XSETFASTINT (val, FETCH_BYTE (pos_byte));
+    }
+   return val;
+}
+
 DEFUN ("user-login-name", Fuser_login_name, Suser_login_name, 0, 1, 0,
        doc: /* Return the name under which the user logged in, as a string.
 This is based on the effective uid, not the real uid.
