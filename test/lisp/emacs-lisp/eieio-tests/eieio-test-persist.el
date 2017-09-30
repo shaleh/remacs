@@ -222,16 +222,13 @@ persistent class.")
   ((slot1 :initarg :slot1
           :type (or persistent-random-class null persist-not-persistent))
    (slot2 :initarg :slot2
-          :type (or persist-not-persistent persistent-random-class null))
-   (slot3 :initarg :slot3
-          :type persistent-random-class)))
+          :type (or persist-not-persistent persist-random-class null))))
 
 (ert-deftest eieio-test-multiple-class-slot ()
   (let ((persist
          (persistent-multiclass-slot "random string"
           :slot1 (persistent-random-class)
           :slot2 (persist-not-persistent)
-          :slot3 (persistent-random-class)
           :file (concat default-directory "test-ps5.pt"))))
     (unwind-protect
         (persist-test-save-and-compare persist)
