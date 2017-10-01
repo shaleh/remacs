@@ -3216,7 +3216,7 @@ a number of other ways as well.  Here we sketch a few of them:
 @item
 The semantics of maximizing and iconifying child frames is highly
 window-system dependent.  As a rule, applications should never invoke
-these operations on child frames.  By default, invoking
+these operations for on frames.  By default, invoking
 @code{iconify-frame} on a child frame will try to iconify the top-level
 frame corresponding to that child frame instead.  To obtain a different
 behavior, users may customize the option @code{iconify-child-frame}
@@ -3278,7 +3278,7 @@ window.
 Customizing the following option can be useful to tweak the behavior of
 @code{iconify-frame} for child frames.
 
-@defopt iconify-child-frame
+@defvar iconify-child-frame
 This option tells Emacs how to proceed when it is asked to iconify a
 child frame.  If it is @code{nil}, @code{iconify-frame} will do nothing
 when invoked on a child frame.  If it is @code{iconify-top-level}, Emacs
@@ -3290,7 +3290,7 @@ Any other value means to try iconifying the child frame.  Since such an
 attempt may not be honored by all window managers and can even lead to
 making the child frame unresponsive to user actions, the default is to
 iconify the top level frame instead.
-@end defopt
+@end defvar
 
 
 @node Mouse Tracking
