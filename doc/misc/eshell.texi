@@ -418,7 +418,7 @@ Lisp functions, based on successful completion).
 
 @end table
 
-@xref{Aliases}, for the built-in variables @samp{$*}, @samp{$1},
+@ref{Aliases} for the built-in variables @samp{$*}, @samp{$1},
 @samp{$2}, @dots{}, in alias definitions.
 
 @node Variables
@@ -441,6 +441,7 @@ automatically written to the file named by @code{eshell-aliases-file},
 which you can also edit directly (although you will have to manually
 reload it).
 
+@vindex $1, $2, @dots{}
 Note that unlike aliases in Bash, arguments must be handled
 explicitly.  Typically the alias definition would end in @samp{$*} to
 pass all arguments along.  More selective use of arguments via
