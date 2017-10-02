@@ -26,10 +26,10 @@
 ;;; Commentary:
 
 ;; Please send bug reports and bug fixes to the mailing list at
-;; bug-gnu-emacs@gnu.org.
-;; See also the general help list at
-;; https://lists.gnu.org/mailman/listinfo/help-gnu-emacs
-;; I monitor this list actively.  If you send an e-mail
+;; help-gnu-emacs@gnu.org.  If you want to subscribe to the mailing
+;; list, see the web page at
+;; https://lists.gnu.org/mailman/listinfo/help-gnu-emacs for
+;; instructions.  I monitor this list actively.  If you send an e-mail
 ;; to Alex Schroeder it usually makes it to me when Alex has a chance
 ;; to forward them along (Thanks, Alex).
 
