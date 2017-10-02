@@ -732,6 +732,8 @@ pub struct Lisp_Char_Table {
 
 #[repr(C)]
 pub struct Lisp_Process {
+    pub header: Lisp_Vectorlike_Header,
+
     /// Name of subprocess terminal.
     pub tty_name: Lisp_Object,
 
