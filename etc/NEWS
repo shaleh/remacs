@@ -756,6 +756,10 @@ paragraphs, for the purposes of bidirectional display.
 This controls how long Emacs will wait for updates to the graphical
 state to take effect (making a frame visible, for example).
 
+** The 'file-system-info' function is now available on all platforms.
+instead of just Microsoft platforms.  This fixes a get-free-disk-space
+bug on OS X 10.8 and later (Bug#28639).
+
 
 * Changes in Specialized Modes and Packages in Emacs 26.1
 
