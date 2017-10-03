@@ -600,49 +600,11 @@ large integers from being displayed as characters by 'M-:' and similar
 commands.
 
 ---
-** Two new commands for finding the source code of Emacs Lisp
-libraries: 'find-library-other-window' and 'find-library-other-frame'.
-
-+++
-** The new variable 'display-raw-bytes-as-hex' allows to change the
-display of raw bytes from octal to hex.
-
-+++
-** You can now provide explicit field numbers in format specifiers.
-For example, '(format "%2$s %1$s" "X" "Y")' produces "Y X".
-
-+++
-** Emacs now supports optional display of line numbers in the buffer.
-This is similar to what linum-mode provides, but much faster and
-doesn't usurp the display margin for the line numbers.  Customize the
-buffer-local variable 'display-line-numbers' to activate this optional
-display.  Alternatively, you can use the `display-line-numbers-mode'
-minor mode or the global `global-display-line-numbers-mode'.  When
-using these modes, customize `display-line-numbers-type' with the same
-value as you would use with `display-line-numbers'.
-
-Line numbers are not displayed at all in minibuffer windows and in
-tooltips, as they are not useful there.
-
-Lisp programs can disable line-number display for a particular screen
-line by putting the 'display-line-numbers-disable' text property or
-overlay property on the first character of that screen line.  This is
-intended for add-on packages that need a finer control of the display.
-
-Lisp programs that need to know how much screen estate is used up for
-line-number display in a window can use the new function
-'line-number-display-width'.
-
-Linum mode and all similar packages are henceforth becoming obsolete.
-Users and developers are encouraged to switch to this new feature
-instead.
-
-+++
-** emacsclient now accepts command-line options in ALTERNATE_EDITOR
-and --alternate-editor. For example, ALTERNATE_EDITOR="emacs -Q -nw".
-Arguments may be quoted "like this", so that for example an absolute
-path containing a space may be specified; quote escaping is not
-supported.
+** The function 'eldoc-message' now accepts a single argument.
+Programs that called it with multiple arguments before should pass
+them through 'format' first.  Even that is discouraged: for ElDoc
+support, you should set 'eldoc-documentation-function' instead of
+calling 'eldoc-message' directly.
 
 
 * Editing Changes in Emacs 26.1
@@ -756,9 +718,14 @@ paragraphs, for the purposes of bidirectional display.
 This controls how long Emacs will wait for updates to the graphical
 state to take effect (making a frame visible, for example).
 
+---
 ** The 'file-system-info' function is now available on all platforms.
-instead of just Microsoft platforms.  This fixes a get-free-disk-space
+instead of just Microsoft platforms.  This fixes a 'get-free-disk-space'
 bug on OS X 10.8 and later (Bug#28639).
+
+---
+** The function 'get-free-disk-space' returns now a non-nil value for
+remote systems, which support this check.
 
 
 * Changes in Specialized Modes and Packages in Emacs 26.1
