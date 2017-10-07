@@ -196,6 +196,12 @@ build-time.  See nextstep/INSTALL for details.
 (This change was actually made in Emacs 26.1, but was undocumented and
 not called out in its NEWS.)
 
+---
+** The new option 'tooltip-resize-echo-area' avoids truncating tooltip text
+on GUI frames when tooltips are displayed in the echo area.  Instead,
+it resizes the echo area as needed to accommodate the full tool-tip
+text.
+
 +++
 ** New function 'logcount' calculates an integer's Hamming weight.
 
