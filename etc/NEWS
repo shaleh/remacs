@@ -275,8 +275,9 @@ globally or for individual definitions.
 
 ** Enhanced xterm support
 
-** Emacs no longer works on IRIX.  We expect that Emacs users are not
-affected by this, as SGI stopped supporting IRIX in December 2013.
+*** New variable 'xterm-set-window-title' controls whether Emacs sets
+the XTerm window title.  This feature is experimental and is disabled
+by default.
 
 
 * Startup Changes in Emacs 26.1
