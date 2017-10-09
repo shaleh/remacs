@@ -1029,6 +1029,18 @@ extern "C" {
         offset2: c_int,
         pvec_type: PseudovecType,
     ) -> *mut Lisp_Vector;
+
+    pub fn extract_data_from_object(
+        spec: Lisp_Object,
+        start_byte: *mut ptrdiff_t,
+        end_byte: *mut ptrdiff_t,
+    ) -> *mut c_char;
+
+    pub fn hash_lookup(
+        h: *mut Lisp_Hash_Table,
+        key: Lisp_Object,
+        hash: *mut EmacsUint,
+    ) -> ptrdiff_t;
 }
 
 /// Contains C definitions from the font.h header.
