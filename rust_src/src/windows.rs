@@ -2,7 +2,8 @@
 
 use lisp::{LispObject, ExternalPtr};
 use remacs_macros::lisp_fn;
-use remacs_sys::{Lisp_Window, selected_window as current_window};
+use remacs_sys::{Lisp_Window, selected_window as current_window,
+                 minibuf_selected_window as current_minibuf_window, minibuf_level};
 use marker::marker_position;
 use editfns::point;
 
@@ -117,4 +118,31 @@ pub fn window_start(window: LispObject) -> LispObject {
         window
     };
     marker_position(win.as_live_window_or_error().start_marker())
+}
+
+/// Return non-nil if WINDOW is a minibuffer window.
+/// WINDOW must be a valid window and defaults to the selected one.
+#[lisp_fn(min = "0")]
+pub fn window_minibuffer_p(window: LispObject) -> LispObject {
+    let win = if window.is_nil() {
+        selected_window()
+    } else {
+        window
+    };
+    LispObject::from_bool(win.as_window_or_error().is_minibuffer())
+}
+
+/// Return the window which was selected when entering the minibuffer.
+/// Returns nil, if selected window is not a minibuffer window.
+#[lisp_fn]
+pub fn minibuffer_selected_window() -> LispObject {
+    let level = unsafe { minibuf_level };
+    let current_minibuf = unsafe { LispObject::from_raw(current_minibuf_window) };
+    if level > 0 && selected_window().as_window_or_error().is_minibuffer() &&
+        current_minibuf.as_window_or_error().is_live()
+    {
+        current_minibuf
+    } else {
+        LispObject::constant_nil()
+    }
 }
