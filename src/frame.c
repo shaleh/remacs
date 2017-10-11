@@ -1429,13 +1429,6 @@ to that frame.  */)
   call1 (intern ("handle-focus-in"), event);
   return value;
 }
-
-DEFUN ("selected-frame", Fselected_frame, Sselected_frame, 0, 0, 0,
-       doc: /* Return the frame that is now selected.  */)
-  (void)
-{
-  return selected_frame;
-}
 
 DEFUN ("frame-list", Fframe_list, Sframe_list,
        0, 0, 0,
@@ -6025,7 +6018,6 @@ iconify the top level frame instead.  */);
   defsubr (&Smake_terminal_frame);
   defsubr (&Shandle_switch_frame);
   defsubr (&Sselect_frame);
-  defsubr (&Sselected_frame);
   defsubr (&Sframe_list);
   defsubr (&Sframe_parent);
   defsubr (&Sframe_ancestor_p);

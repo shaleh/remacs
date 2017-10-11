@@ -51,6 +51,8 @@ mod str2sig;
 mod multibyte;
 mod buffers;
 mod windows;
+mod frames;
+mod hashtable;
 mod interactive;
 mod process;
 mod fonts;
@@ -394,5 +396,6 @@ pub extern "C" fn rust_init_syms() {
         defsubr(&*threads::Sthread_name);
         defsubr(&*cmds::Sforward_point);
         defsubr(&*data::Sindirect_function);
+        defsubr(&*frames::Sselected_frame);
     }
 }
