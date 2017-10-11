@@ -835,8 +835,7 @@ Changes to files in this list are not listed.")
     "lisp/obsolete/sym-comp.el"
     "library-of-babel.org"
     "flymake-elisp.el"
-    "flymake-ui.el"
-    "pinentry.el")
+    "flymake-ui.el")
   "File names which are valid, but no longer exist (or cannot be found)
 in the repository.")
 
