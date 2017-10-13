@@ -149,7 +149,7 @@ fn memql(elt: LispObject, list: LispObject) -> LispObject {
 /// Return non-nil if ELT is an element of LIST.  Comparison done with `equal'.
 /// The value is actually the tail of LIST whose car is ELT.
 #[lisp_fn]
-fn member(elt: LispObject, list: LispObject) -> LispObject {
+pub fn member(elt: LispObject, list: LispObject) -> LispObject {
     for tail in list.iter_tails() {
         if elt.equal(tail.car()) {
             return tail.as_obj();
@@ -382,7 +382,7 @@ fn lax_plist_put(plist: LispObject, prop: LispObject, val: LispObject) -> LispOb
 /// Return the value of SYMBOL's PROPNAME property.
 /// This is the last value stored with `(put SYMBOL PROPNAME VALUE)'.
 #[lisp_fn]
-fn get(symbol: LispObject, propname: LispObject) -> LispObject {
+pub fn get(symbol: LispObject, propname: LispObject) -> LispObject {
     let sym = symbol.as_symbol_or_error();
     plist_get(sym.get_plist(), propname)
 }
