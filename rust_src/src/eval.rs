@@ -42,7 +42,7 @@ macro_rules! call {
     ($func:expr, $($arg:expr),*) => {{
         let mut argsarray = [$func.to_raw(), $($arg.to_raw()),*];
         unsafe {
-            LispObject::from_raw(
+            LispObject::from(
                 ::remacs_sys::Ffuncall(argsarray.len() as ::libc::ptrdiff_t, argsarray.as_mut_ptr())
             )
         }
@@ -57,7 +57,7 @@ macro_rules! error {
             ::remacs_sys::make_string($str.as_ptr() as *const ::libc::c_char,
                                       $str.len() as ::libc::ptrdiff_t)
         };
-        xsignal!(::remacs_sys::Qerror, $crate::lisp::LispObject::from_raw(strobj));
+        xsignal!(::remacs_sys::Qerror, $crate::lisp::LispObject::from(strobj));
     }};
     ($fmtstr:expr, $($arg:expr),*) => {{
         let formatted = format!($fmtstr, $($arg),*);
@@ -65,15 +65,15 @@ macro_rules! error {
             ::remacs_sys::make_string(formatted.as_ptr() as *const ::libc::c_char,
                                       formatted.len() as ::libc::ptrdiff_t)
         };
-        xsignal!(::remacs_sys::Qerror, $crate::lisp::LispObject::from_raw(strobj));
-    }}
+        xsignal!(::remacs_sys::Qerror, $crate::lisp::LispObject::from(strobj));
+    }};
 }
-/// Convenience function for calling `xsignal` with a two-element list.
-pub fn xsignal2(error_symbol: LispObject, arg1: LispObject, arg2: LispObject) -> ! {
-    xsignal(
-        error_symbol,
-        LispObject::cons(arg1, LispObject::cons(arg2, LispObject::constant_nil())),
-    )
+
+/// Macro to format a "wrong argument type" error message.
+macro_rules! wrong_type {
+    ($pred:expr, $arg:expr) => {
+        xsignal!(::remacs_sys::Qwrong_type_argument, LispObject::from($pred), $arg);
+    };
 }
 
 macro_rules! args_out_of_range {

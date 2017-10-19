@@ -16,22 +16,22 @@ impl LispWindowRef {
     /// This is also sometimes called a "leaf window" in Emacs sources.
     #[inline]
     pub fn is_live(self) -> bool {
-        LispObject::from_raw(self.contents).is_buffer()
+        LispObject::from(self.contents).is_buffer()
     }
 
     #[inline]
     pub fn point_marker(self) -> LispObject {
-        LispObject::from_raw(self.pointm)
+        LispObject::from(self.pointm)
     }
 
     #[inline]
     pub fn contents(self) -> LispObject {
-        LispObject::from_raw(self.contents)
+        LispObject::from(self.contents)
     }
 
     #[inline]
     pub fn start_marker(self) -> LispObject {
-        LispObject::from_raw(self.start)
+        LispObject::from(self.start)
     }
 }
 
@@ -75,7 +75,7 @@ pub fn window_point(window: LispObject) -> LispObject {
 /// selected windows appears and to which many commands apply.
 #[lisp_fn]
 pub fn selected_window() -> LispObject {
-    unsafe { LispObject::from_raw(current_window) }
+    unsafe { LispObject::from(current_window) }
 }
 
 /// Return the buffer displayed in window WINDOW.
@@ -157,4 +157,19 @@ pub fn window_margins(window: LispObject) -> LispObject {
         margin_as_object(win.left_margin_cols),
         margin_as_object(win.right_margin_cols),
     )
+}
+
+/// Return the window which was selected when entering the minibuffer.
+/// Returns nil, if selected window is not a minibuffer window.
+#[lisp_fn]
+pub fn minibuffer_selected_window() -> LispObject {
+    let level = unsafe { minibuf_level };
+    let current_minibuf = unsafe { LispObject::from(current_minibuf_window) };
+    if level > 0 && selected_window().as_window_or_error().is_minibuffer() &&
+        current_minibuf.as_window().unwrap().is_live()
+    {
+        current_minibuf
+    } else {
+        LispObject::constant_nil()
+    }
 }

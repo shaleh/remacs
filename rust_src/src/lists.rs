@@ -384,7 +384,13 @@ fn lax_plist_put(plist: LispObject, prop: LispObject, val: LispObject) -> LispOb
 #[lisp_fn]
 pub fn get(symbol: LispObject, propname: LispObject) -> LispObject {
     let sym = symbol.as_symbol_or_error();
-    plist_get(sym.get_plist(), propname)
+    let plist_env = LispObject::from(unsafe { globals.f_Voverriding_plist_environment });
+    let propval = plist_get(cdr(assq(symbol, plist_env)), propname);
+    if propval.is_not_nil() {
+        propval
+    } else {
+        plist_get(sym.get_plist(), propname)
+    }
 }
 
 /// Store SYMBOL's PROPNAME property with value VALUE.
