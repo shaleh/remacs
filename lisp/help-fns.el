@@ -575,7 +575,7 @@ FILE is the file where FUNCTION was probably defined."
             (setq short rel))))
     short))
 
-(defun help-fns--analyze-function (function)
+(defun help-fns--analyse-function (function)
   ;; FIXME: Document/explain the differences between FUNCTION,
   ;; REAL-FUNCTION, DEF, and REAL-DEF.
   "Return information about FUNCTION.
@@ -707,13 +707,13 @@ Returns a list of the form (REAL-FUNCTION DEF ALIASED REAL-DEF)."
   (terpri)(terpri)
 
   (pcase-let* ((`(,real-function ,def ,_aliased ,real-def)
-                (help-fns--analyze-function function))
+                (help-fns--analyse-function function))
                (doc-raw (condition-case nil
                             ;; FIXME: Maybe `documentation' should return nil
                             ;; for invalid functions i.s.o. signaling an error.
                             (documentation function t)
                           ;; E.g. an alias for a not yet defined function.
-                          ((invalid-function void-function) nil)))
+                          (invalid-function nil)))
                (key-bindings-buffer (current-buffer)))
 
     ;; If the function is autoloaded, and its docstring has
@@ -733,7 +733,7 @@ Returns a list of the form (REAL-FUNCTION DEF ALIASED REAL-DEF)."
                       (if (subrp def) (indirect-function real-def) real-def)
                       real-function key-bindings-buffer)
                    ;; E.g. an alias for a not yet defined function.
-                   ((invalid-function void-function) doc-raw))))
+                   (invalid-function doc-raw))))
         (run-hook-with-args 'help-fns-describe-function-functions function)
         (insert "\n" (or doc "Not documented.")))
       (when (or (function-get function 'pure)
