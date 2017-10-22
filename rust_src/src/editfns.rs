@@ -3,8 +3,8 @@
 use remacs_macros::lisp_fn;
 use lisp::LispObject;
 use util::clip_to_bounds;
-use remacs_sys::{buf_charpos_to_bytepos, globals, set_point_both, EmacsInt, Qinteger_or_marker_p,
-                 Qmark_inactive, Finsert_char};
+use remacs_sys::{buf_charpos_to_bytepos, globals, set_point_both, Fcons, Fadd_text_properties,
+                 EmacsInt, Qinteger_or_marker_p, Qmark_inactive, Qnil, Qstringp};
 use threads::ThreadState;
 use buffers::get_buffer;
 use marker::{marker_position, set_point_from_marker};
@@ -154,31 +154,42 @@ pub fn goto_char(position: LispObject) -> LispObject {
     position
 }
 
-/// Return character in current buffer at position POS.
-/// POS is an integer or a marker and defaults to point.
-/// If POS is out of range, the value is nil.
-#[lisp_fn(min = "0")]
-pub fn char_after(mut pos: LispObject) -> LispObject {
-    let buffer_ref = ThreadState::current_buffer();
-    if pos.is_nil() {
-        pos = point();
+/// Return a copy of STRING with text properties added.
+/// First argument is the string to copy.
+/// Remaining arguments form a sequence of PROPERTY VALUE pairs for text
+/// properties to add to the result.
+/// usage: (propertize STRING &rest PROPERTIES)  */
+#[lisp_fn(min = "1")]
+pub fn propertize(args: &mut [LispObject]) -> LispObject {
+    /* Number of args must be odd. */
+    if args.len() & 1 == 0 {
+        error!("Wrong number of arguments");
     }
-    if pos.is_marker() {
-        let pos_byte = pos.as_marker().unwrap().bytepos_or_error();
-        // Note that this considers the position in the current buffer,
-        // even if the marker is from another buffer.
-        if pos_byte < buffer_ref.begv_byte || pos_byte >= buffer_ref.zv_byte {
-            LispObject::constant_nil()
-        } else {
-            LispObject::from_natnum(buffer_ref.fetch_char(pos_byte) as EmacsInt)
-        }
-    } else {
-        let p = pos.as_fixnum_coerce_marker_or_error() as ptrdiff_t;
-        if p < buffer_ref.begv || p >= buffer_ref.zv() {
-            LispObject::constant_nil()
-        } else {
-            let pos_byte = unsafe { buf_charpos_to_bytepos(buffer_ref.as_ptr(), p) };
-            LispObject::from_natnum(buffer_ref.fetch_char(pos_byte) as EmacsInt)
-        }
+
+    let mut it = args.iter();
+
+    let first = it.next().unwrap(); // safe, there is at least 1 arg
+    if !first.is_string() {
+        wrong_type!(Qstringp, *first);
     }
+
+    let copy = first.clone();
+    let mut properties = Qnil;
+
+    while let Some(a) = it.next() {
+        let b = it.next().unwrap(); // safe due to the odd check at the beginning
+        properties = unsafe { Fcons(a.to_raw(), Fcons(b.to_raw(), properties)) };
+    }
+
+    let strcopy = copy.as_string_or_error();
+    unsafe {
+        Fadd_text_properties(
+            LispObject::from_natnum(0).to_raw(),
+            LispObject::from_natnum(strcopy.len_chars() as EmacsInt).to_raw(),
+            properties,
+            copy.to_raw(),
+        );
+    };
+
+    copy
 }
