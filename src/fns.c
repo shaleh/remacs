@@ -2840,7 +2840,7 @@ hash_remove_from_table (struct Lisp_Hash_Table *h, Lisp_Object key)
 
 /* Clear hash table H.  */
 
-static void
+void
 hash_clear (struct Lisp_Hash_Table *h)
 {
   if (h->count > 0)
@@ -3366,72 +3366,209 @@ DEFUN ("hash-table-rehash-size", Fhash_table_rehash_size,
     return make_float (rehash_size + 1);
 }
 
-
-DEFUN ("hash-table-rehash-threshold", Fhash_table_rehash_threshold,
-       Shash_table_rehash_threshold, 1, 1, 0,
-       doc: /* Return the current rehash threshold of TABLE.  */)
-  (Lisp_Object table)
+DEFUN ("secure-hash-algorithms", Fsecure_hash_algorithms,
+       Ssecure_hash_algorithms, 0, 0, 0,
+       doc: /* Return a list of all the supported `secure_hash' algorithms. */)
+  (void)
 {
-  return make_float (check_hash_table (table)->rehash_threshold);
+  return listn (CONSTYPE_HEAP, 6,
+                Qmd5,
+                Qsha1,
+                Qsha224,
+                Qsha256,
+                Qsha384,
+                Qsha512);
 }
 
-
-DEFUN ("hash-table-size", Fhash_table_size, Shash_table_size, 1, 1, 0,
-       doc: /* Return the size of TABLE.
-The size can be used as an argument to `make-hash-table' to create
-a hash table than can hold as many elements as TABLE holds
-without need for resizing.  */)
-  (Lisp_Object table)
+/* Extract data from a string or a buffer. SPEC is a list of
+(BUFFER-OR-STRING-OR-SYMBOL START END CODING-SYSTEM NOERROR) which behave as
+specified with `secure-hash' and in Info node
+`(elisp)Format of GnuTLS Cryptography Inputs'.  */
+char *
+extract_data_from_object (Lisp_Object spec,
+                          ptrdiff_t *start_byte,
+                          ptrdiff_t *end_byte)
 {
-  struct Lisp_Hash_Table *h = check_hash_table (table);
-  return make_number (HASH_TABLE_SIZE (h));
+  Lisp_Object object = XCAR (spec);
+
+  if (CONSP (spec)) spec = XCDR (spec);
+  Lisp_Object start = CAR_SAFE (spec);
+
+  if (CONSP (spec)) spec = XCDR (spec);
+  Lisp_Object end = CAR_SAFE (spec);
+
+  if (CONSP (spec)) spec = XCDR (spec);
+  Lisp_Object coding_system = CAR_SAFE (spec);
+
+  if (CONSP (spec)) spec = XCDR (spec);
+  Lisp_Object noerror = CAR_SAFE (spec);
+
+  if (STRINGP (object))
+    {
+      if (NILP (coding_system))
+	{
+	  /* Decide the coding-system to encode the data with.  */
+
+	  if (STRING_MULTIBYTE (object))
+	    /* use default, we can't guess correct value */
+	    coding_system = preferred_coding_system ();
+	  else
+	    coding_system = Qraw_text;
+	}
+
+      if (NILP (Fcoding_system_p (coding_system)))
+	{
+	  /* Invalid coding system.  */
+
+	  if (!NILP (noerror))
+	    coding_system = Qraw_text;
+	  else
+	    xsignal1 (Qcoding_system_error, coding_system);
+	}
+
+      if (STRING_MULTIBYTE (object))
+	object = code_convert_string (object, coding_system, Qnil, 1, 0, 1);
+
+      ptrdiff_t size = SCHARS (object), start_char, end_char;
+      validate_subarray (object, start, end, size, &start_char, &end_char);
+
+      *start_byte = !start_char ? 0 : string_char_to_byte (object, start_char);
+      *end_byte = (end_char == size
+                   ? SBYTES (object)
+                   : string_char_to_byte (object, end_char));
+    }
+  else if (BUFFERP (object))
+    {
+      struct buffer *prev = current_buffer;
+      EMACS_INT b, e;
+
+      record_unwind_current_buffer ();
+
+      CHECK_BUFFER (object);
+
+      struct buffer *bp = XBUFFER (object);
+      set_buffer_internal (bp);
+
+      if (NILP (start))
+	b = BEGV;
+      else
+	{
+	  CHECK_NUMBER_COERCE_MARKER (start);
+	  b = XINT (start);
+	}
+
+      if (NILP (end))
+	e = ZV;
+      else
+	{
+	  CHECK_NUMBER_COERCE_MARKER (end);
+	  e = XINT (end);
+	}
+
+      if (b > e)
+	{
+	  EMACS_INT temp = b;
+	  b = e;
+	  e = temp;
+	}
+
+      if (!(BEGV <= b && e <= ZV))
+	args_out_of_range (start, end);
+
+      if (NILP (coding_system))
+	{
+	  /* Decide the coding-system to encode the data with.
+	     See fileio.c:Fwrite-region */
+
+	  if (!NILP (Vcoding_system_for_write))
+	    coding_system = Vcoding_system_for_write;
+	  else
+	    {
+	      bool force_raw_text = 0;
+
+	      coding_system = BVAR (XBUFFER (object), buffer_file_coding_system);
+	      if (NILP (coding_system)
+		  || NILP (Flocal_variable_p (Qbuffer_file_coding_system, Qnil)))
+		{
+		  coding_system = Qnil;
+		  if (NILP (BVAR (current_buffer, enable_multibyte_characters)))
+		    force_raw_text = 1;
+		}
+
+	      if (NILP (coding_system) && !NILP (Fbuffer_file_name (object)))
+		{
+		  /* Check file-coding-system-alist.  */
+		  Lisp_Object val = CALLN (Ffind_operation_coding_system,
+					   Qwrite_region, start, end,
+					   Fbuffer_file_name (object));
+		  if (CONSP (val) && !NILP (XCDR (val)))
+		    coding_system = XCDR (val);
+		}
+
+	      if (NILP (coding_system)
+		  && !NILP (BVAR (XBUFFER (object), buffer_file_coding_system)))
+		{
+		  /* If we still have not decided a coding system, use the
+		     default value of buffer-file-coding-system.  */
+		  coding_system = BVAR (XBUFFER (object), buffer_file_coding_system);
+		}
+
+	      if (!force_raw_text
+		  && !NILP (Ffboundp (Vselect_safe_coding_system_function)))
+		/* Confirm that VAL can surely encode the current region.  */
+		coding_system = call4 (Vselect_safe_coding_system_function,
+				       make_number (b), make_number (e),
+				       coding_system, Qnil);
+
+	      if (force_raw_text)
+		coding_system = Qraw_text;
+	    }
+
+	  if (NILP (Fcoding_system_p (coding_system)))
+	    {
+	      /* Invalid coding system.  */
+
+	      if (!NILP (noerror))
+		coding_system = Qraw_text;
+	      else
+		xsignal1 (Qcoding_system_error, coding_system);
+	    }
+	}
+
+      object = make_buffer_string (b, e, 0);
+      set_buffer_internal (prev);
+      /* Discard the unwind protect for recovering the current
+	 buffer.  */
+      specpdl_ptr--;
+
+      if (STRING_MULTIBYTE (object))
+	object = code_convert_string (object, coding_system, Qnil, 1, 0, 0);
+      *start_byte = 0;
+      *end_byte = SBYTES (object);
+    }
+  else if (EQ (object, Qiv_auto))
+    {
+#ifdef HAVE_GNUTLS3
+      /* Format: (iv-auto REQUIRED-LENGTH).  */
+
+      if (! NATNUMP (start))
+        error ("Without a length, `iv-auto' can't be used; see ELisp manual");
+      else
+        {
+	  EMACS_INT start_hold = XFASTINT (start);
+          object = make_uninit_string (start_hold);
+          gnutls_rnd (GNUTLS_RND_NONCE, SSDATA (object), start_hold);
+
+          *start_byte = 0;
+          *end_byte = start_hold;
+        }
+#else
+      error ("GnuTLS is not available, so `iv-auto' can't be used");
+#endif
+    }
+
+  return SSDATA (object);
 }
-
-
-DEFUN ("hash-table-test", Fhash_table_test, Shash_table_test, 1, 1, 0,
-       doc: /* Return the test TABLE uses.  */)
-  (Lisp_Object table)
-{
-  return check_hash_table (table)->test.name;
-}
-
-
-DEFUN ("hash-table-weakness", Fhash_table_weakness, Shash_table_weakness,
-       1, 1, 0,
-       doc: /* Return the weakness of TABLE.  */)
-  (Lisp_Object table)
-{
-  return check_hash_table (table)->weak;
-}
-
-DEFUN ("clrhash", Fclrhash, Sclrhash, 1, 1, 0,
-       doc: /* Clear hash table TABLE and return it.  */)
-  (Lisp_Object table)
-{
-  struct Lisp_Hash_Table *h = check_hash_table (table);
-  CHECK_IMPURE (table, h);
-  hash_clear (h);
-  /* Be compatible with XEmacs.  */
-  return table;
-}
-
-DEFUN ("define-hash-table-test", Fdefine_hash_table_test,
-       Sdefine_hash_table_test, 3, 3, 0,
-       doc: /* Define a new hash table test with name NAME, a symbol.
-
-In hash tables created with NAME specified as test, use TEST to
-compare keys, and HASH for computing hash codes of keys.
-
-TEST must be a function taking two arguments and returning non-nil if
-both arguments are the same.  HASH must be a function taking one
-argument and returning an object that is the hash code of the argument.
-It should be the case that if (eq (funcall HASH x1) (funcall HASH x2))
-returns nil, then (funcall TEST x1 x2) also returns nil.  */)
-  (Lisp_Object name, Lisp_Object test, Lisp_Object hash)
-{
-  return Fput (name, Qhash_table_test, list2 (test, hash));
-}
-
 
 void
 syms_of_fns (void)
@@ -3458,12 +3595,6 @@ syms_of_fns (void)
   defsubr (&Ssxhash_equal);
   defsubr (&Smake_hash_table);
   defsubr (&Shash_table_rehash_size);
-  defsubr (&Shash_table_rehash_threshold);
-  defsubr (&Shash_table_size);
-  defsubr (&Shash_table_test);
-  defsubr (&Shash_table_weakness);
-  defsubr (&Sclrhash);
-  defsubr (&Sdefine_hash_table_test);
 
   /* Crypto and hashing stuff.  */
   DEFSYM (Qiv_auto, "iv-auto");
