@@ -216,6 +216,13 @@ pub enum Symbol_Redirect {
     Forwarded = 3,
 }
 
+#[repr(C)]
+pub enum Symbol_Trapped_Write {
+    UntrappedWrite = 0,
+    NoWrite = 1,
+    TrappedWrite = 2,
+}
+
 /// This struct has 4 bytes of padding, representing the bitfield that
 /// lives at the top of a Lisp_Symbol. The first 10 bits of this field are
 /// used.
@@ -1003,6 +1010,8 @@ extern "C" {
     pub static Qsetting_constant: Lisp_Object;
     pub static Qcyclic_function_indirection: Lisp_Object;
     pub static Qcyclic_variable_indirection: Lisp_Object;
+    pub static Qsubfeatures: Lisp_Object;
+    pub static Qunbound: Lisp_Object;
 
     pub static Qmd5: Lisp_Object;
     pub static Qsha1: Lisp_Object;
@@ -1035,6 +1044,7 @@ extern "C" {
     pub fn Ffuncall(nargs: ptrdiff_t, args: *mut Lisp_Object) -> Lisp_Object;
     pub fn Fpurecopy(string: Lisp_Object) -> Lisp_Object;
     pub fn Fmapcar(function: Lisp_Object, sequence: Lisp_Object) -> Lisp_Object;
+    pub fn Fset(symbol: Lisp_Object, newval: Lisp_Object) -> Lisp_Object;
 
     pub fn make_float(float_value: c_double) -> Lisp_Object;
     pub fn make_string(s: *const c_char, length: ptrdiff_t) -> Lisp_Object;
