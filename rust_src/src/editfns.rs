@@ -154,6 +154,84 @@ pub fn goto_char(position: LispObject) -> LispObject {
     position
 }
 
+/// Return the byte position for character position POSITION.
+/// If POSITION is out of range, the value is nil.
+#[lisp_fn]
+pub fn position_bytes(position: LispObject) -> LispObject {
+    let pos = position.as_fixnum_coerce_marker_or_error() as ptrdiff_t;
+    let cur_buf = ThreadState::current_buffer();
+
+    if pos >= cur_buf.begv && pos <= cur_buf.zv {
+        let bytepos = unsafe { buf_charpos_to_bytepos(cur_buf.as_ptr(), pos) };
+        LispObject::from_natnum(bytepos as EmacsInt)
+    } else {
+        LispObject::constant_nil()
+    }
+}
+
+/// TODO: Write better docstring
+/// Insert COUNT (second arg) copies of BYTE (first arg).
+/// Both arguments are required.
+/// BYTE is a number of the range 0..255.
+///
+/// If BYTE is 128..255 and the current buffer is multibyte, the
+/// corresponding eight-bit character is inserted.
+///
+/// Point, and before-insertion markers, are relocated as in the function `insert'.
+/// The optional third arg INHERIT, if non-nil, says to inherit text properties
+/// from adjoining text, if those properties are sticky.
+#[lisp_fn(min = "2")]
+pub fn insert_byte(mut byte: LispObject, count: LispObject, inherit: LispObject) -> LispObject {
+    let b = byte.as_fixnum_or_error();
+    if b < 0 || b > 255 {
+        args_out_of_range!(
+            byte,
+            LispObject::from_fixnum(0),
+            LispObject::from_fixnum(255)
+        )
+    }
+    let buf = ThreadState::current_buffer();
+    if b >= 128 && LispObject::from_raw(buf.enable_multibyte_characters).is_not_nil() {
+        byte = LispObject::from_natnum(raw_byte_codepoint(b as c_uchar) as EmacsInt);
+    }
+    unsafe {
+        LispObject::from_raw(Finsert_char(
+            byte.to_raw(),
+            count.to_raw(),
+            inherit.to_raw(),
+        ))
+    }
+}
+
+/// Return character in current buffer at position POS.
+/// POS is an integer or a marker and defaults to point.
+/// If POS is out of range, the value is nil.
+#[lisp_fn(min = "0")]
+pub fn char_after(mut pos: LispObject) -> LispObject {
+    let buffer_ref = ThreadState::current_buffer();
+    if pos.is_nil() {
+        pos = point();
+    }
+    if pos.is_marker() {
+        let pos_byte = pos.as_marker().unwrap().bytepos_or_error();
+        // Note that this considers the position in the current buffer,
+        // even if the marker is from another buffer.
+        if pos_byte < buffer_ref.begv_byte || pos_byte >= buffer_ref.zv_byte {
+            LispObject::constant_nil()
+        } else {
+            LispObject::from_natnum(buffer_ref.fetch_char(pos_byte) as EmacsInt)
+        }
+    } else {
+        let p = pos.as_fixnum_coerce_marker_or_error() as ptrdiff_t;
+        if p < buffer_ref.begv || p >= buffer_ref.zv() {
+            LispObject::constant_nil()
+        } else {
+            let pos_byte = unsafe { buf_charpos_to_bytepos(buffer_ref.as_ptr(), p) };
+            LispObject::from_natnum(buffer_ref.fetch_char(pos_byte) as EmacsInt)
+        }
+    }
+}
+
 /// Return a copy of STRING with text properties added.
 /// First argument is the string to copy.
 /// Remaining arguments form a sequence of PROPERTY VALUE pairs for text
