@@ -1349,6 +1349,213 @@ error (const char *m, ...)
   verror (m, ap);
 }
 
+DEFUN ("commandp", Fcommandp, Scommandp, 1, 2, 0,
+       doc: /* Non-nil if FUNCTION makes provisions for interactive calling.
+This means it contains a description for how to read arguments to give it.
+The value is nil for an invalid function or a symbol with no function
+definition.
+
+Interactively callable functions include strings and vectors (treated
+as keyboard macros), lambda-expressions that contain a top-level call
+to `interactive', autoload definitions made by `autoload' with non-nil
+fourth argument, and some of the built-in functions of Lisp.
+
+Also, a symbol satisfies `commandp' if its function definition does so.
+
+If the optional argument FOR-CALL-INTERACTIVELY is non-nil,
+then strings and vectors are not accepted.  */)
+  (Lisp_Object function, Lisp_Object for_call_interactively)
+{
+  register Lisp_Object fun;
+  register Lisp_Object funcar;
+  Lisp_Object if_prop = Qnil;
+
+  fun = function;
+
+  fun = indirect_function (fun); /* Check cycles.  */
+  if (NILP (fun))
+    return Qnil;
+
+  /* Check an `interactive-form' property if present, analogous to the
+     function-documentation property.  */
+  fun = function;
+  while (SYMBOLP (fun))
+    {
+      Lisp_Object tmp = Fget (fun, Qinteractive_form);
+      if (!NILP (tmp))
+	if_prop = Qt;
+      fun = Fsymbol_function (fun);
+    }
+
+  /* Emacs primitives are interactive if their DEFUN specifies an
+     interactive spec.  */
+  if (SUBRP (fun))
+    return XSUBR (fun)->intspec ? Qt : if_prop;
+
+  /* Bytecode objects are interactive if they are long enough to
+     have an element whose index is COMPILED_INTERACTIVE, which is
+     where the interactive spec is stored.  */
+  else if (COMPILEDP (fun))
+    return (PVSIZE (fun) > COMPILED_INTERACTIVE ? Qt : if_prop);
+
+  /* Strings and vectors are keyboard macros.  */
+  if (STRINGP (fun) || VECTORP (fun))
+    return (NILP (for_call_interactively) ? Qt : Qnil);
+
+  /* Lists may represent commands.  */
+  if (!CONSP (fun))
+    return Qnil;
+  funcar = XCAR (fun);
+  if (EQ (funcar, Qclosure))
+    return (!NILP (Fassq (Qinteractive, Fcdr (Fcdr (XCDR (fun)))))
+	    ? Qt : if_prop);
+  else if (EQ (funcar, Qlambda))
+    return !NILP (Fassq (Qinteractive, Fcdr (XCDR (fun)))) ? Qt : if_prop;
+  else if (EQ (funcar, Qautoload))
+    return !NILP (Fcar (Fcdr (Fcdr (XCDR (fun))))) ? Qt : if_prop;
+  else
+    return Qnil;
+}
+
+DEFUN ("autoload", Fautoload, Sautoload, 2, 5, 0,
+       doc: /* Define FUNCTION to autoload from FILE.
+FUNCTION is a symbol; FILE is a file name string to pass to `load'.
+Third arg DOCSTRING is documentation for the function.
+Fourth arg INTERACTIVE if non-nil says function can be called interactively.
+Fifth arg TYPE indicates the type of the object:
+   nil or omitted says FUNCTION is a function,
+   `keymap' says FUNCTION is really a keymap, and
+   `macro' or t says FUNCTION is really a macro.
+Third through fifth args give info about the real definition.
+They default to nil.
+If FUNCTION is already defined other than as an autoload,
+this does nothing and returns nil.  */)
+  (Lisp_Object function, Lisp_Object file, Lisp_Object docstring, Lisp_Object interactive, Lisp_Object type)
+{
+  CHECK_SYMBOL (function);
+  CHECK_STRING (file);
+
+  /* If function is defined and not as an autoload, don't override.  */
+  if (!NILP (XSYMBOL (function)->function)
+      && !AUTOLOADP (XSYMBOL (function)->function))
+    return Qnil;
+
+  if (!NILP (Vpurify_flag) && EQ (docstring, make_number (0)))
+    /* `read1' in lread.c has found the docstring starting with "\
+       and assumed the docstring will be provided by Snarf-documentation, so it
+       passed us 0 instead.  But that leads to accidental sharing in purecopy's
+       hash-consing, so we use a (hopefully) unique integer instead.  */
+    docstring = make_number (XHASH (function));
+  return Fdefalias (function,
+		    list5 (Qautoload, file, docstring, interactive, type),
+		    Qnil);
+}
+
+void
+un_autoload (Lisp_Object oldqueue)
+{
+  Lisp_Object queue, first, second;
+
+  /* Queue to unwind is current value of Vautoload_queue.
+     oldqueue is the shadowed value to leave in Vautoload_queue.  */
+  queue = Vautoload_queue;
+  Vautoload_queue = oldqueue;
+  while (CONSP (queue))
+    {
+      first = XCAR (queue);
+      second = Fcdr (first);
+      first = Fcar (first);
+      if (EQ (first, make_number (0)))
+	Vfeatures = second;
+      else
+	Ffset (first, second);
+      queue = XCDR (queue);
+    }
+}
+
+/* Load an autoloaded function.
+   FUNNAME is the symbol which is the function's name.
+   FUNDEF is the autoload definition (a list).  */
+
+DEFUN ("autoload-do-load", Fautoload_do_load, Sautoload_do_load, 1, 3, 0,
+       doc: /* Load FUNDEF which should be an autoload.
+If non-nil, FUNNAME should be the symbol whose function value is FUNDEF,
+in which case the function returns the new autoloaded function value.
+If equal to `macro', MACRO-ONLY specifies that FUNDEF should only be loaded if
+it defines a macro.  */)
+  (Lisp_Object fundef, Lisp_Object funname, Lisp_Object macro_only)
+{
+  ptrdiff_t count = SPECPDL_INDEX ();
+
+  if (!CONSP (fundef) || !EQ (Qautoload, XCAR (fundef)))
+    return fundef;
+
+  Lisp_Object kind = Fnth (make_number (4), fundef);
+  if (EQ (macro_only, Qmacro)
+      && !(EQ (kind, Qt) || EQ (kind, Qmacro)))
+    return fundef;
+
+  /* This is to make sure that loadup.el gives a clear picture
+     of what files are preloaded and when.  */
+  if (! NILP (Vpurify_flag))
+    error ("Attempt to autoload %s while preparing to dump",
+	   SDATA (SYMBOL_NAME (funname)));
+
+  CHECK_SYMBOL (funname);
+
+  /* Preserve the match data.  */
+  record_unwind_save_match_data ();
+
+  /* If autoloading gets an error (which includes the error of failing
+     to define the function being called), we use Vautoload_queue
+     to undo function definitions and `provide' calls made by
+     the function.  We do this in the specific case of autoloading
+     because autoloading is not an explicit request "load this file",
+     but rather a request to "call this function".
+
+     The value saved here is to be restored into Vautoload_queue.  */
+  record_unwind_protect (un_autoload, Vautoload_queue);
+  Vautoload_queue = Qt;
+  /* If `macro_only' is set and fundef isn't a macro, assume this autoload to
+     be a "best-effort" (e.g. to try and find a compiler macro),
+     so don't signal an error if autoloading fails.  */
+  Lisp_Object ignore_errors
+    = (EQ (kind, Qt) || EQ (kind, Qmacro)) ? Qnil : macro_only;
+  Fload (Fcar (Fcdr (fundef)), ignore_errors, Qt, Qnil, Qt);
+
+  /* Once loading finishes, don't undo it.  */
+  Vautoload_queue = Qt;
+  unbind_to (count, Qnil);
+
+  if (NILP (funname) || !NILP (ignore_errors))
+    return Qnil;
+  else
+    {
+      Lisp_Object fun = Findirect_function (funname, Qnil);
+
+      if (!NILP (Fequal (fun, fundef)))
+	error ("Autoloading file %s failed to define function %s",
+	       SDATA (Fcar (Fcar (Vload_history))),
+	       SDATA (SYMBOL_NAME (funname)));
+      else
+	return fun;
+    }
+}
+
+
+DEFUN ("eval", Feval, Seval, 1, 2, 0,
+       doc: /* Evaluate FORM and return its value.
+If LEXICAL is t, evaluate using lexical scoping.
+LEXICAL can also be an actual lexical environment, in the form of an
+alist mapping symbols to their value.  */)
+  (Lisp_Object form, Lisp_Object lexical)
+{
+  ptrdiff_t count = SPECPDL_INDEX ();
+  specbind (Qinternal_interpreter_environment,
+	    CONSP (lexical) || NILP (lexical) ? lexical : list1 (Qt));
+  return unbind_to (count, eval_sub (form));
+}
+
 /* Grow the specpdl stack by one entry.
    The caller should have already initialized the entry.
    Signal an error on stack overflow.
