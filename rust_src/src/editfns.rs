@@ -165,9 +165,22 @@ pub fn propertize(args: &mut [LispObject]) -> LispObject {
     if args.len() & 1 == 0 {
         error!("Wrong number of arguments");
     }
-    let buf = ThreadState::current_buffer();
-    if b >= 128 && LispObject::from(buf.enable_multibyte_characters).is_not_nil() {
-        byte = LispObject::from_natnum(raw_byte_codepoint(b as c_uchar) as EmacsInt);
+
+    let mut it = args.iter();
+
+    // the unwrap call is safe, the number of args has already been checked
+    let first = it.next().unwrap();
+    let orig_string = first.as_string_or_error();
+
+    let copy = LispObject::from(unsafe { Fcopy_sequence(first.to_raw()) });
+
+    // this is a C style Lisp_Object because that is what Fcons expects and returns.
+    // Once Fcons is ported to Rust this can be migrated to a LispObject.
+    let mut properties = Qnil;
+
+    while let Some(a) = it.next() {
+        let b = it.next().unwrap(); // safe due to the odd check at the beginning
+        properties = unsafe { Fcons(a.to_raw(), Fcons(b.to_raw(), properties)) };
     }
 
     unsafe {
