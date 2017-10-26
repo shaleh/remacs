@@ -65,6 +65,7 @@ mod cmds;
 mod data;
 mod fns;
 mod dispnew;
+mod indent;
 
 #[cfg(all(not(test), target_os = "macos"))]
 use alloc_unexecmacosx::OsxUnexecAlloc;
@@ -435,6 +436,7 @@ pub extern "C" fn rust_init_syms() {
         defsubr(&*data::Sindirect_function);
         defsubr(&*frames::Sselected_frame);
         defsubr(&*dispnew::Ssleep_for);
+        defsubr(&*indent::Scurrent_column);
         defsubr(&*process::Sprocess_list);
     }
 }
