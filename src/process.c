@@ -1453,18 +1453,6 @@ DEFUN ("process-plist", Fprocess_plist, Sprocess_plist,
   return XPROCESS (process)->plist;
 }
 
-DEFUN ("set-process-plist", Fset_process_plist, Sset_process_plist,
-       2, 2, 0,
-       doc: /* Replace the plist of PROCESS with PLIST.  Return PLIST.  */)
-  (Lisp_Object process, Lisp_Object plist)
-{
-  CHECK_PROCESS (process);
-  CHECK_LIST (plist);
-
-  pset_plist (XPROCESS (process), plist);
-  return plist;
-}
-
 #if 0 /* Turned off because we don't currently record this info
 	 in the process.  Perhaps add it.  */
 DEFUN ("process-connection", Fprocess_connection, Sprocess_connection, 1, 1, 0,
@@ -7944,7 +7932,6 @@ The variable takes effect when `start-process' is called.  */);
   defsubr (&Sprocess_query_on_exit_flag);
   defsubr (&Sprocess_contact);
   defsubr (&Sprocess_plist);
-  defsubr (&Sset_process_plist);
   defsubr (&Smake_process);
   defsubr (&Smake_pipe_process);
   defsubr (&Sserial_process_configure);
