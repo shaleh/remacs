@@ -317,6 +317,10 @@ Snake and Pong are more playable on HiDPI displays.
 *** Completing filenames in the minibuffer via 'C-TAB' now uses the
 styles as configured by the variable 'completion-styles'.
 
+** New macros 'thunk-let' and 'thunk-let*'.
+These macros are analogue to 'let' and 'let*', but create bindings that
+are evaluated lazily.
+
 
 * Startup Changes in Emacs 26.1
 
