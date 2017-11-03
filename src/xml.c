@@ -18,14 +18,14 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 
 #include <config.h>
 
+#include "lisp.h"
+#include "buffer.h"
+
 #ifdef HAVE_LIBXML2
 
 #include <libxml/tree.h>
 #include <libxml/parser.h>
 #include <libxml/HTMLparser.h>
-
-#include "lisp.h"
-#include "buffer.h"
 
 
 #ifdef WINDOWSNT
@@ -266,4 +266,68 @@ xml_cleanup_parser (void)
     xmlCleanupParser ();
 }
 
+DEFUN ("libxml-parse-html-region", Flibxml_parse_html_region,
+       Slibxml_parse_html_region,
+       2, 4, 0,
+       doc: /* Parse the region as an HTML document and return the parse tree.
+If BASE-URL is non-nil, it is used to expand relative URLs.
+If DISCARD-COMMENTS is non-nil, all HTML comments are discarded. */)
+  (Lisp_Object start, Lisp_Object end, Lisp_Object base_url, Lisp_Object discard_comments)
+{
+  if (init_libxml2_functions ())
+    return parse_region (start, end, base_url, discard_comments, true);
+  return Qnil;
+}
+
+DEFUN ("libxml-parse-xml-region", Flibxml_parse_xml_region,
+       Slibxml_parse_xml_region,
+       2, 4, 0,
+       doc: /* Parse the region as an XML document and return the parse tree.
+If BASE-URL is non-nil, it is used to expand relative URLs.
+If DISCARD-COMMENTS is non-nil, all HTML comments are discarded. */)
+  (Lisp_Object start, Lisp_Object end, Lisp_Object base_url, Lisp_Object discard_comments)
+{
+  if (init_libxml2_functions ())
+    return parse_region (start, end, base_url, discard_comments, false);
+  return Qnil;
+}
 #endif /* HAVE_LIBXML2 */
+
+
+
+DEFUN ("libxml-available-p", Flibxml_available_p, Slibxml_available_p, 0, 0, 0,
+       doc: /* Return t if libxml2 support is available in this instance of Emacs.*/)
+  (void)
+{
+#ifdef HAVE_LIBXML2
+# ifdef WINDOWSNT
+  Lisp_Object found = Fassq (Qlibxml2, Vlibrary_cache);
+  if (CONSP (found))
+    return XCDR (found);
+  else
+    {
+      Lisp_Object status;
+      status = init_libxml2_functions () ? Qt : Qnil;
+      Vlibrary_cache = Fcons (Fcons (Qlibxml2, status), Vlibrary_cache);
+      return status;
+    }
+# else
+  return Qt;
+# endif /* WINDOWSNT */
+#else
+  return Qnil;
+#endif	/* HAVE_LIBXML2 */
+}
+
+/***********************************************************************
+			    Initialization
+ ***********************************************************************/
+void
+syms_of_xml (void)
+{
+#ifdef HAVE_LIBXML2
+  defsubr (&Slibxml_parse_html_region);
+  defsubr (&Slibxml_parse_xml_region);
+#endif
+  defsubr (&Slibxml_available_p);
+}

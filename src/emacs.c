@@ -1487,6 +1487,8 @@ Using an Emacs configured with --with-x-toolkit=lucid does not have this problem
 #endif
 #endif /* HAVE_X_WINDOWS */
 
+      syms_of_xml ();
+
 #ifdef HAVE_LCMS2
       syms_of_lcms2 ();
 #endif
