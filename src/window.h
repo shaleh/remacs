@@ -506,6 +506,9 @@ wset_next_buffers (struct window *w, Lisp_Object val)
   w->next_buffers = val;
 }
 
+Lisp_Object
+wget_parent(struct window *w);
+
 /* True if W is a minibuffer window.  */
 #define MINI_WINDOW_P(W) ((W)->mini)
 
