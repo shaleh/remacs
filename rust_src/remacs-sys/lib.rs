@@ -941,6 +941,14 @@ pub struct terminal {
     pub header: Lisp_Vectorlike_Header,
 }
 
+pub enum OutputMethod {
+    output_initial,
+    output_termcap,
+    output_x_window,
+    output_w32,
+    output_ns,
+}
+
 /// Functions to access members of `struct frame`.
 extern "C" {
     pub fn fget_column_width(f: *const Lisp_Frame) -> c_int;
@@ -948,6 +956,7 @@ extern "C" {
     pub fn fget_minibuffer_window(f: *const Lisp_Frame) -> Lisp_Object;
     pub fn fget_root_window(f: *const Lisp_Frame) -> Lisp_Object;
     pub fn fget_terminal(f: *const Lisp_Frame) -> *const terminal;
+    pub fn fget_output_method(f: *const Lisp_Frame) -> OutputMethod;
 }
 
 extern "C" {
@@ -1204,31 +1213,9 @@ extern "C" {
         inhibit_capture_property: Lisp_Object,
     ) -> Lisp_Object;
     pub fn Fline_end_position(n: Lisp_Object) -> Lisp_Object;
-    pub fn get_process(name: Lisp_Object) -> Lisp_Object;
-    pub fn update_status(p: *const Lisp_Process);
-    pub fn setup_process_coding_systems(process: Lisp_Object);
-    pub fn send_process(
-        process: Lisp_Object,
-        buf: *const c_char,
-        len: ptrdiff_t,
-        object: Lisp_Object,
-    );
-    pub fn STRING_BYTES(s: *const Lisp_String) -> ptrdiff_t;
-    pub fn Fevent_convert_list(event_desc: Lisp_Object) -> Lisp_Object;
-    pub fn access_keymap(
-        map: Lisp_Object,
-        idx: Lisp_Object,
-        ok: bool,
-        noinherit: bool,
-        autoload: bool,
-    ) -> Lisp_Object;
-    pub fn get_keymap(
-        object: Lisp_Object,
-        error_if_not_keymap: bool,
-        autoload: bool,
-    ) -> Lisp_Object;
-    pub fn message_with_string(m: *const c_char, string: Lisp_Object, log: bool);
-    pub fn maybe_quit();
+    pub fn Fselect_window(window: Lisp_Object, norecord: Lisp_Object) -> Lisp_Object;
+    pub fn Fframep(object: Lisp_Object) -> Lisp_Object;
+    // pub fn frame_live_p(object: Lisp_Object) -> Lisp_Object;
 }
 
 /// Contains C definitions from the font.h header.
