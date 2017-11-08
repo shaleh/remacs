@@ -850,7 +850,16 @@ to prepend a space."
   (princ (object-print object) stream))
 
 (defvar eieio-print-depth 0
-  "When printing, keep track of the current indentation depth.")
+  "The current indentation depth while printing.
+Ignored if `eieio-print-indentation' is nil.")
+
+(defvar eieio-print-indentation t
+  "When non-nil, indent contents of printed objects.")
+
+(defvar eieio-print-object-name t
+  "When non-nil write the object name in `object-write'.
+Does not affect objects subclassing `eieio-named'.  Note that
+Emacs<26 requires that object names be present.")
 
 (cl-defgeneric object-write (this &optional comment)
   "Write out object THIS to the current stream.
@@ -862,10 +871,11 @@ This writes out the vector version of this object.  Complex and recursive
 object are discouraged from being written.
   If optional COMMENT is non-nil, include comments when outputting
 this object."
-  (when comment
+  (when eieio-print-object-name
     (princ ";; Object ")
     (princ (eieio-object-name-string this))
-    (princ "\n")
+    (princ "\n"))
+  (when comment
     (princ comment)
     (princ "\n"))
   (let* ((cl (eieio-object-class this))
@@ -874,11 +884,13 @@ this object."
     ;; It should look like this:
     ;; (<constructor> <name> <slot> <slot> ... )
     ;; Each slot's slot is writen using its :writer.
-    (princ (make-string (* eieio-print-depth 2) ? ))
+    (when eieio-print-indentation
+      (princ (make-string (* eieio-print-depth 2) ? )))
     (princ "(")
     (princ (symbol-name (eieio--class-constructor (eieio-object-class this))))
-    (princ " ")
-    (prin1 (eieio-object-name-string this))
+    (when eieio-print-object-name
+      (princ " ")
+      (prin1 (eieio-object-name-string this)))
     (princ "\n")
     ;; Loop over all the public slots
     (let ((slots (eieio--class-slots cv))
@@ -892,7 +904,8 @@ this object."
               (unless (or (not i) (equal v (cl--slot-descriptor-initform slot)))
                 (unless (bolp)
                   (princ "\n"))
-                (princ (make-string (* eieio-print-depth 2) ? ))
+                (when eieio-print-indentation
+                  (princ (make-string (* eieio-print-depth 2) ? )))
                 (princ (symbol-name i))
                 (if (alist-get :printer (cl--slot-descriptor-props slot))
                     ;; Use our public printer
@@ -907,7 +920,7 @@ this object."
                              "\n" " "))
                   (eieio-override-prin1 v))))))))
     (princ ")")
-    (when (= eieio-print-depth 0)
+    (when (zerop eieio-print-depth)
       (princ "\n"))))
 
 (defun eieio-override-prin1 (thing)
@@ -945,14 +958,16 @@ this object."
       (progn
 	(princ "'")
 	(prin1 list))
-    (princ (make-string (* eieio-print-depth 2) ? ))
+    (when eieio-print-indentation
+      (princ (make-string (* eieio-print-depth 2) ? )))
     (princ "(list")
     (let ((eieio-print-depth (1+ eieio-print-depth)))
       (while list
 	(princ "\n")
 	(if (eieio-object-p (car list))
 	    (object-write (car list))
-	  (princ (make-string (* eieio-print-depth 2) ? ))
+          (when eieio-print-indentation
+	   (princ (make-string (* eieio-print-depth) ? )))
 	  (eieio-override-prin1 (car list)))
 	(setq list (cdr list))))
     (princ ")")))
