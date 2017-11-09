@@ -1089,7 +1089,6 @@ extern "C" {
     ) -> Lisp_Object;
 
     // These signal an error, therefore are marked as non-returning.
-    pub fn circular_list(tail: Lisp_Object) -> !;
     pub fn nsberror(spec: Lisp_Object) -> !;
 
     pub fn emacs_abort() -> !;
