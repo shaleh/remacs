@@ -5503,7 +5503,7 @@ int fget_line_height(const struct frame *f)
 }
 
 enum output_method
-fget_output_method(struct frame *f)
+fget_output_method(const struct frame *f)
 {
   return f->output_method;
 }
