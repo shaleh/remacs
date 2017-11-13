@@ -659,24 +659,6 @@ impl LispObject {
         })
     }
 
-    pub fn is_font_entity(self) -> bool {
-        self.is_font() && self.as_vectorlike().map_or(false, |vec| {
-            vec.pseudovector_size() == font::FONT_ENTITY_MAX as i64
-        })
-    }
-
-    pub fn is_font_object(self) -> bool {
-        self.is_font() && self.as_vectorlike().map_or(false, |vec| {
-            vec.pseudovector_size() == font::FONT_OBJECT_MAX as i64
-        })
-    }
-
-    pub fn is_font_spec(self) -> bool {
-        self.is_font() && self.as_vectorlike().map_or(false, |vec| {
-            vec.pseudovector_size() == font::FONT_SPEC_MAX as i64
-        })
-    }
-
     pub fn is_record(self) -> bool {
         self.as_vectorlike()
             .map_or(false, |v| v.is_pseudovector(PseudovecType::PVEC_RECORD))
@@ -1086,7 +1068,7 @@ impl LispObject {
     #[inline]
     pub fn as_marker(self) -> Option<LispMarkerRef> {
         self.as_misc().and_then(|m| {
-            if m.get_type() == Lisp_Misc_Type::Marker {
+            if m.ty == Lisp_Misc_Type::Marker {
                 unsafe { Some(mem::transmute(m)) }
             } else {
                 None
@@ -1123,7 +1105,7 @@ impl LispObject {
 
     pub fn as_overlay(self) -> Option<LispOverlayRef> {
         self.as_misc().and_then(|m| {
-            if m.get_type() == Lisp_Misc_Type::Overlay {
+            if m.ty == Lisp_Misc_Type::Overlay {
                 unsafe { Some(mem::transmute(m)) }
             } else {
                 None
@@ -1141,6 +1123,11 @@ impl LispObject {
     #[inline]
     pub fn eq(self, other: LispObject) -> bool {
         self == other
+    }
+
+    #[inline]
+    pub fn ne(self, other: LispObject) -> bool {
+        self != other
     }
 
     #[inline]
