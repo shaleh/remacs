@@ -1,14 +1,25 @@
-;;; Package -- helpers for Remacs porting
+;;; remacs-helpers.el -- tools for Remacs development
+;;; Commentary:
+
+;; This is a collection of tools to help developers working with Remacs source.
+
+(require 's)
+
+;;; Code:
+
+(defun remacs-helpers/ignored-type-part-p (input)
+  "Predicate to indicate if INPUT is part of a C type ignored in Rust."
+  (string= input "struct"))
 
 (defun remacs-helpers/make-rust-args-from-C-worker (input)
   "Transform function C arguments INPUT into Rust style arguments."
-  (mapconcat (lambda (arg) (let* ((is-struct (lambda (s) (string= s "struct")))
-                                  (pieces (cl-remove-if is-struct (split-string (string-trim arg) " ")))
+  (mapconcat (lambda (arg) (let* ((pieces (cl-remove-if 'remacs-helpers/ignored-type-part-p
+                                                        (split-string (string-trim arg) " ")))
                                   (name (s-append ":" (car (last pieces))))
                                   (rest (butlast pieces)))
-                             (if (s-starts-with? "\*" name)
+                             (if (s-starts-with? "*" name)
                                  (s-join " " (cons (s-chop-prefix "*" name)
-                                                   (cons "*" rest)))
+                                                   (cons "*mut" rest)))
                                (s-join " " (cons name rest)))))
              (split-string input ",")
              ", "))
@@ -21,10 +32,9 @@
      (let ((bds (bounds-of-thing-at-point 'paragraph)) )
        (list nil (car bds) (cdr bds)) ) ) )
 
-  (let* ((stringInputP (if string t nil))
-         (input (if stringInputP string (buffer-substring-no-properties from to)))
+  (let* ((input (or string (buffer-substring-no-properties from to)))
          (output (remacs-helpers/make-rust-args-from-C-worker input)))
-    (if stringInputP
+    (if string
         output
       (save-excursion
         (delete-region from to)
@@ -32,3 +42,5 @@
         (insert output) )) ) )
 
 (provide 'remacs-helpers)
+
+;;; remacs-helpers.el ends here
