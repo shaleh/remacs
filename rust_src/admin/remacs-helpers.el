@@ -3,6 +3,7 @@
 
 ;; This is a collection of tools to help developers working with Remacs source.
 
+(require 'cl)
 (require 's)
 
 ;;; Code:
