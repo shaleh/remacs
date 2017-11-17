@@ -1031,6 +1031,7 @@ extern "C" {
     pub fn Fpurecopy(string: Lisp_Object) -> Lisp_Object;
     pub fn Fconcat(nargs: ptrdiff_t, args: *mut Lisp_Object) -> Lisp_Object;
     pub fn Fnconc(nargs: ptrdiff_t, args: *mut Lisp_Object) -> Lisp_Object;
+    pub fn Fset(symbol: Lisp_Object, newval: Lisp_Object) -> Lisp_Object;
 
     pub fn make_float(float_value: c_double) -> Lisp_Object;
     pub fn make_string(s: *const c_char, length: ptrdiff_t) -> Lisp_Object;

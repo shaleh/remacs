@@ -248,11 +248,6 @@ impl LispBoolVecRef {
     }
 
     #[inline]
-    pub unsafe fn get_unchecked(&self, idx: ptrdiff_t) -> LispObject {
-        ptr::read(mem::transmute::<_, *const LispObject>(&self.contents).offset(idx))
-    }
-
-    #[inline]
     pub fn get(&self, idx: usize) -> LispObject {
         LispObject::from_bool(self.get_bit(idx))
     }

@@ -5,13 +5,13 @@ use remacs_sys::{BoolBF, EmacsInt, Lisp_Process, QCbuffer, Qcdr, Qclosed, Qexit,
                  Qopen, Qpipe, Qrun, Qserial, Qstop, Vprocess_alist};
 use remacs_sys::{get_process as cget_process, pget_kill_without_query, pget_pid,
                  pget_raw_status_new, pset_kill_without_query, send_process,
-                 setup_process_coding_systems, update_status, Fmapcar, STRING_BYTES};
+                 setup_process_coding_systems, update_status, STRING_BYTES};
 
 use lisp::{ExternalPtr, LispObject};
 use lisp::defsubr;
 
 use buffers::get_buffer;
-use lists::{assoc, cdr, plist_put};
+use lists::{assoc, cdr, mapcar, plist_put};
 
 pub type LispProcessRef = ExternalPtr<Lisp_Process>;
 
@@ -116,7 +116,10 @@ pub fn get_buffer_process(buffer: LispObject) -> LispObject {
 /// Return a list of all processes that are Emacs sub-processes.
 #[lisp_fn]
 pub fn process_list() -> LispObject {
-    LispObject::from(unsafe { Fmapcar(Qcdr, Vprocess_alist) })
+    mapcar(
+        LispObject::from(Qcdr),
+        LispObject::from(unsafe { Vprocess_alist }),
+    )
 }
 
 /// Replace the plist of PROCESS with PLIST.  Return PLIST.
