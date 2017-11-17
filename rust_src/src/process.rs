@@ -11,7 +11,7 @@ use lisp::{ExternalPtr, LispObject};
 use lisp::defsubr;
 
 use buffers::get_buffer;
-use lists::{assoc, cdr, mapcar, plist_put};
+use lists::{assoc, cdr, plist_put, rust_mapcar};
 
 pub type LispProcessRef = ExternalPtr<Lisp_Process>;
 
@@ -116,7 +116,7 @@ pub fn get_buffer_process(buffer: LispObject) -> LispObject {
 /// Return a list of all processes that are Emacs sub-processes.
 #[lisp_fn]
 pub fn process_list() -> LispObject {
-    mapcar(
+    rust_mapcar(
         LispObject::from(Qcdr),
         LispObject::from(unsafe { Vprocess_alist }),
     )

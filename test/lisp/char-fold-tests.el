@@ -42,7 +42,7 @@
       ;; A folded string should always match the original string.
       (char-fold--test-search-with-contents w w))))
 
-(ert-deftest char-fold--test-lax-whitespace ()
+(ert-deftest char-fold--b-test-lax-whitespace ()
   (dotimes (n 40)
     (let ((w1 (char-fold--random-word n))
           (w2 (char-fold--random-word n))

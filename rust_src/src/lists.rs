@@ -523,7 +523,7 @@ impl<T> iter::FromIterator<T> for SideEffectOnly {
 }
 
 /// Guts of all mapping functions.
-fn mapcar1<T: iter::FromIterator<LispObject>>(seq: LispObject, func: LispObject) -> T {
+fn rust_mapcar1<T: iter::FromIterator<LispObject>>(seq: LispObject, func: LispObject) -> T {
     if seq.is_cons() {
         seq.iter_tails_safe()
             .map(|cons| call!(func, cons.car()))
@@ -557,7 +557,7 @@ fn mapcar1<T: iter::FromIterator<LispObject>>(seq: LispObject, func: LispObject)
 /// SEQUENCE may be a list, a vector, a bool-vector, or a string.
 #[lisp_fn]
 pub fn mapconcat(function: LispObject, sequence: LispObject, separator: LispObject) -> LispObject {
-    let mapped: Vec<_> = mapcar1(sequence, function);
+    let mapped: Vec<_> = rust_mapcar1(sequence, function);
     let mut with_sep: Vec<_> = mapped
         .into_iter()
         .map(LispObject::to_raw)
@@ -570,8 +570,8 @@ pub fn mapconcat(function: LispObject, sequence: LispObject, separator: LispObje
 /// The result is a list just as long as SEQUENCE.
 /// SEQUENCE may be a list, a vector, a bool-vector, or a string.
 #[lisp_fn]
-pub fn mapcar(function: LispObject, sequence: LispObject) -> LispObject {
-    let mut mapped: Vec<_> = mapcar1(sequence, function);
+pub fn rust_mapcar(function: LispObject, sequence: LispObject) -> LispObject {
+    let mut mapped: Vec<_> = rust_mapcar1(sequence, function);
     list(&mut mapped)
 }
 
@@ -579,8 +579,8 @@ pub fn mapcar(function: LispObject, sequence: LispObject) -> LispObject {
 /// Unlike `mapcar', don't accumulate the results.  Return SEQUENCE.
 /// SEQUENCE may be a list, a vector, a bool-vector, or a string.
 #[lisp_fn]
-pub fn mapc(function: LispObject, sequence: LispObject) -> LispObject {
-    let _: SideEffectOnly = mapcar1(sequence, function);
+pub fn rust_mapc(function: LispObject, sequence: LispObject) -> LispObject {
+    let _: SideEffectOnly = rust_mapcar1(sequence, function);
     sequence
 }
 
@@ -588,8 +588,8 @@ pub fn mapc(function: LispObject, sequence: LispObject) -> LispObject {
 /// the results by altering them (using `nconc').
 /// SEQUENCE may be a list, a vector, a bool-vector, or a string.
 #[lisp_fn]
-pub fn mapcan(function: LispObject, sequence: LispObject) -> LispObject {
-    let mut mapped: Vec<_> = mapcar1(sequence, function);
+pub fn rust_mapcan(function: LispObject, sequence: LispObject) -> LispObject {
+    let mut mapped: Vec<_> = rust_mapcar1(sequence, function);
     unsafe {
         let raw_slice = mem::transmute::<&mut [LispObject], &mut [Lisp_Object]>(&mut mapped);
         LispObject::from(Fnconc(raw_slice.len() as ptrdiff_t, raw_slice.as_mut_ptr()))
