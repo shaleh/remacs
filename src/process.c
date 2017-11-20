@@ -1092,18 +1092,6 @@ If PROCESS has not yet exited or died, return 0.  */)
   return make_number (0);
 }
 
-DEFUN ("process-command", Fprocess_command, Sprocess_command, 1, 1, 0,
-       doc: /* Return the command that was executed to start PROCESS.
-This is a list of strings, the first string being the program executed
-and the rest of the strings being the arguments given to it.
-For a network or serial or pipe connection, this is nil (process is running)
-or t (process is stopped).  */)
-  (register Lisp_Object process)
-{
-  CHECK_PROCESS (process);
-  return XPROCESS (process)->command;
-}
-
 DEFUN ("process-mark", Fprocess_mark, Sprocess_mark,
        1, 1, 0,
        doc: /* Return the marker for the end of the last output from PROCESS.  */)
@@ -7800,7 +7788,6 @@ The variable takes effect when `start-process' is called.  */);
 
   defsubr (&Sdelete_process);
   defsubr (&Sprocess_exit_status);
-  defsubr (&Sprocess_command);
   defsubr (&Sprocess_mark);
   defsubr (&Sset_process_filter);
   defsubr (&Sprocess_filter);
