@@ -1092,14 +1092,6 @@ If PROCESS has not yet exited or died, return 0.  */)
   return make_number (0);
 }
 
-DEFUN ("process-mark", Fprocess_mark, Sprocess_mark,
-       1, 1, 0,
-       doc: /* Return the marker for the end of the last output from PROCESS.  */)
-  (register Lisp_Object process)
-{
-  CHECK_PROCESS (process);
-  return XPROCESS (process)->mark;
-}
 
 static void
 set_process_filter_masks (struct Lisp_Process *p)
@@ -7788,7 +7780,6 @@ The variable takes effect when `start-process' is called.  */);
 
   defsubr (&Sdelete_process);
   defsubr (&Sprocess_exit_status);
-  defsubr (&Sprocess_mark);
   defsubr (&Sset_process_filter);
   defsubr (&Sprocess_filter);
   defsubr (&Sset_process_sentinel);
