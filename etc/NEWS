@@ -321,6 +321,15 @@ styles as configured by the variable 'completion-styles'.
 These macros are analogue to 'let' and 'let*', but create bindings that
 are evaluated lazily.
 
+** Eshell
+
+---
+*** Expansion of history event designators is disabled by default.
+To restore the old behavior, use
+
+    (add-hook 'eshell-expand-input-functions
+              #'eshell-expand-history-references)
+
 
 * Startup Changes in Emacs 26.1
 
