@@ -883,7 +883,7 @@ The function `default-value' gets the default value and `set-default' sets it.  
     }
 
   if (SYMBOL_CONSTANT_P (variable))
-    error ("Symbol %s may not be buffer-local", SDATA (SYMBOL_NAME (variable)));
+    xsignal1 (Qsetting_constant, variable);
 
   if (!blv)
     {
@@ -946,8 +946,7 @@ Instead, use `add-hook' and specify t for the LOCAL argument.  */)
     }
 
   if (sym->u.s.trapped_write == SYMBOL_NOWRITE)
-    error ("Symbol %s may not be buffer-local",
-	   SDATA (SYMBOL_NAME (variable)));
+    xsignal1 (Qsetting_constant, variable);
 
   if (blv ? blv->local_if_set
       : (forwarded && BUFFER_OBJFWDP (valcontents.fwd)))
