@@ -206,12 +206,13 @@ fn logxor(args: &mut [LispObject]) -> LispObject {
 fn minmax_driver(args: &[LispObject], comparison: ArithComparison) -> LispObject {
     assert!(!args.is_empty());
     let mut accum = args[0];
+    accum.as_number_coerce_marker_or_error();
     for &arg in &args[1..] {
         if arithcompare(arg, accum, comparison).is_not_nil() {
             accum = arg;
         }
-        if accum.as_float().map_or(false, |f| f.is_nan()) {
-            return accum;
+        if arg.as_float().map_or(false, |f| f.is_nan()) {
+            return arg;
         }
     }
     // we should return the same object if it's not a marker
