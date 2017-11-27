@@ -26,7 +26,27 @@ impl LispFrameRef {
     }
 
     #[inline]
-    pub fn fset_selected_window(&mut self, window: LispObject) {
+    pub fn column_width(self) -> i32 {
+        unsafe { fget_column_width(self.as_ptr()) }
+    }
+
+    #[inline]
+    pub fn line_height(self) -> i32 {
+        unsafe { fget_line_height(self.as_ptr()) }
+    }
+
+    #[inline]
+    pub fn minibuffer_window(self) -> LispObject {
+        LispObject::from(unsafe { fget_minibuffer_window(self.as_ptr()) })
+    }
+
+    #[inline]
+    pub fn root_window(self) -> LispObject {
+        LispObject::from(unsafe { fget_root_window(self.as_ptr()) })
+    }
+
+    #[inline]
+    pub fn set_selected_window(&mut self, window: LispObject) {
         self.selected_window = window.to_raw();
     }
 }
@@ -96,21 +116,16 @@ pub fn set_frame_selected_window(
     window: LispObject,
     norecord: LispObject,
 ) -> LispObject {
-    let f = if frame.is_nil() {
-        selected_frame()
-    } else {
-        frame
-    };
-    let mut frame_ref = frame_live_or_selected(f);
+    let mut frame_ref = frame_live_or_selected(frame);
     let w = window.as_live_window_or_error();
 
-    if f.ne(w.frame()) {
+    if frame_ref != w.frame().as_frame().unwrap() {
         error!("In `set-frame-selected-window', WINDOW is not on FRAME")
     }
-    if f.eq(selected_frame()) {
+    if frame_ref == selected_frame().as_frame().unwrap() {
         unsafe { LispObject::from(Fselect_window(window.to_raw(), norecord.to_raw())) }
     } else {
-        frame_ref.fset_selected_window(window);
+        frame_ref.set_selected_window(window);
         window
     }
 }
