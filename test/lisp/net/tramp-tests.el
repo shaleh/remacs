@@ -2656,7 +2656,9 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
 	   (tmp-name1 (tramp--test-make-temp-name nil quoted))
 	   (tmp-name2 (tramp--test-make-temp-name nil quoted))
 	   (tmp-name3 (tramp--test-make-temp-name 'local quoted))
-	   (tmp-name4 (tramp--test-make-temp-name nil quoted)))
+	   (tmp-name4 (tramp--test-make-temp-name nil quoted))
+           (tmp-name5
+            (expand-file-name (file-name-nondirectory tmp-name1) tmp-name4)))
 
       ;; Check `make-symbolic-link'.
       (unwind-protect
