@@ -590,7 +590,6 @@ xg_check_special_colors (struct frame *f,
          a single background color any more, so we shouldn’t query for
          it.  */
       gtk_style_context_get_background_color (gsty, state, &col);
-#endif
 
     unsigned short
       r = col.red * 65535,
