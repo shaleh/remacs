@@ -319,7 +319,7 @@ fn get_input(
 ///
 /// If BINARY is non-nil, returns a string in binary form.
 #[lisp_fn(min = "1")]
-fn md5(
+pub fn md5(
     object: LispObject,
     start: LispObject,
     end: LispObject,
@@ -350,7 +350,7 @@ fn md5(
 ///
 /// If BINARY is non-nil, returns a string in binary form.
 #[lisp_fn(min = "2")]
-fn secure_hash(
+pub fn secure_hash(
     algorithm: LispObject,
     object: LispObject,
     start: LispObject,
@@ -482,7 +482,7 @@ fn sha512_buffer(buffer: &[u8], dest_buf: &mut [u8]) {
 /// disregarding any coding systems.
 /// If nil, use the current buffer.
 #[lisp_fn(min = "0")]
-fn buffer_hash(buffer_or_name: LispObject) -> LispObject {
+pub fn buffer_hash(buffer_or_name: LispObject) -> LispObject {
     let buffer = if buffer_or_name.is_nil() {
         current_buffer()
     } else {
