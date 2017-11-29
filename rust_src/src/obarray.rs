@@ -2,9 +2,9 @@
 use libc;
 
 use remacs_macros::lisp_fn;
-use remacs_sys::{Fpurecopy, Lisp_Object};
-use remacs_sys::{check_obarray, check_vobarray, globals, intern_driver, make_unibyte_string,
-                 oblookup};
+use remacs_sys::{check_obarray, check_vobarray, intern_driver, make_unibyte_string, oblookup,
+                 Fpurecopy};
+use remacs_sys::{globals, Lisp_Object};
 
 use lisp::LispObject;
 use lisp::defsubr;
@@ -13,6 +13,12 @@ use lisp::defsubr;
 pub struct LispObarrayRef(LispObject);
 
 impl LispObarrayRef {
+    #[allow(dead_code)]
+    #[inline]
+    pub fn as_obj(self) -> LispObject {
+        self.0
+    }
+
     /// Return a reference to the Lisp variable `obarray`.
     pub fn constant_obarray() -> LispObarrayRef {
         LispObarrayRef(LispObject::from(unsafe { check_vobarray() }))

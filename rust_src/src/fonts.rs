@@ -1,7 +1,8 @@
 //! font support
 
 use remacs_macros::lisp_fn;
-use remacs_sys::{EmacsInt, Qfont_entity, Qfont_object, Qfont_spec};
+use remacs_sys::{EmacsInt, Lisp_Type};
+use remacs_sys::{Qfont_entity, Qfont_object, Qfont_spec};
 use remacs_sys::font;
 
 use lisp::{defsubr, intern};
@@ -14,6 +15,11 @@ use vectors::LispVectorlikeRef;
 pub struct LispFontRef(LispVectorlikeRef);
 
 impl LispFontRef {
+    #[inline]
+    pub fn as_obj(self) -> LispObject {
+        LispObject::tag_ptr(self.0, Lisp_Type::Lisp_Vectorlike)
+    }
+
     #[inline]
     pub fn from_vectorlike(v: LispVectorlikeRef) -> LispFontRef {
         LispFontRef(v)

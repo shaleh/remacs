@@ -1,7 +1,7 @@
 //! Generic frame functions.
 
 use remacs_macros::lisp_fn;
-use remacs_sys::{selected_frame as current_frame, Lisp_Frame};
+use remacs_sys::{selected_frame as current_frame, Lisp_Frame, Lisp_Type};
 use remacs_sys::{fget_column_width, fget_line_height, fget_minibuffer_window, fget_root_window,
                  fget_terminal};
 use remacs_sys::Qframe_live_p;
@@ -12,6 +12,11 @@ use lisp::defsubr;
 pub type LispFrameRef = ExternalPtr<Lisp_Frame>;
 
 impl LispFrameRef {
+    #[inline]
+    pub fn as_obj(self) -> LispObject {
+        LispObject::tag_ptr(self, Lisp_Type::Lisp_Vectorlike)
+    }
+
     #[inline]
     pub fn is_live(&self) -> bool {
         unsafe { !fget_terminal(self.as_ptr()).is_null() }

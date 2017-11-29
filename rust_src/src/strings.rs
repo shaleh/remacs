@@ -5,9 +5,9 @@ use std::ptr;
 use libc;
 
 use remacs_macros::lisp_fn;
+use remacs_sys::EmacsInt;
 use remacs_sys::{make_unibyte_string, make_uninit_multibyte_string,
                  string_to_multibyte as c_string_to_multibyte};
-use remacs_sys::EmacsInt;
 
 use lisp::LispObject;
 use lisp::defsubr;

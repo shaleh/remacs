@@ -8,9 +8,11 @@ use std::slice;
 use libc::ptrdiff_t;
 
 use remacs_macros::lisp_fn;
-use remacs_sys::{EmacsInt, Faref, Lisp_Bool_Vector, Lisp_Vector, Lisp_Vectorlike, PseudovecType,
-                 Qsequencep, MOST_POSITIVE_FIXNUM, PSEUDOVECTOR_AREA_BITS, PSEUDOVECTOR_FLAG,
+use remacs_sys::{EmacsInt, Lisp_Bool_Vector, Lisp_Type, Lisp_Vector, Lisp_Vectorlike,
+                 PseudovecType, MOST_POSITIVE_FIXNUM, PSEUDOVECTOR_AREA_BITS, PSEUDOVECTOR_FLAG,
                  PSEUDOVECTOR_SIZE_MASK, PVEC_TYPE_MASK};
+use remacs_sys::Faref;
+use remacs_sys::Qsequencep;
 
 use buffers::LispBufferRef;
 use chartable::LispCharTableRef;
@@ -28,6 +30,11 @@ pub type LispVectorRef = ExternalPtr<Lisp_Vector>;
 pub type LispBoolVecRef = ExternalPtr<Lisp_Bool_Vector>;
 
 impl LispVectorlikeRef {
+    #[inline]
+    pub fn as_obj(self) -> LispObject {
+        LispObject::tag_ptr(self, Lisp_Type::Lisp_Vectorlike)
+    }
+
     #[inline]
     pub fn is_vector(&self) -> bool {
         self.header.size & PSEUDOVECTOR_FLAG == 0
@@ -124,6 +131,11 @@ impl LispVectorlikeRef {
 
 impl LispVectorRef {
     #[inline]
+    pub fn as_obj(self) -> LispObject {
+        LispObject::tag_ptr(self, Lisp_Type::Lisp_Vectorlike)
+    }
+
+    #[inline]
     pub fn len(&self) -> usize {
         self.header.size as usize
     }
@@ -161,6 +173,11 @@ impl LispVectorRef {
 }
 
 impl LispBoolVecRef {
+    #[inline]
+    pub fn as_obj(self) -> LispObject {
+        LispObject::tag_ptr(self, Lisp_Type::Lisp_Vectorlike)
+    }
+
     pub fn len(&self) -> usize {
         self.size as usize
     }

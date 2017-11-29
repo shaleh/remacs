@@ -1,11 +1,12 @@
 //! Functions operating on process.
 
 use remacs_macros::lisp_fn;
-use remacs_sys::{BoolBF, EmacsInt, Lisp_Process, QCbuffer, Qcdr, Qclosed, Qexit, Qlistp, Qnetwork,
-                 Qopen, Qpipe, Qrun, Qserial, Qstop, Vprocess_alist};
+use remacs_sys::{BoolBF, EmacsInt, Lisp_Process, Lisp_Type};
 use remacs_sys::{get_process as cget_process, pget_kill_without_query, pget_pid,
                  pget_raw_status_new, pset_kill_without_query, send_process,
                  setup_process_coding_systems, update_status, Fmapcar, STRING_BYTES};
+use remacs_sys::{QCbuffer, Qcdr, Qclosed, Qexit, Qlistp, Qnetwork, Qopen, Qpipe, Qrun, Qserial,
+                 Qstop, Vprocess_alist};
 
 use lisp::{ExternalPtr, LispObject};
 use lisp::defsubr;
@@ -16,6 +17,11 @@ use lists::{assoc, cdr, plist_put};
 pub type LispProcessRef = ExternalPtr<Lisp_Process>;
 
 impl LispProcessRef {
+    #[inline]
+    pub fn as_obj(self) -> LispObject {
+        LispObject::tag_ptr(self, Lisp_Type::Lisp_Vectorlike)
+    }
+
     #[inline]
     fn name(&self) -> LispObject {
         LispObject::from(self.name)

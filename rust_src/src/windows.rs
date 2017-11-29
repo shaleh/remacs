@@ -3,7 +3,7 @@
 use libc::c_int;
 
 use remacs_macros::lisp_fn;
-use remacs_sys::{EmacsInt, Lisp_Window};
+use remacs_sys::{EmacsInt, Lisp_Type, Lisp_Window};
 use remacs_sys::{Qceiling, Qfloor, Qheader_line_format, Qmode_line_format, Qnone};
 use remacs_sys::{is_minibuffer, minibuf_level, minibuf_selected_window as current_minibuf_window,
                  selected_window as current_window, wget_parent, wget_pixel_height,
@@ -18,11 +18,16 @@ use marker::marker_position;
 pub type LispWindowRef = ExternalPtr<Lisp_Window>;
 
 impl LispWindowRef {
+    #[inline]
+    pub fn as_obj(self) -> LispObject {
+        LispObject::tag_ptr(self, Lisp_Type::Lisp_Vectorlike)
+    }
+
     /// Check if window is a live window (displays a buffer).
     /// This is also sometimes called a "leaf window" in Emacs sources.
     #[inline]
     pub fn is_live(self) -> bool {
-        LispObject::from(self.contents).is_buffer()
+        self.contents().is_buffer()
     }
 
     #[inline]
