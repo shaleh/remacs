@@ -291,6 +291,7 @@ pub enum Lisp_Misc_Type {
     Overlay,
     SaveValue,
     Finalizer,
+    UserPtr,
 }
 
 // Supertype of all Misc types.
