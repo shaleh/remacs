@@ -9325,8 +9325,8 @@ arguments after setting up the Ediff buffers.
 Run Ediff on a pair of regions in specified buffers.
 BUFFER-A and BUFFER-B are the buffers to be compared.
 Regions (i.e., point and mark) can be set in advance or marked interactively.
-This function might be slow for large regions.  If you find it slow,
-use `ediff-regions-linewise' instead.
+This function is effective only for relatively small regions, up to 200
+lines.  For large regions, use `ediff-regions-linewise'.
 STARTUP-HOOKS is a list of functions that Emacs calls without
 arguments after setting up the Ediff buffers.
 
@@ -10640,10 +10640,9 @@ Otherwise, connect to HOST:PORT as USER and /join CHANNEL.
 
 ;;;***
 
-;;;### (autoloads nil "erc-autoaway" "erc/erc-autoaway.el" (0 0 0
-;;;;;;  0))
+;;;### (autoloads "actual autoloads are elsewhere" "erc-autoaway"
+;;;;;;  "erc/erc-autoaway.el" (0 0 0 0))
 ;;; Generated autoloads from erc/erc-autoaway.el
- (autoload 'erc-autoaway-mode "erc-autoaway")
 
 (if (fboundp 'register-definition-prefixes) (register-definition-prefixes "erc-autoaway" '("erc-auto")))
 
@@ -10656,144 +10655,57 @@ Otherwise, connect to HOST:PORT as USER and /join CHANNEL.
 
 ;;;***
 
-;;;### (autoloads nil "erc-button" "erc/erc-button.el" (0 0 0 0))
+;;;### (autoloads "actual autoloads are elsewhere" "erc-button" "erc/erc-button.el"
+;;;;;;  (0 0 0 0))
 ;;; Generated autoloads from erc/erc-button.el
- (autoload 'erc-button-mode "erc-button" nil t)
 
 (if (fboundp 'register-definition-prefixes) (register-definition-prefixes "erc-button" '("erc-")))
 
 ;;;***
 
-;;;### (autoloads nil "erc-capab" "erc/erc-capab.el" (0 0 0 0))
+;;;### (autoloads "actual autoloads are elsewhere" "erc-capab" "erc/erc-capab.el"
+;;;;;;  (0 0 0 0))
 ;;; Generated autoloads from erc/erc-capab.el
- (autoload 'erc-capab-identify-mode "erc-capab" nil t)
 
 (if (fboundp 'register-definition-prefixes) (register-definition-prefixes "erc-capab" '("erc-capab-identify-")))
 
 ;;;***
 
-;;;### (autoloads nil "erc-compat" "erc/erc-compat.el" (0 0 0 0))
+;;;### (autoloads "actual autoloads are elsewhere" "erc-compat" "erc/erc-compat.el"
+;;;;;;  (0 0 0 0))
 ;;; Generated autoloads from erc/erc-compat.el
- (autoload 'erc-define-minor-mode "erc-compat")
 
 (if (fboundp 'register-definition-prefixes) (register-definition-prefixes "erc-compat" '("erc-")))
 
 ;;;***
 
-;;;### (autoloads nil "erc-dcc" "erc/erc-dcc.el" (0 0 0 0))
+;;;### (autoloads "actual autoloads are elsewhere" "erc-dcc" "erc/erc-dcc.el"
+;;;;;;  (0 0 0 0))
 ;;; Generated autoloads from erc/erc-dcc.el
- (autoload 'erc-dcc-mode "erc-dcc")
-
-(autoload 'erc-cmd-DCC "erc-dcc" "\
-Parser for /dcc command.
-This figures out the dcc subcommand and calls the appropriate routine to
-handle it.  The function dispatched should be named \"erc-dcc-do-FOO-command\",
-where FOO is one of CLOSE, GET, SEND, LIST, CHAT, etc.
-
-\(fn CMD &rest ARGS)" nil nil)
-
-(autoload 'pcomplete/erc-mode/DCC "erc-dcc" "\
-Provides completion for the /DCC command.
-
-\(fn)" nil nil)
-
-(defvar erc-ctcp-query-DCC-hook '(erc-ctcp-query-DCC) "\
-Hook variable for CTCP DCC queries.")
-
-(autoload 'erc-ctcp-query-DCC "erc-dcc" "\
-The function called when a CTCP DCC request is detected by the client.
-It examines the DCC subcommand, and calls the appropriate routine for
-that subcommand.
-
-\(fn PROC NICK LOGIN HOST TO QUERY)" nil nil)
 
 (if (fboundp 'register-definition-prefixes) (register-definition-prefixes "erc-dcc" '("erc-" "pcomplete/erc-mode/")))
 
 ;;;***
 
-;;;### (autoloads nil "erc-desktop-notifications" "erc/erc-desktop-notifications.el"
-;;;;;;  (0 0 0 0))
+;;;### (autoloads "actual autoloads are elsewhere" "erc-desktop-notifications"
+;;;;;;  "erc/erc-desktop-notifications.el" (0 0 0 0))
 ;;; Generated autoloads from erc/erc-desktop-notifications.el
-(autoload 'erc-notifications-mode "erc-desktop-notifications" "" t)
 
 (if (fboundp 'register-definition-prefixes) (register-definition-prefixes "erc-desktop-notifications" '("erc-notifications-")))
 
 ;;;***
 
-;;;### (autoloads nil "erc-ezbounce" "erc/erc-ezbounce.el" (0 0 0
-;;;;;;  0))
+;;;### (autoloads "actual autoloads are elsewhere" "erc-ezbounce"
+;;;;;;  "erc/erc-ezbounce.el" (0 0 0 0))
 ;;; Generated autoloads from erc/erc-ezbounce.el
-
-(autoload 'erc-cmd-ezb "erc-ezbounce" "\
-Send EZB commands to the EZBouncer verbatim.
-
-\(fn LINE &optional FORCE)" nil nil)
-
-(autoload 'erc-ezb-get-login "erc-ezbounce" "\
-Return an appropriate EZBounce login for SERVER and PORT.
-Look up entries in `erc-ezb-login-alist'. If the username or password
-in the alist is nil, prompt for the appropriate values.
-
-\(fn SERVER PORT)" nil nil)
-
-(autoload 'erc-ezb-lookup-action "erc-ezbounce" "\
-
-
-\(fn MESSAGE)" nil nil)
-
-(autoload 'erc-ezb-notice-autodetect "erc-ezbounce" "\
-React on an EZBounce NOTICE request.
-
-\(fn PROC PARSED)" nil nil)
-
-(autoload 'erc-ezb-identify "erc-ezbounce" "\
-Identify to the EZBouncer server.
-
-\(fn MESSAGE)" nil nil)
-
-(autoload 'erc-ezb-init-session-list "erc-ezbounce" "\
-Reset the EZBounce session list to nil.
-
-\(fn MESSAGE)" nil nil)
-
-(autoload 'erc-ezb-end-of-session-list "erc-ezbounce" "\
-Indicate the end of the EZBounce session listing.
-
-\(fn MESSAGE)" nil nil)
-
-(autoload 'erc-ezb-add-session "erc-ezbounce" "\
-Add an EZBounce session to the session list.
-
-\(fn MESSAGE)" nil nil)
-
-(autoload 'erc-ezb-select "erc-ezbounce" "\
-Select an IRC server to use by EZBounce, in ERC style.
-
-\(fn MESSAGE)" nil nil)
-
-(autoload 'erc-ezb-select-session "erc-ezbounce" "\
-Select a detached EZBounce session.
-
-\(fn)" nil nil)
-
-(autoload 'erc-ezb-initialize "erc-ezbounce" "\
-Add EZBouncer convenience functions to ERC.
-
-\(fn)" nil nil)
 
 (if (fboundp 'register-definition-prefixes) (register-definition-prefixes "erc-ezbounce" '("erc-ezb-")))
 
 ;;;***
 
-;;;### (autoloads nil "erc-fill" "erc/erc-fill.el" (0 0 0 0))
+;;;### (autoloads "actual autoloads are elsewhere" "erc-fill" "erc/erc-fill.el"
+;;;;;;  (0 0 0 0))
 ;;; Generated autoloads from erc/erc-fill.el
- (autoload 'erc-fill-mode "erc-fill" nil t)
-
-(autoload 'erc-fill "erc-fill" "\
-Fill a region using the function referenced in `erc-fill-function'.
-You can put this on `erc-insert-modify-hook' and/or `erc-send-modify-hook'.
-
-\(fn)" nil nil)
 
 (if (fboundp 'register-definition-prefixes) (register-definition-prefixes "erc-fill" '("erc-")))
 
@@ -10813,44 +10725,25 @@ You can put this on `erc-insert-modify-hook' and/or `erc-send-modify-hook'.
 
 ;;;***
 
-;;;### (autoloads nil "erc-identd" "erc/erc-identd.el" (0 0 0 0))
+;;;### (autoloads "actual autoloads are elsewhere" "erc-identd" "erc/erc-identd.el"
+;;;;;;  (0 0 0 0))
 ;;; Generated autoloads from erc/erc-identd.el
- (autoload 'erc-identd-mode "erc-identd")
-
-(autoload 'erc-identd-start "erc-identd" "\
-Start an identd server listening to port 8113.
-Port 113 (auth) will need to be redirected to port 8113 on your
-machine -- using iptables, or a program like redir which can be
-run from inetd.  The idea is to provide a simple identd server
-when you need one, without having to install one globally on your
-system.
-
-\(fn &optional PORT)" t nil)
-
-(autoload 'erc-identd-stop "erc-identd" "\
-
-
-\(fn &rest IGNORE)" t nil)
 
 (if (fboundp 'register-definition-prefixes) (register-definition-prefixes "erc-identd" '("erc-identd-")))
 
 ;;;***
 
-;;;### (autoloads nil "erc-imenu" "erc/erc-imenu.el" (0 0 0 0))
+;;;### (autoloads "actual autoloads are elsewhere" "erc-imenu" "erc/erc-imenu.el"
+;;;;;;  (0 0 0 0))
 ;;; Generated autoloads from erc/erc-imenu.el
-
-(autoload 'erc-create-imenu-index "erc-imenu" "\
-
-
-\(fn)" nil nil)
 
 (if (fboundp 'register-definition-prefixes) (register-definition-prefixes "erc-imenu" '("erc-unfill-notice")))
 
 ;;;***
 
-;;;### (autoloads nil "erc-join" "erc/erc-join.el" (0 0 0 0))
+;;;### (autoloads "actual autoloads are elsewhere" "erc-join" "erc/erc-join.el"
+;;;;;;  (0 0 0 0))
 ;;; Generated autoloads from erc/erc-join.el
- (autoload 'erc-autojoin-mode "erc-join" nil t)
 
 (if (fboundp 'register-definition-prefixes) (register-definition-prefixes "erc-join" '("erc-")))
 
@@ -10863,110 +10756,41 @@ system.
 
 ;;;***
 
-;;;### (autoloads nil "erc-list" "erc/erc-list.el" (0 0 0 0))
+;;;### (autoloads "actual autoloads are elsewhere" "erc-list" "erc/erc-list.el"
+;;;;;;  (0 0 0 0))
 ;;; Generated autoloads from erc/erc-list.el
- (autoload 'erc-list-mode "erc-list")
 
 (if (fboundp 'register-definition-prefixes) (register-definition-prefixes "erc-list" '("erc-")))
 
 ;;;***
 
-;;;### (autoloads nil "erc-log" "erc/erc-log.el" (0 0 0 0))
+;;;### (autoloads "actual autoloads are elsewhere" "erc-log" "erc/erc-log.el"
+;;;;;;  (0 0 0 0))
 ;;; Generated autoloads from erc/erc-log.el
- (autoload 'erc-log-mode "erc-log" nil t)
-
-(autoload 'erc-logging-enabled "erc-log" "\
-Return non-nil if logging is enabled for BUFFER.
-If BUFFER is nil, the value of `current-buffer' is used.
-Logging is enabled if `erc-log-channels-directory' is non-nil, the directory
-is writable (it will be created as necessary) and
-`erc-enable-logging' returns a non-nil value.
-
-\(fn &optional BUFFER)" nil nil)
-
-(autoload 'erc-save-buffer-in-logs "erc-log" "\
-Append BUFFER contents to the log file, if logging is enabled.
-If BUFFER is not provided, current buffer is used.
-Logging is enabled if `erc-logging-enabled' returns non-nil.
-
-This is normally done on exit, to save the unsaved portion of the
-buffer, since only the text that runs off the buffer limit is logged
-automatically.
-
-You can save every individual message by putting this function on
-`erc-insert-post-hook'.
-
-\(fn &optional BUFFER)" t nil)
 
 (if (fboundp 'register-definition-prefixes) (register-definition-prefixes "erc-log" '("erc-")))
 
 ;;;***
 
-;;;### (autoloads nil "erc-match" "erc/erc-match.el" (0 0 0 0))
+;;;### (autoloads "actual autoloads are elsewhere" "erc-match" "erc/erc-match.el"
+;;;;;;  (0 0 0 0))
 ;;; Generated autoloads from erc/erc-match.el
- (autoload 'erc-match-mode "erc-match")
-
-(autoload 'erc-add-pal "erc-match" "\
-Add pal interactively to `erc-pals'.
-
-\(fn)" t nil)
-
-(autoload 'erc-delete-pal "erc-match" "\
-Delete pal interactively to `erc-pals'.
-
-\(fn)" t nil)
-
-(autoload 'erc-add-fool "erc-match" "\
-Add fool interactively to `erc-fools'.
-
-\(fn)" t nil)
-
-(autoload 'erc-delete-fool "erc-match" "\
-Delete fool interactively to `erc-fools'.
-
-\(fn)" t nil)
-
-(autoload 'erc-add-keyword "erc-match" "\
-Add keyword interactively to `erc-keywords'.
-
-\(fn)" t nil)
-
-(autoload 'erc-delete-keyword "erc-match" "\
-Delete keyword interactively to `erc-keywords'.
-
-\(fn)" t nil)
-
-(autoload 'erc-add-dangerous-host "erc-match" "\
-Add dangerous-host interactively to `erc-dangerous-hosts'.
-
-\(fn)" t nil)
-
-(autoload 'erc-delete-dangerous-host "erc-match" "\
-Delete dangerous-host interactively to `erc-dangerous-hosts'.
-
-\(fn)" t nil)
 
 (if (fboundp 'register-definition-prefixes) (register-definition-prefixes "erc-match" '("erc-")))
 
 ;;;***
 
-;;;### (autoloads nil "erc-menu" "erc/erc-menu.el" (0 0 0 0))
+;;;### (autoloads "actual autoloads are elsewhere" "erc-menu" "erc/erc-menu.el"
+;;;;;;  (0 0 0 0))
 ;;; Generated autoloads from erc/erc-menu.el
- (autoload 'erc-menu-mode "erc-menu" nil t)
 
 (if (fboundp 'register-definition-prefixes) (register-definition-prefixes "erc-menu" '("erc-menu-")))
 
 ;;;***
 
-;;;### (autoloads nil "erc-netsplit" "erc/erc-netsplit.el" (0 0 0
-;;;;;;  0))
+;;;### (autoloads "actual autoloads are elsewhere" "erc-netsplit"
+;;;;;;  "erc/erc-netsplit.el" (0 0 0 0))
 ;;; Generated autoloads from erc/erc-netsplit.el
- (autoload 'erc-netsplit-mode "erc-netsplit")
-
-(autoload 'erc-cmd-WHOLEFT "erc-netsplit" "\
-Show who's gone.
-
-\(fn)" nil nil)
 
 (if (fboundp 'register-definition-prefixes) (register-definition-prefixes "erc-netsplit" '("erc-")))
 
@@ -10992,176 +10816,105 @@ Interactively select a server to connect to using `erc-server-alist'.
 
 ;;;***
 
-;;;### (autoloads nil "erc-notify" "erc/erc-notify.el" (0 0 0 0))
+;;;### (autoloads "actual autoloads are elsewhere" "erc-notify" "erc/erc-notify.el"
+;;;;;;  (0 0 0 0))
 ;;; Generated autoloads from erc/erc-notify.el
- (autoload 'erc-notify-mode "erc-notify" nil t)
-
-(autoload 'erc-cmd-NOTIFY "erc-notify" "\
-Change `erc-notify-list' or list current notify-list members online.
-Without args, list the current list of notified people online,
-with args, toggle notify status of people.
-
-\(fn &rest ARGS)" nil nil)
-
-(autoload 'pcomplete/erc-mode/NOTIFY "erc-notify" "\
-
-
-\(fn)" nil nil)
 
 (if (fboundp 'register-definition-prefixes) (register-definition-prefixes "erc-notify" '("erc-")))
 
 ;;;***
 
-;;;### (autoloads nil "erc-page" "erc/erc-page.el" (0 0 0 0))
+;;;### (autoloads "actual autoloads are elsewhere" "erc-page" "erc/erc-page.el"
+;;;;;;  (0 0 0 0))
 ;;; Generated autoloads from erc/erc-page.el
- (autoload 'erc-page-mode "erc-page")
 
 (if (fboundp 'register-definition-prefixes) (register-definition-prefixes "erc-page" '("erc-")))
 
 ;;;***
 
-;;;### (autoloads nil "erc-pcomplete" "erc/erc-pcomplete.el" (0 0
-;;;;;;  0 0))
+;;;### (autoloads "actual autoloads are elsewhere" "erc-pcomplete"
+;;;;;;  "erc/erc-pcomplete.el" (0 0 0 0))
 ;;; Generated autoloads from erc/erc-pcomplete.el
- (autoload 'erc-completion-mode "erc-pcomplete" nil t)
 
 (if (fboundp 'register-definition-prefixes) (register-definition-prefixes "erc-pcomplete" '("pcomplete" "erc-pcomplet")))
 
 ;;;***
 
-;;;### (autoloads nil "erc-replace" "erc/erc-replace.el" (0 0 0 0))
+;;;### (autoloads "actual autoloads are elsewhere" "erc-replace"
+;;;;;;  "erc/erc-replace.el" (0 0 0 0))
 ;;; Generated autoloads from erc/erc-replace.el
- (autoload 'erc-replace-mode "erc-replace")
 
 (if (fboundp 'register-definition-prefixes) (register-definition-prefixes "erc-replace" '("erc-replace-")))
 
 ;;;***
 
-;;;### (autoloads nil "erc-ring" "erc/erc-ring.el" (0 0 0 0))
+;;;### (autoloads "actual autoloads are elsewhere" "erc-ring" "erc/erc-ring.el"
+;;;;;;  (0 0 0 0))
 ;;; Generated autoloads from erc/erc-ring.el
- (autoload 'erc-ring-mode "erc-ring" nil t)
 
 (if (fboundp 'register-definition-prefixes) (register-definition-prefixes "erc-ring" '("erc-")))
 
 ;;;***
 
-;;;### (autoloads nil "erc-services" "erc/erc-services.el" (0 0 0
-;;;;;;  0))
+;;;### (autoloads "actual autoloads are elsewhere" "erc-services"
+;;;;;;  "erc/erc-services.el" (0 0 0 0))
 ;;; Generated autoloads from erc/erc-services.el
- (autoload 'erc-services-mode "erc-services" nil t)
-
-(autoload 'erc-nickserv-identify-mode "erc-services" "\
-Set up hooks according to which MODE the user has chosen.
-
-\(fn MODE)" t nil)
-
-(autoload 'erc-nickserv-identify "erc-services" "\
-Send an \"identify <PASSWORD>\" message to NickServ.
-When called interactively, read the password using `read-passwd'.
-
-\(fn PASSWORD)" t nil)
 
 (if (fboundp 'register-definition-prefixes) (register-definition-prefixes "erc-services" '("erc-")))
 
 ;;;***
 
-;;;### (autoloads nil "erc-sound" "erc/erc-sound.el" (0 0 0 0))
+;;;### (autoloads "actual autoloads are elsewhere" "erc-sound" "erc/erc-sound.el"
+;;;;;;  (0 0 0 0))
 ;;; Generated autoloads from erc/erc-sound.el
- (autoload 'erc-sound-mode "erc-sound")
 
 (if (fboundp 'register-definition-prefixes) (register-definition-prefixes "erc-sound" '("erc-")))
 
 ;;;***
 
-;;;### (autoloads nil "erc-speedbar" "erc/erc-speedbar.el" (0 0 0
-;;;;;;  0))
+;;;### (autoloads "actual autoloads are elsewhere" "erc-speedbar"
+;;;;;;  "erc/erc-speedbar.el" (0 0 0 0))
 ;;; Generated autoloads from erc/erc-speedbar.el
-
-(autoload 'erc-speedbar-browser "erc-speedbar" "\
-Initialize speedbar to display an ERC browser.
-This will add a speedbar major display mode.
-
-\(fn)" t nil)
 
 (if (fboundp 'register-definition-prefixes) (register-definition-prefixes "erc-speedbar" '("erc-")))
 
 ;;;***
 
-;;;### (autoloads nil "erc-spelling" "erc/erc-spelling.el" (0 0 0
-;;;;;;  0))
+;;;### (autoloads "actual autoloads are elsewhere" "erc-spelling"
+;;;;;;  "erc/erc-spelling.el" (0 0 0 0))
 ;;; Generated autoloads from erc/erc-spelling.el
- (autoload 'erc-spelling-mode "erc-spelling" nil t)
 
 (if (fboundp 'register-definition-prefixes) (register-definition-prefixes "erc-spelling" '("erc-spelling-")))
 
 ;;;***
 
-;;;### (autoloads nil "erc-stamp" "erc/erc-stamp.el" (0 0 0 0))
+;;;### (autoloads "actual autoloads are elsewhere" "erc-stamp" "erc/erc-stamp.el"
+;;;;;;  (0 0 0 0))
 ;;; Generated autoloads from erc/erc-stamp.el
- (autoload 'erc-timestamp-mode "erc-stamp" nil t)
 
 (if (fboundp 'register-definition-prefixes) (register-definition-prefixes "erc-stamp" '("erc-")))
 
 ;;;***
 
-;;;### (autoloads nil "erc-track" "erc/erc-track.el" (0 0 0 0))
+;;;### (autoloads "actual autoloads are elsewhere" "erc-track" "erc/erc-track.el"
+;;;;;;  (0 0 0 0))
 ;;; Generated autoloads from erc/erc-track.el
-
-(defvar erc-track-minor-mode nil "\
-Non-nil if Erc-Track minor mode is enabled.
-See the `erc-track-minor-mode' command
-for a description of this minor mode.")
-
-(custom-autoload 'erc-track-minor-mode "erc-track" nil)
-
-(autoload 'erc-track-minor-mode "erc-track" "\
-Toggle mode line display of ERC activity (ERC Track minor mode).
-With a prefix argument ARG, enable ERC Track minor mode if ARG is
-positive, and disable it otherwise.  If called from Lisp, enable
-the mode if ARG is omitted or nil.
-
-ERC Track minor mode is a global minor mode.  It exists for the
-sole purpose of providing the C-c C-SPC and C-c C-@ keybindings.
-Make sure that you have enabled the track module, otherwise the
-keybindings will not do anything useful.
-
-\(fn &optional ARG)" t nil)
- (autoload 'erc-track-mode "erc-track" nil t)
 
 (if (fboundp 'register-definition-prefixes) (register-definition-prefixes "erc-track" '("erc-")))
 
 ;;;***
 
-;;;### (autoloads nil "erc-truncate" "erc/erc-truncate.el" (0 0 0
-;;;;;;  0))
+;;;### (autoloads "actual autoloads are elsewhere" "erc-truncate"
+;;;;;;  "erc/erc-truncate.el" (0 0 0 0))
 ;;; Generated autoloads from erc/erc-truncate.el
- (autoload 'erc-truncate-mode "erc-truncate" nil t)
-
-(autoload 'erc-truncate-buffer-to-size "erc-truncate" "\
-Truncates the buffer to the size SIZE.
-If BUFFER is not provided, the current buffer is assumed.  The deleted
-region is logged if `erc-logging-enabled' returns non-nil.
-
-\(fn SIZE &optional BUFFER)" nil nil)
-
-(autoload 'erc-truncate-buffer "erc-truncate" "\
-Truncates the current buffer to `erc-max-buffer-size'.
-Meant to be used in hooks, like `erc-insert-post-hook'.
-
-\(fn)" t nil)
 
 (if (fboundp 'register-definition-prefixes) (register-definition-prefixes "erc-truncate" '("erc-max-buffer-size")))
 
 ;;;***
 
-;;;### (autoloads nil "erc-xdcc" "erc/erc-xdcc.el" (0 0 0 0))
+;;;### (autoloads "actual autoloads are elsewhere" "erc-xdcc" "erc/erc-xdcc.el"
+;;;;;;  (0 0 0 0))
 ;;; Generated autoloads from erc/erc-xdcc.el
- (autoload 'erc-xdcc-mode "erc-xdcc")
-
-(autoload 'erc-xdcc-add-file "erc-xdcc" "\
-Add a file to `erc-xdcc-files'.
-
-\(fn FILE)" t nil)
 
 (if (fboundp 'register-definition-prefixes) (register-definition-prefixes "erc-xdcc" '("erc-")))
 
@@ -12616,7 +12369,7 @@ STRING is passed as an argument to the locate command.
 \(fn STRING)" t nil)
 
 (autoload 'file-cache-add-directory-recursively "filecache" "\
-Adds DIR and any subdirectories to the file-cache.
+Add DIR and any subdirectories to the file-cache.
 This function does not use any external programs.
 If the optional REGEXP argument is non-nil, only files which match it
 will be added to the cache.  Note that the REGEXP is applied to the
@@ -13733,7 +13486,7 @@ and choose the directory as the fortune-file.
 Minimum set of parameters to filter for live (on-session) framesets.
 DO NOT MODIFY.  See `frameset-filter-alist' for a full description.")
 
-(defvar frameset-persistent-filter-alist (nconc '((background-color . frameset-filter-sanitize-color) (buffer-list . :never) (buffer-predicate . :never) (buried-buffer-list . :never) (delete-before . :never) (font . frameset-filter-font-param) (foreground-color . frameset-filter-sanitize-color) (fullscreen . frameset-filter-shelve-param) (GUI:font . frameset-filter-unshelve-param) (GUI:fullscreen . frameset-filter-unshelve-param) (GUI:height . frameset-filter-unshelve-param) (GUI:width . frameset-filter-unshelve-param) (height . frameset-filter-shelve-param) (outer-window-id . :never) (parent-frame . :never) (parent-id . :never) (mouse-wheel-frame . :never) (tty . frameset-filter-tty-to-GUI) (tty-type . frameset-filter-tty-to-GUI) (width . frameset-filter-shelve-param) (window-id . :never) (window-system . :never)) frameset-session-filter-alist) "\
+(defvar frameset-persistent-filter-alist (nconc '((background-color . frameset-filter-sanitize-color) (buffer-list . :never) (buffer-predicate . :never) (buried-buffer-list . :never) (client . :never) (delete-before . :never) (font . frameset-filter-font-param) (foreground-color . frameset-filter-sanitize-color) (fullscreen . frameset-filter-shelve-param) (GUI:font . frameset-filter-unshelve-param) (GUI:fullscreen . frameset-filter-unshelve-param) (GUI:height . frameset-filter-unshelve-param) (GUI:width . frameset-filter-unshelve-param) (height . frameset-filter-shelve-param) (outer-window-id . :never) (parent-frame . :never) (parent-id . :never) (mouse-wheel-frame . :never) (tty . frameset-filter-tty-to-GUI) (tty-type . frameset-filter-tty-to-GUI) (width . frameset-filter-shelve-param) (window-id . :never) (window-system . :never)) frameset-session-filter-alist) "\
 Parameters to filter for persistent framesets.
 DO NOT MODIFY.  See `frameset-filter-alist' for a full description.")
 
@@ -20108,13 +19861,7 @@ A major mode to edit m4 macro files.
 ;;;### (autoloads nil "macros" "macros.el" (0 0 0 0))
 ;;; Generated autoloads from macros.el
 
-(autoload 'name-last-kbd-macro "macros" "\
-Assign a name to the last keyboard macro defined.
-Argument SYMBOL is the name to define.
-The symbol's function definition becomes the keyboard macro string.
-Such a \"function\" cannot be called from Lisp, but it is a valid editor command.
-
-\(fn SYMBOL)" t nil)
+(defalias 'name-last-kbd-macro #'kmacro-name-last-macro)
 
 (autoload 'insert-kbd-macro "macros" "\
 Insert in buffer the definition of kbd macro MACRONAME, as Lisp code.
@@ -34628,16 +34375,6 @@ This regexp should match Tramp file names but no other file
 names.  When calling `tramp-register-file-name-handlers', the
 initial value is overwritten by the car of `tramp-file-name-structure'.")
 
-(defconst tramp-completion-file-name-regexp-default (concat "\\`/\\(" "\\([^/|:]+:[^/|:]*|\\)*" (if (memq system-type '(cygwin windows-nt)) "\\(-\\|[^/|:]\\{2,\\}\\)" "[^/|:]+") "\\(:[^/|:]*\\)?" "\\)?\\'") "\
-Value for `tramp-completion-file-name-regexp' for default remoting.
-See `tramp-file-name-structure' for more explanations.
-
-On W32 systems, the volume letter must be ignored.")
-
-(defconst tramp-initial-completion-file-name-regexp tramp-completion-file-name-regexp-default "\
-Value for `tramp-completion-file-name-regexp' for autoload.
-It must match the initial `tramp-syntax' settings.")
-
 (defconst tramp-autoload-file-name-regexp (concat "\\`/" (if (memq system-type '(cygwin windows-nt)) "\\(-\\|[^/|:]\\{2,\\}\\)" "[^/|:]+") ":") "\
 Regular expression matching file names handled by Tramp autoload.
 It must match the initial `tramp-syntax' settings.  It should not
@@ -38821,17 +38558,26 @@ Zone out, completely.
 ;;;;;;  "emacs-lisp/eieio-opt.el" "emacs-lisp/eldoc.el" "emacs-lisp/float-sup.el"
 ;;;;;;  "emacs-lisp/lisp-mode.el" "emacs-lisp/lisp.el" "emacs-lisp/macroexp.el"
 ;;;;;;  "emacs-lisp/map-ynp.el" "emacs-lisp/nadvice.el" "emacs-lisp/syntax.el"
-;;;;;;  "emacs-lisp/timer.el" "env.el" "epa-hook.el" "eshell/em-alias.el"
-;;;;;;  "eshell/em-banner.el" "eshell/em-basic.el" "eshell/em-cmpl.el"
-;;;;;;  "eshell/em-dirs.el" "eshell/em-glob.el" "eshell/em-hist.el"
-;;;;;;  "eshell/em-ls.el" "eshell/em-pred.el" "eshell/em-prompt.el"
-;;;;;;  "eshell/em-rebind.el" "eshell/em-script.el" "eshell/em-smart.el"
-;;;;;;  "eshell/em-term.el" "eshell/em-tramp.el" "eshell/em-unix.el"
-;;;;;;  "eshell/em-xtra.el" "facemenu.el" "faces.el" "files.el" "font-core.el"
-;;;;;;  "font-lock.el" "format.el" "frame.el" "help.el" "hfy-cmap.el"
-;;;;;;  "ibuf-ext.el" "indent.el" "international/characters.el" "international/charprop.el"
-;;;;;;  "international/charscript.el" "international/cp51932.el"
-;;;;;;  "international/eucjp-ms.el" "international/mule-cmds.el"
+;;;;;;  "emacs-lisp/timer.el" "env.el" "epa-hook.el" "erc/erc-autoaway.el"
+;;;;;;  "erc/erc-button.el" "erc/erc-capab.el" "erc/erc-compat.el"
+;;;;;;  "erc/erc-dcc.el" "erc/erc-desktop-notifications.el" "erc/erc-ezbounce.el"
+;;;;;;  "erc/erc-fill.el" "erc/erc-identd.el" "erc/erc-imenu.el"
+;;;;;;  "erc/erc-join.el" "erc/erc-list.el" "erc/erc-log.el" "erc/erc-match.el"
+;;;;;;  "erc/erc-menu.el" "erc/erc-netsplit.el" "erc/erc-notify.el"
+;;;;;;  "erc/erc-page.el" "erc/erc-pcomplete.el" "erc/erc-replace.el"
+;;;;;;  "erc/erc-ring.el" "erc/erc-services.el" "erc/erc-sound.el"
+;;;;;;  "erc/erc-speedbar.el" "erc/erc-spelling.el" "erc/erc-stamp.el"
+;;;;;;  "erc/erc-track.el" "erc/erc-truncate.el" "erc/erc-xdcc.el"
+;;;;;;  "eshell/em-alias.el" "eshell/em-banner.el" "eshell/em-basic.el"
+;;;;;;  "eshell/em-cmpl.el" "eshell/em-dirs.el" "eshell/em-glob.el"
+;;;;;;  "eshell/em-hist.el" "eshell/em-ls.el" "eshell/em-pred.el"
+;;;;;;  "eshell/em-prompt.el" "eshell/em-rebind.el" "eshell/em-script.el"
+;;;;;;  "eshell/em-smart.el" "eshell/em-term.el" "eshell/em-tramp.el"
+;;;;;;  "eshell/em-unix.el" "eshell/em-xtra.el" "facemenu.el" "faces.el"
+;;;;;;  "files.el" "font-core.el" "font-lock.el" "format.el" "frame.el"
+;;;;;;  "help.el" "hfy-cmap.el" "ibuf-ext.el" "indent.el" "international/characters.el"
+;;;;;;  "international/charprop.el" "international/charscript.el"
+;;;;;;  "international/cp51932.el" "international/eucjp-ms.el" "international/mule-cmds.el"
 ;;;;;;  "international/mule-conf.el" "international/mule.el" "international/uni-bidi.el"
 ;;;;;;  "international/uni-brackets.el" "international/uni-category.el"
 ;;;;;;  "international/uni-combining.el" "international/uni-comment.el"
