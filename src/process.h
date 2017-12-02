@@ -315,7 +315,7 @@ INLINE_HEADER_END
 
 #endif /* EMACS_PROCESS_H */
 
-int
+bool
 pget_raw_status_new(const struct Lisp_Process *p);
 
 

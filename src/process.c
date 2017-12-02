@@ -1083,21 +1083,6 @@ nil, indicating the current buffer's process.  */)
   return Qnil;
 }
 
-DEFUN ("process-exit-status", Fprocess_exit_status, Sprocess_exit_status,
-       1, 1, 0,
-       doc: /* Return the exit status of PROCESS or the signal number that killed it.
-If PROCESS has not yet exited or died, return 0.  */)
-  (register Lisp_Object process)
-{
-  CHECK_PROCESS (process);
-  if (XPROCESS (process)->raw_status_new)
-    update_status (XPROCESS (process));
-  if (CONSP (XPROCESS (process)->status))
-    return XCAR (XCDR (XPROCESS (process)->status));
-  return make_number (0);
-}
-
-
 static void
 set_process_filter_masks (struct Lisp_Process *p)
 {
@@ -7733,7 +7718,6 @@ The variable takes effect when `start-process' is called.  */);
   Vprocess_adaptive_read_buffering = Qt;
 
   defsubr (&Sdelete_process);
-  defsubr (&Sprocess_exit_status);
   defsubr (&Sset_process_filter);
   defsubr (&Sset_process_sentinel);
   defsubr (&Sset_process_thread);
@@ -7809,7 +7793,7 @@ The variable takes effect when `start-process' is called.  */);
   defsubr (&Sprocess_attributes);
 }
 
-int
+bool
 pget_raw_status_new(const struct Lisp_Process *p)
 {
   return p->raw_status_new;
