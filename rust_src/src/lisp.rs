@@ -1007,6 +1007,18 @@ impl LispObject {
 
 // Other functions
 
+pub trait IsLispNatnum {
+    fn check_natnum(&self);
+}
+
+impl IsLispNatnum for EmacsInt {
+    fn check_natnum(&self) {
+        if *self < 0 {
+            wrong_type!(Qwholenump, LispObject::from_fixnum(*self));
+        }
+    }
+}
+
 pub enum LispNumber {
     Fixnum(EmacsInt),
     Float(f64),
