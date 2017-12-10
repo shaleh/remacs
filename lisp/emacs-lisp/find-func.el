@@ -438,13 +438,50 @@ The search is done in the source for library LIBRARY."
   ;; that defines something else.
   (while (and (symbolp symbol) (get symbol 'definition-name))
     (setq symbol (get symbol 'definition-name)))
-  (cond
-   ((string-match (rx bos "src/" (group (+ nonl) (or ".c" ".m")) eos) library)
-    (find-function-C-source symbol (match-string 1 library) type))
-   ((string-match (rx bos "rust_src/src/" (group (+ nonl) ".rs") eos) library)
-    (find-function-rust-source symbol (match-string 1 library) type))
-   (t
-    (find-function-lisp-source symbol type library))))
+  (if (string-match "\\`src/\\(.*\\.\\(c\\|m\\)\\)\\'" library)
+      (find-function-C-source symbol (match-string 1 library) type)
+    (when (string-match "\\.el\\(c\\)\\'" library)
+      (setq library (substring library 0 (match-beginning 1))))
+    ;; Strip extension from .emacs.el to make sure symbol is searched in
+    ;; .emacs too.
+    (when (string-match "\\.emacs\\(.el\\)" library)
+      (setq library (substring library 0 (match-beginning 1))))
+    (let* ((filename (find-library-name library))
+	   (regexp-symbol (cdr (assq type find-function-regexp-alist))))
+      (with-current-buffer (find-file-noselect filename)
+	(let ((regexp (if (functionp regexp-symbol) regexp-symbol
+                        (format (symbol-value regexp-symbol)
+                                ;; Entry for ` (backquote) macro in loaddefs.el,
+                                ;; (defalias (quote \`)..., has a \ but
+                                ;; (symbol-name symbol) doesn't.  Add an
+                                ;; optional \ to catch this.
+                                (concat "\\\\?"
+                                        (regexp-quote (symbol-name symbol))))))
+	      (case-fold-search))
+          (save-restriction
+            (widen)
+            (with-syntax-table emacs-lisp-mode-syntax-table
+              (goto-char (point-min))
+              (if (if (functionp regexp)
+                      (funcall regexp symbol)
+                    (or (re-search-forward regexp nil t)
+                        ;; `regexp' matches definitions using known forms like
+                        ;; `defun', or `defvar'.  But some functions/variables
+                        ;; are defined using special macros (or functions), so
+                        ;; if `regexp' can't find the definition, we look for
+                        ;; something of the form "(SOMETHING <symbol> ...)".
+                        ;; This fails to distinguish function definitions from
+                        ;; variable declarations (or even uses thereof), but is
+                        ;; a good pragmatic fallback.
+                        (re-search-forward
+                         (concat "^([^ ]+" find-function-space-re "['(]?"
+                                 (regexp-quote (symbol-name symbol))
+                                 "\\_>")
+                         nil t)))
+                  (progn
+                    (beginning-of-line)
+                    (cons (current-buffer) (point)))
+                (cons (current-buffer) nil)))))))))
 
 (defun find-function-library (function &optional lisp-only verbose)
   "Return the pair (ORIG-FUNCTION . LIBRARY) for FUNCTION.
