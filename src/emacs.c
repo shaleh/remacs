@@ -1219,7 +1219,7 @@ Using an Emacs configured with --with-x-toolkit=lucid does not have this problem
   running_asynch_code = 0;
   init_random ();
 
-#ifdef HAVE_JSON
+#if defined HAVE_JSON && !defined WINDOWSNT
   init_json ();
 #endif
 
