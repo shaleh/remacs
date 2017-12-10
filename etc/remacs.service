@@ -8,7 +8,7 @@ Documentation=info:remacs man:remacs(1) https://gnu.org/software/emacs/
 
 [Service]
 Type=simple
-ExecStart=remacs --new-daemon
+ExecStart=remacs --fg-daemon
 ExecStop=remacsclient --eval "(kill-emacs)"
 Environment=SSH_AUTH_SOCK=%t/keyring/ssh
 Restart=on-failure
