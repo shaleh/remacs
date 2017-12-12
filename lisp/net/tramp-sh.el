@@ -1098,8 +1098,8 @@ component is used as the target of the symlink."
 		(tramp-error v 'file-already-exists localname)
 	      (delete-file linkname)))
 
-	  (tramp-flush-file-property v (file-name-directory localname))
-	  (tramp-flush-file-property v localname)
+	  (tramp-flush-file-properties v (file-name-directory localname))
+	  (tramp-flush-file-properties v localname)
 
 	  ;; Right, they are on the same host, regardless of user,
 	  ;; method, etc.  We now make the link on the remote
@@ -1493,8 +1493,8 @@ of."
 (defun tramp-sh-handle-set-file-modes (filename mode)
   "Like `set-file-modes' for Tramp files."
   (with-parsed-tramp-file-name filename nil
-    (tramp-flush-file-property v (file-name-directory localname))
-    (tramp-flush-file-property v localname)
+    (tramp-flush-file-properties v (file-name-directory localname))
+    (tramp-flush-file-properties v localname)
     ;; FIXME: extract the proper text from chmod's stderr.
     (tramp-barf-unless-okay
      v
@@ -1505,8 +1505,8 @@ of."
   "Like `set-file-times' for Tramp files."
   (with-parsed-tramp-file-name filename nil
     (when (tramp-get-remote-touch v)
-      (tramp-flush-file-property v (file-name-directory localname))
-      (tramp-flush-file-property v localname)
+      (tramp-flush-file-properties v (file-name-directory localname))
+      (tramp-flush-file-properties v localname)
       (let ((time (if (or (null time) (equal time '(0 0)))
 		      (current-time)
 		    time)))
@@ -1598,8 +1598,7 @@ be non-negative integers."
 	  (if (and user role type range)
 	      (tramp-set-file-property
 	       v localname "file-selinux-context" context)
-	    (tramp-set-file-property
-	     v localname "file-selinux-context" 'undef))
+	    (tramp-flush-file-property v localname "file-selinux-context"))
 	  t)))))
 
 (defun tramp-remote-acl-p (vec)
@@ -1639,7 +1638,7 @@ be non-negative integers."
 	  (tramp-set-file-property v localname "file-acl" acl-string)
 	  t)
       ;; In case of errors, we return nil.
-      (tramp-set-file-property v localname "file-acl-string" 'undef)
+      (tramp-flush-file-property v localname "file-acl-string")
       nil)))
 
 ;; Simple functions using the `test' command.
@@ -1933,8 +1932,8 @@ tramp-sh-handle-file-name-all-completions: internal error accessing `%s': `%s'"
 			      v2-localname)))))
 	      (tramp-error v2 'file-already-exists newname)
 	    (delete-file newname)))
-	(tramp-flush-file-property v2 (file-name-directory v2-localname))
-	(tramp-flush-file-property v2 v2-localname)
+	(tramp-flush-file-properties v2 (file-name-directory v2-localname))
+	(tramp-flush-file-properties v2 v2-localname)
 	(tramp-barf-unless-okay
 	 v1
 	 (format "%s %s %s" ln
@@ -2000,8 +1999,8 @@ tramp-sh-handle-file-name-all-completions: internal error accessing `%s': `%s'"
       ;; When newname did exist, we have wrong cached values.
       (when t2
 	(with-parsed-tramp-file-name newname nil
-	  (tramp-flush-file-property v (file-name-directory localname))
-	  (tramp-flush-file-property v localname))))))
+	  (tramp-flush-file-properties v (file-name-directory localname))
+	  (tramp-flush-file-properties v localname))))))
 
 (defun tramp-sh-handle-rename-file
   (filename newname &optional ok-if-already-exists)
@@ -2128,14 +2127,16 @@ file names."
 	  ;; In case of `rename', we must flush the cache of the source file.
 	  (when (and t1 (eq op 'rename))
 	    (with-parsed-tramp-file-name filename v1
-	      (tramp-flush-file-property v1 (file-name-directory v1-localname))
-	      (tramp-flush-file-property v1 v1-localname)))
+	      (tramp-flush-file-properties
+	       v1 (file-name-directory v1-localname))
+	      (tramp-flush-file-properties v1 v1-localname)))
 
 	  ;; When newname did exist, we have wrong cached values.
 	  (when t2
 	    (with-parsed-tramp-file-name newname v2
-	      (tramp-flush-file-property v2 (file-name-directory v2-localname))
-	      (tramp-flush-file-property v2 v2-localname))))))))
+	      (tramp-flush-file-properties
+	       v2 (file-name-directory v2-localname))
+	      (tramp-flush-file-properties v2 v2-localname))))))))
 
 (defun tramp-do-copy-or-rename-file-via-buffer (op filename newname keep-date)
   "Use an Emacs buffer to copy or rename a file.
@@ -2514,8 +2515,8 @@ The method used must be an out-of-band method."
 		     p v nil tramp-actions-copy-out-of-band))))
 
 	    ;; Reset the transfer process properties.
-	    (tramp-set-connection-property v "process-name" nil)
-	    (tramp-set-connection-property v "process-buffer" nil)
+	    (tramp-flush-connection-property v "process-name")
+	    (tramp-flush-connection-property v "process-buffer")
 	    ;; Clear the remote prompt.
 	    (when (and remote-copy-program
 		       (not (tramp-send-command-and-check v nil)))
@@ -2546,7 +2547,7 @@ The method used must be an out-of-band method."
   "Like `make-directory' for Tramp files."
   (setq dir (expand-file-name dir))
   (with-parsed-tramp-file-name dir nil
-    (tramp-flush-directory-property v (file-name-directory localname))
+    (tramp-flush-directory-properties v (file-name-directory localname))
     (save-excursion
       (tramp-barf-unless-okay
        v (format "%s %s"
@@ -2558,8 +2559,8 @@ The method used must be an out-of-band method."
   "Like `delete-directory' for Tramp files."
   (setq directory (expand-file-name directory))
   (with-parsed-tramp-file-name directory nil
-    (tramp-flush-file-property v (file-name-directory localname))
-    (tramp-flush-directory-property v localname)
+    (tramp-flush-file-properties v (file-name-directory localname))
+    (tramp-flush-directory-properties v localname)
     (tramp-barf-unless-okay
      v (format "cd / && %s %s"
 	       (or (and trash (tramp-get-remote-trash v))
@@ -2571,8 +2572,8 @@ The method used must be an out-of-band method."
   "Like `delete-file' for Tramp files."
   (setq filename (expand-file-name filename))
   (with-parsed-tramp-file-name filename nil
-    (tramp-flush-file-property v (file-name-directory localname))
-    (tramp-flush-file-property v localname)
+    (tramp-flush-file-properties v (file-name-directory localname))
+    (tramp-flush-file-properties v localname)
     (tramp-barf-unless-okay
      v (format "%s %s"
 	       (or (and trash (tramp-get-remote-trash v)) "rm -f")
@@ -2585,7 +2586,7 @@ The method used must be an out-of-band method."
   "Like `dired-compress-file' for Tramp files."
   ;; Code stolen mainly from dired-aux.el.
   (with-parsed-tramp-file-name file nil
-    (tramp-flush-file-property v localname)
+    (tramp-flush-file-properties v localname)
     (save-excursion
       (let ((suffixes dired-compress-file-suffixes)
 	    suffix)
@@ -2821,8 +2822,8 @@ the result will be a local, non-Tramp, file name."
     (let ((vec (tramp-get-connection-property proc "vector" nil)))
       (when vec
 	(tramp-message vec 5 "Sentinel called: `%S' `%s'" proc event)
-        (tramp-flush-connection-property proc)
-        (tramp-flush-directory-property vec "")))))
+        (tramp-flush-connection-properties proc)
+        (tramp-flush-directory-properties vec "")))))
 
 ;; We use BUFFER also as connection buffer during setup. Because of
 ;; this, its original contents must be saved, and restored once
@@ -2958,8 +2959,8 @@ the result will be a local, non-Tramp, file name."
 		(set-process-buffer p nil)
 		(kill-buffer (current-buffer)))
 	    (set-buffer-modified-p bmp))
-	  (tramp-set-connection-property v "process-name" nil)
-	  (tramp-set-connection-property v "process-buffer" nil))))))
+	  (tramp-flush-connection-property v "process-name")
+	  (tramp-flush-connection-property v "process-buffer"))))))
 
 (defun tramp-sh-handle-process-file
   (program &optional infile destination display &rest args)
@@ -3081,7 +3082,7 @@ the result will be a local, non-Tramp, file name."
       (when tmpinput (delete-file tmpinput))
 
       (unless process-file-side-effects
-        (tramp-flush-directory-property v ""))
+        (tramp-flush-directory-properties v ""))
 
       ;; Return exit status.
       (if (equal ret -1)
@@ -3385,8 +3386,8 @@ the result will be a local, non-Tramp, file name."
 	  (when coding-system-used
 	    (set 'last-coding-system-used coding-system-used))))
 
-      (tramp-flush-file-property v (file-name-directory localname))
-      (tramp-flush-file-property v localname)
+      (tramp-flush-file-properties v (file-name-directory localname))
+      (tramp-flush-file-properties v localname)
 
       ;; We must protect `last-coding-system-used', now we have set it
       ;; to its correct value.
