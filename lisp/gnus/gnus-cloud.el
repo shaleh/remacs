@@ -80,7 +80,7 @@ against the basename of files in said directory."
 
 (defcustom gnus-cloud-method nil
   "The IMAP select method used to store the cloud data.
-See also `gnus-server-toggle-cloud-method-server' for an
+See also `gnus-server-set-cloud-method-server' for an
 easy interactive way to set this from the Server buffer."
   :group 'gnus-cloud
   :type '(radio (const :tag "Not set" nil)
