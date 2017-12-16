@@ -741,7 +741,9 @@ PRESERVE-UID-GID and PRESERVE-EXTENDED-ATTRIBUTES are completely ignored."
 	  (let* ((share     (tramp-smb-get-share v))
 		 (localname (replace-regexp-in-string
 			     "\\\\" "/" (tramp-smb-get-localname v)))
-		 (args      (list (concat "//" host "/" share) "-E")))
+		 (args      (list (concat "//" host "/" share) "-E"))
+		 ;; We do not want to run timers.
+		 timer-list timer-idle-list)
 
 	    (if (not (zerop (length user)))
 		(setq args (append args (list "-U" user)))

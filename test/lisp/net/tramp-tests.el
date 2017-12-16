@@ -4625,6 +4625,8 @@ process sentinels.  They shall not disturb each other."
                 (set-process-filter
                  proc
                  (lambda (proc string)
+                   (tramp--test-message
+                    "Process filter %s %s %s" proc string (current-time-string))
                    (with-current-buffer (process-buffer proc)
                      (insert string))
                    (unless (zerop (length string))
@@ -4634,6 +4636,8 @@ process sentinels.  They shall not disturb each other."
                 (set-process-sentinel
                  proc
                  (lambda (proc _state)
+                   (tramp--test-message
+                    "Process sentinel %s %s" proc (current-time-string))
 		   (dired-uncache (process-get proc 'foo))
                    (should-not (file-attributes (process-get proc 'foo)))))))
 
@@ -4657,6 +4661,8 @@ process sentinels.  They shall not disturb each other."
                   (accept-process-output proc 0.1 nil 0)
                   ;; Give the watchdog a chance.
                   (read-event nil nil 0.01)
+                  (tramp--test-message
+                   "Continue action %d %s %s" count buf (current-time-string))
                   ;; Regular operation post process action.
 		  (dired-uncache file)
                   (if (= count 2)
