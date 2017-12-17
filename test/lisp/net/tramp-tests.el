@@ -3807,7 +3807,7 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
 			 (list (file-name-nondirectory tmp-name2))))
 		;; `vc-register' has changed its arguments in Emacs
 		;; 25.1.  Let's skip it for older Emacsen.
-		(error (skip-unless (tramp--test-emacs25-p))))
+		(error (skip-unless (>= emacs-major-version 25))))
 	      ;; vc-git uses an own process sentinel, Tramp's sentinel
 	      ;; for flushing the cache isn't used.
 	      (dired-uncache (concat (file-remote-p default-directory) "/"))
