@@ -1194,11 +1194,12 @@ check-declare:
 	fi
 	$(MAKE) -C lisp $@
 
-.PHONY: rustfmt
+.PHONY: gitmerge
 
-rustfmt:
-	(cd rust_src && cargo fmt)
-	(cd rust_src/remacs-lib && cargo fmt)
-	(cd rust_src/remacs-util && cargo fmt)
-	(cd rust_src/remacs-macros && cargo fmt)
-	(cd rust_src/alloc_unexecmacosx && cargo fmt)
+GITMERGE_EMACS = ./src/emacs${EXEEXT}
+GITMERGE_NMIN = 10
+
+gitmerge:
+	${GITMERGE_EMACS} -batch --no-site-file --no-site-lisp \
+	  -l ${srcdir}/admin/gitmerge.el \
+	  --eval '(setq gitmerge-minimum-missing ${GITMERGE_NMIN})' -f gitmerge
