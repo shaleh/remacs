@@ -110,16 +110,14 @@ fn get_coding_system_for_buffer(
     if LispObject::from(unsafe { globals.f_Vcoding_system_for_write }).is_not_nil() {
         return LispObject::from(unsafe { globals.f_Vcoding_system_for_write });
     }
-    if LispObject::from(buffer.buffer_file_coding_system).is_nil() || LispObject::from(unsafe {
+    if (LispObject::from(buffer.buffer_file_coding_system).is_nil() || LispObject::from(unsafe {
         Flocal_variable_p(
             Qbuffer_file_coding_system,
             LispObject::constant_nil().to_raw(),
         )
-    }).is_nil()
+    }).is_nil()) && LispObject::from(buffer.enable_multibyte_characters).is_nil()
     {
-        if LispObject::from(buffer.enable_multibyte_characters).is_nil() {
-            return LispObject::from(Qraw_text);
-        }
+        return LispObject::from(Qraw_text);
     }
     if buffer_file_name(object).is_not_nil() {
         /* Check file-coding-system-alist. */
@@ -406,9 +404,9 @@ fn _secure_hash(algorithm: HashAlg, input: &[u8], hex: bool) -> LispObject {
         digest_size as EmacsInt
     };
     let digest = LispObject::from(unsafe { make_uninit_string(buffer_size as EmacsInt) });
-    let digest_str = digest.as_string_or_error();
-    hash_func(input, digest_str.as_mut_slice());
-    if hex {
+    let mut digest_str = digest.as_string_or_error();
+    hash_func(input_slice, digest_str.as_mut_slice());
+    if binary.is_nil() {
         hexify_digest_string(digest_str.as_mut_slice(), digest_size);
     }
     digest

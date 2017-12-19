@@ -17,7 +17,7 @@ use remacs_sys::{font, EmacsDouble, EmacsInt, EmacsUint, EqualKind, Fcons, Pseud
                  CHECK_IMPURE, INTMASK, INTTYPEBITS, MOST_NEGATIVE_FIXNUM, MOST_POSITIVE_FIXNUM,
                  USE_LSB_TAG, VALBITS, VALMASK};
 use remacs_sys::{Lisp_Cons, Lisp_Float, Lisp_Misc_Any, Lisp_Misc_Type, Lisp_Object, Lisp_Subr,
-                 Lisp_Type};
+                 Lisp_Symbol, Lisp_Type};
 use remacs_sys::{Qarrayp, Qbufferp, Qchar_table_p, Qcharacterp, Qconsp, Qfloatp, Qframe_live_p,
                  Qframep, Qhash_table_p, Qinteger_or_marker_p, Qintegerp, Qlistp, Qmarkerp, Qnil,
                  Qnumber_or_marker_p, Qnumberp, Qoverlayp, Qplistp, Qprocessp, Qstringp, Qsubrp,
@@ -154,7 +154,7 @@ impl LispObject {
     pub fn as_symbol(self) -> Option<LispSymbolRef> {
         if self.is_symbol() {
             Some(LispSymbolRef::new(
-                unsafe { mem::transmute(self.symbol_ptr_value()) },
+                self.symbol_ptr_value() as *mut Lisp_Symbol,
             ))
         } else {
             None
@@ -163,8 +163,8 @@ impl LispObject {
 
     #[inline]
     pub fn as_symbol_or_error(self) -> LispSymbolRef {
-        if self.is_symbol() {
-            LispSymbolRef::new(unsafe { mem::transmute(self.symbol_ptr_value()) })
+        if let Some(sym) = self.as_symbol() {
+            sym
         } else {
             wrong_type!(Qsymbolp, self)
         }
@@ -205,13 +205,14 @@ impl LispObject {
 #[derive(Debug)]
 pub struct ExternalPtr<T>(*mut T);
 
+impl<T> Copy for ExternalPtr<T> {}
+
+// Derive fails for this type so do it manually
 impl<T> Clone for ExternalPtr<T> {
     fn clone(&self) -> Self {
         ExternalPtr::new(self.0)
     }
 }
-
-impl<T> Copy for ExternalPtr<T> {}
 
 impl<T> ExternalPtr<T> {
     pub fn new(p: *mut T) -> ExternalPtr<T> {
@@ -244,10 +245,6 @@ impl<T> PartialEq for ExternalPtr<T> {
     fn eq(&self, other: &ExternalPtr<T>) -> bool {
         self.as_ptr() == other.as_ptr()
     }
-
-    fn ne(&self, other: &ExternalPtr<T>) -> bool {
-        self.as_ptr() != other.as_ptr()
-    }
 }
 
 pub type LispSubrRef = ExternalPtr<Lisp_Subr>;
@@ -258,7 +255,7 @@ pub type LispMiscRef = ExternalPtr<Lisp_Misc_Any>;
 impl LispMiscRef {
     #[inline]
     pub fn get_type(self) -> Lisp_Misc_Type {
-        unsafe { mem::transmute(misc_get_ty(self.as_ptr()) as i32) }
+        unsafe { mem::transmute(i32::from(misc_get_ty(self.as_ptr()))) }
     }
 }
 
@@ -474,7 +471,7 @@ impl LispObject {
     }
 
     pub fn as_thread(self) -> Option<ThreadStateRef> {
-        self.as_vectorlike().map_or(None, |v| v.as_thread())
+        self.as_vectorlike().and_then(|v| v.as_thread())
     }
 
     pub fn as_thread_or_error(self) -> ThreadStateRef {
@@ -516,7 +513,7 @@ impl LispObject {
     }
 
     pub fn as_buffer(self) -> Option<LispBufferRef> {
-        self.as_vectorlike().map_or(None, |v| v.as_buffer())
+        self.as_vectorlike().and_then(|v| v.as_buffer())
     }
 
     pub fn as_buffer_or_error(self) -> LispBufferRef {
@@ -571,7 +568,7 @@ impl LispObject {
     }
 
     pub fn as_process(self) -> Option<LispProcessRef> {
-        self.as_vectorlike().map_or(None, |v| v.as_process())
+        self.as_vectorlike().and_then(|v| v.as_process())
     }
 
     pub fn as_process_or_error(self) -> LispProcessRef {
@@ -585,7 +582,7 @@ impl LispObject {
     }
 
     pub fn as_window(self) -> Option<LispWindowRef> {
-        self.as_vectorlike().map_or(None, |v| v.as_window())
+        self.as_vectorlike().and_then(|v| v.as_window())
     }
 
     pub fn as_window_or_error(self) -> LispWindowRef {
@@ -630,7 +627,7 @@ impl LispObject {
     */
 
     pub fn as_frame(self) -> Option<LispFrameRef> {
-        self.as_vectorlike().map_or(None, |v| v.as_frame())
+        self.as_vectorlike().and_then(|v| v.as_frame())
     }
 
     pub fn as_frame_or_error(self) -> LispFrameRef {
@@ -659,7 +656,7 @@ impl LispObject {
     }
 
     pub fn as_font(self) -> Option<LispFontRef> {
-        self.as_vectorlike().map_or(None, |v| {
+        self.as_vectorlike().and_then(|v| {
             if v.is_pseudovector(PseudovecType::PVEC_FONT) {
                 Some(LispFontRef::from_vectorlike(v))
             } else {
@@ -670,19 +667,19 @@ impl LispObject {
 
     pub fn is_font_entity(self) -> bool {
         self.is_font() && self.as_vectorlike().map_or(false, |vec| {
-            vec.pseudovector_size() == font::FONT_ENTITY_MAX as EmacsInt
+            vec.pseudovector_size() == EmacsInt::from(font::FONT_ENTITY_MAX)
         })
     }
 
     pub fn is_font_object(self) -> bool {
         self.is_font() && self.as_vectorlike().map_or(false, |vec| {
-            vec.pseudovector_size() == font::FONT_OBJECT_MAX as EmacsInt
+            vec.pseudovector_size() == EmacsInt::from(font::FONT_OBJECT_MAX)
         })
     }
 
     pub fn is_font_spec(self) -> bool {
         self.is_font() && self.as_vectorlike().map_or(false, |vec| {
-            vec.pseudovector_size() == font::FONT_SPEC_MAX as EmacsInt
+            vec.pseudovector_size() == EmacsInt::from(font::FONT_SPEC_MAX)
         })
     }
 
@@ -759,8 +756,8 @@ impl Iterator for TailsIter {
     fn next(&mut self) -> Option<Self::Item> {
         match self.tail.as_cons() {
             None => {
-                if !self.safe && self.tail.is_not_nil() {
-                    wrong_type!(Qlistp, self.list)
+                if self.errsym.is_some() && self.tail.is_not_nil() {
+                    wrong_type!(self.errsym.unwrap(), self.list)
                 }
                 None
             }
@@ -1128,7 +1125,7 @@ impl LispObject {
     /// Nonzero iff X is a character.
     pub fn is_character(self) -> bool {
         self.as_fixnum()
-            .map_or(false, |i| 0 <= i && i <= MAX_CHAR as EmacsInt)
+            .map_or(false, |i| 0 <= i && i <= EmacsInt::from(MAX_CHAR))
     }
 
     /// Check if Lisp object is a character or not and return the codepoint
