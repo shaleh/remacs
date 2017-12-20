@@ -2440,6 +2440,8 @@ mark."
          (file buffer-file-name)
          (backend (vc-backend file))
          (buf (get-buffer-create "*VC-history*")))
+    (unless backend
+      (error "Buffer is not version controlled"))
     (with-current-buffer buf
       (setq-local vc-log-view-type 'long))
     (vc-call region-history file buf lfrom lto)
