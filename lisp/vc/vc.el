@@ -2435,8 +2435,8 @@ When called interactively with a prefix argument, prompt for REMOTE-LOCATION."
 If called interactively, show the history between point and
 mark."
   (interactive "r")
-  (let* ((lfrom (line-number-at-pos from))
-         (lto   (line-number-at-pos (1- to)))
+  (let* ((lfrom (line-number-at-pos from t))
+         (lto   (line-number-at-pos (1- to) t))
          (file buffer-file-name)
          (backend (vc-backend file))
          (buf (get-buffer-create "*VC-history*")))
