@@ -719,7 +719,6 @@ pub struct thread_state {
     pub m_waiting_for_user_input_p: c_int,
     /// True while doing kbd input.
     pub m_waiting_for_input: bool,
-
     // TODO: this struct is incomplete. We're missing thread_id,
     // thread_condvar, wait_condvar, not_holding_lock, and
     // next_thread.
@@ -833,7 +832,6 @@ pub struct Lisp_Process {
 
     /// Queue for storing waiting writes.
     pub write_queue: Lisp_Object,
-
     // This struct is incomplete.
     // To access remaining fields use access functions written in
     // src/process.c and export them here for use in Rust.
@@ -938,7 +936,6 @@ pub struct Lisp_Frame {
     /// List of buffers that were viewed, then buried in this frame.  The
     /// most recently buried buffer is first.  For last-buffer.
     pub buried_buffer_list: Lisp_Object,
-
     // This struct is incomplete.
     // It is difficult, if not impossible, to import the rest of this struct.
     // 1. #IFDEF logic means the proper number of fields is hard to determine.
