@@ -877,18 +877,6 @@ or `thread-join' in the target thread.  */)
   return Qnil;
 }
 
-DEFUN ("thread-live-p", Fthread_live_p, Sthread_live_p, 1, 1, 0,
-       doc: /* Return t if THREAD is alive, or nil if it has exited.  */)
-  (Lisp_Object thread)
-{
-  struct thread_state *tstate;
-
-  CHECK_THREAD (thread);
-  tstate = XTHREAD (thread);
-
-  return thread_live_p (tstate) ? Qt : Qnil;
-}
-
 DEFUN ("thread--blocker", Fthread_blocker, Sthread_blocker, 1, 1, 0,
        doc: /* Return the object that THREAD is blocking on.
 If THREAD is blocked in `thread-join' on a second thread, return that
@@ -1043,7 +1031,6 @@ syms_of_threads (void)
       defsubr (&Smake_thread);
       defsubr (&Scurrent_thread);
       defsubr (&Sthread_signal);
-      defsubr (&Sthread_live_p);
       defsubr (&Sthread_join);
       defsubr (&Sthread_blocker);
       defsubr (&Sall_threads);
