@@ -95,12 +95,12 @@ impl LispObject {
     }
 
     #[inline]
-    pub fn from_raw(i: EmacsInt) -> LispObject {
+    pub fn from_raw(i: Lisp_Object) -> LispObject {
         LispObject(i)
     }
 
     #[inline]
-    pub fn to_raw(self) -> EmacsInt {
+    pub fn to_raw(self) -> Lisp_Object {
         self.0
     }
 }
@@ -144,7 +144,7 @@ impl From<bool> for LispObject {
 
 impl LispObject {
     pub fn get_type(self) -> Lisp_Type {
-        let raw = self.to_raw() as EmacsUint;
+        let raw = self.to_raw().to_C_unsigned();
         let res = (if USE_LSB_TAG {
             raw & (!VALMASK as EmacsUint)
         } else {
@@ -165,16 +165,12 @@ impl LispObject {
             ((tag << VALBITS) + ptr) as EmacsInt
         };
 
-        LispObject::from_raw(res)
+        LispObject::from_raw(Lisp_Object::from_C(res))
     }
 
     #[inline]
-    pub fn check_type_or_error(self, ok: bool, predicate: Lisp_Object) -> () {
-        if !ok {
-            unsafe {
-                wrong_type_argument(predicate, self.to_raw());
-            }
-        }
+    pub fn get_untaggedptr(self) -> *mut c_void {
+        (self.to_raw().to_C() & VALMASK) as intptr_t as *mut c_void
     }
 }
 
@@ -217,7 +213,7 @@ impl LispObject {
     #[inline]
     fn symbol_ptr_value(self) -> EmacsInt {
         let ptr_value = if USE_LSB_TAG {
-            self.to_raw() as EmacsInt
+            self.to_raw().to_C()
         } else {
             self.get_untaggedptr() as EmacsInt
         };
@@ -357,7 +353,7 @@ impl LispObject {
         } else {
             (n & INTMASK) as EmacsUint + ((Lisp_Type::Lisp_Int0 as EmacsUint) << VALBITS)
         };
-        LispObject::from_raw(o as EmacsInt)
+        LispObject::from_raw(Lisp_Object::from_C(o as EmacsInt))
     }
 
     /// Convert a positive integer into its LispObject representation.
@@ -391,7 +387,7 @@ impl LispObject {
 
     #[inline]
     unsafe fn to_fixnum_unchecked(self) -> EmacsInt {
-        let raw = self.to_raw();
+        let raw = self.to_raw().to_C();
         if !USE_LSB_TAG {
             raw & INTMASK
         } else {
@@ -549,7 +545,7 @@ impl LispObject {
 
     pub fn as_thread_or_error(self) -> ThreadStateRef {
         self.as_thread()
-            .unwrap_or_else(|| wrong_type!(Qthreadp, self))
+            .unwrap_or_else(|| wrong_type!(Qthreadp.into(), self))
     }
 
     pub fn is_mutex(self) -> bool {
@@ -1428,7 +1424,7 @@ impl Debug for LispObject {
                 f,
                 "#<INVALID-OBJECT @ {:#X}: VAL({:#X})>",
                 self_ptr,
-                self.to_raw()
+                self.to_raw().to_C()
             )?;
             return Ok(());
         }
@@ -1469,7 +1465,7 @@ impl Debug for LispObject {
                         f,
                         "#<VECTOR-LIKE @ {:#X}: VAL({:#X})>",
                         self_ptr,
-                        self.to_raw()
+                        self.to_raw().to_C()
                     )?;
                 }
             }
@@ -1477,7 +1473,12 @@ impl Debug for LispObject {
                 write!(f, "{}", self.as_fixnum().unwrap())?;
             }
             Lisp_Type::Lisp_Misc => {
-                write!(f, "#<MISC @ {:#X}: VAL({:#X})>", self_ptr, self.to_raw())?;
+                write!(
+                    f,
+                    "#<MISC @ {:#X}: VAL({:#X})>",
+                    self_ptr,
+                    self.to_raw().to_C()
+                )?;
             }
             Lisp_Type::Lisp_String => {
                 write!(f, "{:?}", display_string(*self))?;
