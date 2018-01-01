@@ -337,6 +337,10 @@ pub struct Lisp_Marker {
     pub bytepos: ptrdiff_t,
 }
 
+extern "C" {
+    pub fn mget_insertion_type(marker: *const Lisp_Marker) -> BoolBF;
+}
+
 // TODO: write a docstring based on the docs in lisp.h.
 #[repr(C)]
 pub struct Lisp_Overlay {
