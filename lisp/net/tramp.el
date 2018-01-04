@@ -2204,6 +2204,8 @@ Falls back to normal file name handler if no Tramp file name handler exists."
 			(let ((default-directory
 				(tramp-compat-temporary-file-directory)))
 			  (load (cadr sf) 'noerror 'nomessage)))
+;;		      (tramp-message
+;;		       v 4 "Running `%s'..." (cons operation args))
 		      ;; If `non-essential' is non-nil, Tramp shall
 		      ;; not open a new connection.
 		      ;; If Tramp detects that it shouldn't continue
@@ -2227,6 +2229,8 @@ Falls back to normal file name handler if no Tramp file name handler exists."
 				      (let ((tramp-locker t))
 					(apply foreign operation args))
 				    (setq tramp-locked tl))))))
+;;		      (tramp-message
+;;		       v 4 "Running `%s'...`%s'" (cons operation args) result)
 		      (cond
 		       ((eq result 'non-essential)
 			(tramp-message

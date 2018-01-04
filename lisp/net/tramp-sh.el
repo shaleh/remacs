@@ -4715,7 +4715,8 @@ connection if a previous connection has died for some reason."
 	      (setenv "PS1" tramp-initial-end-of-output)
               (unless (stringp tramp-encoding-shell)
                 (tramp-error vec 'file-error "`tramp-encoding-shell' not set"))
-	      (let* ((target-alist (tramp-compute-multi-hops vec))
+	      (let* ((current-host (system-name))
+		     (target-alist (tramp-compute-multi-hops vec))
 		     ;; We will apply `tramp-ssh-controlmaster-options'
 		     ;; only for the first hop.
 		     (options (tramp-ssh-controlmaster-options vec))
@@ -4736,16 +4737,14 @@ connection if a previous connection has died for some reason."
 			   (if tramp-encoding-command-interactive
 			       (list tramp-encoding-shell
 				     tramp-encoding-command-interactive)
-			     (list tramp-encoding-shell)))))
-		     current-host)
+			     (list tramp-encoding-shell))))))
 
 		;; Set sentinel and query flag.  Initialize variables.
 		(tramp-set-connection-property p "vector" vec)
 		(set-process-sentinel p 'tramp-process-sentinel)
 		(process-put p 'adjust-window-size-function 'ignore)
 		(set-process-query-on-exit-flag p nil)
-		(setq tramp-current-connection (cons vec (current-time))
-		      current-host (system-name))
+		(setq tramp-current-connection (cons vec (current-time)))
 
 		(tramp-message
 		 vec 6 "%s" (mapconcat 'identity (process-command p) " "))
