@@ -367,6 +367,12 @@ To restore the old behavior, use
     (add-hook 'eshell-expand-input-functions
               #'eshell-expand-history-references)
 
+** Tramp
+
++++
+*** New connection method "owncloud", which allows to access OwnCloud
+or NextCloud hosted files and directories.
+
 
 * Startup Changes in Emacs 26.1
 
