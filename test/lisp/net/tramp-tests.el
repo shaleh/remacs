@@ -2869,15 +2869,17 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
 	      (tramp-compat-file-name-quote
 	       (concat (file-remote-p tmp-name2) "/penguin:motd:"))))
 	    ;; `tmp-name3' is a local file name.
-	    (make-symbolic-link tmp-name1 tmp-name3)
-	    (should (file-symlink-p tmp-name3))
-            (should-not (string-equal tmp-name3 (file-truename tmp-name3)))
-	    ;; `file-truename' returns a quoted file name for `tmp-name3'.
-	    ;; We must unquote it.
-	    (should
-	     (string-equal
-	      (tramp-compat-file-name-unquote (file-truename tmp-name1))
-	      (tramp-compat-file-name-unquote (file-truename tmp-name3)))))
+	    ;; `make-symbolic-link' might not be permitted on w32 systems.
+	    (unless (tramp--test-windows-nt)
+	      (make-symbolic-link tmp-name1 tmp-name3)
+	      (should (file-symlink-p tmp-name3))
+              (should-not (string-equal tmp-name3 (file-truename tmp-name3)))
+	      ;; `file-truename' returns a quoted file name for `tmp-name3'.
+	      ;; We must unquote it.
+	      (should
+	       (string-equal
+		(tramp-compat-file-name-unquote (file-truename tmp-name1))
+		(tramp-compat-file-name-unquote (file-truename tmp-name3))))))
 
 	;; Cleanup.
 	(ignore-errors
