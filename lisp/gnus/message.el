@@ -1434,8 +1434,6 @@ starting with `not' and followed by regexps."
      :bold t :italic t))
   "Face used for displaying To headers."
   :group 'message-faces)
-(define-obsolete-face-alias 'message-header-to-face
-  'message-header-to "22.1")
 
 (defface message-header-cc
   '((((class color)
@@ -1448,8 +1446,6 @@ starting with `not' and followed by regexps."
      :bold t))
   "Face used for displaying Cc headers."
   :group 'message-faces)
-(define-obsolete-face-alias 'message-header-cc-face
-  'message-header-cc "22.1")
 
 (defface message-header-subject
   '((((class color)
@@ -1462,8 +1458,6 @@ starting with `not' and followed by regexps."
      :bold t))
   "Face used for displaying Subject headers."
   :group 'message-faces)
-(define-obsolete-face-alias 'message-header-subject-face
-  'message-header-subject "22.1")
 
 (defface message-header-newsgroups
   '((((class color)
@@ -1476,8 +1470,6 @@ starting with `not' and followed by regexps."
      :bold t :italic t))
   "Face used for displaying Newsgroups headers."
   :group 'message-faces)
-(define-obsolete-face-alias 'message-header-newsgroups-face
-  'message-header-newsgroups "22.1")
 
 (defface message-header-other
   '((((class color)
@@ -1490,8 +1482,6 @@ starting with `not' and followed by regexps."
      :bold t :italic t))
   "Face used for displaying other headers."
   :group 'message-faces)
-(define-obsolete-face-alias 'message-header-other-face
-  'message-header-other "22.1")
 
 (defface message-header-name
   '((((class color)
@@ -1504,8 +1494,6 @@ starting with `not' and followed by regexps."
      :bold t))
   "Face used for displaying header names."
   :group 'message-faces)
-(define-obsolete-face-alias 'message-header-name-face
-  'message-header-name "22.1")
 
 (defface message-header-xheader
   '((((class color)
@@ -1518,8 +1506,6 @@ starting with `not' and followed by regexps."
      :bold t))
   "Face used for displaying X-Header headers."
   :group 'message-faces)
-(define-obsolete-face-alias 'message-header-xheader-face
-  'message-header-xheader "22.1")
 
 (defface message-separator
   '((((class color)
@@ -1532,8 +1518,6 @@ starting with `not' and followed by regexps."
      :bold t))
   "Face used for displaying the separator."
   :group 'message-faces)
-(define-obsolete-face-alias 'message-separator-face
-  'message-separator "22.1")
 
 (defface message-cited-text
   '((((class color)
@@ -1546,8 +1530,6 @@ starting with `not' and followed by regexps."
      :bold t))
   "Face used for displaying cited text names."
   :group 'message-faces)
-(define-obsolete-face-alias 'message-cited-text-face
-  'message-cited-text "22.1")
 
 (defface message-mml
   '((((class color)
@@ -1560,8 +1542,6 @@ starting with `not' and followed by regexps."
      :bold t))
   "Face used for displaying MML."
   :group 'message-faces)
-(define-obsolete-face-alias 'message-mml-face
-  'message-mml "22.1")
 
 (defun message-font-lock-make-header-matcher (regexp)
   (let ((form
