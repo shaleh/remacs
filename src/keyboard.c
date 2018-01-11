@@ -1898,7 +1898,7 @@ start_polling (void)
 #endif
 }
 
-#ifdef DOS_NT
+#if defined CYGWIN || defined DOS_NT
 /* True if we are using polling to handle input asynchronously.  */
 
 bool
