@@ -1955,6 +1955,10 @@ like the macOS default.  The new variables 'ns-mwheel-line-height',
 'ns-use-mwheel-acceleration' and 'ns-use-mwheel-momentum' can be used
 to customize the behavior.
 
+---
+** Battery status is now supported in all Cygwin builds.
+Previously it was supported only in the Cygwin-w32 build.
+
 
 ----------------------------------------------------------------------
 This file is part of GNU Emacs.
