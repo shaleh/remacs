@@ -839,6 +839,9 @@ paragraphs, for the purposes of bidirectional display.
 This controls how long Emacs will wait for updates to the graphical
 state to take effect (making a frame visible, for example).
 
+** 'print-quoted' now defaults to t, so if you want to see
+(quote x) instead of 'x you will have to bind it to nil where applicable.
+
 ** Internal parsing commands now use syntax-ppss and disregard
 open-paren-in-column-0-is-defun-start.  This affects mostly things like
 forward-comment, scan-sexps, and forward-sexp when parsing backward.
