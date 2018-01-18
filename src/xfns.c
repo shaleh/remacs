@@ -3606,6 +3606,372 @@ x_get_net_workarea (struct x_display_info *dpyinfo, XRectangle *rect)
 }
 #endif
 
+#ifndef USE_GTK
+
+/* Return monitor number where F is "most" or closest to.  */
+static int
+x_get_monitor_for_frame (struct frame *f,
+                         struct MonitorInfo *monitors,
+                         int n_monitors)
+{
+  XRectangle frect;
+  int area = 0, dist = -1;
+  int best_area = -1, best_dist = -1;
+  int i;
+
+  if (n_monitors == 1) return 0;
+  frect.x = f->left_pos;
+  frect.y = f->top_pos;
+  frect.width = FRAME_PIXEL_WIDTH (f);
+  frect.height = FRAME_PIXEL_HEIGHT (f);
+
+  for (i = 0; i < n_monitors; ++i)
+    {
+      struct MonitorInfo *mi = &monitors[i];
+      XRectangle res;
+      int a = 0;
+
+      if (mi->geom.width == 0) continue;
+
+      if (x_intersect_rectangles (&mi->geom, &frect, &res))
+        {
+          a = res.width * res.height;
+          if (a > area)
+	    {
+	      area = a;
+	      best_area = i;
+	    }
+        }
+
+      if (a == 0 && area == 0)
+        {
+          int dx, dy, d;
+          if (frect.x + frect.width < mi->geom.x)
+            dx = mi->geom.x - frect.x + frect.width;
+          else if (frect.x > mi->geom.x + mi->geom.width)
+            dx = frect.x - mi->geom.x + mi->geom.width;
+          else
+            dx = 0;
+          if (frect.y + frect.height < mi->geom.y)
+            dy = mi->geom.y - frect.y + frect.height;
+          else if (frect.y > mi->geom.y + mi->geom.height)
+            dy = frect.y - mi->geom.y + mi->geom.height;
+          else
+            dy = 0;
+
+          d = dx*dx + dy*dy;
+          if (dist == -1 || dist > d)
+            {
+              dist = d;
+              best_dist = i;
+            }
+        }
+    }
+
+  return best_area != -1 ? best_area : (best_dist != -1 ? best_dist : 0);
+}
+
+static Lisp_Object
+x_make_monitor_attribute_list (struct MonitorInfo *monitors,
+                               int n_monitors,
+                               int primary_monitor,
+                               struct x_display_info *dpyinfo,
+                               const char *source)
+{
+  Lisp_Object monitor_frames = Fmake_vector (make_number (n_monitors), Qnil);
+  Lisp_Object frame, rest;
+
+  FOR_EACH_FRAME (rest, frame)
+    {
+      struct frame *f = XFRAME (frame);
+
+      if (FRAME_X_P (f)
+	  && FRAME_DISPLAY_INFO (f) == dpyinfo
+	  && !FRAME_TOOLTIP_P (f))
+	{
+	  int i = x_get_monitor_for_frame (f, monitors, n_monitors);
+	  ASET (monitor_frames, i, Fcons (frame, AREF (monitor_frames, i)));
+	}
+    }
+
+  return make_monitor_attribute_list (monitors, n_monitors, primary_monitor,
+                                      monitor_frames, source);
+}
+
+static Lisp_Object
+x_get_monitor_attributes_fallback (struct x_display_info *dpyinfo)
+{
+  struct MonitorInfo monitor;
+  XRectangle workarea_r;
+
+  /* Fallback: treat (possibly) multiple physical monitors as if they
+     formed a single monitor as a whole.  This should provide a
+     consistent result at least on single monitor environments.  */
+  monitor.geom.x = monitor.geom.y = 0;
+  monitor.geom.width = x_display_pixel_width (dpyinfo);
+  monitor.geom.height = x_display_pixel_height (dpyinfo);
+  monitor.mm_width = WidthMMOfScreen (dpyinfo->screen);
+  monitor.mm_height = HeightMMOfScreen (dpyinfo->screen);
+  monitor.name = xstrdup ("combined screen");
+
+  if (x_get_net_workarea (dpyinfo, &workarea_r))
+    monitor.work = workarea_r;
+  else
+    monitor.work = monitor.geom;
+  return x_make_monitor_attribute_list (&monitor, 1, 0, dpyinfo, "fallback");
+}
+
+
+#ifdef HAVE_XINERAMA
+static Lisp_Object
+x_get_monitor_attributes_xinerama (struct x_display_info *dpyinfo)
+{
+  int n_monitors, i;
+  Lisp_Object attributes_list = Qnil;
+  Display *dpy = dpyinfo->display;
+  XineramaScreenInfo *info = XineramaQueryScreens (dpy, &n_monitors);
+  struct MonitorInfo *monitors;
+  double mm_width_per_pixel, mm_height_per_pixel;
+
+  if (! info || n_monitors == 0)
+    {
+      if (info)
+	XFree (info);
+      return attributes_list;
+    }
+
+  mm_width_per_pixel = ((double) WidthMMOfScreen (dpyinfo->screen)
+			/ x_display_pixel_width (dpyinfo));
+  mm_height_per_pixel = ((double) HeightMMOfScreen (dpyinfo->screen)
+			 / x_display_pixel_height (dpyinfo));
+  monitors = xzalloc (n_monitors * sizeof *monitors);
+  for (i = 0; i < n_monitors; ++i)
+    {
+      struct MonitorInfo *mi = &monitors[i];
+      XRectangle workarea_r;
+
+      mi->geom.x = info[i].x_org;
+      mi->geom.y = info[i].y_org;
+      mi->geom.width = info[i].width;
+      mi->geom.height = info[i].height;
+      mi->mm_width = mi->geom.width * mm_width_per_pixel + 0.5;
+      mi->mm_height = mi->geom.height * mm_height_per_pixel + 0.5;
+      mi->name = 0;
+
+      /* Xinerama usually have primary monitor first, just use that.  */
+      if (i == 0 && x_get_net_workarea (dpyinfo, &workarea_r))
+	{
+	  mi->work = workarea_r;
+	  if (! x_intersect_rectangles (&mi->geom, &mi->work, &mi->work))
+	    mi->work = mi->geom;
+	}
+      else
+	mi->work = mi->geom;
+    }
+  XFree (info);
+
+  attributes_list = x_make_monitor_attribute_list (monitors,
+                                                   n_monitors,
+                                                   0,
+                                                   dpyinfo,
+                                                   "Xinerama");
+  free_monitors (monitors, n_monitors);
+  return attributes_list;
+}
+#endif /* HAVE_XINERAMA */
+
+
+#ifdef HAVE_XRANDR
+static Lisp_Object
+x_get_monitor_attributes_xrandr (struct x_display_info *dpyinfo)
+{
+  Lisp_Object attributes_list = Qnil;
+  XRRScreenResources *resources;
+  Display *dpy = dpyinfo->display;
+  int i, n_monitors, primary = -1;
+  RROutput pxid = None;
+  struct MonitorInfo *monitors;
+
+#define RANDR13_LIBRARY \
+  (RANDR_MAJOR > 1 || (RANDR_MAJOR == 1 && RANDR_MINOR >= 3))
+
+#if RANDR13_LIBRARY
+  /* Check if the display supports 1.3 too.  */
+  bool randr13_avail = (dpyinfo->xrandr_major_version > 1
+			|| (dpyinfo->xrandr_major_version == 1
+			    && dpyinfo->xrandr_minor_version >= 3));
+
+  if (randr13_avail)
+    resources = XRRGetScreenResourcesCurrent (dpy, dpyinfo->root_window);
+  else
+    resources = XRRGetScreenResources (dpy, dpyinfo->root_window);
+#else
+  resources = XRRGetScreenResources (dpy, dpyinfo->root_window);
+#endif
+  if (! resources || resources->noutput == 0)
+    {
+      if (resources)
+	XRRFreeScreenResources (resources);
+      return Qnil;
+    }
+  n_monitors = resources->noutput;
+  monitors = xzalloc (n_monitors * sizeof *monitors);
+
+#if RANDR13_LIBRARY
+  if (randr13_avail)
+    pxid = XRRGetOutputPrimary (dpy, dpyinfo->root_window);
+#endif
+
+  for (i = 0; i < n_monitors; ++i)
+    {
+      XRROutputInfo *info = XRRGetOutputInfo (dpy, resources,
+                                              resources->outputs[i]);
+      if (!info)
+	continue;
+
+      if (strcmp (info->name, "default") == 0)
+        {
+          /* Non XRandr 1.2 driver, does not give useful data.  */
+	  XRRFreeOutputInfo (info);
+	  XRRFreeScreenResources (resources);
+          free_monitors (monitors, n_monitors);
+          return Qnil;
+        }
+
+      if (info->connection != RR_Disconnected && info->crtc != None)
+        {
+          XRRCrtcInfo *crtc = XRRGetCrtcInfo (dpy, resources, info->crtc);
+          struct MonitorInfo *mi = &monitors[i];
+          XRectangle workarea_r;
+
+    default:
+      error ("Strange value for BackingStore parameter of screen");
+    }
+
+  return result;
+}
+
+DEFUN ("x-display-visual-class", Fx_display_visual_class,
+       Sx_display_visual_class, 0, 1, 0,
+       doc: /* Return the visual class of the X display TERMINAL.
+The value is one of the symbols `static-gray', `gray-scale',
+`static-color', `pseudo-color', `true-color', or `direct-color'.
+
+The optional argument TERMINAL specifies which display to ask about.
+TERMINAL should a terminal object, a frame or a display name (a string).
+If omitted or nil, that stands for the selected frame's display.  */)
+  (Lisp_Object terminal)
+{
+  struct x_display_info *dpyinfo = check_x_display_info (terminal);
+  Lisp_Object result;
+
+  switch (dpyinfo->visual->class)
+    {
+    case StaticGray:
+      result = intern ("static-gray");
+      break;
+    case GrayScale:
+      result = intern ("gray-scale");
+      break;
+    case StaticColor:
+      result = intern ("static-color");
+      break;
+    case PseudoColor:
+      result = intern ("pseudo-color");
+      break;
+    case TrueColor:
+      result = intern ("true-color");
+      break;
+    case DirectColor:
+      result = intern ("direct-color");
+      break;
+    default:
+      error ("Display has an unknown visual class");
+    }
+
+  return result;
+}
+
+DEFUN ("x-display-save-under", Fx_display_save_under,
+       Sx_display_save_under, 0, 1, 0,
+       doc: /* Return t if the X display TERMINAL supports the save-under feature.
+The optional argument TERMINAL specifies which display to ask about.
+TERMINAL should be a terminal object, a frame or a display name (a string).
+If omitted or nil, that stands for the selected frame's display.  */)
+  (Lisp_Object terminal)
+{
+  struct x_display_info *dpyinfo = check_x_display_info (terminal);
+
+  if (DoesSaveUnders (dpyinfo->screen) == True)
+    return Qt;
+  else
+    return Qnil;
+}
+
+/* Store the geometry of the workarea on display DPYINFO into *RECT.
+   Return false if and only if the workarea information cannot be
+   obtained via the _NET_WORKAREA root window property.  */
+
+#if ! GTK_CHECK_VERSION (3, 4, 0)
+static bool
+x_get_net_workarea (struct x_display_info *dpyinfo, XRectangle *rect)
+{
+  Display *dpy = dpyinfo->display;
+  long offset, max_len;
+  Atom target_type, actual_type;
+  unsigned long actual_size, bytes_remaining;
+  int rc, actual_format;
+  unsigned char *tmp_data = NULL;
+  bool result = false;
+
+  x_catch_errors (dpy);
+  offset = 0;
+  max_len = 1;
+  target_type = XA_CARDINAL;
+  rc = XGetWindowProperty (dpy, dpyinfo->root_window,
+			   dpyinfo->Xatom_net_current_desktop,
+			   offset, max_len, False, target_type,
+			   &actual_type, &actual_format, &actual_size,
+			   &bytes_remaining, &tmp_data);
+  if (rc == Success && actual_type == target_type && !x_had_errors_p (dpy)
+      && actual_format == 32 && actual_size == max_len)
+    {
+      long current_desktop = ((long *) tmp_data)[0];
+
+      XFree (tmp_data);
+      tmp_data = NULL;
+
+      offset = 4 * current_desktop;
+      max_len = 4;
+      rc = XGetWindowProperty (dpy, dpyinfo->root_window,
+			       dpyinfo->Xatom_net_workarea,
+			       offset, max_len, False, target_type,
+			       &actual_type, &actual_format, &actual_size,
+			       &bytes_remaining, &tmp_data);
+      if (rc == Success && actual_type == target_type && !x_had_errors_p (dpy)
+	  && actual_format == 32 && actual_size == max_len)
+	{
+	  long *values = (long *) tmp_data;
+
+	  rect->x = values[0];
+	  rect->y = values[1];
+	  rect->width = values[2];
+	  rect->height = values[3];
+
+	  XFree (tmp_data);
+	  tmp_data = NULL;
+
+	  result = true;
+	}
+    }
+  if (tmp_data)
+    XFree (tmp_data);
+  x_uncatch_errors ();
+
+  return result;
+}
+#endif
+
 DEFUN ("x-display-monitor-attributes-list", Fx_display_monitor_attributes_list,
        Sx_display_monitor_attributes_list,
        0, 1, 0,
@@ -3661,12 +4027,9 @@ Internal use only, use `display-monitor-attributes-list' instead.  */)
     {
       struct frame *f = XFRAME (frame);
 
-      if (FRAME_X_P (f) && FRAME_DISPLAY_INFO (f) == dpyinfo
-	  && !(EQ (frame, tip_frame)
-#ifdef USE_GTK
-	       && !NILP (Fframe_parameter (tip_frame, Qtooltip))
-#endif
-	       ))
+      if (FRAME_X_P (f)
+	  && FRAME_DISPLAY_INFO (f) == dpyinfo
+	  && !FRAME_TOOLTIP_P (f))
 	{
 	  GdkWindow *gwin = gtk_widget_get_window (FRAME_GTK_WIDGET (f));
 
@@ -4799,22 +5162,27 @@ Otherwise, the return value is a vector with the following fields:
  ***********************************************************************/
 
 static void compute_tip_xy (struct frame *, Lisp_Object, Lisp_Object,
-                            Lisp_Object, int, int, int *, int *);
+			    Lisp_Object, int, int, int *, int *);
 
-/* The frame of a currently visible tooltip.  */
-
+/* The frame of the currently visible tooltip.  */
 Lisp_Object tip_frame;
 
-/* If non-nil, a timer started that hides the last tooltip when it
-   fires.  */
-
-static Lisp_Object tip_timer;
+/* The window-system window corresponding to the frame of the
+   currently visible tooltip.  */
 Window tip_window;
 
-/* If non-nil, a vector of 3 elements containing the last args
-   with which x-show-tip was called.  See there.  */
+/* A timer that hides or deletes the currently visible tooltip when it
+   fires.  */
+Lisp_Object tip_timer;
 
-static Lisp_Object last_show_tip_args;
+/* STRING argument of last `x-show-tip' call.  */
+Lisp_Object tip_last_string;
+
+/* FRAME argument of last `x-show-tip' call.  */
+Lisp_Object tip_last_frame;
+
+/* PARMS argument of last `x-show-tip' call.  */
+Lisp_Object tip_last_parms;
 
 
 static void
@@ -4884,6 +5252,7 @@ x_create_tip_frame (struct x_display_info *dpyinfo, Lisp_Object parms)
   f->output_data.x->white_relief.pixel = -1;
   f->output_data.x->black_relief.pixel = -1;
 
+  f->tooltip = true;
   fset_icon_name (f, Qnil);
   FRAME_DISPLAY_INFO (f) = dpyinfo;
   f->output_data.x->parent_desc = FRAME_DISPLAY_INFO (f)->root_window;
@@ -5148,7 +5517,9 @@ x_create_tip_frame (struct x_display_info *dpyinfo, Lisp_Object parms)
    the display in *ROOT_X, and *ROOT_Y.  */
 
 static void
-compute_tip_xy (struct frame *f, Lisp_Object parms, Lisp_Object dx, Lisp_Object dy, int width, int height, int *root_x, int *root_y)
+compute_tip_xy (struct frame *f,
+		Lisp_Object parms, Lisp_Object dx, Lisp_Object dy,
+		int width, int height, int *root_x, int *root_y)
 {
   Lisp_Object left, top, right, bottom;
   int win_x, win_y;
@@ -5245,7 +5616,19 @@ compute_tip_xy (struct frame *f, Lisp_Object parms, Lisp_Object dx, Lisp_Object 
 }
 
 
-/* Hide tooltip.  Delete its frame if DELETE is true.  */
+/**
+ * x_hide_tip:
+ *
+ * Hide currently visible tooltip and cancel its timer.
+ *
+ * If GTK+ system tooltips are used, this will try to hide the tooltip
+ * referenced by the x_output structure of tooltip_last_frame.  For
+ * Emacs tooltips this will try to make tooltip_frame invisible (if
+ * DELETE is false) or delete tooltip_frame (if DELETE is true).
+ *
+ * Return Qt if the tooltip was either deleted or made invisible, Qnil
+ * otherwise.
+ */
 static Lisp_Object
 x_hide_tip (bool delete)
 {
@@ -5255,9 +5638,73 @@ x_hide_tip (bool delete)
       tip_timer = Qnil;
     }
 
+#ifdef USE_GTK
+  /* The GTK+ system tooltip window can be found via the x_output
+     structure of tip_last_frame, if it still exists.  */
+  if (x_gtk_use_system_tooltips && NILP (tip_last_frame))
+    return Qnil;
+  else if (!x_gtk_use_system_tooltips
+	   && (NILP (tip_frame)
+	       || (!delete
+		   && FRAMEP (tip_frame)
+		   && FRAME_LIVE_P (XFRAME (tip_frame))
+		   && !FRAME_VISIBLE_P (XFRAME (tip_frame)))))
+    return Qnil;
+  else
+    {
+      ptrdiff_t count;
+      Lisp_Object was_open = Qnil;
 
+      count = SPECPDL_INDEX ();
+      specbind (Qinhibit_redisplay, Qt);
+      specbind (Qinhibit_quit, Qt);
+
+      if (x_gtk_use_system_tooltips)
+	{
+	  /* The GTK+ system tooltip window is stored in the x_output
+	     structure of tip_last_frame.  */
+	  struct frame *f = XFRAME (tip_last_frame);
+
+	  if (FRAME_LIVE_P (f))
+	    {
+	      if (xg_hide_tooltip (f))
+		was_open = Qt;
+	    }
+	  else
+	    tip_last_frame = Qnil;
+	}
+      else
+	{
+	  if (FRAMEP (tip_frame))
+	    {
+	      struct frame *f = XFRAME (tip_frame);
+
+	      if (FRAME_LIVE_P (f))
+		{
+		  if (delete)
+		    {
+		      delete_frame (tip_frame, Qnil);
+		      tip_frame = Qnil;
+		    }
+		  else
+		    x_make_frame_invisible (f);
+
+		  was_open = Qt;
+		}
+	      else
+		tip_frame = Qnil;
+	    }
+	  else
+	    tip_frame = Qnil;
+	}
+
+      return unbind_to (count, was_open);
+    }
+#else /* not USE_GTK */
   if (NILP (tip_frame)
-      || (!delete && FRAMEP (tip_frame)
+      || (!delete
+	  && FRAMEP (tip_frame)
+	  && FRAME_LIVE_P (XFRAME (tip_frame))
 	  && !FRAME_VISIBLE_P (XFRAME (tip_frame))))
     return Qnil;
   else
@@ -5269,36 +5716,56 @@ x_hide_tip (bool delete)
       specbind (Qinhibit_redisplay, Qt);
       specbind (Qinhibit_quit, Qt);
 
-      {
-	/* When using system tooltip, tip_frame is the Emacs frame on
-	   which the tip is shown.  */
-	struct frame *f = XFRAME (tip_frame);
-
-	if (FRAME_LIVE_P (f) && xg_hide_tooltip (f))
-	  {
-	    tip_frame = Qnil;
-	    was_open = Qt;
-	  }
-      }
-
       if (FRAMEP (tip_frame))
 	{
-	  if (delete)
+	  struct frame *f = XFRAME (tip_frame);
+
+	  if (FRAME_LIVE_P (f))
 	    {
-	      delete_frame (tip_frame, Qnil);
-	      tip_frame = Qnil;
+	      if (delete)
+		{
+		  delete_frame (tip_frame, Qnil);
+		  tip_frame = Qnil;
+		}
+	      else
+		x_make_frame_invisible (XFRAME (tip_frame));
+
+#ifdef USE_LUCID
+	      /* Bloodcurdling hack alert: The Lucid menu bar widget's
+		 redisplay procedure is not called when a tip frame over
+		 menu items is unmapped.  Redisplay the menu manually...  */
+	      {
+		Widget w;
+		struct frame *f = SELECTED_FRAME ();
+
+		if (FRAME_X_P (f) && FRAME_LIVE_P (f))
+		  {
+		    w = f->output_data.x->menubar_widget;
+
+		    if (!DoesSaveUnders (FRAME_DISPLAY_INFO (f)->screen)
+			&& w != NULL)
+		      {
+			block_input ();
+			xlwmenu_redisplay (w);
+			unblock_input ();
+		      }
+		  }
+	      }
+#endif /* USE_LUCID */
+
+	      was_open = Qt;
 	    }
 	  else
-	    x_make_frame_invisible (XFRAME (tip_frame));
-
-	  was_open = Qt;
+	    tip_frame = Qnil;
 	}
       else
 	tip_frame = Qnil;
 
       return unbind_to (count, was_open);
     }
+#endif /* USE_GTK */
 }
+
 
 DEFUN ("x-show-tip", Fx_show_tip, Sx_show_tip, 1, 6, 0,
        doc: /* Show STRING in a "tooltip" window on frame FRAME.
@@ -5330,7 +5797,8 @@ with offset DY added (default is -10).
 
 A tooltip's maximum size is specified by `x-max-tooltip-size'.
 Text larger than the specified size is clipped.  */)
-  (Lisp_Object string, Lisp_Object frame, Lisp_Object parms, Lisp_Object timeout, Lisp_Object dx, Lisp_Object dy)
+  (Lisp_Object string, Lisp_Object frame, Lisp_Object parms,
+   Lisp_Object timeout, Lisp_Object dx, Lisp_Object dy)
 {
   struct frame *f, *tip_f;
   struct window *w;
@@ -5341,7 +5809,7 @@ Text larger than the specified size is clipped.  */)
   int old_windows_or_buffers_changed = windows_or_buffers_changed;
   ptrdiff_t count = SPECPDL_INDEX ();
   ptrdiff_t count_1;
-  Lisp_Object window, size;
+  Lisp_Object window, size, tip_buf;
   AUTO_STRING (tip, " *tip*");
 
   specbind (Qinhibit_redisplay, Qt);
@@ -5379,35 +5847,26 @@ Text larger than the specified size is clipped.  */)
         {
 	  compute_tip_xy (f, parms, dx, dy, width, height, &root_x, &root_y);
           xg_show_tooltip (f, root_x, root_y);
-          /* This is used in Fx_hide_tip.  */
-          XSETFRAME (tip_frame, f);
+	  tip_last_frame = frame;
         }
+
       unblock_input ();
       if (ok) goto start_timer;
     }
 
-  if (NILP (last_show_tip_args))
-    last_show_tip_args = Fmake_vector (make_number (3), Qnil);
-
   if (FRAMEP (tip_frame) && FRAME_LIVE_P (XFRAME (tip_frame)))
     {
-      Lisp_Object last_string = AREF (last_show_tip_args, 0);
-      Lisp_Object last_frame = AREF (last_show_tip_args, 1);
-      Lisp_Object last_parms = AREF (last_show_tip_args, 2);
-
       if (FRAME_VISIBLE_P (XFRAME (tip_frame))
-	  && EQ (frame, last_frame)
-	  && !NILP (Fequal_including_properties (last_string, string))
-	  && !NILP (Fequal (last_parms, parms)))
+	  && EQ (frame, tip_last_frame)
+	  && !NILP (Fequal_including_properties (tip_last_string, string))
+	  && !NILP (Fequal (tip_last_parms, parms)))
 	{
 	  /* Only DX and DY have changed.  */
 	  tip_f = XFRAME (tip_frame);
 	  if (!NILP (tip_timer))
 	    {
-	      Lisp_Object timer = tip_timer;
-
+	      call1 (Qcancel_timer, tip_timer);
 	      tip_timer = Qnil;
-	      call1 (Qcancel_timer, timer);
 	    }
 
 	  block_input ();
@@ -5419,15 +5878,14 @@ Text larger than the specified size is clipped.  */)
 
 	  goto start_timer;
 	}
-      else if (tooltip_reuse_hidden_frame && EQ (frame, last_frame))
+      else if (tooltip_reuse_hidden_frame && EQ (frame, tip_last_frame))
 	{
 	  bool delete = false;
 	  Lisp_Object tail, elt, parm, last;
 
 	  /* Check if every parameter in PARMS has the same value in
-	     last_parms unless it should be ignored by means of
-	     Vtooltip_reuse_hidden_frame_parameters.  This may destruct
-	     last_parms which, however, will be recreated below.  */
+	     tip_last_parms.  This may destruct tip_last_parms which,
+	     however, will be recreated below.  */
 	  for (tail = parms; CONSP (tail); tail = XCDR (tail))
 	    {
 	      elt = XCAR (tail);
@@ -5437,7 +5895,7 @@ Text larger than the specified size is clipped.  */)
 	      if (!EQ (parm, Qleft) && !EQ (parm, Qtop)
 		  && !EQ (parm, Qright) && !EQ (parm, Qbottom))
 		{
-		  last = Fassq (parm, last_parms);
+		  last = Fassq (parm, tip_last_parms);
 		  if (NILP (Fequal (Fcdr (elt), Fcdr (last))))
 		    {
 		      /* We lost, delete the old tooltip.  */
@@ -5445,17 +5903,18 @@ Text larger than the specified size is clipped.  */)
 		      break;
 		    }
 		  else
-		    last_parms = call2 (Qassq_delete_all, parm, last_parms);
+		    tip_last_parms =
+		      call2 (Qassq_delete_all, parm, tip_last_parms);
 		}
 	      else
-		last_parms = call2 (Qassq_delete_all, parm, last_parms);
+		tip_last_parms =
+		  call2 (Qassq_delete_all, parm, tip_last_parms);
 	    }
 
-	  /* Now check if every parameter in what is left of last_parms
-	     with a non-nil value has an association in PARMS unless it
-	     should be ignored by means of
-	     Vtooltip_reuse_hidden_frame_parameters.  */
-	  for (tail = last_parms; CONSP (tail); tail = XCDR (tail))
+	  /* Now check if every parameter in what is left of
+	     tip_last_parms with a non-nil value has an association in
+	     PARMS.  */
+	  for (tail = tip_last_parms; CONSP (tail); tail = XCDR (tail))
 	    {
 	      elt = XCAR (tail);
 	      parm = Fcar (elt);
@@ -5476,9 +5935,9 @@ Text larger than the specified size is clipped.  */)
   else
     x_hide_tip (true);
 
-  ASET (last_show_tip_args, 0, string);
-  ASET (last_show_tip_args, 1, frame);
-  ASET (last_show_tip_args, 2, parms);
+  tip_last_frame = frame;
+  tip_last_string = string;
+  tip_last_parms = parms;
 
   if (!FRAMEP (tip_frame) || !FRAME_LIVE_P (XFRAME (tip_frame)))
     {
@@ -6313,7 +6772,6 @@ When using Gtk+ tooltips, the tooltip face is not used.  */);
   defsubr (&Sx_display_list);
   defsubr (&Sx_synchronize);
   defsubr (&Sx_backspace_delete_keys_p);
-
   defsubr (&Sx_show_tip);
   defsubr (&Sx_hide_tip);
   defsubr (&Sx_double_buffered_p);
@@ -6321,9 +6779,12 @@ When using Gtk+ tooltips, the tooltip face is not used.  */);
   staticpro (&tip_timer);
   tip_frame = Qnil;
   staticpro (&tip_frame);
-
-  last_show_tip_args = Qnil;
-  staticpro (&last_show_tip_args);
+  tip_last_frame = Qnil;
+  staticpro (&tip_last_frame);
+  tip_last_string = Qnil;
+  staticpro (&tip_last_string);
+  tip_last_parms = Qnil;
+  staticpro (&tip_last_parms);
 
   defsubr (&Sx_uses_old_gtk_dialog);
   defsubr (&Sx_file_dialog);
