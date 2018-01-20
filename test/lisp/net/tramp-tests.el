@@ -373,7 +373,10 @@ handled properly.  BODY shall not contain a timeout."
   "Check remote file name components."
   (let ((tramp-default-method "default-method")
 	(tramp-default-user "default-user")
-	(tramp-default-host "default-host"))
+	(tramp-default-host "default-host")
+	tramp-default-method-alist
+	tramp-default-user-alist
+	tramp-default-host-alist)
     ;; Expand `tramp-default-user' and `tramp-default-host'.
     (should (string-equal
 	     (file-remote-p "/method::")
@@ -723,7 +726,55 @@ handled properly.  BODY shall not contain a timeout."
 	"|method3:user3@host3:/path/to/file")
        'hop)
       (format "%s:%s@%s|%s:%s@%s|"
-	      "method1" "user1" "host1" "method2" "user2" "host2")))))
+	      "method1" "user1" "host1" "method2" "user2" "host2")))
+
+    ;; Expand `tramp-default-method-alist'.
+    (add-to-list 'tramp-default-method-alist '("host1" "user1" "method1"))
+    (add-to-list 'tramp-default-method-alist '("host2" "user2" "method2"))
+    (add-to-list 'tramp-default-method-alist '("host3" "user3" "method3"))
+    (should
+     (string-equal
+      (file-remote-p
+       (concat
+	"/-:user1@host1"
+	"|-:user2@host2"
+	"|-:user3@host3:/path/to/file"))
+      (format "/%s:%s@%s|%s:%s@%s|%s:%s@%s:"
+	      "-" "user1" "host1"
+	      "-" "user2" "host2"
+	      "method3" "user3" "host3")))
+
+    ;; Expand `tramp-default-user-alist'.
+    (add-to-list 'tramp-default-user-alist '("method1" "host1" "user1"))
+    (add-to-list 'tramp-default-user-alist '("method2" "host2" "user2"))
+    (add-to-list 'tramp-default-user-alist '("method3" "host3" "user3"))
+    (should
+     (string-equal
+      (file-remote-p
+       (concat
+	"/method1:host1"
+	"|method2:host2"
+	"|method3:host3:/path/to/file"))
+      (format "/%s:%s|%s:%s|%s:%s@%s:"
+	      "method1" "host1"
+	      "method2" "host2"
+	      "method3" "user3" "host3")))
+
+    ;; Expand `tramp-default-host-alist'.
+    (add-to-list 'tramp-default-host-alist '("method1" "user1" "host1"))
+    (add-to-list 'tramp-default-host-alist '("method2" "user2" "host2"))
+    (add-to-list 'tramp-default-host-alist '("method3" "user3" "host3"))
+    (should
+     (string-equal
+      (file-remote-p
+       (concat
+	"/method1:user1@"
+	"|method2:user2@"
+	"|method3:user3@:/path/to/file"))
+      (format "/%s:%s@|%s:%s@|%s:%s@%s:"
+	      "method1" "user1"
+	      "method2" "user2"
+	      "method3" "user3" "host3")))))
 
 (ert-deftest tramp-test02-file-name-dissect-simplified ()
   "Check simplified file name components."
@@ -731,6 +782,8 @@ handled properly.  BODY shall not contain a timeout."
   (let ((tramp-default-method "default-method")
 	(tramp-default-user "default-user")
 	(tramp-default-host "default-host")
+	tramp-default-user-alist
+	tramp-default-host-alist
 	(syntax tramp-syntax))
     (unwind-protect
 	(progn
@@ -978,7 +1031,39 @@ handled properly.  BODY shall not contain a timeout."
 	      "|user3@host3:/path/to/file")
 	     'hop)
 	    (format "%s@%s|%s@%s|"
-		    "user1" "host1" "user2" "host2"))))
+		    "user1" "host1" "user2" "host2")))
+
+	  ;; Expand `tramp-default-user-alist'.
+	  (add-to-list 'tramp-default-user-alist '(nil "host1" "user1"))
+	  (add-to-list 'tramp-default-user-alist '(nil "host2" "user2"))
+	  (add-to-list 'tramp-default-user-alist '(nil "host3" "user3"))
+	  (should
+	   (string-equal
+	    (file-remote-p
+	     (concat
+	      "/host1"
+	      "|host2"
+	      "|host3:/path/to/file"))
+	    (format "/%s|%s|%s@%s:"
+		    "host1"
+		    "host2"
+		    "user3" "host3")))
+
+	  ;; Expand `tramp-default-host-alist'.
+	  (add-to-list 'tramp-default-host-alist '(nil "user1" "host1"))
+	  (add-to-list 'tramp-default-host-alist '(nil "user2" "host2"))
+	  (add-to-list 'tramp-default-host-alist '(nil "user3" "host3"))
+	  (should
+	   (string-equal
+	    (file-remote-p
+	     (concat
+	      "/user1@"
+	      "|user2@"
+	      "|user3@:/path/to/file"))
+	    (format "/%s@|%s@|%s@%s:"
+		    "user1"
+		    "user2"
+		    "user3" "host3"))))
 
       ;; Exit.
       (tramp-change-syntax syntax))))
@@ -989,6 +1074,9 @@ handled properly.  BODY shall not contain a timeout."
   (let ((tramp-default-method "default-method")
 	(tramp-default-user "default-user")
 	(tramp-default-host "default-host")
+	tramp-default-method-alist
+	tramp-default-user-alist
+	tramp-default-host-alist
 	(syntax tramp-syntax))
     (unwind-protect
 	(progn
@@ -1546,7 +1634,55 @@ handled properly.  BODY shall not contain a timeout."
 	      "|method3/user3@host3]/path/to/file")
 	     'hop)
 	    (format "%s/%s@%s|%s/%s@%s|"
-		    "method1" "user1" "host1" "method2" "user2" "host2"))))
+		    "method1" "user1" "host1" "method2" "user2" "host2")))
+
+	  ;; Expand `tramp-default-method-alist'.
+	  (add-to-list 'tramp-default-method-alist '("host1" "user1" "method1"))
+	  (add-to-list 'tramp-default-method-alist '("host2" "user2" "method2"))
+	  (add-to-list 'tramp-default-method-alist '("host3" "user3" "method3"))
+	  (should
+	   (string-equal
+	    (file-remote-p
+	     (concat
+	      "/[/user1@host1"
+	      "|/user2@host2"
+	      "|/user3@host3]/path/to/file"))
+	    (format "/[/%s@%s|/%s@%s|%s/%s@%s]"
+		    "user1" "host1"
+		    "user2" "host2"
+		    "method3" "user3" "host3")))
+
+	  ;; Expand `tramp-default-user-alist'.
+	  (add-to-list 'tramp-default-user-alist '("method1" "host1" "user1"))
+	  (add-to-list 'tramp-default-user-alist '("method2" "host2" "user2"))
+	  (add-to-list 'tramp-default-user-alist '("method3" "host3" "user3"))
+	  (should
+	   (string-equal
+	    (file-remote-p
+	     (concat
+	      "/[method1/host1"
+	      "|method2/host2"
+	      "|method3/host3]/path/to/file"))
+	    (format "/[%s/%s|%s/%s|%s/%s@%s]"
+		    "method1" "host1"
+		    "method2" "host2"
+		    "method3" "user3" "host3")))
+
+	  ;; Expand `tramp-default-host-alist'.
+	  (add-to-list 'tramp-default-host-alist '("method1" "user1" "host1"))
+	  (add-to-list 'tramp-default-host-alist '("method2" "user2" "host2"))
+	  (add-to-list 'tramp-default-host-alist '("method3" "user3" "host3"))
+	  (should
+	   (string-equal
+	    (file-remote-p
+	     (concat
+	      "/[method1/user1@"
+	      "|method2/user2@"
+	      "|method3/user3@]/path/to/file"))
+	    (format "/[%s/%s@|%s/%s@|%s/%s@%s]"
+		    "method1" "user1"
+		    "method2" "user2"
+		    "method3" "user3" "host3"))))
 
       ;; Exit.
       (tramp-change-syntax syntax))))
