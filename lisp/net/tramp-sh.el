@@ -4113,6 +4113,11 @@ process to set up.  VEC specifies the connection."
 	(goto-char (point-min))
 	(when (search-forward "\r" nil t)
 	  (setq cs-decode (coding-system-change-eol-conversion cs-decode 'dos)))
+	;; Special setting for macOS.
+	(when (and (string-match "^Darwin" uname)
+		   (memq 'utf-8-hfs (coding-system-list)))
+	  (setq cs-decode 'utf-8-hfs
+		cs-encode 'utf-8-hfs))
 	(set-process-coding-system proc cs-decode cs-encode)
 	(tramp-message
 	 vec 5 "Setting coding system to `%s' and `%s'" cs-decode cs-encode)))
