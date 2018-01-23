@@ -3391,6 +3391,13 @@ read1 (Lisp_Object readcharfun, int *pch, bool first_in_list)
 	    if (! NILP (result))
 	      return unbind_to (count, result);
 	  }
+        if (!quoted && multibyte)
+          {
+            int ch = STRING_CHAR ((unsigned char *) read_buffer);
+            if (confusable_symbol_character_p (ch))
+              xsignal2 (Qinvalid_read_syntax, build_string ("strange quote"),
+                        CALLN (Fstring, make_number (ch)));
+          }
 	{
 	  Lisp_Object result;
 	  ptrdiff_t nbytes = p - read_buffer;
