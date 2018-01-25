@@ -1032,6 +1032,87 @@ set_process_filter_masks (struct Lisp_Process *p)
     add_process_read_fd (p->infd);
 }
 
+DEFUN ("set-process-filter", Fset_process_filter, Sset_process_filter,
+       2, 2, 0,
+       doc: /* Give PROCESS the filter function FILTER; nil means default.
+A value of t means stop accepting output from the process.
+
+When a process has a non-default filter, its buffer is not used for output.
+Instead, each time it does output, the entire string of output is
+passed to the filter.
+
+The filter gets two arguments: the process and the string of output.
+The string argument is normally a multibyte string, except:
+- if the process's input coding system is no-conversion or raw-text,
+  it is a unibyte string (the non-converted input).  */)
+  (Lisp_Object process, Lisp_Object filter)
+{
+  CHECK_PROCESS (process);
+  struct Lisp_Process *p = XPROCESS (process);
+
+  /* Don't signal an error if the process's input file descriptor
+     is closed.  This could make debugging Lisp more difficult,
+     for example when doing something like
+
+     (setq process (start-process ...))
+     (debug)
+     (set-process-filter process ...)  */
+
+  if (NILP (filter))
+    filter = Qinternal_default_process_filter;
+
+  pset_filter (p, filter);
+
+  if (p->infd >= 0)
+    set_process_filter_masks (p);
+
+  if (NETCONN1_P (p) || SERIALCONN1_P (p) || PIPECONN1_P (p))
+    pset_childp (p, Fplist_put (p->childp, QCfilter, filter));
+  setup_process_coding_systems (process);
+  return filter;
+}
+
+DEFUN ("process-filter", Fprocess_filter, Sprocess_filter,
+       1, 1, 0,
+       doc: /* Return the filter function of PROCESS.
+See `set-process-filter' for more info on filter functions.  */)
+  (register Lisp_Object process)
+{
+  CHECK_PROCESS (process);
+  return XPROCESS (process)->filter;
+}
+
+DEFUN ("set-process-sentinel", Fset_process_sentinel, Sset_process_sentinel,
+       2, 2, 0,
+       doc: /* Give PROCESS the sentinel SENTINEL; nil for default.
+The sentinel is called as a function when the process changes state.
+It gets two arguments: the process, and a string describing the change.  */)
+  (register Lisp_Object process, Lisp_Object sentinel)
+{
+  struct Lisp_Process *p;
+
+  CHECK_PROCESS (process);
+  p = XPROCESS (process);
+
+  if (NILP (sentinel))
+    sentinel = Qinternal_default_process_sentinel;
+
+  pset_sentinel (p, sentinel);
+  if (NETCONN1_P (p) || SERIALCONN1_P (p) || PIPECONN1_P (p))
+    pset_childp (p, Fplist_put (p->childp, QCsentinel, sentinel));
+  return sentinel;
+}
+
+DEFUN ("process-sentinel", Fprocess_sentinel, Sprocess_sentinel,
+       1, 1, 0,
+       doc: /* Return the sentinel of PROCESS.
+See `set-process-sentinel' for more info on sentinels.  */)
+  (register Lisp_Object process)
+{
+  CHECK_PROCESS (process);
+  return XPROCESS (process)->sentinel;
+}
+
 DEFUN ("set-process-thread", Fset_process_thread, Sset_process_thread,
        2, 2, 0,
        doc: /* Set the locking thread of PROCESS to be THREAD.
@@ -3411,8 +3492,7 @@ The stopped state is cleared by `continue-process' and set by
 
 :filter-multibyte BOOL -- If BOOL is non-nil, strings given to the
 process filter are multibyte, otherwise they are unibyte.
-If this keyword is not specified, the strings are multibyte if
-the default value of `enable-multibyte-characters' is non-nil.
+If this keyword is not specified, the strings are multibyte.
 
 :sentinel SENTINEL -- Install SENTINEL as the process sentinel.
 
