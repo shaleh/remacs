@@ -129,12 +129,7 @@ emacs = EMACSLOADPATH= LC_ALL=$(TEST_LOCALE) \
  EMACS_TEST_DIRECTORY=$(abspath $(srcdir)) \
  $(GDB) "$(EMACS)" $(MODULES_EMACSOPT) $(EMACSOPT)
 
-# Set HOME to a nonexistent directory to prevent tests from accessing
-# it accidentally (e.g., popping up a gnupg dialog if ~/.authinfo.gpg
-# exists, or writing to ~/.bzr.log when running bzr commands).
-TEST_HOME = /nonexistent
-
-test_module_dir := $(srcdir)/data/emacs-module
+test_module_dir := data/emacs-module
 
 .PHONY: all check
 
@@ -241,14 +236,13 @@ else
 FPIC_CFLAGS = -fPIC
 endif
 
-# Note: emacs-module.h is generated from emacs-module.h.in, hence we
-# look in ../src, not $(srcdir)/../src.
 MODULE_CFLAGS = -I../src $(FPIC_CFLAGS) $(PROFILING_CFLAGS) \
   $(WARN_CFLAGS) $(WERROR_CFLAGS) $(CFLAGS)
 
 test_module = $(test_module_dir)/mod-test${SO}
 src/emacs-module-tests.log: $(test_module)
-$(test_module): $(test_module:${SO}=.c) ../src/emacs-module.h
+$(test_module): $(test_module:${SO}=.c) $(srcdir)/../src/emacs-module.h
+	$(AM_V_at)${MKDIR_P} $(dir $@)
 	$(AM_V_CCLD)$(CC) -shared $(CPPFLAGS) $(MODULE_CFLAGS) $(LDFLAGS) \
 	  -o $@ $<
 endif
