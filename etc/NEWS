@@ -916,6 +916,10 @@ file name extensions.
 ** The new function 'read-answer' accepts either long or short answers
 depending on the new customizable variable 'read-answer-short'.
 
+** The function 'load' now behaves correctly when loading modules.
+Specifically, it puts the module name into 'load-history', prints
+loading messages if requested, and protects against recursive loads.
+
 
 * Changes in Specialized Modes and Packages in Emacs 26.1
 
