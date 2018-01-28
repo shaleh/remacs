@@ -864,6 +864,9 @@ paragraphs, for the purposes of bidirectional display.
 This controls how long Emacs will wait for updates to the graphical
 state to take effect (making a frame visible, for example).
 
++++
+** New function assoc-delete-all.
+
 ** 'print-quoted' now defaults to t, so if you want to see
 (quote x) instead of 'x you will have to bind it to nil where applicable.
 
