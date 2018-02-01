@@ -6542,9 +6542,10 @@ The return value is a string describing the amount of free
 space (normally, the number of free 1KB blocks).
 
 If DIR's free space cannot be obtained, this function returns nil."
-  (let ((avail (nth 2 (file-system-info dir))))
-    (if avail
-	(format "%.0f" (/ avail 1024)))))
+  (save-match-data
+    (let ((avail (nth 2 (file-system-info dir))))
+      (if avail
+	  (format "%.0f" (/ avail 1024))))))
 
 ;; The following expression replaces `dired-move-to-filename-regexp'.
 (defvar directory-listing-before-filename-regexp
