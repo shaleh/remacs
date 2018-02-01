@@ -2048,8 +2048,8 @@ This checks also `file-name-as-directory', `file-name-directory',
   "Check `copy-file'."
   (skip-unless (tramp--test-enabled))
 
-  ;; `filename-non-special' has been fixed in Emacs 26.1, see Bug#29579.
-  (dolist (quoted (if (and tramp--test-expensive-test (tramp--test-emacs26-p))
+  ;; `filename-non-special' has been fixed in Emacs 27.1, see Bug#29579.
+  (dolist (quoted (if (and tramp--test-expensive-test (tramp--test-emacs27-p))
 		      '(nil t) '(nil)))
     (let ((tmp-name1 (tramp--test-make-temp-name nil quoted))
 	  (tmp-name2 (tramp--test-make-temp-name nil quoted))
@@ -2159,8 +2159,8 @@ This checks also `file-name-as-directory', `file-name-directory',
   "Check `rename-file'."
   (skip-unless (tramp--test-enabled))
 
-  ;; `filename-non-special' has been fixed in Emacs 26.1, see Bug#29579.
-  (dolist (quoted (if (and tramp--test-expensive-test (tramp--test-emacs26-p))
+  ;; `filename-non-special' has been fixed in Emacs 27.1, see Bug#29579.
+  (dolist (quoted (if (and tramp--test-expensive-test (tramp--test-emacs27-p))
 		      '(nil t) '(nil)))
     (let ((tmp-name1 (tramp--test-make-temp-name nil quoted))
 	  (tmp-name2 (tramp--test-make-temp-name nil quoted))
@@ -3014,7 +3014,10 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
 	      ;; We must unquote it.
 	      (should
 	       (string-equal
-		(tramp-compat-file-name-unquote (file-truename tmp-name1))
+		(funcall
+		 (if (tramp--test-emacs27-p)
+		     'tramp-compat-file-name-unquote 'identity)
+		 (file-truename tmp-name1))
 		(tramp-compat-file-name-unquote (file-truename tmp-name3))))))
 
 	;; Cleanup.
@@ -3146,8 +3149,8 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
   (skip-unless (tramp--test-enabled))
   (skip-unless (file-acl tramp-test-temporary-file-directory))
 
-  ;; `filename-non-special' has been fixed in Emacs 26.1, see Bug#29579.
-  (dolist (quoted (if (and tramp--test-expensive-test (tramp--test-emacs26-p))
+  ;; `filename-non-special' has been fixed in Emacs 27.1, see Bug#29579.
+  (dolist (quoted (if (and tramp--test-expensive-test (tramp--test-emacs27-p))
 		      '(nil t) '(nil)))
     (let ((tmp-name1 (tramp--test-make-temp-name nil quoted))
 	  (tmp-name2 (tramp--test-make-temp-name nil quoted))
@@ -3223,8 +3226,8 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
    (not (equal (file-selinux-context tramp-test-temporary-file-directory)
 	       '(nil nil nil nil))))
 
-  ;; `filename-non-special' has been fixed in Emacs 26.1, see Bug#29579.
-  (dolist (quoted (if (and tramp--test-expensive-test (tramp--test-emacs26-p))
+  ;; `filename-non-special' has been fixed in Emacs 27.1, see Bug#29579.
+  (dolist (quoted (if (and tramp--test-expensive-test (tramp--test-emacs27-p))
 		      '(nil t) '(nil)))
     (let ((tmp-name1 (tramp--test-make-temp-name nil quoted))
 	  (tmp-name2 (tramp--test-make-temp-name nil quoted))
@@ -4310,8 +4313,8 @@ This requires restrictions of file name syntax."
 
 (defun tramp--test-check-files (&rest files)
   "Run a simple but comprehensive test over every file in FILES."
-  ;; `filename-non-special' has been fixed in Emacs 26.1, see Bug#29579.
-  (dolist (quoted (if (and tramp--test-expensive-test (tramp--test-emacs26-p))
+  ;; `filename-non-special' has been fixed in Emacs 27.1, see Bug#29579.
+  (dolist (quoted (if (and tramp--test-expensive-test (tramp--test-emacs27-p))
 		      '(nil t) '(nil)))
     ;; We must use `file-truename' for the temporary directory,
     ;; because it could be located on a symlinked directory.  This
