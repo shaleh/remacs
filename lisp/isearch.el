@@ -1856,11 +1856,11 @@ replacements from Isearch is `M-s w ... M-%'."
       (concat "Query replace"
               (isearch--describe-regexp-mode (or delimited isearch-regexp-function) t)
 	      (if backward " backward" "")
-	      (if (and transient-mark-mode mark-active) " in region" ""))
+	      (if (use-region-p) " in region" ""))
       isearch-regexp)
      t isearch-regexp (or delimited isearch-regexp-function) nil nil
-     (if (and transient-mark-mode mark-active) (region-beginning))
-     (if (and transient-mark-mode mark-active) (region-end))
+     (if (use-region-p) (region-beginning))
+     (if (use-region-p) (region-end))
      backward))
   (and isearch-recursive-edit (exit-recursive-edit)))
 
@@ -1923,7 +1923,8 @@ characters in that string."
 			   'isearch-regexp-function-descr
                            (isearch--describe-regexp-mode isearch-regexp-function))
 	     regexp)
-	   nlines)))
+	   nlines
+	   (if (use-region-p) (region-bounds)))))
 
 (declare-function hi-lock-read-face-name "hi-lock" ())
 
