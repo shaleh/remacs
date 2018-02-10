@@ -23357,6 +23357,23 @@ display_mode_lines (struct window *w)
   Lisp_Object old_frame_selected_window = XFRAME (new_frame)->selected_window;
   int n = 0;
 
+  if (window_wants_mode_line (w))
+    {
+      Lisp_Object window;
+      Lisp_Object default_help
+	= buffer_local_value (Qmode_line_default_help_echo, w->contents);
+
+      /* Set up mode line help echo.  Do this before selecting w so it
+	 can reasonably tell whether a mouse click will select w.  */
+      XSETWINDOW (window, w);
+      if (FUNCTIONP (default_help))
+	wset_mode_line_help_echo (w, safe_call1 (default_help, window));
+      else if (STRINGP (default_help))
+	wset_mode_line_help_echo (w, default_help);
+      else
+	wset_mode_line_help_echo (w, Qnil);
+    }
+
   selected_frame = new_frame;
   /* FIXME: If we were to allow the mode-line's computation changing the buffer
      or window's point, then we'd need select_window_1 here as well.  */
@@ -23371,7 +23388,6 @@ display_mode_lines (struct window *w)
     {
       Lisp_Object window_mode_line_format
 	= window_parameter (w, Qmode_line_format);
-
       struct window *sel_w = XWINDOW (old_selected_window);
 
       /* Select mode line face based on the real selected window.  */
@@ -30896,9 +30912,6 @@ note_mode_line_or_margin_highlight (Lisp_Object window, int x, int y,
   struct window *w = XWINDOW (window);
   struct frame *f = XFRAME (w->frame);
   Mouse_HLInfo *hlinfo = MOUSE_HL_INFO (f);
-#ifdef HAVE_WINDOW_SYSTEM
-  Display_Info *dpyinfo;
-#endif
   Cursor cursor = No_Cursor;
   Lisp_Object pointer = Qnil;
   int dx, dy, width, height;
@@ -30992,7 +31005,8 @@ note_mode_line_or_margin_highlight (Lisp_Object window, int x, int y,
 
   /* Set the help text and mouse pointer.  If the mouse is on a part
      of the mode line without any text (e.g. past the right edge of
-     the mode line text), use the default help text and pointer.  */
+     the mode line text), use that windows's mode line help echo if it
+     has been set.  */
   if (STRINGP (string) || area == ON_MODE_LINE)
     {
       /* Arrange to display the help by setting the global variables
@@ -31009,21 +31023,13 @@ note_mode_line_or_margin_highlight (Lisp_Object window, int x, int y,
 	      help_echo_object = string;
 	      help_echo_pos = charpos;
 	    }
-	  else if (area == ON_MODE_LINE)
+	  else if (area == ON_MODE_LINE
+		   && !NILP (w->mode_line_help_echo))
 	    {
-	      Lisp_Object default_help
-		= buffer_local_value (Qmode_line_default_help_echo,
-				      w->contents);
-
-	      if (FUNCTIONP (default_help) || STRINGP (default_help))
-		{
-		  help_echo_string = (FUNCTIONP (default_help)
-				      ? safe_call1 (default_help, window)
-				      : default_help);
-		  XSETWINDOW (help_echo_window, w);
-		  help_echo_object = Qnil;
-		  help_echo_pos = -1;
-		}
+	      help_echo_string =  w->mode_line_help_echo;
+	      XSETWINDOW (help_echo_window, w);
+	      help_echo_object = Qnil;
+	      help_echo_pos = -1;
 	    }
 	}
 
@@ -31035,7 +31041,6 @@ note_mode_line_or_margin_highlight (Lisp_Object window, int x, int y,
 			    || minibuf_level
 			    || NILP (Vresize_mini_windows));
 
-	  dpyinfo = FRAME_DISPLAY_INFO (f);
 	  if (STRINGP (string))
 	    {
 	      cursor = FRAME_X_OUTPUT (f)->nontext_cursor;
@@ -31045,25 +31050,28 @@ note_mode_line_or_margin_highlight (Lisp_Object window, int x, int y,
 
 	      /* Change the mouse pointer according to what is under X/Y.  */
 	      if (NILP (pointer)
-		  && ((area == ON_MODE_LINE) || (area == ON_HEADER_LINE)))
+		  && (area == ON_MODE_LINE || area == ON_HEADER_LINE))
 		{
 		  Lisp_Object map;
+
 		  map = Fget_text_property (pos, Qlocal_map, string);
 		  if (!KEYMAPP (map))
 		    map = Fget_text_property (pos, Qkeymap, string);
-		  if (!KEYMAPP (map) && draggable)
-		    cursor = dpyinfo->vertical_scroll_bar_cursor;
+		  if (!KEYMAPP (map) && draggable && area == ON_MODE_LINE)
+		    cursor = FRAME_X_OUTPUT (f)->vertical_drag_cursor;
 		}
 	    }
-	  else if (draggable)
-	    /* Default mode-line pointer.  */
-	    cursor = FRAME_DISPLAY_INFO (f)->vertical_scroll_bar_cursor;
+	  else if (draggable && area == ON_MODE_LINE)
+	    cursor = FRAME_X_OUTPUT (f)->vertical_drag_cursor;
+	  else
+	    cursor = FRAME_X_OUTPUT (f)->nontext_cursor;
 	}
 #endif
     }
 
   /* Change the mouse face according to what is under X/Y.  */
   bool mouse_face_shown = false;
+
   if (STRINGP (string))
     {
       mouse_face = Fget_text_property (pos, Qmouse_face, string);

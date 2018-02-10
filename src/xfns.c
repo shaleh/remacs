@@ -5178,7 +5178,7 @@ static Lisp_Object tip_timer;
 /* STRING argument of last `x-show-tip' call.  */
 static Lisp_Object tip_last_string;
 
-/* FRAME argument of last `x-show-tip' call.  */
+/* Normalized FRAME argument of last `x-show-tip' call.  */
 static Lisp_Object tip_last_frame;
 
 /* PARMS argument of last `x-show-tip' call.  */
@@ -5638,16 +5638,21 @@ x_hide_tip (bool delete)
       tip_timer = Qnil;
     }
 
-  /* The GTK+ system tooltip window can be found via the x_output
-     structure of tip_last_frame, if it still exists.  */
-  if (x_gtk_use_system_tooltips && NILP (tip_last_frame))
-    return Qnil;
-  else if (!x_gtk_use_system_tooltips
-	   && (NILP (tip_frame)
-	       || (!delete
-		   && FRAMEP (tip_frame)
-		   && FRAME_LIVE_P (XFRAME (tip_frame))
-		   && !FRAME_VISIBLE_P (XFRAME (tip_frame)))))
+#ifdef USE_GTK
+  /* Any GTK+ system tooltip can be found via the x_output structure of
+     tip_last_frame, provided that frame is still live.  Any Emacs
+     tooltip is found via the tip_frame variable.  Note that the current
+     value of x_gtk_use_system_tooltips might not be the same as used
+     for the tooltip we have to hide, see Bug#30399.  */
+  if ((NILP (tip_last_frame) && NILP (tip_frame))
+      || (!x_gtk_use_system_tooltips
+	  && !delete
+	  && FRAMEP (tip_frame)
+	  && FRAME_LIVE_P (XFRAME (tip_frame))
+	  && !FRAME_VISIBLE_P (XFRAME (tip_frame))))
+    /* Either there's no tooltip to hide or it's an already invisible
+       Emacs tooltip and we don't want to change its type.  Return
+       quickly.  */
     return Qnil;
   else
     {
@@ -5658,10 +5663,9 @@ x_hide_tip (bool delete)
       specbind (Qinhibit_redisplay, Qt);
       specbind (Qinhibit_quit, Qt);
 
-      if (x_gtk_use_system_tooltips)
+      /* Try to hide the GTK+ system tip first.  */
+      if (FRAMEP (tip_last_frame))
 	{
-	  /* The GTK+ system tooltip window is stored in the x_output
-	     structure of tip_last_frame.  */
 	  struct frame *f = XFRAME (tip_last_frame);
 
 	  if (FRAME_LIVE_P (f))
@@ -5669,33 +5673,37 @@ x_hide_tip (bool delete)
 	      if (xg_hide_tooltip (f))
 		was_open = Qt;
 	    }
-	  else
-	    tip_last_frame = Qnil;
 	}
-      else
+
+      /* Reset tip_last_frame, it will be reassigned when showing the
+	 next GTK+ system tooltip.  */
+      tip_last_frame = Qnil;
+
+      /* Now look whether there's an Emacs tip around.  */
+      if (FRAMEP (tip_frame))
 	{
-	  if (FRAMEP (tip_frame))
+	  struct frame *f = XFRAME (tip_frame);
+
+	  if (FRAME_LIVE_P (f))
 	    {
-	      struct frame *f = XFRAME (tip_frame);
-
-	      if (FRAME_LIVE_P (f))
+	      if (delete || x_gtk_use_system_tooltips)
 		{
-		  if (delete)
-		    {
-		      delete_frame (tip_frame, Qnil);
-		      tip_frame = Qnil;
-		    }
-		  else
-		    x_make_frame_invisible (f);
-
-		  was_open = Qt;
+		  /* Delete the Emacs tooltip frame when DELETE is true
+		     or we change the tooltip type from an Emacs one to
+		     a GTK+ system one.  */
+		  delete_frame (tip_frame, Qnil);
+		  tip_frame = Qnil;
 		}
 	      else
-		tip_frame = Qnil;
+		x_make_frame_invisible (f);
+
+	      was_open = Qt;
 	    }
 	  else
 	    tip_frame = Qnil;
 	}
+      else
+	tip_frame = Qnil;
 
       return unbind_to (count, was_open);
     }
@@ -5817,7 +5825,10 @@ Text larger than the specified size is clipped.  */)
   if (SCHARS (string) == 0)
     string = make_unibyte_string (" ", 1);
 
+  if (NILP (frame))
+    frame = selected_frame;
   f = decode_window_system_frame (frame);
+
   if (NILP (timeout))
     timeout = make_number (5);
   else
