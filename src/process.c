@@ -155,6 +155,20 @@ static bool kbd_is_on_hold;
    when exiting.  */
 bool inhibit_sentinels;
 
+union u_sockaddr
+{
+  struct sockaddr sa;
+  struct sockaddr_in in;
+#ifdef AF_INET6
+  struct sockaddr_in6 in6;
+#endif
+#ifdef HAVE_LOCAL_SOCKETS
+  struct sockaddr_un un;
+#endif
+};
+
+#ifdef subprocesses
+
 #ifndef SOCK_CLOEXEC
 # define SOCK_CLOEXEC 0
 #endif
@@ -271,10 +285,6 @@ static int max_desc;
    `:use-external-socket' option.  The value should be either -1, or
    the file descriptor of a socket that is already bound.  */
 static int external_sock_fd;
-
-/* The name (path) of the socket that was passed to Emacs, when
-   `external_sock_fd' is not -1.  */
-static const char *external_sock_name = NULL;
 
 /* Indexed by descriptor, gives the process (if any) for that descriptor.  */
 static Lisp_Object chan_process[FD_SETSIZE];
@@ -4411,16 +4421,7 @@ server_accept_connection (Lisp_Object server, int channel)
   struct Lisp_Process *ps = XPROCESS (server);
   struct Lisp_Process *p;
   int s;
-  union u_sockaddr {
-    struct sockaddr sa;
-    struct sockaddr_in in;
-#ifdef AF_INET6
-    struct sockaddr_in6 in6;
-#endif
-#ifdef HAVE_LOCAL_SOCKETS
-    struct sockaddr_un un;
-#endif
-  } saddr;
+  union u_sockaddr saddr;
   socklen_t len = sizeof saddr;
   ptrdiff_t count;
 
@@ -7386,21 +7387,10 @@ restore_nofile_limit (void)
 }
 
 
-DEFUN ("get-external-sockname", Fget_external_sockname, Sget_external_sockname, 0, 0, 0,
-       doc: /* Return the path of an external socket passed to Emacs.
-Otherwise return nil.  */)
-     (void)
-{
-    if (external_sock_name)
-        return make_string(external_sock_name, strlen(external_sock_name));
-    else
-        return Qnil;
-}
-
 /* This is not called "init_process" because that is the name of a
    Mach system call, so it would cause problems on Darwin systems.  */
 void
-init_process_emacs (int sockfd, char *sockname)
+init_process_emacs (int sockfd)
 {
   int i;
 
@@ -7434,7 +7424,18 @@ init_process_emacs (int sockfd, char *sockname)
 #endif
 
   external_sock_fd = sockfd;
-  external_sock_name = sockname;
+  Lisp_Object sockname = Qnil;
+# if HAVE_GETSOCKNAME
+  if (0 <= sockfd)
+    {
+      union u_sockaddr sa;
+      socklen_t salen = sizeof sa;
+      if (getsockname (sockfd, &sa.sa, &salen) == 0)
+	sockname = conv_sockaddr_to_lisp (&sa.sa, salen);
+    }
+# endif
+  Vinternal__external_sockname = sockname;
+
   max_desc = -1;
   memset (fd_callback_info, 0, sizeof (fd_callback_info));
 
@@ -7619,6 +7620,10 @@ These functions are called in the order of the list, until one of them
 returns non-`nil'.  */);
   Vinterrupt_process_functions = list1 (Qinternal_default_interrupt_process);
 
+  DEFVAR_LISP ("internal--external-sockname", Vinternal__external_sockname,
+	       doc: /* Name of external socket passed to Emacs, or nil if none.  */);
+  Vinternal__external_sockname = Qnil;
+
   DEFSYM (Qinternal_default_interrupt_process,
 	  "internal-default-interrupt-process");
   DEFSYM (Qinterrupt_process_functions, "interrupt-process-functions");
@@ -7691,5 +7696,4 @@ returns non-`nil'.  */);
 
   defsubr (&Slist_system_processes);
   defsubr (&Sprocess_attributes);
-  defsubr (&Sget_external_sockname);
 }
