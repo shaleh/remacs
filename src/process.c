@@ -272,6 +272,10 @@ static int max_desc;
    the file descriptor of a socket that is already bound.  */
 static int external_sock_fd;
 
+/* The name (path) of the socket that was passed to Emacs, when
+   `external_sock_fd' is not -1.  */
+static const char *external_sock_name = NULL;
+
 /* Indexed by descriptor, gives the process (if any) for that descriptor.  */
 static Lisp_Object chan_process[FD_SETSIZE];
 static void wait_for_socket_fds (Lisp_Object, char const *);
@@ -7382,10 +7386,21 @@ restore_nofile_limit (void)
 }
 
 
+DEFUN ("get-external-sockname", Fget_external_sockname, Sget_external_sockname, 0, 0, 0,
+       doc: /* Return the path of an external socket passed to Emacs.
+Otherwise return nil.  */)
+     (void)
+{
+    if (external_sock_name)
+        return make_string(external_sock_name, strlen(external_sock_name));
+    else
+        return Qnil;
+}
+
 /* This is not called "init_process" because that is the name of a
    Mach system call, so it would cause problems on Darwin systems.  */
 void
-init_process_emacs (int sockfd)
+init_process_emacs (int sockfd, char *sockname)
 {
   int i;
 
@@ -7419,6 +7434,7 @@ init_process_emacs (int sockfd)
 #endif
 
   external_sock_fd = sockfd;
+  external_sock_name = sockname;
   max_desc = -1;
   memset (fd_callback_info, 0, sizeof (fd_callback_info));
 
@@ -7675,4 +7691,5 @@ returns non-`nil'.  */);
 
   defsubr (&Slist_system_processes);
   defsubr (&Sprocess_attributes);
+  defsubr (&Sget_external_sockname);
 }
