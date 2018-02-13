@@ -143,12 +143,7 @@ x_menu_wait_for_event (void *data)
 
 
 DEFUN ("x-menu-bar-open-internal", Fx_menu_bar_open_internal, Sx_menu_bar_open_internal, 0, 1, "i",
-       doc: /* Start key navigation of the menu bar in FRAME.
-This initially opens the first menu bar item and you can then navigate with the
-arrow keys, select a menu entry with the return key or cancel with the
-escape key.  If FRAME has no menu bar this function does nothing.
-
-If FRAME is nil or not given, use the selected frame.  */)
+       doc: /* SKIP: real doc in USE_GTK definition in xmenu.c.  */)
   (Lisp_Object frame)
 {
   GtkWidget *menubar;
@@ -1355,7 +1350,8 @@ popup_activated (void)
 /* The following is used by delayed window autoselection.  */
 
 DEFUN ("menu-or-popup-active-p", Fmenu_or_popup_active_p, Smenu_or_popup_active_p, 0, 0, 0,
-       doc: /* Return t if a menu or popup dialog is active.  */)
+       doc: /* Return t if a menu or popup dialog is active.
+\(On MS Windows, this refers to the selected frame.)  */)
   (void)
 {
   return (popup_activated ()) ? Qt : Qnil;
