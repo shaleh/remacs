@@ -1724,7 +1724,7 @@ For more precise customization, parameters specified by
 @code{tramp-methods} can be overwritten manually.
 
 @vindex tramp-connection-properties
-Set @code{tramp-connection-properties} to manually override
+Set @option{tramp-connection-properties} to manually override
 @code{tramp-methods}.  Properties in this list are in the form
 @code{(@var{regexp} @var{property} @var{value})}.  @var{regexp}
 matches remote file names.  Use @code{nil} to match all.
@@ -2227,6 +2227,7 @@ Disabling backups can be targeted to just the @option{su} and
 @end group
 @end lisp
 
+@vindex tramp-backup-directory-alist
 Another option is to create better backup file naming with user and
 host names prefixed to the file name.  For example, transforming
 @file{/etc/secretfile} to
@@ -2945,7 +2946,7 @@ relative or absolute paths, but not remote paths.
 command.  Powershell V2.0 on the remote host is required to run
 processes triggered from @value{tramp}.
 
-@code{explicit-shell-file-name} and @code{explicit-*-args} have to
+@option{explicit-shell-file-name} and @option{explicit-*-args} have to
 be set properly so @kbd{M-x shell @key{RET}} can open a proper remote
 shell on a MS Windows host.  To open @command{cmd}, set it as follows:
 
@@ -3589,6 +3590,8 @@ the following code in @file{~/.emacs}.
 How to get a Visual Warning when working with @samp{root} privileges?
 Host indication in the mode line?
 
+@cindex @value{tramp} theme
+@vindex tramp-theme-face-remapping-alist
 Install @file{tramp-theme} from GNU ELPA via Emacs' Package Manager.
 Enable it via @kbd{M-x load-theme @key{RET} tramp @key{RET}}.  Further
 customization is explained in user option
