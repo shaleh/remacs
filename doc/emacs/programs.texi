@@ -77,6 +77,7 @@ mode for the C programming language is @code{c-mode}.
 @cindex VHDL mode
 @cindex M4 mode
 @cindex Shell-script mode
+@cindex Scheme mode
 @cindex OPascal mode
 @cindex PostScript mode
 @cindex Conf mode
@@ -906,7 +907,7 @@ also do spell checking on comments with Flyspell Prog mode
 comments.  For example, in Lisp code, comments starting with two
 semicolons are indented as if they were lines of code, while those
 starting with three semicolons are supposed to be aligned to the left
-margin and are often used for sectioning purposes.  Emacs understands
+margin and are often used for sectioning purposes.  Emacs understand
 these conventions; for instance, typing @kbd{@key{TAB}} on a comment
 line will indent the comment to the appropriate position.
 
@@ -978,13 +979,13 @@ the line is blank (i.e., empty or containing only whitespace
 characters), the comment is indented to the same position where
 @kbd{@key{TAB}} would indent to (@pxref{Basic Indent}).  If the line
 is non-blank, the comment is placed after the last non-whitespace
-character on the line.  Emacs tries to fit the comment between the
-columns specified by the variables @code{comment-column} and
-@code{comment-fill-column} (@pxref{Options for Comments}), if
-possible.  Otherwise, it will choose some other suitable position,
-usually separated from the non-comment text by at least one space.  In
-each case, Emacs places point after the comment's starting delimiter,
-so that you can start typing the comment text right away.
+character on the line; normally, Emacs tries putting it at the column
+specified by the variable @code{comment-column} (@pxref{Options for
+Comments}), but if the line already extends past that column, it puts
+the comment at some suitable position, usually separated from the
+non-comment text by at least one space.  In each case, Emacs places
+point after the comment's starting delimiter, so that you can start
+typing the comment text right away.
 
   You can also use @kbd{M-;} to align an existing comment.  If a line
 already contains the comment-start string, @kbd{M-;} realigns it to
