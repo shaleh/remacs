@@ -1960,12 +1960,9 @@ before point that's highlighted as misspelled."
 ;;*---------------------------------------------------------------------*/
 (defun flyspell-auto-correct-word ()
   "Correct the current word.
-This command proposes various successive corrections for the
-current word.  If invoked repeatedly on the same position, it
-cycles through the possible corrections of the current word.
-
-See `flyspell-get-word' for details of how this finds the word to
-spell-check."
+This command proposes various successive corrections for the current word.
+If invoked repeatedly with point on a word, it cycles through the
+possible corrections."
   (interactive)
   ;; If we are not in the construct where flyspell should be active,
   ;; invoke the original binding of M-TAB, if that was recorded.
