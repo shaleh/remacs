@@ -2633,7 +2633,7 @@ current list, it is used @emph{as well as} the others.
 @example
 @group
 (setq tags-table-list
-      '("~/emacs.d/init.el" "/usr/local/lib/emacs/src"))
+      '("~/.emacs.d" "/usr/local/lib/emacs/src"))
 @end group
 @end example
 
