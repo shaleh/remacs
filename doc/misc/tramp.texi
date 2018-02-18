@@ -1898,58 +1898,6 @@ prompts, for which @value{tramp} uses @code{tramp-wrong-passwd-regexp}.
 @item @command{tset} and other questions
 @cindex unix command @command{tset}
 @cindex @command{tset} unix command
-@vindex tramp-terminal-type
-@vindex TERM@r{, environment variable}
-
-@value{tramp} uses the user option @code{tramp-terminal-type} to set
-the remote environment variable @env{TERM} for the shells it runs.
-Per default, it is @samp{"dumb"}, but this could be changed.  A dumb
-terminal is best suited to run the background sessions of
-@value{tramp}.  However, running interactive remote shells might
-require a different setting.  This could be achieved by tweaking the
-@env{TERM} environment variable in @code{process-environment}.
-
-@lisp
-@group
-(let ((process-environment
-       (cons "TERM=xterm-256color" process-environment)))
-  (shell))
-@end group
-@end lisp
-
-@item Determining a @value{tramp} session
-@vindex TERM@r{, environment variable}
-@vindex INSIDE_EMACS@r{, environment variable}
-
-Sometimes, it is needed to identify whether a shell runs under
-@value{tramp} control.  The setting of environment variable @env{TERM}
-will help:
-
-@example
-@group
-if test "$TERM" = "dumb"; then
-   ...
-fi
-@end group
-@end example
-
-Another possibility is to check the environment variable
-@env{INSIDE_EMACS}.  Like for all subprocesses of Emacs, this is set
-to the version of the parent Emacs process, @xref{Interactive Shell, ,
-, emacs}.  @value{tramp} adds its own package version to this string,
-which could be used for further tests in an inferior shell.  The
-string of that environment variable looks always like
-
-@example
-@group
-echo $INSIDE_EMACS
-@result{} 26.2,tramp:2.3.4
-@end group
-@end example
-
-@item @command{tset} and other questions
-@cindex unix command @command{tset}
-@cindex @command{tset} unix command
 
 To suppress inappropriate prompts for terminal type, @value{tramp}
 sets the @env{TERM} environment variable before the remote login
