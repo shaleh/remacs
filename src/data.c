@@ -1056,47 +1056,6 @@ If the current binding is global (the default), the value is nil.  */)
     }
 }
 
-/* This code is disabled now that we use the selected frame to return
-   keyboard-local-values.  */
-#if 0
-extern struct terminal *get_terminal (Lisp_Object display, int);
-
-DEFUN ("terminal-local-value", Fterminal_local_value,
-       Sterminal_local_value, 2, 2, 0,
-       doc: /* Return the terminal-local value of SYMBOL on TERMINAL.
-If SYMBOL is not a terminal-local variable, then return its normal
-value, like `symbol-value'.
-
-TERMINAL may be a terminal object, a frame, or nil (meaning the
-selected frame's terminal device).  */)
-  (Lisp_Object symbol, Lisp_Object terminal)
-{
-  Lisp_Object result;
-  struct terminal *t = get_terminal (terminal, 1);
-  push_kboard (t->kboard);
-  result = Fsymbol_value (symbol);
-  pop_kboard ();
-  return result;
-}
-
-DEFUN ("set-terminal-local-value", Fset_terminal_local_value,
-       Sset_terminal_local_value, 3, 3, 0,
-       doc: /* Set the terminal-local binding of SYMBOL on TERMINAL to VALUE.
-If VARIABLE is not a terminal-local variable, then set its normal
-binding, like `set'.
-
-TERMINAL may be a terminal object, a frame, or nil (meaning the
-selected frame's terminal device).  */)
-  (Lisp_Object symbol, Lisp_Object terminal, Lisp_Object value)
-{
-  Lisp_Object result;
-  struct terminal *t = get_terminal (terminal, 1);
-  push_kboard (d->kboard);
-  result = Fset (symbol, value);
-  pop_kboard ();
-  return result;
-}
-#endif
 
 void
 aset_multibyte_string(register Lisp_Object array, EMACS_INT idxval, int c)
