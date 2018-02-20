@@ -1312,7 +1312,7 @@ that may be included as part of a word (see `ispell-dictionary-alist').
 
 This finds the word to spell-check by searching for CASECHARS defined
 in `ispell-dictionary-alist' for the current dictionary.  Thus, the
-word could be far away from point if point is inside whitespace or
+word could be far away of point if point is inside whitespace or
 punctuation characters, or in text that belongs to a different
 language."
   (let* ((flyspell-casechars (flyspell-get-casechars))
@@ -1962,8 +1962,10 @@ before point that's highlighted as misspelled."
   "Correct the current word.
 This command proposes various successive corrections for the
 current word.  If invoked repeatedly on the same position, it
-cycles through the possible corrections of the word at or near
-that position."
+cycles through the possible corrections of the current word.
+
+See `flyspell-get-word' for details of how this finds the word to
+spell-check."
   (interactive)
   ;; If we are not in the construct where flyspell should be active,
   ;; invoke the original binding of M-TAB, if that was recorded.
