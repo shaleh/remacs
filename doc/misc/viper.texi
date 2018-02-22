@@ -4069,7 +4069,7 @@ The variable @code{viper-read-buffer-function} controls which function is
 actually used to read the buffer name. The default is @code{read-buffer},
 but better alternatives are also available in Emacs (e.g.,
 @code{ido-read-buffer}).
-@vindex viper-read-buffer-function
+@vindex @code{viper-read-buffer-function}
 @item :B
 Like @kbd{:b}, but the meaning of @code{ex-cycle-other-window} is reversed.
 @item :<address>r <name>
