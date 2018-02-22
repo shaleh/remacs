@@ -427,6 +427,34 @@ See `compilation-error-regexp-alist' for format details.")
 (defvar grep-context-face 'shadow
   "Face name to use for grep context lines.")
 
+(defvar grep-num-matches-found 0)
+
+(defconst grep-mode-line-matches
+  `(" [" (:propertize (:eval (int-to-string grep-num-matches-found))
+                      face ,grep-hit-face
+                      help-echo "Number of matches so far")
+    "]"))
+
+(defcustom grep-find-hide t
+  "If non-nil, hide part of rgrep/lgrep/zrgrep command line.
+The hidden part contains a list of ignored directories and files.
+Clicking on the button-like ellipsis unhides the abbreviated part
+and reveals the entire command line."
+  :type 'boolean
+  :version "27.1"
+  :group 'grep)
+
+(defvar grep-find-hide-properties
+  (let ((ellipsis (if (char-displayable-p ?…) "[…]" "[...]"))
+        (map (make-sparse-keymap)))
+    (define-key map [down-mouse-2] 'mouse-set-point)
+    (define-key map [mouse-2] 'grep-find-show)
+    (define-key map "\C-m" 'grep-find-show)
+    `(face nil display ,ellipsis mouse-face highlight
+      help-echo "RET, mouse-2: show unabbreviated command"
+      keymap ,map))
+  "Properties of button-like ellipsis on part of rgrep command line.")
+
 (defvar grep-mode-font-lock-keywords
    '(;; Command output lines.
      (": \\(.+\\): \\(?:Permission denied\\|No such \\(?:file or directory\\|device or address\\)\\)$"
@@ -444,9 +472,16 @@ See `compilation-error-regexp-alist' for format details.")
       (2 grep-error-face nil t))
      ;; "filename-linenumber-" format is used for context lines in GNU grep,
      ;; "filename=linenumber=" for lines with function names in "git grep -p".
-     ("^.+?\\([-=\0]\\)[0-9]+\\([-=]\\).*\n" (0 grep-context-face)
+     ("^.+?\\([-=\0]\\)[0-9]+\\([-=]\\).*\n"
+      (0 grep-context-face)
       (1 (if (eq (char-after (match-beginning 1)) ?\0)
-             `(face nil display ,(match-string 2))))))
+             `(face nil display ,(match-string 2)))))
+     ;; Hide excessive part of rgrep command
+     ("^find \\(\\. -type d .*\\\\)\\)"
+      (1 (when grep-find-hide grep-find-hide-properties)))
+     ;; Hide excessive part of lgrep command
+     ("^grep \\( *--exclude.*--exclude[^ ]+\\)"
+      (1 (when grep-find-hide grep-find-hide-properties))))
    "Additional things to highlight in grep output.
 This gets tacked on the end of the generated expressions.")
 
@@ -1151,6 +1186,24 @@ to specify a command to run."
                  " "
                  (shell-quote-argument ")")
                  " -prune -o ")))))
+
+(defun grep-find-show ()
+  "Show the hidden part of rgrep/lgrep/zrgrep command line."
+  (interactive)
+  (when (get-text-property (point) 'display)
+    (let ((beg (or (previous-single-property-change
+                    (min (point-max) (1+ (point))) 'display)
+                   (point)))
+          (end (or (next-single-property-change
+                    (point) 'display)
+                   (point)))
+          (inhibit-modification-hooks t)
+          (inhibit-read-only t)
+	  (buffer-undo-list t)
+	  (modified (buffer-modified-p)))
+      (remove-list-of-text-properties
+       beg end '(display help-echo mouse-face help-echo keymap))
+      (set-buffer-modified-p modified))))
 
 ;;;###autoload
 (defun zrgrep (regexp &optional files dir confirm template)
