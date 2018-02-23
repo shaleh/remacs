@@ -319,6 +319,11 @@ Deterministic builds omit the build date from the output of the
 following variables nil: 'emacs-build-system', 'emacs-build-time',
 'erc-emacs-build-time'.
 
++++
+** New isearch bindings.
+'C-M-w' in isearch changed from isearch-del-char to the new function
+isearch-yank-symbol-or-char. isearch-del-char is now bound to 'C-M-d'.
+
 ---
 ** Emacs can now be built with support for Little CMS.
 
