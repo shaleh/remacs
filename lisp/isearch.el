@@ -2098,14 +2098,13 @@ If optional ARG is non-nil, pull in the next ARG characters."
   (interactive "p")
   (isearch-yank-internal (lambda () (forward-char arg) (point))))
 
-(defun isearch-yank-word-or-char ()
-  "Pull next character or word from buffer into search string."
-  (interactive)
+(defun isearch--yank-char-or-syntax (syntax-list fn)
   (isearch-yank-internal
    (lambda ()
-     (if (or (= (char-syntax (or (char-after) 0)) ?w)
-             (= (char-syntax (or (char-after (1+ (point))) 0)) ?w))
-	 (forward-word 1)
+     (if (or (memq (char-syntax (or (char-after) 0)) syntax-list)
+             (memq (char-syntax (or (char-after (1+ (point))) 0))
+                   syntax-list))
+	 (funcall fn 1)
        (forward-char 1))
      (point))))
 
@@ -2115,7 +2114,7 @@ If optional ARG is non-nil, pull in the next ARG characters."
   (isearch--yank-char-or-syntax '(?w) 'forward-word))
 
 (defun isearch-yank-symbol-or-char ()
-  "Pull next character or symbol from buffer into search string."
+  "Pull next character or word from buffer into search string."
   (interactive)
   (isearch--yank-char-or-syntax '(?w ?_) 'forward-symbol))
 
