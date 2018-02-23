@@ -302,7 +302,7 @@ being used.
 
 @vindex vhdl-echo-syntactic-information-p
 @vindex echo-syntactic-information-p @r{(vhdl-)}
-@cindex @key{TAB}
+@cindex TAB
 To help you configure VHDL Mode, you can set the variable
 @code{vhdl-echo-syntactic-information-p} to non-@code{nil} so that the
 syntactic component list and calculated offset will always be echoed in

@@ -771,11 +771,10 @@ file.
 @findex open-termscript
 @cindex termscript file
 @vindex TERM@r{, environment variable, and display bugs}
-For possible display bugs on text-mode terminals, the terminal type
-(the value of environment variable @env{TERM}), the complete termcap
-entry for the terminal from @file{/etc/termcap} (since that file is
-not identical on all machines), and the output that Emacs actually
-sent to the terminal.
+For possible display bugs, the terminal type (the value of environment
+variable @env{TERM}), the complete termcap entry for the terminal from
+@file{/etc/termcap} (since that file is not identical on all machines),
+and the output that Emacs actually sent to the terminal.
 
 The way to collect the terminal output is to execute the Lisp expression
 

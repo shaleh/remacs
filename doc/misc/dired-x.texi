@@ -625,18 +625,23 @@ to @command{gzip}, possibly overriding a verbose option in the @env{GZIP}
 environment variable.  The default is @code{t}.
 @end defvar
 
-@cindex @code{znew}
-@defvar dired-guess-shell-znew-switches nil
-This variable specifies a string of switches passed to @command{znew}.
-An example is @samp{-K} which will make @command{znew} keep a @file{.Z}
-file when it is smaller than the @file{.gz} file.  The default is
-@code{nil}: no additional switches are passed to @command{znew}.
-@end defvar
+A non-@code{nil} value means that @samp{-q} is passed to @code{gzip}
+overriding a verbose option in the @env{GZIP} environment variable.
 
-@defvar dired-shell-command-history nil
-This variable holds the history list for commands that read
-dired-shell commands.
-@end defvar
+@item dired-guess-shell-znew-switches nil
+@vindex dired-guess-shell-znew-switches
+@cindex @code{znew}
+Default: @code{nil}
+
+A string of switches passed to @code{znew}.  An example is
+@samp{-K} which will make @code{znew} keep a @file{.Z} file when it is
+smaller than the @file{.gz} file.
+
+@item dired-shell-command-history nil
+@vindex dired-shell-command-history
+
+History list for commands that read dired-shell commands.
+@end table
 
 @node Virtual Dired
 @chapter Virtual Dired

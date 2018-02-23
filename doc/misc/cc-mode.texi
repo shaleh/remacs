@@ -587,9 +587,9 @@ for the latest information on Emacs version and package compatibility
 
 @deffn Command c-version
 @findex version @r{(c-)}
-You can find out what version of @ccmode{} you are using by visiting a
-C file and entering @kbd{M-x c-version @key{RET}}.  You should see
-this message in the echo area:
+You can find out what version of @ccmode{} you are using by visiting a C
+file and entering @kbd{M-x c-version RET}.  You should see this message in
+the echo area:
 
 @example
 Using CC Mode version 5.XX
@@ -1531,7 +1531,7 @@ deletion.
 @kindex DEL
 @findex c-electric-backspace
 @findex electric-backspace @r{(c-)}
-This command is run by default when you hit the @kbd{@key{DEL}} key.  When
+This command is run by default when you hit the @kbd{DEL} key.  When
 hungry delete mode is enabled, it deletes any amount of whitespace in
 the backwards direction.  Otherwise, or when used with a prefix
 argument or in a literal (@pxref{Auto-newlines}), the command just

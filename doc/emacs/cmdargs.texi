@@ -661,8 +661,9 @@ saving time information.  @xref{Time Zone Rules,,, elisp, The GNU
 Emacs Lisp Reference Manual}.  On MS-Windows, Emacs
 does not use @env{TZ} at all.
 @item USER
-@vindex USER, environment variable
-The user's login name.  See also @env{LOGNAME}.
+@vindex USER@r{, environment variable}
+The user's login name.  See also @env{LOGNAME}.  On MS-DOS, this
+defaults to @samp{root}.
 @item VERSION_CONTROL
 @vindex VERSION_CONTROL@r{, environment variable}
 Used to initialize the @code{version-control} variable (@pxref{Backup
