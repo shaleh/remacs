@@ -3539,7 +3539,7 @@ support symbolic links."
 		  (concat (file-remote-p filename)
 			  (substitute-in-file-name localname))))))
       ;; "/m:h:~" does not work for completion.  We use "/m:h:~/".
-      (if (and (stringp localname) (string-equal "~" localname))
+      (if (string-match "^~$" localname)
 	  (concat filename "/")
 	filename))))
 
