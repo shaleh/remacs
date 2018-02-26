@@ -150,16 +150,28 @@ This can be slightly disconcerting, but some people prefer it."
 
 ;;; For tilt-scroll
 ;;;
-(defcustom mouse-wheel-tilt-scroll nil
+(defcustom mwheel-tilt-scroll-p nil
   "Enable scroll using tilting mouse wheel."
   :group 'mouse
   :type 'boolean
   :version "26.1")
 
-(defcustom mouse-wheel-flip-direction nil
+(defcustom mwheel-flip-direction nil
   "Swap direction of 'wheel-right and 'wheel-left."
   :group 'mouse
   :type 'boolean
+  :version "26.1")
+
+(defcustom mwheel-scroll-left-function 'scroll-left
+  "Function that does the job of scrolling left."
+  :group 'mouse
+  :type 'function
+  :version "26.1")
+
+(defcustom mwheel-scroll-right-function 'scroll-right
+  "Function that does the job of scrolling right."
+  :group 'mouse
+  :type 'function
   :version "26.1")
 
 (eval-and-compile
@@ -198,12 +210,6 @@ This can be slightly disconcerting, but some people prefer it."
 
 (defvar mwheel-scroll-down-function 'scroll-down
   "Function that does the job of scrolling downward.")
-
-(defvar mwheel-scroll-left-function 'scroll-left
-  "Function that does the job of scrolling left.")
-
-(defvar mwheel-scroll-right-function 'scroll-right
-  "Function that does the job of scrolling right.")
 
 (defvar mouse-wheel-left-event
   (if (or (featurep 'w32-win) (featurep 'ns-win))
