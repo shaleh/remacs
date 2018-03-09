@@ -150,8 +150,6 @@ to A2 and inserting a row, makes A2 value empty, and A3 equal to
       (should-not (bound-and-true-p A2))
       (should (eq (bound-and-true-p A3) 2)))))
 
-(defvar ses--bar)
-
 (ert-deftest ses-tests-renamed-cells-row-insertion ()
   "Check that setting A1 to 1 and A2 to (1+ A1), and then renaming A1 to `ses--foo' and A2 to `ses--bar' jumping
 to `ses--bar' and inserting a row, makes A2 value empty, and `ses--bar' equal to
