@@ -99,8 +99,7 @@ This might not yet be honored by all index-building functions."
 (defcustom imenu-auto-rescan-maxout 600000
   "Imenu auto-rescan is disabled in buffers larger than this size (in bytes)."
   :type 'integer
-  :group 'imenu
-  :version "26.2")
+  :group 'imenu)
 
 (defcustom imenu-use-popup-menu 'on-mouse
   "Use a popup menu rather than a minibuffer prompt.
