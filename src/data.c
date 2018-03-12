@@ -1060,6 +1060,366 @@ NUMBER may be an integer or a floating point number.  */)
   return make_unibyte_string (buffer, len);
 }
 
+DEFUN ("string-to-number", Fstring_to_number, Sstring_to_number, 1, 2, 0,
+       doc: /* Parse STRING as a decimal number and return the number.
+Ignore leading spaces and tabs, and all trailing chars.  Return 0 if
+STRING cannot be parsed as an integer or floating point number.
+
+If BASE, interpret STRING as a number in that base.  If BASE isn't
+present, base 10 is used.  BASE must be between 2 and 16 (inclusive).
+If the base used is not 10, STRING is always parsed as an integer.  */)
+  (register Lisp_Object string, Lisp_Object base)
+{
+  register char *p;
+  register int b;
+  Lisp_Object val;
+
+  CHECK_STRING (string);
+
+  if (NILP (base))
+    b = 10;
+  else
+    {
+      CHECK_NUMBER (base);
+      if (! (XINT (base) >= 2 && XINT (base) <= 16))
+	xsignal1 (Qargs_out_of_range, base);
+      b = XINT (base);
+    }
+
+  p = SSDATA (string);
+  while (*p == ' ' || *p == '\t')
+    p++;
+
+  val = string_to_number (p, b, true);
+  return NILP (val) ? make_number (0) : val;
+}
+
+enum arithop
+  {
+    Aadd,
+    Asub,
+    Amult,
+    Adiv,
+    Alogand,
+    Alogior,
+    Alogxor
+  };
+
+static Lisp_Object float_arith_driver (double, ptrdiff_t, enum arithop,
+                                       ptrdiff_t, Lisp_Object *);
+static Lisp_Object
+arith_driver (enum arithop code, ptrdiff_t nargs, Lisp_Object *args)
+{
+  Lisp_Object val;
+  ptrdiff_t argnum, ok_args;
+  EMACS_INT accum = 0;
+  EMACS_INT next, ok_accum;
+  bool overflow = 0;
+
+  switch (code)
+    {
+    case Alogior:
+    case Alogxor:
+    case Aadd:
+    case Asub:
+      accum = 0;
+      break;
+    case Amult:
+    case Adiv:
+      accum = 1;
+      break;
+    case Alogand:
+      accum = -1;
+      break;
+    default:
+      break;
+    }
+
+  for (argnum = 0; argnum < nargs; argnum++)
+    {
+      if (! overflow)
+	{
+	  ok_args = argnum;
+	  ok_accum = accum;
+	}
+
+      /* Using args[argnum] as argument to CHECK_NUMBER_... */
+      val = args[argnum];
+      CHECK_NUMBER_OR_FLOAT_COERCE_MARKER (val);
+
+      if (FLOATP (val))
+	return float_arith_driver (ok_accum, ok_args, code,
+				   nargs, args);
+      args[argnum] = val;
+      next = XINT (args[argnum]);
+      switch (code)
+	{
+	case Aadd:
+	  overflow |= INT_ADD_WRAPV (accum, next, &accum);
+	  break;
+	case Asub:
+	  if (! argnum)
+	    accum = nargs == 1 ? - next : next;
+	  else
+	    overflow |= INT_SUBTRACT_WRAPV (accum, next, &accum);
+	  break;
+	case Amult:
+	  overflow |= INT_MULTIPLY_WRAPV (accum, next, &accum);
+	  break;
+	case Adiv:
+	  if (! (argnum || nargs == 1))
+	    accum = next;
+	  else
+	    {
+	      if (next == 0)
+		xsignal0 (Qarith_error);
+	      if (INT_DIVIDE_OVERFLOW (accum, next))
+		overflow = true;
+	      else
+		accum /= next;
+	    }
+	  break;
+	case Alogand:
+	  accum &= next;
+	  break;
+	case Alogior:
+	  accum |= next;
+	  break;
+	case Alogxor:
+	  accum ^= next;
+	  break;
+	}
+    }
+
+  XSETINT (val, accum);
+  return val;
+}
+
+#ifndef isnan
+# define isnan(x) ((x) != (x))
+#endif
+
+static Lisp_Object
+float_arith_driver (double accum, ptrdiff_t argnum, enum arithop code,
+		    ptrdiff_t nargs, Lisp_Object *args)
+{
+  register Lisp_Object val;
+  double next;
+
+  for (; argnum < nargs; argnum++)
+    {
+      val = args[argnum];    /* using args[argnum] as argument to CHECK_NUMBER_... */
+      CHECK_NUMBER_OR_FLOAT_COERCE_MARKER (val);
+
+      if (FLOATP (val))
+	{
+	  next = XFLOAT_DATA (val);
+	}
+      else
+	{
+	  args[argnum] = val;    /* runs into a compiler bug. */
+	  next = XINT (args[argnum]);
+	}
+      switch (code)
+	{
+	case Aadd:
+	  accum += next;
+	  break;
+	case Asub:
+	  accum = argnum ? accum - next : nargs == 1 ? - next : next;
+	  break;
+	case Amult:
+	  accum *= next;
+	  break;
+	case Adiv:
+	  if (! (argnum || nargs == 1))
+	    accum = next;
+	  else
+	    {
+	      if (! IEEE_FLOATING_POINT && next == 0)
+		xsignal0 (Qarith_error);
+	      accum /= next;
+	    }
+	  break;
+	case Alogand:
+	case Alogior:
+	case Alogxor:
+	  wrong_type_argument (Qinteger_or_marker_p, val);
+	}
+    }
+
+  return make_float (accum);
+}
+
+
+DEFUN ("+", Fplus, Splus, 0, MANY, 0,
+       doc: /* Return sum of any number of arguments, which are numbers or markers.
+usage: (+ &rest NUMBERS-OR-MARKERS)  */)
+  (ptrdiff_t nargs, Lisp_Object *args)
+{
+  return arith_driver (Aadd, nargs, args);
+}
+
+DEFUN ("-", Fminus, Sminus, 0, MANY, 0,
+       doc: /* Negate number or subtract numbers or markers and return the result.
+With one arg, negates it.  With more than one arg,
+subtracts all but the first from the first.
+usage: (- &optional NUMBER-OR-MARKER &rest MORE-NUMBERS-OR-MARKERS)  */)
+  (ptrdiff_t nargs, Lisp_Object *args)
+{
+  return arith_driver (Asub, nargs, args);
+}
+
+DEFUN ("*", Ftimes, Stimes, 0, MANY, 0,
+       doc: /* Return product of any number of arguments, which are numbers or markers.
+usage: (* &rest NUMBERS-OR-MARKERS)  */)
+  (ptrdiff_t nargs, Lisp_Object *args)
+{
+  return arith_driver (Amult, nargs, args);
+}
+
+DEFUN ("/", Fquo, Squo, 1, MANY, 0,
+       doc: /* Divide number by divisors and return the result.
+With two or more arguments, return first argument divided by the rest.
+With one argument, return 1 divided by the argument.
+The arguments must be numbers or markers.
+usage: (/ NUMBER &rest DIVISORS)  */)
+  (ptrdiff_t nargs, Lisp_Object *args)
+{
+  ptrdiff_t argnum;
+  for (argnum = 2; argnum < nargs; argnum++)
+    if (FLOATP (args[argnum]))
+      return float_arith_driver (0, 0, Adiv, nargs, args);
+  return arith_driver (Adiv, nargs, args);
+}
+
+DEFUN ("%", Frem, Srem, 2, 2, 0,
+       doc: /* Return remainder of X divided by Y.
+Both must be integers or markers.  */)
+  (register Lisp_Object x, Lisp_Object y)
+{
+  Lisp_Object val;
+
+  CHECK_NUMBER_COERCE_MARKER (x);
+  CHECK_NUMBER_COERCE_MARKER (y);
+
+  if (XINT (y) == 0)
+    xsignal0 (Qarith_error);
+
+  XSETINT (val, XINT (x) % XINT (y));
+  return val;
+}
+
+DEFUN ("mod", Fmod, Smod, 2, 2, 0,
+       doc: /* Return X modulo Y.
+The result falls between zero (inclusive) and Y (exclusive).
+Both X and Y must be numbers or markers.  */)
+  (register Lisp_Object x, Lisp_Object y)
+{
+  Lisp_Object val;
+  EMACS_INT i1, i2;
+
+  CHECK_NUMBER_OR_FLOAT_COERCE_MARKER (x);
+  CHECK_NUMBER_OR_FLOAT_COERCE_MARKER (y);
+
+  if (FLOATP (x) || FLOATP (y))
+    return fmod_float (x, y);
+
+  i1 = XINT (x);
+  i2 = XINT (y);
+
+  if (i2 == 0)
+    xsignal0 (Qarith_error);
+
+  i1 %= i2;
+
+  /* If the "remainder" comes out with the wrong sign, fix it.  */
+  if (i2 < 0 ? i1 > 0 : i1 < 0)
+    i1 += i2;
+
+  XSETINT (val, i1);
+  return val;
+}
+
+static Lisp_Object
+minmax_driver (ptrdiff_t nargs, Lisp_Object *args,
+	       enum Arith_Comparison comparison)
+{
+  Lisp_Object accum = args[0];
+  CHECK_NUMBER_OR_FLOAT_COERCE_MARKER (accum);
+  for (ptrdiff_t argnum = 1; argnum < nargs; argnum++)
+    {
+      Lisp_Object val = args[argnum];
+      CHECK_NUMBER_OR_FLOAT_COERCE_MARKER (val);
+      if (!NILP (arithcompare (val, accum, comparison)))
+	accum = val;
+      else if (FLOATP (val) && isnan (XFLOAT_DATA (val)))
+	return val;
+    }
+  return accum;
+}
+
+DEFUN ("max", Fmax, Smax, 1, MANY, 0,
+       doc: /* Return largest of all the arguments (which must be numbers or markers).
+The value is always a number; markers are converted to numbers.
+usage: (max NUMBER-OR-MARKER &rest NUMBERS-OR-MARKERS)  */)
+  (ptrdiff_t nargs, Lisp_Object *args)
+{
+  return minmax_driver (nargs, args, ARITH_GRTR);
+}
+
+DEFUN ("min", Fmin, Smin, 1, MANY, 0,
+       doc: /* Return smallest of all the arguments (which must be numbers or markers).
+The value is always a number; markers are converted to numbers.
+usage: (min NUMBER-OR-MARKER &rest NUMBERS-OR-MARKERS)  */)
+  (ptrdiff_t nargs, Lisp_Object *args)
+{
+  return minmax_driver (nargs, args, ARITH_LESS);
+}
+
+DEFUN ("logand", Flogand, Slogand, 0, MANY, 0,
+       doc: /* Return bitwise-and of all the arguments.
+Arguments may be integers, or markers converted to integers.
+usage: (logand &rest INTS-OR-MARKERS)  */)
+  (ptrdiff_t nargs, Lisp_Object *args)
+{
+  return arith_driver (Alogand, nargs, args);
+}
+
+DEFUN ("logior", Flogior, Slogior, 0, MANY, 0,
+       doc: /* Return bitwise-or of all the arguments.
+Arguments may be integers, or markers converted to integers.
+usage: (logior &rest INTS-OR-MARKERS)  */)
+  (ptrdiff_t nargs, Lisp_Object *args)
+{
+  return arith_driver (Alogior, nargs, args);
+}
+
+DEFUN ("logxor", Flogxor, Slogxor, 0, MANY, 0,
+       doc: /* Return bitwise-exclusive-or of all the arguments.
+Arguments may be integers, or markers converted to integers.
+usage: (logxor &rest INTS-OR-MARKERS)  */)
+  (ptrdiff_t nargs, Lisp_Object *args)
+{
+  return arith_driver (Alogxor, nargs, args);
+}
+
+DEFUN ("logcount", Flogcount, Slogcount, 1, 1, 0,
+       doc: /* Return population count of VALUE.
+This is the number of one bits in the two's complement representation
+of VALUE.  If VALUE is negative, return the number of zero bits in the
+representation.  */)
+  (Lisp_Object value)
+{
+  CHECK_NUMBER (value);
+  EMACS_INT v = XINT (value) < 0 ? -1 - XINT (value) : XINT (value);
+  return make_number (EMACS_UINT_WIDTH <= UINT_WIDTH
+		      ? count_one_bits (v)
+		      : EMACS_UINT_WIDTH <= ULONG_WIDTH
+		      ? count_one_bits_l (v)
+		      : count_one_bits_ll (v));
+}
+
 static Lisp_Object
 ash_lsh_impl (Lisp_Object value, Lisp_Object count, bool lsh)
 {
