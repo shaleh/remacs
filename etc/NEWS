@@ -553,6 +553,7 @@ as new-style, bind the new variable 'force-new-style-backquotes' to t.
 integer, Emacs now signals an error if the number is too large for the
 implementation to format (Bug#30408).
 
+---
 ** Some functions and variables obsolete since Emacs 22 have been removed:
 archive-mouse-extract, assoc-ignore-case, assoc-ignore-representation,
 backward-text-line, blink-cursor, bookmark-exit-hooks,
