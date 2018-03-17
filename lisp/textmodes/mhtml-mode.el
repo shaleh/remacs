@@ -21,7 +21,10 @@
 
 ;;; Code:
 
-(eval-and-compile (require 'sgml-mode))
+(eval-and-compile
+  (require 'cl-lib)
+  (require 'flyspell)
+  (require 'sgml-mode))
 (require 'js)
 (require 'css-mode)
 (require 'prog-mode)
