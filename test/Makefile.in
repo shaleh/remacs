@@ -296,8 +296,8 @@ ifeq ($(TEST_INTERACTIVE), yes)
 	  $(TEST_RUN_ERT)
 else
 	-@${MAKE} -k  ${LOGFILES}
-	@$(emacs) --batch -l ert -f ert-summarize-tests-batch-and-exit ${LOGFILES}
-endif
+	@$(emacs) -l ert --eval \
+	"(ert-summarize-tests-batch-and-exit ${SUMMARIZE_TESTS})" ${LOGFILES}
 
 .PHONY: mostlyclean clean bootstrap-clean distclean maintainer-clean
 
