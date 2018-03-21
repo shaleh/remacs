@@ -406,6 +406,11 @@ bool_bf pget_kill_without_query(const struct Lisp_Process *p)
 {
   return p->kill_without_query;
 }
+
+bool_bf pget_process_inherit_coding_system_flag(const struct Lisp_Process *p)
+{
+  return p->inherit_coding_system_flag;
+}
 /* End Rust Accessors */
 
 /* Setters to enable Rust code to set data in the Lisp_Process struct */
@@ -7364,19 +7369,6 @@ setup_process_coding_systems (Lisp_Object process)
 		       proc_encode_coding_system[outch]);
 }
 
-DEFUN ("process-inherit-coding-system-flag",
-       Fprocess_inherit_coding_system_flag, Sprocess_inherit_coding_system_flag,
-       1, 1, 0,
-       doc: /* Return the value of inherit-coding-system flag for PROCESS.
-If this flag is t, `buffer-file-coding-system' of the buffer
-associated with PROCESS will inherit the coding system used to decode
-the process output.  */)
-  (register Lisp_Object process)
-{
-  CHECK_PROCESS (process);
-  return XPROCESS (process)->inherit_coding_system_flag ? Qt : Qnil;
-}
-
 /* Kill all processes associated with `buffer'.
    If `buffer' is nil, kill all processes.  */
 
@@ -7813,7 +7805,6 @@ The variable takes effect when `start-process' is called.  */);
    Fprovide (intern_c_string ("make-network-process"), subfeatures);
  }
 
-  defsubr (&Sprocess_inherit_coding_system_flag);
   defsubr (&Slist_system_processes);
   defsubr (&Sprocess_attributes);
 }
