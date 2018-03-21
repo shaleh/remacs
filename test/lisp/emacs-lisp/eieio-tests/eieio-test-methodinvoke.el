@@ -327,7 +327,7 @@
   )
 
 (ert-deftest eieio-test-method-order-list-9 ()
-  (should (eitest-Jd "test")))
+  (should (eitest-Jd)))
 
 ;;; call-next-method with replacement arguments across a simple class hierarchy.
 ;;
@@ -373,7 +373,7 @@
 
 (ert-deftest eieio-test-method-order-list-10 ()
   (let ((eieio-test-call-next-method-arguments nil))
-    (CNM-M (CNM-2 "") '(INIT))
+    (CNM-M (CNM-2) '(INIT))
     (should (equal (eieio-test-arguments-for 'CNM-0)
 		   '(CNM-1-1 CNM-2 INIT)))
     (should (equal (eieio-test-arguments-for 'CNM-1-1)
