@@ -1179,7 +1179,7 @@ define xprintbytestr
   set $bstrsize = ($arg0->size_byte < 0) ? ($arg0->size & ~ARRAY_MARK_FLAG) : $arg0->size_byte
   printf "Bytecode: "
   if $bstrsize > 0
-    output/u ($arg0->size > 1000) ? 0 : ($data[0])@($bvsize)
+    output/u ($arg0->size > 1000) ? 0 : ($data[0])@($bstrsize)
   else
     printf ""
   end
@@ -1354,6 +1354,8 @@ if hasattr(gdb, 'printing'):
   gdb.printing.register_pretty_printer (gdb.current_objfile (),
                                         build_pretty_printer (), True)
 end
+
+set history save on
 
 # GDB mishandles indentation with leading tabs when feeding it to Python.
 # Local Variables:
