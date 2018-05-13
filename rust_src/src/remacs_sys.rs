@@ -1699,12 +1699,7 @@ extern "C" {
         all_frames: Lisp_Object,
     ) -> Lisp_Object;
     pub fn buffer_local_value(variable: Lisp_Object, buffer: Lisp_Object) -> Lisp_Object;
-    pub fn scan_lists(
-        from: EmacsInt,
-        count: EmacsInt,
-        depth: EmacsInt,
-        sexpflag: bool,
-    ) -> LispObject;
+    pub fn Fuser_real_login_name() -> Lisp_Object;
 }
 
 /// Contains C definitions from the font.h header.
