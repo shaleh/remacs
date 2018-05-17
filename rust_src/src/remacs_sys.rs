@@ -1692,13 +1692,17 @@ extern "C" {
     pub fn Fexpand_file_name(filename: LispObject, default_directory: LispObject) -> LispObject;
     pub fn Ffind_file_name_handler(filename: LispObject, operation: LispObject) -> LispObject;
     pub fn window_list_1(
-        window: LispObject,
-        minibuf: LispObject,
-        all_frames: LispObject,
-    ) -> LispObject;
-    pub fn buffer_local_value(variable: LispObject, buffer: LispObject) -> LispObject;
-    pub fn downcase(c: c_int) -> c_int;
-
+        window: Lisp_Object,
+        minibuf: Lisp_Object,
+        all_frames: Lisp_Object,
+    ) -> Lisp_Object;
+    pub fn buffer_local_value(variable: Lisp_Object, buffer: Lisp_Object) -> Lisp_Object;
+    pub fn scan_lists(
+        from: EmacsInt,
+        count: EmacsInt,
+        depth: EmacsInt,
+        sexpflag: bool,
+    ) -> Lisp_Object;
 }
 
 /// Contains C definitions from the font.h header.
