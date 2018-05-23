@@ -3261,6 +3261,12 @@ get_symbol_redirect(const struct Lisp_Symbol *sym)
 }
 
 INLINE void
+set_symbol_redirect(struct Lisp_Symbol *sym, enum symbol_redirect v)
+{
+  sym->redirect = v;
+}
+
+INLINE void
 set_symbol_next (Lisp_Object sym, struct Lisp_Symbol *next)
 {
   XSYMBOL (sym)->u.s.next = next;

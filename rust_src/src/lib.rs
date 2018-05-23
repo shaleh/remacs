@@ -73,6 +73,7 @@ mod keyboard;
 mod keymap;
 mod libm;
 mod lists;
+mod lread;
 mod marker;
 mod math;
 mod minibuf;
