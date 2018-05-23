@@ -5917,8 +5917,8 @@ bget_overlays_after(const struct buffer *b)
   return b->overlays_after;
 }
 
-void
-bset_markers (struct buffer *b, struct Lisp_Marker *m)
+extern void
+set_per_buffer_value (struct buffer *b, int offset, Lisp_Object value)
 {
-  b->text->markers = m;
+  *(Lisp_Object *)(offset + (char *) b) = value;
 }
