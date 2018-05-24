@@ -4215,21 +4215,6 @@ defalias (struct Lisp_Subr *sname, char *string)
 }
 #endif /* NOTDEF */
 
-/* Similar but define a variable whose value is the Lisp Object stored
-   at a particular offset in the current kboard object.  */
-
-void
-defvar_kboard (struct Lisp_Kboard_Objfwd *ko_fwd,
-	       const char *namestring, int offset)
-{
-  Lisp_Object sym;
-  sym = intern_c_string (namestring);
-  ko_fwd->type = Lisp_Fwd_Kboard_Obj;
-  ko_fwd->offset = offset;
-  XSYMBOL (sym)->u.s.declared_special = true;
-  XSYMBOL (sym)->u.s.redirect = SYMBOL_FORWARDED;
-  SET_SYMBOL_FWD (XSYMBOL (sym), (union Lisp_Fwd *)ko_fwd);
-}
 
 /* Check that the elements of lpath exist.  */
 
