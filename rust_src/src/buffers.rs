@@ -632,9 +632,11 @@ pub fn set_buffer(buffer_or_name: LispObject) -> LispObject {
 pub fn barf_if_buffer_read_only(position: Option<EmacsInt>) -> () {
     let pos = position.unwrap_or_else(point);
 
-    let inhibit_read_only: bool = unsafe { globals.f_Vinhibit_read_only.into() };
-    let prop =
-        unsafe { Fget_text_property(LispObject::from(pos).to_raw(), Qinhibit_read_only, Qnil) };
+    let inhibit_read_only: bool =
+        unsafe { LispObject::from_raw(globals.Vinhibit_read_only).into() };
+    let prop = LispObject::from_raw(unsafe {
+        Fget_text_property(LispObject::from(pos).to_raw(), Qinhibit_read_only, Qnil)
+    });
 
     if ThreadState::current_buffer().is_read_only() && !inhibit_read_only && prop.is_nil() {
         xsignal!(Qbuffer_read_only, current_buffer())
