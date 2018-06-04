@@ -164,8 +164,8 @@ more Emacs-y.
 
     On macOS, you'll need libxml2 (via `xcode-select --install`) and
     gnutls (via `brew install gnutls`).
-    
-    On macOS, the default `makeinfo` command in outdated, you'll need 
+
+    On macOS, the default `makeinfo` command in outdated, you'll need
     to update it (via `brew install texinfo`). To use the installed
     version of `makeinfo` instead of the built in (`/usr/bin/makeinfo`)
     one, you'll need to make sure `/usr/local/opt/texinfo/bin` is
@@ -368,7 +368,7 @@ $ make rustfmt
 
 ### Running tests
 
-Run elisp and Rust tests in toplevel directory. If run in a subdirectory, 
+Run elisp and Rust tests in toplevel directory. If run in a subdirectory,
 only run the tests in that directory.
 
 * `make check`
@@ -377,7 +377,7 @@ only run the tests in that directory.
   <filename>.log.
 
 * `make check-maybe`
-  Like "make check", but run only the tests for files that have been 
+  Like "make check", but run only the tests for files that have been
   modified since the last build.
 
 ## Design Goals
@@ -515,3 +515,4 @@ impl LispObject {
     }
 }
 ```
+Fin!
