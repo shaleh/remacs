@@ -108,7 +108,7 @@ fn get_coding_system_for_buffer(
     if LispObject::from_raw(unsafe { globals.Vcoding_system_for_write }).is_not_nil() {
         return LispObject::from_raw(unsafe { globals.Vcoding_system_for_write });
     }
-    if (buffer.buffer_file_coding_system.is_nil() || unsafe {
+    if (buffer.buffer_file_coding_system_.is_nil() || unsafe {
         Flocal_variable_p(
             Qbuffer_file_coding_system,
             LispObject::constant_nil().to_raw(),
@@ -130,10 +130,10 @@ fn get_coding_system_for_buffer(
             return val.as_cons_or_error().cdr();
         }
     }
-    if buffer.buffer_file_coding_system.is_not_nil() {
+    if buffer.buffer_file_coding_system_.is_not_nil() {
         /* If we still have not decided a coding system, use the
            default value of buffer-file-coding-system. */
-        return buffer.buffer_file_coding_system;
+        return buffer.buffer_file_coding_system_;
     }
     let sscsf = LispObject::from_raw(unsafe { globals.Vselect_safe_coding_system_function });
     if fboundp(sscsf.as_symbol_or_error()) {

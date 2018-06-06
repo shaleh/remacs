@@ -450,9 +450,7 @@ enum Lisp_Misc_Type
     Lisp_Misc_Overlay,
     Lisp_Misc_Save_Value,
     Lisp_Misc_Finalizer,
-#ifdef HAVE_MODULES
     Lisp_Misc_User_Ptr,
-#endif
     /* This is not a type code.  It is for range checking.  */
     Lisp_Misc_Limit
   };
@@ -1818,7 +1816,7 @@ struct Lisp_Subr
     const char *symbol_name;
     const char *intspec;
     EMACS_INT doc;
-    int lang;
+    enum Lisp_Subr_Lang lang;
   };
 
 INLINE bool
@@ -4788,39 +4786,11 @@ maybe_gc (void)
     Fgarbage_collect ();
 }
 
-INLINE bool
-functionp (Lisp_Object object)
-{
-  if (SYMBOLP (object) && !NILP (Ffboundp (object)))
-    {
-      object = Findirect_function (object, Qt);
-
-      if (CONSP (object) && EQ (XCAR (object), Qautoload))
-	{
-	  /* Autoloaded symbols are functions, except if they load
-	     macros or keymaps.  */
-	  int i;
-	  for (i = 0; i < 4 && CONSP (object); i++)
-	    object = XCDR (object);
-
-	  return ! (CONSP (object) && !NILP (XCAR (object)));
-	}
-    }
-
-  if (SUBRP (object))
-    return XSUBR (object)->max_args != UNEVALLED;
-  else if (COMPILEDP (object))
-    return true;
-  else if (CONSP (object))
-    {
-      Lisp_Object car = XCAR (object);
-      return EQ (car, Qlambda) || EQ (car, Qclosure);
-    }
-  else
-    return false;
-}
-
-Lisp_Object Fsetcar(Lisp_Object, Lisp_Object);
+// Used by Rust to interact with bitfield properties.
+bool symbol_is_interned(struct Lisp_Symbol *symbol);
+bool symbol_is_alias(struct Lisp_Symbol *symbol);
+bool symbol_is_constant(struct Lisp_Symbol *symbol);
+uint16_t misc_get_ty(struct Lisp_Misc_Any *any);
 
 INLINE_HEADER_END
 

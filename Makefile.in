@@ -972,6 +972,7 @@ have-tests:
 .PHONY: check check-maybe check-expensive check-all
 check check-maybe check-expensive check-all: have-tests all
 	$(MAKE) -C test $@
+	$(MAKE) -C src $@
 
 dist:
 	cd ${srcdir}; ./make-dist
