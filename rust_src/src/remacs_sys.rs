@@ -108,6 +108,8 @@ extern "C" {
         sexpflag: bool,
     ) -> LispObject;
     pub fn is_minibuffer(w: *const Lisp_Window) -> bool;
+    pub static minibuf_prompt: LispObject;
+    pub fn add_process_read_fd(fd: libc::c_int);
 }
 
 // Largest and smallest numbers that can be represented as fixnums in
