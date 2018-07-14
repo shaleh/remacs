@@ -374,13 +374,13 @@ pub fn propertize(args: &[LispObject]) -> LispObject {
     }
 
     unsafe {
-        LispObject::from(Finsert_char(
-            byte.to_raw(),
-            count.to_raw(),
-            inherit.to_raw(),
-        ))
-    }
-}
+        Fadd_text_properties(
+            LispObject::from(0).to_raw(),
+            LispObject::from(orig_string.len_chars()).to_raw(),
+            properties,
+            copy.to_raw(),
+        );
+    };
 
     copy
 }
