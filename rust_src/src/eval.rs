@@ -37,7 +37,7 @@ pub fn or(args: LispObject) -> LispObject {
     let mut val = Qnil;
 
     for elt in args.iter_cars_safe() {
-        val = unsafe { eval_sub(elt.to_raw()) };
+        val = unsafe { eval_sub(elt) };
         if val != Qnil {
             break;
         }
@@ -55,7 +55,7 @@ pub fn and(args: LispObject) -> LispObject {
     let mut val = Qt;
 
     for elt in args.iter_cars_safe() {
-        val = unsafe { eval_sub(elt.to_raw()) };
+        val = unsafe { eval_sub(elt) };
         if val == Qnil {
             break;
         }
@@ -72,10 +72,10 @@ pub fn and(args: LispObject) -> LispObject {
 #[lisp_fn(name = "if", c_name = "if", min = "2", unevalled = "true")]
 pub fn lisp_if(args: LispObject) -> LispObject {
     let cell = args.as_cons_or_error();
-    let cond = unsafe { eval_sub(cell.car().to_raw()) };
+    let cond = unsafe { eval_sub(cell.car()) };
 
     if cond != Qnil {
-        unsafe { eval_sub(cell.cdr().as_cons_or_error().car().to_raw()) }
+        unsafe { eval_sub(cell.cdr().as_cons_or_error().car()) }
     } else {
         progn(cell.cdr().as_cons_or_error().cdr())
     }
@@ -96,11 +96,11 @@ pub fn cond(args: LispObject) -> LispObject {
 
     for clause in args.iter_cars_safe() {
         let cell = clause.as_cons_or_error();
-        val = unsafe { eval_sub(cell.car().to_raw()) };
+        val = unsafe { eval_sub(cell.car()) };
         if val != Qnil {
             let tail = cell.cdr();
             if tail.is_not_nil() {
-                val = progn(tail).to_raw();
+                val = progn(tail);
             }
             break;
         }
@@ -114,7 +114,7 @@ pub fn cond(args: LispObject) -> LispObject {
 #[lisp_fn(min = "0", unevalled = "true")]
 pub fn progn(body: LispObject) -> LispObject {
     body.iter_cars_safe()
-        .map(|form| unsafe { eval_sub(form.to_raw()) })
+        .map(|form| unsafe { eval_sub(form) })
         .last()
         .into()
 }
@@ -133,7 +133,7 @@ pub extern "C" fn prog_ignore(body: LispObject) {
 pub fn prog1(args: LispObject) -> LispObject {
     let (first, body) = args.as_cons_or_error().as_tuple();
 
-    let val = unsafe { eval_sub(first.to_raw()) };
+    let val = unsafe { eval_sub(first) };
     progn(body);
     val
 }
@@ -146,7 +146,7 @@ pub fn prog1(args: LispObject) -> LispObject {
 pub fn prog2(args: LispObject) -> LispObject {
     let (form1, tail) = args.as_cons_or_error().as_tuple();
 
-    unsafe { eval_sub(form1.to_raw()) };
+    unsafe { eval_sub(form1) };
     prog1(tail)
 }
 
@@ -172,7 +172,7 @@ pub fn setq(args: LispObject) -> LispObject {
             );
         });
 
-        val = unsafe { eval_sub(arg.to_raw()) };
+        val = unsafe { eval_sub(arg) };
 
         let mut lexical = false;
 
@@ -191,7 +191,7 @@ pub fn setq(args: LispObject) -> LispObject {
         }
 
         if !lexical {
-            unsafe { Fset(sym.to_raw(), val.to_raw()) }; /* SYM is dynamically bound. */
+            unsafe { Fset(sym, val) }; /* SYM is dynamically bound. */
         }
     }
 
@@ -228,22 +228,17 @@ pub fn function(args: LispObject) -> LispObject {
                         // Handle the special (:documentation <form>) to build the docstring
                         // dynamically.
 
-                        let docstring = unsafe { eval_sub(car(tail).to_raw()) };
+                        let docstring = unsafe { eval_sub(car(tail)) };
                         docstring.as_string_or_error();
                         let (a, b) = cdr.as_cons().unwrap().as_tuple();
-                        cdr = unsafe {
-                            Fcons(
-                                a.to_raw(),
-                                Fcons(docstring.to_raw(), b.as_cons().unwrap().cdr().to_raw()),
-                            )
-                        };
+                        cdr = unsafe { Fcons(a, Fcons(docstring, b.as_cons().unwrap().cdr())) };
                     }
                 }
 
                 return unsafe {
                     Fcons(
                         Qclosure,
-                        Fcons(globals.Vinternal_interpreter_environment, cdr.to_raw()),
+                        Fcons(globals.Vinternal_interpreter_environment, cdr),
                     )
                 };
             }
@@ -300,23 +295,23 @@ pub fn defconst(args: LispObject) -> LispSymbolRef {
         LispObject::constant_nil()
     };
 
-    let mut tem = unsafe { eval_sub(car(cdr(args)).to_raw()) };
+    let mut tem = unsafe { eval_sub(car(cdr(args))) };
     if unsafe { globals.Vpurify_flag } != Qnil {
         tem = unsafe { Fpurecopy(tem) };
     }
-    unsafe { Fset_default(sym.to_raw(), tem) };
+    unsafe { Fset_default(sym, tem) };
     let sym_ref = sym.as_symbol_or_error();
     sym_ref.set_declared_special(true);
     if docstring.is_not_nil() {
         if unsafe { globals.Vpurify_flag } != Qnil {
-            docstring = LispObject::from_raw(unsafe { Fpurecopy(docstring.to_raw()) });
+            docstring = unsafe { Fpurecopy(docstring) };
         }
 
         put(sym, Qvariable_documentation, docstring);
     }
 
     put(sym, Qrisky_local_variable, LispObject::constant_t());
-    loadhist_attach(sym.to_raw());
+    loadhist_attach(sym);
 
     sym_ref
 }
@@ -339,7 +334,7 @@ fn let_binding_value(obj: LispObject) -> (LispObject, LispObject) {
         };
 
         if tail.is_nil() {
-            (front, unsafe { eval_sub(to_eval.to_raw()) })
+            (front, unsafe { eval_sub(to_eval) })
         } else {
             signal_error("`let' bindings can have only one value-form", obj);
         }
@@ -378,10 +373,8 @@ pub fn letX(args: LispCons) -> LispObject {
                         // Lexically bind VAR by adding it to the interpreter's binding alist.
 
                         unsafe {
-                            let newenv = Fcons(
-                                Fcons(var.to_raw(), val),
-                                globals.Vinternal_interpreter_environment,
-                            );
+                            let newenv =
+                                Fcons(Fcons(var, val), globals.Vinternal_interpreter_environment);
 
                             if globals.Vinternal_interpreter_environment == lexenv {
                                 // Save the old lexical environment on the specpdl stack,
@@ -401,12 +394,12 @@ pub fn letX(args: LispCons) -> LispObject {
 
         // handles both lexenv is nil and the question of already lexically bound
         if needs_bind {
-            unsafe { specbind(var.to_raw(), val) };
+            unsafe { specbind(var, val) };
         }
     }
 
     // The symbols are bound. Now evaluate the body
-    let val = Fprogn(body.to_raw());
+    let val = Fprogn(body);
     unsafe { unbind_to(count, val) }
 }
 
@@ -438,7 +431,7 @@ pub fn lisp_let(args: LispCons) -> LispObject {
 
                     if !bound {
                         // Lexically bind VAR by adding it to the lexenv alist.
-                        lexenv = unsafe { Fcons(Fcons(var.to_raw(), val), lexenv) };
+                        lexenv = unsafe { Fcons(Fcons(var, val), lexenv) };
                         dyn_bind = false;
                     }
                 }
@@ -448,7 +441,7 @@ pub fn lisp_let(args: LispCons) -> LispObject {
         // handles both lexenv is nil and the question of already lexically bound
         if dyn_bind {
             // Dynamically bind VAR.
-            unsafe { specbind(var.to_raw(), val) };
+            unsafe { specbind(var, val) };
         }
     }
 
@@ -460,7 +453,7 @@ pub fn lisp_let(args: LispCons) -> LispObject {
     }
 
     // The symbols are bound. Now evaluate the body
-    let val = Fprogn(body.to_raw());
+    let val = Fprogn(body);
     unsafe { unbind_to(count, val) }
 }
 
@@ -472,7 +465,7 @@ pub fn lisp_let(args: LispCons) -> LispObject {
 pub fn lisp_while(args: LispCons) -> LispObject {
     let (test, body) = args.as_tuple();
 
-    while unsafe { eval_sub(test.to_raw()) } != Qnil {
+    while unsafe { eval_sub(test) } != Qnil {
         unsafe { maybe_quit() };
 
         progn(body);
@@ -538,7 +531,7 @@ pub fn macroexpand(mut form: LispObject, environment: LispObject) -> LispObject 
             next
         };
 
-        let newform = apply1(expander.to_raw(), body.to_raw());
+        let newform = apply1(expander, body);
         if form.eq_raw(newform) {
             break;
         } else {
@@ -563,10 +556,10 @@ pub fn eval(form: LispObject, lexical: LispObject) -> LispObject {
     };
 
     unsafe {
-        specbind(Qinternal_interpreter_environment, value.to_raw());
+        specbind(Qinternal_interpreter_environment, value);
     }
 
-    unsafe { unbind_to(count, eval_sub(form.to_raw())) }
+    unsafe { unbind_to(count, eval_sub(form)) }
 }
 
 /// Apply fn to arg.
@@ -575,7 +568,7 @@ pub extern "C" fn apply1(mut func: LispObject, arg: LispObject) -> LispObject {
     if arg == Qnil {
         unsafe { Ffuncall(1, &mut func) }
     } else {
-        callN_raw!(Fapply, func, arg).to_raw()
+        callN_raw!(Fapply, func, arg)
     }
 }
 
@@ -588,10 +581,7 @@ fn signal_error(msg: &str, arg: LispObject) -> ! {
         Some(_) => arg,
     };
 
-    xsignal!(
-        Qerror,
-        Fcons(build_string(msg.as_ptr() as *const i8), arg.to_raw())
-    );
+    xsignal!(Qerror, Fcons(build_string(msg.as_ptr() as *const i8), arg));
 }
 
 /// Non-nil if FUNCTION makes provisions for interactive calling.
@@ -708,7 +698,7 @@ def_lisp_sym!(Qautoload, "autoload");
 /// Non-nil if OBJECT is a function.
 #[lisp_fn(name = "functionp", c_name = "functionp")]
 pub fn functionp_lisp(object: LispObject) -> bool {
-    FUNCTIONP(object.to_raw())
+    FUNCTIONP(object)
 }
 
 #[no_mangle]
@@ -761,9 +751,9 @@ pub unsafe extern "C" fn un_autoload(oldqueue: LispObject) {
         let (first, second) = first.as_cons_or_error().as_tuple();
 
         if first.eq(LispObject::from(0)) {
-            globals.Vfeatures = second.to_raw();
+            globals.Vfeatures = second;
         } else {
-            Ffset(first.to_raw(), second.to_raw());
+            Ffset(first, second);
         }
     }
 }
@@ -824,13 +814,7 @@ pub fn autoload_do_load(
         Vautoload_queue = Qt;
         // If `macro_only', assume this autoload to be a "best-effort",
         // so don't signal an error if autoloading fails.
-        Fload(
-            Fcar(Fcdr(fundef.to_raw())),
-            macro_only.to_raw(),
-            Qt,
-            Qnil,
-            Qt,
-        );
+        Fload(Fcar(Fcdr(fundef)), macro_only, Qt, Qnil, Qt);
 
         // Once loading finishes, don't undo it.
         Vautoload_queue = Qt;
@@ -872,7 +856,7 @@ pub fn autoload_do_load(
 #[lisp_fn]
 pub fn run_hooks(args: &[LispObject]) -> () {
     for item in args {
-        run_hook(item.to_raw());
+        run_hook(*item);
     }
 }
 
@@ -891,7 +875,7 @@ pub fn run_hook_with_args(args: &mut [LispObject]) -> LispObject {
 }
 
 fn funcall_nil(args: &[LispObject]) -> LispObject {
-    let mut obj_array: Vec<LispObject> = args.iter().map(|o| o.to_raw()).collect();
+    let mut obj_array: Vec<LispObject> = args.iter().map(|o| *o).collect();
     unsafe { Ffuncall(obj_array.len() as isize, obj_array.as_mut_ptr()) };
     LispObject::constant_nil()
 }
@@ -918,7 +902,7 @@ fn run_hook_with_args_internal(
 
     let mut ret = LispObject::constant_nil();
     let sym = args[0];
-    let val = unsafe { find_symbol_value(sym.to_raw()) };
+    let val = unsafe { find_symbol_value(sym) };
 
     if val.eq_raw(Qunbound) || val.is_nil() {
         LispObject::constant_nil()
@@ -934,7 +918,7 @@ fn run_hook_with_args_internal(
             if item.eq_raw(Qt) {
                 // t indicates this hook has a local binding;
                 // it means to run the global binding too.
-                let global_vals = unsafe { Fdefault_value(sym.to_raw()) };
+                let global_vals = unsafe { Fdefault_value(sym) };
                 if global_vals.is_nil() {
                     continue;
                 }

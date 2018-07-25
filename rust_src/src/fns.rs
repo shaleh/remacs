@@ -49,7 +49,7 @@ pub fn provide(feature: LispSymbolRef, subfeature: LispObject) -> LispObject {
     unsafe {
         if Vautoload_queue.is_not_nil() {
             Vautoload_queue = Fcons(
-                Fcons(LispObject::from(0).to_raw(), globals.Vfeatures),
+                Fcons(LispObject::from(0), globals.Vfeatures),
                 Vautoload_queue,
             );
         }
@@ -60,7 +60,7 @@ pub fn provide(feature: LispSymbolRef, subfeature: LispObject) -> LispObject {
     ).is_nil()
     {
         unsafe {
-            globals.Vfeatures = Fcons(feature.as_lisp_obj().to_raw(), globals.Vfeatures);
+            globals.Vfeatures = Fcons(feature.as_lisp_obj(), globals.Vfeatures);
         }
     }
     if subfeature.is_not_nil() {
@@ -68,18 +68,14 @@ pub fn provide(feature: LispSymbolRef, subfeature: LispObject) -> LispObject {
     }
     unsafe {
         globals.Vcurrent_load_list = Fcons(
-            Fcons(Qprovide, feature.as_lisp_obj().to_raw()),
+            Fcons(Qprovide, feature.as_lisp_obj()),
             globals.Vcurrent_load_list,
         );
     }
     // Run any load-hooks for this file.
     unsafe {
-        if let Some(c) = assq(
-            feature.as_lisp_obj(),
-            LispObject::from_raw(globals.Vafter_load_alist),
-        ).as_cons()
-        {
-            Fmapc(Qfuncall, c.cdr().to_raw());
+        if let Some(c) = assq(feature.as_lisp_obj(), globals.Vafter_load_alist).as_cons() {
+            Fmapc(Qfuncall, c.cdr());
         }
     }
     feature.as_lisp_obj()
@@ -149,7 +145,7 @@ pub fn require(feature: LispObject, filename: LispObject, noerror: LispObject) -
     if from_file {
         let tem = LispObject::cons(Qrequire, feature);
         if member(tem, current_load_list).is_nil() {
-            loadhist_attach(tem.to_raw());
+            loadhist_attach(tem);
         }
     }
 
@@ -186,7 +182,7 @@ pub fn require(feature: LispObject, filename: LispObject, noerror: LispObject) -
     unsafe {
         // Update the list for any nested `require's that occur.
         record_unwind_protect(Some(require_unwind), require_nesting_list);
-        require_nesting_list = Fcons(feature.to_raw(), require_nesting_list);
+        require_nesting_list = Fcons(feature, require_nesting_list);
 
         // Value saved here is to be restored into Vautoload_queue
         record_unwind_protect(Some(un_autoload), Vautoload_queue);
@@ -195,11 +191,11 @@ pub fn require(feature: LispObject, filename: LispObject, noerror: LispObject) -
         // Load the file.
         let tem = Fload(
             if filename.is_nil() {
-                feature_sym.symbol_name().to_raw()
+                feature_sym.symbol_name()
             } else {
-                filename.to_raw()
+                filename
             },
-            noerror.to_raw(),
+            noerror,
             Qt,
             Qnil,
             if filename.is_nil() { Qt } else { Qnil },
@@ -235,7 +231,7 @@ pub fn require(feature: LispObject, filename: LispObject, noerror: LispObject) -
         Vautoload_queue = Qt;
     }
 
-    unsafe { unbind_to(count, feature.to_raw()) }
+    unsafe { unbind_to(count, feature) }
 }
 def_lisp_sym!(Qrequire, "require");
 
