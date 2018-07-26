@@ -135,6 +135,11 @@ impl LispBufferRef {
     }
 
     #[inline]
+    pub fn gap_start_addr(self) -> *mut c_uchar {
+        unsafe { (*self.text).beg.offset((*self.text).gpt_byte - BEG_BYTE) }
+    }
+
+    #[inline]
     pub fn gap_end_addr(self) -> *mut c_uchar {
         unsafe {
             (*self.text)
@@ -239,6 +244,11 @@ impl LispBufferRef {
     #[inline]
     pub fn is_live(self) -> bool {
         self.name_.is_not_nil()
+    }
+
+    #[inline]
+    pub fn byte_pos_addr(self, n: ptrdiff_t) -> *mut c_uchar {
+        unsafe { (*self.text).beg.offset(n - BEG_BYTE) }
     }
 
     #[inline]
