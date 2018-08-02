@@ -61,7 +61,8 @@ Lisp_Object filemode_string(Lisp_Object);
 #endif
 
 #ifdef WINDOWSNT
-Lisp_Object directory_files_c(Lisp_Object, Lisp_Object, Lisp_Object);
+Lisp_Object directory_files_c(Lisp_Object, Lisp_Object, Lisp_Object,
+			      Lisp_Object);
 Lisp_Object directory_files_and_attributes_c(Lisp_Object, Lisp_Object,
 					     Lisp_Object, Lisp_Object,
 					     Lisp_Object);
@@ -354,8 +355,7 @@ directory_files_internal (Lisp_Object directory, Lisp_Object full,
 #ifdef WINDOWSNT
 Lisp_Object
 directory_files_c(Lisp_Object directory, Lisp_Object full,
-		  Lisp_Object match,
-		  Lisp_Object nosort)
+		  Lisp_Object match, Lisp_Object nosort)
 {
   Lisp_Object handler;
   directory = Fexpand_file_name (directory, Qnil);
