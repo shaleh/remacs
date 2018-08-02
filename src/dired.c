@@ -61,6 +61,10 @@ Lisp_Object filemode_string(Lisp_Object);
 #endif
 
 #ifdef WINDOWSNT
+Lisp_Object directory_files_c(Lisp_Object, Lisp_Object, Lisp_Object);
+Lisp_Object directory_files_and_attributes_c(Lisp_Object, Lisp_Object,
+					     Lisp_Object, Lisp_Object,
+					     Lisp_Object);
 Lisp_Object file_attributes_c(Lisp_Object, Lisp_Object);
 #endif
 
@@ -174,6 +178,7 @@ read_dirent (DIR *dir, Lisp_Object dirname)
    if ATTRS, return a list of directory filenames and their attributes.
    In the latter case, pass ID_FORMAT to file_attributes.  */
 
+#ifdef WINDOWSNT
 Lisp_Object
 directory_files_internal (Lisp_Object directory, Lisp_Object full,
 			  Lisp_Object match, Lisp_Object nosort, bool attrs,
@@ -344,18 +349,13 @@ directory_files_internal (Lisp_Object directory, Lisp_Object full,
   (void) directory_volatile;
   return list;
 }
+#endif /* WINDOWSNT*/
 
-
-DEFUN ("directory-files", Fdirectory_files, Sdirectory_files, 1, 4, 0,
-       doc: /* Return a list of names of files in DIRECTORY.
-There are three optional arguments:
-If FULL is non-nil, return absolute file names.  Otherwise return names
- that are relative to the specified directory.
-If MATCH is non-nil, mention only file names that match the regexp MATCH.
-If NOSORT is non-nil, the list is not sorted--its order is unpredictable.
- Otherwise, the list returned is sorted with `string-lessp'.
- NOSORT is useful if you plan to sort the result yourself.  */)
-  (Lisp_Object directory, Lisp_Object full, Lisp_Object match, Lisp_Object nosort)
+#ifdef WINDOWSNT
+Lisp_Object
+directory_files_c(Lisp_Object directory, Lisp_Object full,
+		  Lisp_Object match,
+		  Lisp_Object nosort)
 {
   Lisp_Object handler;
   directory = Fexpand_file_name (directory, Qnil);
@@ -369,28 +369,13 @@ If NOSORT is non-nil, the list is not sorted--its order is unpredictable.
 
   return directory_files_internal (directory, full, match, nosort, false, Qnil);
 }
+#endif
 
-DEFUN ("directory-files-and-attributes", Fdirectory_files_and_attributes,
-       Sdirectory_files_and_attributes, 1, 5, 0,
-       doc: /* Return a list of names of files and their attributes in DIRECTORY.
-Value is a list of the form:
-
-  ((FILE1 FILE1-ATTRS) (FILE2 FILE2-ATTRS) ...)
-
-where each FILEn-ATTRS is the attributes of FILEn as returned
-by `file-attributes'.
-
-This function accepts four optional arguments:
-If FULL is non-nil, return absolute file names.  Otherwise return names
- that are relative to the specified directory.
-If MATCH is non-nil, mention only file names that match the regexp MATCH.
-If NOSORT is non-nil, the list is not sorted--its order is unpredictable.
- NOSORT is useful if you plan to sort the result yourself.
-ID-FORMAT specifies the preferred format of attributes uid and gid, see
-`file-attributes' for further documentation.
-On MS-Windows, performance depends on `w32-get-true-file-attributes',
-which see.  */)
-  (Lisp_Object directory, Lisp_Object full, Lisp_Object match, Lisp_Object nosort, Lisp_Object id_format)
+#ifdef WINDOWSNT
+Lisp_Object
+directory_files_and_attributes_c(Lisp_Object directory, Lisp_Object full,
+				 Lisp_Object match, Lisp_Object nosort,
+				 Lisp_Object id_format)
 {
   Lisp_Object handler;
   directory = Fexpand_file_name (directory, Qnil);
@@ -405,6 +390,8 @@ which see.  */)
   return directory_files_internal (directory, full, match, nosort,
 				   true, id_format);
 }
+#endif
+
 
 
 static Lisp_Object file_name_completion (Lisp_Object, Lisp_Object, bool,
@@ -1098,8 +1085,6 @@ syms_of_dired (void)
   DEFSYM (Qdefault_directory, "default-directory");
   DEFSYM (Qdecomposed_characters, "decomposed-characters");
 
-  defsubr (&Sdirectory_files);
-  defsubr (&Sdirectory_files_and_attributes);
   defsubr (&Sfile_name_completion);
   defsubr (&Sfile_name_all_completions);
   defsubr (&Ssystem_groups);
