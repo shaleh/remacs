@@ -144,6 +144,7 @@ unsafe impl Sync for Lisp_Subr {}
 pub type Lisp_Buffer = buffer;
 pub type Lisp_Window = window;
 pub type Lisp_Frame = frame;
+pub type Lisp_Terminal = terminal;
 
 #[repr(C)]
 pub struct Lisp_Vectorlike {

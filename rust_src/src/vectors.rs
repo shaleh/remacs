@@ -21,6 +21,7 @@ use lisp::{ExternalPtr, LispObject, LispSubrRef};
 use lists::{inorder, nth, sort_list};
 use multibyte::MAX_CHAR;
 use process::LispProcessRef;
+use terminal::LispTerminalRef;
 use threads::ThreadStateRef;
 use windows::LispWindowRef;
 
@@ -110,6 +111,15 @@ impl LispVectorlikeRef {
     #[inline]
     pub fn as_frame(&self) -> Option<LispFrameRef> {
         if self.is_pseudovector(pvec_type::PVEC_FRAME) {
+            Some(unsafe { mem::transmute(*self) })
+        } else {
+            None
+        }
+    }
+
+    #[inline]
+    pub fn as_terminal(&self) -> Option<LispTerminalRef> {
+        if self.is_pseudovector(pvec_type::PVEC_TERMINAL) {
             Some(unsafe { mem::transmute(*self) })
         } else {
             None

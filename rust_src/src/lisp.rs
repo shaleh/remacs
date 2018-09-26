@@ -36,6 +36,7 @@ use multibyte::{Codepoint, LispStringRef, MAX_CHAR};
 use obarray::{check_obarray, LispObarrayRef};
 use process::LispProcessRef;
 use symbols::LispSymbolRef;
+use terminal::LispTerminalRef;
 use threads::ThreadStateRef;
 use vectors::{LispBoolVecRef, LispVectorRef, LispVectorlikeRef};
 use windows::LispWindowRef;
@@ -898,6 +899,15 @@ impl LispObject {
     pub fn as_live_frame_or_error(self) -> LispFrameRef {
         self.as_live_frame()
             .unwrap_or_else(|| wrong_type!(Qframe_live_p, self))
+    }
+
+    pub fn is_terminal(self) -> bool {
+        self.as_vectorlike()
+            .map_or(false, |v| v.is_pseudovector(pvec_type::PVEC_TERMINAL))
+    }
+
+    pub fn as_terminal(self) -> Option<LispTerminalRef> {
+        self.as_vectorlike().and_then(|v| v.as_terminal())
     }
 
     pub fn is_hash_table(self) -> bool {
