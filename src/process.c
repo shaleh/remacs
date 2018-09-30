@@ -7671,8 +7671,3 @@ The variable takes effect when `start-process' is called.  */);
   defsubr (&Sprocess_attributes);
 }
 
-bool
-pget_raw_status_new(const struct Lisp_Process *p)
-{
-  return p->raw_status_new;
-}

@@ -304,12 +304,6 @@ INLINE_HEADER_END
 
 #endif /* EMACS_PROCESS_H */
 
-bool
-pget_raw_status_new(const struct Lisp_Process *p);
-
-int
-pget_infd(const struct Lisp_Process *p);
-
 Lisp_Object
 get_process (register Lisp_Object name);
 
