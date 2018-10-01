@@ -45,10 +45,6 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 #include "blockinput.h"
 #include "syssignal.h"
 
-#ifdef USE_X_TOOLKIT
-#include "../lwlib/lwlib.h"
-#endif
-
 #include "cm.h"
 #include "menu.h"
 
