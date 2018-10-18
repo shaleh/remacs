@@ -332,6 +332,8 @@ fn _secure_hash(
     noerror: LispObject,
     binary: LispObject,
 ) -> LispObject {
+    type HashFn = fn(&[u8], &mut [u8]);
+
     let spec = list!(object, start, end, coding_system, noerror);
     let mut start_byte: ptrdiff_t = 0;
     let mut end_byte: ptrdiff_t = 0;
@@ -341,7 +343,23 @@ fn _secure_hash(
         error!("secure_hash: failed to extract data from object, aborting!");
     }
 
-    let buffer_size = if hex {
+    let input_slice = unsafe {
+        slice::from_raw_parts(
+            input.offset(start_byte) as *mut u8,
+            (end_byte - start_byte) as usize,
+        )
+    };
+
+    let (digest_size, hash_func) = match algorithm {
+        HashAlg::MD5 => (MD5_DIGEST_LEN, md5_buffer as HashFn),
+        HashAlg::SHA1 => (SHA1_DIGEST_LEN, sha1_buffer as HashFn),
+        HashAlg::SHA224 => (SHA224_DIGEST_LEN, sha224_buffer as HashFn),
+        HashAlg::SHA256 => (SHA256_DIGEST_LEN, sha256_buffer as HashFn),
+        HashAlg::SHA384 => (SHA384_DIGEST_LEN, sha384_buffer as HashFn),
+        HashAlg::SHA512 => (SHA512_DIGEST_LEN, sha512_buffer as HashFn),
+    };
+
+    let buffer_size = if binary.is_nil() {
         (digest_size * 2) as EmacsInt
     } else {
         digest_size as EmacsInt
