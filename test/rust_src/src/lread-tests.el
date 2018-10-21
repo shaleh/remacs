@@ -170,12 +170,15 @@ literals (Bug#20852)."
     (lread--substitute-object-in-subtree x 1 t)
     (should (eq x (cdr x)))))
 
-(ert-deftest lread-test-bug-31186 ()
-  (with-temp-buffer
-    (insert ";; -*- -:*-")
-    (should-not
-     ;; This used to crash in lisp_file_lexically_bound_p before the
-     ;; bug was fixed.
-     (eval-buffer))))
+(ert-deftest lread-test-eval-region ()
+  (let ((buf (get-buffer-create "test-eval-region"))
+        (string "(defun test-eval-region-func () nil)
+                 (defvar test-eval-region-var)
+                 (setq test-eval-region-var 1)"))
+    (with-current-buffer buf
+      (insert string)
+      (eval-region (point-min) (point-max))
+      (should (functionp 'test-eval-region-func))
+      (should (boundp 'test-eval-region-var)))))
 
 ;;; lread-tests.el ends here
