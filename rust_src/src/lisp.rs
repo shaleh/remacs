@@ -39,7 +39,7 @@ use process::LispProcessRef;
 use symbols::LispSymbolRef;
 use threads::ThreadStateRef;
 use vectors::{LispBoolVecRef, LispVectorRef, LispVectorlikeRef};
-use windows::LispWindowRef;
+use windows::{LispWindowRef, SaveWindowDataRef};
 
 // TODO: tweak Makefile to rebuild C files if this changes.
 
@@ -846,6 +846,12 @@ impl LispObject {
         self.as_window()
             .unwrap_or_else(|| wrong_type!(Qwindowp, self))
     }
+
+    pub fn as_save_window_data(self) -> Option<SaveWindowDataRef> {
+        self.as_vectorlike()
+    }
+
+    pub fn as_save_window_data_or_error(self) -> SaveWindowDataRef {}
 
     pub fn as_minibuffer_or_error(self) -> LispWindowRef {
         let w = self

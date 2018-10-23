@@ -12,7 +12,7 @@ use remacs_sys::{estimate_mode_line_height, minibuf_level,
                  selected_window as current_window, set_buffer_internal, set_window_hscroll,
                  window_body_width, window_list_1, window_menu_bar_p, window_parameter,
                  window_tool_bar_p, wset_display_table, wset_redisplay, wset_update_mode_line};
-use remacs_sys::{face_id, glyph_matrix, EmacsInt, Lisp_Type, Lisp_Window};
+use remacs_sys::{face_id, glyph_matrix, save_window_data, EmacsInt, Lisp_Type, Lisp_Window};
 use remacs_sys::{Qceiling, Qfloor, Qheader_line_format, Qmode_line_format, Qnil, Qnone};
 
 use editfns::{goto_char, point};
@@ -25,6 +25,7 @@ use marker::{marker_position_lisp, set_marker_restricted};
 use threads::ThreadState;
 
 pub type LispWindowRef = ExternalPtr<Lisp_Window>;
+pub type SaveWindowDataRef = ExternalPtr<save_window_data>;
 
 impl LispWindowRef {
     pub fn as_lisp_obj(self) -> LispObject {
@@ -951,6 +952,98 @@ pub fn scroll_up(arg: LispObject) -> LispObject {
 pub fn scroll_down(arg: LispObject) -> LispObject {
     unsafe { scroll_command(arg, -1) };
     Qnil
+}
+
+#[no_mangle]
+pub extern "C" fn compare_window_configurations(
+    configuration1: LispObject,
+    configuration2: LispObject,
+    ignore_positions: bool,
+) -> bool {
+    compare_window_configurations_rust(
+        configuration1.as_save_window_data_or_error(),
+        configuration2.as_save_window_data_or_error(),
+        ignore_position,
+    )
+}
+
+// Return true if window configurations CONFIGURATION1 and CONFIGURATION2
+// describe the same state of affairs. This is used by Fequal.
+//
+// IGNORE_POSITIONS means ignore non-matching scroll positions
+// and the like.
+//
+// This ignores a couple of things like the dedication status of
+// window, combination_limit and the like. This might have to be
+// fixed.
+fn compare_window_configurations_rust(
+    configuration1: SaveWindowDataRef,
+    configuration1: SaveWindowDataRef,
+    ignore_positions: bool,
+) -> bool {
+    let sws1 = configuration1.saved_windows.as_vector_or_error();
+    let sws2 = configuration2.saved_windows.as_vector_or_error();
+
+    // Frame settings must match.
+    let frame_settings_match = configuration1.frame_cols == configuration2.frame_cols
+        && configuration1.frame_lines == configuration2.frame_lines
+        && configuration1.frame_menu_bar_lines == configuration2.frame_menu_bar_lines
+        && configuration1.selected_frame == configuration2.selected_frame
+        && configuration1.f_current_buffer == configuration2.f_current_buffer
+        && (ignore_positions
+	    || (configuration1.minibuf_scroll_window == configuration2.minibuf_scroll_window
+	        && configuration1.minibuf_selected_window == configuration2.minibuf_selected_window))
+        && configuration1.focus_frame == configuration2.focus_frame
+        // Verify that the two configurations have the same number of windows.
+        && sws1.len() == sws2.len();
+    if !frame_settings_match {
+        return false;
+    }
+
+    // The "current" windows in the two configurations must correspond to each other.
+    sws1.iter().zip(sws2.iter()).all(|sw1, sw2| {
+	(configuration1.current_window == sw1.window) == (configuration2.current_window == sw2.window)
+	// Windows' buffers must match.
+	&& sw1.buffer == sw2.buffer
+	&& sw1.pixel_left == sw2.pixel_left
+	&& sw1.pixel_top == sw2.pixel_top
+	&& sw1.pixel_height == sw2.pixel_height
+	&& sw1.pixel_width == sw2.pixel_width
+	&& sw1.left_col == sw2.left_col
+	&& sw1.top_line == sw2.top_line
+	&& sw1.total_cols == sw2.total_cols
+	&& sw1.total_lines == sw2.total_lines
+	&& sw1.display_table == sw2.display_table
+	// The next two check the window structure for equality.
+	&& sw1.parent == sw2.parent
+	&& sw1.prev == sw2.prev
+	&& (ignore_positions
+	    || (sw1.hscroll == sw2.hscroll
+	        && sw1.min_hscroll == sw2.min_hscroll
+	        && sw1.start_at_line_beg == sw2.start_at_line_beg
+	        && sw1.start.equal(sw2.start)
+	        && sw1.pointm.equal(sw2.pointm)))
+	&& sw1.left_margin_cols == sw2.left_margin_cols
+	&& sw1.right_margin_cols == sw2.right_margin_cols
+	&& sw1.left_fringe_width == sw2.left_fringe_width
+	&& sw1.right_fringe_width == sw2.right_fringe_width
+	&& sw1.fringes_outside_margins == sw2.fringes_outside_margins
+	&& sw1.scroll_bar_width == sw2.scroll_bar_width
+	&& sw1.scroll_bar_height == sw2.scroll_bar_height
+	&& sw1.vertical_scroll_bar_type == sw2.vertical_scroll_bar_type
+	&& sw1.horizontal_scroll_bar_type == sw2.horizontal_scroll_bar_type
+    })
+}
+
+/// Compare two window configurations as regards the structure of windows.
+/// This function ignores details such as the values of point
+/// and scrolling positions.
+#[lisp_fn(
+    name = "compare-window-configuration",
+    c_name = "compare_window_configurations"
+)]
+pub fn compare_window_configurations_lisp(x: SaveWindowDataRef, y: SaveWindowDataRef) -> bool {
+    compare_window_configurations(x, y, true)
 }
 
 include!(concat!(env!("OUT_DIR"), "/windows_exports.rs"));
