@@ -45,10 +45,6 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 #include "fontset.h"
 #endif
 #include "cm.h"
-#ifdef USE_X_TOOLKIT
-#include "widget.h"
-#endif
-
 /* The currently selected frame.  */
 
 Lisp_Object selected_frame;
@@ -1892,7 +1888,7 @@ delete_frame (Lisp_Object frame, Lisp_Object force)
   fset_buried_buffer_list (f, Qnil);
 
   free_font_driver_list (f);
-#if defined (USE_X_TOOLKIT) || defined (HAVE_NTGUI)
+#if defined (HAVE_NTGUI)
   xfree (f->namebuf);
 #endif
   xfree (f->decode_mode_spec_buffer);
@@ -1920,7 +1916,7 @@ delete_frame (Lisp_Object frame, Lisp_Object force)
     /* If needed, delete the terminal that this frame was on.
        (This must be done after the frame is killed.)  */
     terminal->reference_count--;
-#if defined (USE_X_TOOLKIT) || defined (USE_GTK)
+#if defined (USE_GTK)
     /* FIXME: Deleting the terminal crashes emacs because of a GTK
        bug.
        https://lists.gnu.org/archive/html/emacs-devel/2011-10/msg00363.html */
@@ -1930,7 +1926,7 @@ delete_frame (Lisp_Object frame, Lisp_Object force)
        don't delete the terminal for these builds either.  */
     if (terminal->reference_count == 0 && terminal->type == output_x_window)
       terminal->reference_count = 1;
-#endif /* USE_X_TOOLKIT || USE_GTK */
+#endif /* USE_GTK */
     if (terminal->reference_count == 0)
       {
 	Lisp_Object tmp;
@@ -2441,7 +2437,7 @@ for how to proceed.  */)
 	  return Qnil;
 	}
     }
-#endif /* HAVE_WINDOW_SYSTEM */
+#endif	/* HAVE_WINDOW_SYSTEM */
 
   /* Don't allow minibuf_window to remain on an iconified frame.  */
   check_minibuf_window (frame, EQ (minibuf_window, selected_window));
@@ -3135,48 +3131,6 @@ is used.  */)
     return make_number (FRAME_TOOLBAR_WIDTH (f));
 #endif
   return make_number (0);
-}
-
-DEFUN ("frame-text-cols", Fframe_text_cols, Sframe_text_cols, 0, 1, 0,
-       doc: /* Return width in columns of FRAME's text area.  */)
-  (Lisp_Object frame)
-{
-  return make_number (FRAME_COLS (decode_any_frame (frame)));
-}
-
-DEFUN ("frame-text-lines", Fframe_text_lines, Sframe_text_lines, 0, 1, 0,
-       doc: /* Return height in lines of FRAME's text area.  */)
-  (Lisp_Object frame)
-{
-  return make_number (FRAME_LINES (decode_any_frame (frame)));
-}
-
-DEFUN ("frame-total-cols", Fframe_total_cols, Sframe_total_cols, 0, 1, 0,
-       doc: /* Return number of total columns of FRAME.  */)
-  (Lisp_Object frame)
-{
-  return make_number (FRAME_TOTAL_COLS (decode_any_frame (frame)));
-}
-
-DEFUN ("frame-total-lines", Fframe_total_lines, Sframe_total_lines, 0, 1, 0,
-       doc: /* Return number of total lines of FRAME.  */)
-  (Lisp_Object frame)
-{
-  return make_number (FRAME_TOTAL_LINES (decode_any_frame (frame)));
-}
-
-DEFUN ("frame-text-width", Fframe_text_width, Sframe_text_width, 0, 1, 0,
-       doc: /* Return text area width of FRAME in pixels.  */)
-  (Lisp_Object frame)
-{
-  return make_number (FRAME_TEXT_WIDTH (decode_any_frame (frame)));
-}
-
-DEFUN ("frame-text-height", Fframe_text_height, Sframe_text_height, 0, 1, 0,
-       doc: /* Return text area height of FRAME in pixels.  */)
-  (Lisp_Object frame)
-{
-  return make_number (FRAME_TEXT_HEIGHT (decode_any_frame (frame)));
 }
 
 DEFUN ("frame-scroll-bar-width", Fscroll_bar_width, Sscroll_bar_width, 0, 1, 0,
@@ -3929,10 +3883,6 @@ x_report_frame_params (struct frame *f, Lisp_Object *alistptr)
   store_in_alist (alistptr, Qwindow_id,
 		  make_formatted_string (buf, "%"pMu, w));
 #ifdef HAVE_X_WINDOWS
-#ifdef USE_X_TOOLKIT
-  /* Tooltip frame may not have this widget.  */
-  if (FRAME_X_OUTPUT (f)->widget)
-#endif
     w = (uintptr_t) FRAME_OUTER_WINDOW (f);
   store_in_alist (alistptr, Qouter_window_id,
 		  make_formatted_string (buf, "%"pMu, w));
@@ -4700,34 +4650,6 @@ display_x_get_resource (Display_Info *dpyinfo, Lisp_Object attribute,
   return xrdb_get_resource (dpyinfo->xrdb,
 			    attribute, class, component, subclass);
 }
-
-#if defined HAVE_X_WINDOWS && !defined USE_X_TOOLKIT && !defined USE_GTK
-/* Used when C code wants a resource value.  */
-/* Called from oldXMenu/Create.c.  */
-char *
-x_get_resource_string (const char *attribute, const char *class)
-{
-  char *result;
-  struct frame *sf = SELECTED_FRAME ();
-  ptrdiff_t invocation_namelen = SBYTES (Vinvocation_name);
-  USE_SAFE_ALLOCA;
-
-  /* Allocate space for the components, the dots which separate them,
-     and the final '\0'.  */
-  ptrdiff_t name_keysize = invocation_namelen + strlen (attribute) + 2;
-  ptrdiff_t class_keysize = sizeof (EMACS_CLASS) - 1 + strlen (class) + 2;
-  char *name_key = SAFE_ALLOCA (name_keysize + class_keysize);
-  char *class_key = name_key + name_keysize;
-
-  esprintf (name_key, "%s.%s", SSDATA (Vinvocation_name), attribute);
-  sprintf (class_key, "%s.%s", EMACS_CLASS, class);
-
-  result = x_get_string_resource (FRAME_DISPLAY_INFO (sf)->xrdb,
-				  name_key, class_key);
-  SAFE_FREE ();
-  return result;
-}
-#endif
 
 /* Return the value of parameter PARAM.
 
@@ -5628,13 +5550,9 @@ Setting this variable does not affect existing frames, only new ones.  */);
   DEFVAR_LISP ("default-frame-scroll-bars", Vdefault_frame_scroll_bars,
 	       doc: /* Default position of vertical scroll bars on this window-system.  */);
 #ifdef HAVE_WINDOW_SYSTEM
-#if defined (HAVE_NTGUI) || defined (NS_IMPL_COCOA) || (defined (USE_GTK) && defined (USE_TOOLKIT_SCROLL_BARS))
   /* MS-Windows, macOS, and GTK have scroll bars on the right by
      default.  */
   Vdefault_frame_scroll_bars = Qright;
-#else
-  Vdefault_frame_scroll_bars = Qleft;
-#endif
 #else
   Vdefault_frame_scroll_bars = Qnil;
 #endif
@@ -5827,7 +5745,7 @@ Note that when a frame is not large enough to accommodate a change of
 any of the parameters listed above, Emacs may try to enlarge the frame
 even if this option is non-nil.  */);
 #if defined (HAVE_WINDOW_SYSTEM)
-#if defined (USE_LUCID) || defined (USE_MOTIF) || defined (HAVE_NTGUI)
+#if defined (HAVE_NTGUI)
   frame_inhibit_implied_resize = list1 (Qtool_bar_lines);
 #else
   frame_inhibit_implied_resize = Qnil;
@@ -5921,12 +5839,6 @@ iconify the top level frame instead.  */);
   defsubr (&Sframe_char_width);
   defsubr (&Sframe_native_height);
   defsubr (&Sframe_native_width);
-  defsubr (&Sframe_text_cols);
-  defsubr (&Sframe_text_lines);
-  defsubr (&Sframe_total_cols);
-  defsubr (&Sframe_total_lines);
-  defsubr (&Sframe_text_width);
-  defsubr (&Sframe_text_height);
   defsubr (&Sscroll_bar_width);
   defsubr (&Sscroll_bar_height);
   defsubr (&Sfringe_width);

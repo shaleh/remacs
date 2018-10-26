@@ -14,13 +14,14 @@ use remacs_sys::{current_thread, make_buffer_string, record_unwind_current_buffe
                  set_buffer_internal};
 use remacs_sys::{globals, Ffind_operation_coding_system, Flocal_variable_p};
 use remacs_sys::{make_specified_string, make_uninit_string, EmacsInt};
-use remacs_sys::{Qbuffer_file_coding_system, Qcoding_system_error, Qmd5, Qraw_text, Qsha1,
+use remacs_sys::{Qbuffer_file_coding_system, Qcoding_system_error, Qmd5, Qnil, Qraw_text, Qsha1,
                  Qsha224, Qsha256, Qsha384, Qsha512, Qstringp, Qwrite_region};
 
 use buffers::{buffer_file_name, current_buffer, get_buffer, nsberror, LispBufferRef};
 use lisp::defsubr;
-use lisp::{LispNumber, LispObject};
+use lisp::LispObject;
 use multibyte::LispStringRef;
+use numbers::LispNumber;
 use symbols::{fboundp, symbol_name};
 use threads::ThreadState;
 
@@ -98,16 +99,15 @@ fn get_coding_system_for_buffer(
     coding_system: LispObject,
 ) -> LispObject {
     /* Decide the coding-system to encode the data with.
-       See fileio.c:Fwrite-region */
+    See fileio.c:Fwrite-region */
     if coding_system.is_not_nil() {
         return coding_system;
     }
     if unsafe { globals.Vcoding_system_for_write }.is_not_nil() {
         return unsafe { globals.Vcoding_system_for_write };
     }
-    if (buffer.buffer_file_coding_system_.is_nil() || unsafe {
-        Flocal_variable_p(Qbuffer_file_coding_system, LispObject::constant_nil())
-    }.is_nil())
+    if (buffer.buffer_file_coding_system_.is_nil()
+        || unsafe { Flocal_variable_p(Qbuffer_file_coding_system, Qnil) }.is_nil())
         && !buffer.multibyte_characters_enabled()
     {
         return Qraw_text;
@@ -122,7 +122,7 @@ fn get_coding_system_for_buffer(
     }
     if buffer.buffer_file_coding_system_.is_not_nil() {
         /* If we still have not decided a coding system, use the
-           default value of buffer-file-coding-system. */
+        default value of buffer-file-coding-system. */
         return buffer.buffer_file_coding_system_;
     }
     let sscsf = unsafe { globals.Vselect_safe_coding_system_function };
@@ -133,10 +133,10 @@ fn get_coding_system_for_buffer(
             LispObject::from(start_byte),
             LispObject::from(end_byte),
             coding_system,
-            LispObject::constant_nil()
+            Qnil
         );
     }
-    LispObject::constant_nil()
+    Qnil
 }
 
 fn get_input_from_string(
@@ -234,16 +234,8 @@ fn get_input(
                 noerror,
             );
             *string = Some(
-                unsafe {
-                    code_convert_string(
-                        object,
-                        coding_system,
-                        LispObject::constant_nil(),
-                        true,
-                        false,
-                        true,
-                    )
-                }.as_string_or_error(),
+                unsafe { code_convert_string(object, coding_system, Qnil, true, false, true) }
+                    .as_string_or_error(),
             )
         }
         get_input_from_string(object, string.unwrap(), start, end).as_string_or_error()
@@ -265,16 +257,8 @@ fn get_input(
                 ),
                 noerror,
             );
-            unsafe {
-                code_convert_string(
-                    s,
-                    coding_system,
-                    LispObject::constant_nil(),
-                    true,
-                    false,
-                    false,
-                )
-            }.as_string_or_error()
+            unsafe { code_convert_string(s, coding_system, Qnil, true, false, false) }
+                .as_string_or_error()
         } else {
             ss
         }
@@ -324,7 +308,7 @@ pub fn md5(
         end,
         coding_system,
         noerror,
-        LispObject::constant_nil(),
+        Qnil,
     )
 }
 
@@ -347,15 +331,7 @@ pub fn secure_hash(
     end: LispObject,
     binary: LispObject,
 ) -> LispObject {
-    _secure_hash(
-        hash_alg(algorithm),
-        object,
-        start,
-        end,
-        LispObject::constant_nil(),
-        LispObject::constant_nil(),
-        binary,
-    )
+    _secure_hash(hash_alg(algorithm), object, start, end, Qnil, Qnil, binary)
 }
 
 fn _secure_hash(

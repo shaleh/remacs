@@ -5,7 +5,9 @@ use std::mem;
 use libc;
 
 use remacs_macros::lisp_fn;
-use remacs_sys::{current_thread as current_thread_pointer, thread_state, Lisp_Type, SPECPDL_INDEX};
+use remacs_sys::Qthreadp;
+use remacs_sys::{current_thread as current_thread_pointer, pvec_type, thread_state, Lisp_Type,
+                 SPECPDL_INDEX};
 
 use buffers::LispBufferRef;
 use lisp::defsubr;
@@ -26,19 +28,38 @@ impl ThreadState {
 }
 
 impl ThreadStateRef {
-    #[inline]
     pub fn name(self) -> LispObject {
         self.name
     }
 
-    #[inline]
     pub fn is_alive(self) -> bool {
         !self.m_specpdl.is_null()
     }
 
-    #[inline]
     pub fn as_lisp_obj(self) -> LispObject {
         LispObject::tag_ptr(self, Lisp_Type::Lisp_Vectorlike)
+    }
+}
+
+impl From<LispObject> for ThreadStateRef {
+    fn from(o: LispObject) -> Self {
+        o.as_thread_or_error()
+    }
+}
+
+impl LispObject {
+    pub fn is_thread(self) -> bool {
+        self.as_vectorlike()
+            .map_or(false, |v| v.is_pseudovector(pvec_type::PVEC_THREAD))
+    }
+
+    pub fn as_thread(self) -> Option<ThreadStateRef> {
+        self.as_vectorlike().and_then(|v| v.as_thread())
+    }
+
+    pub fn as_thread_or_error(self) -> ThreadStateRef {
+        self.as_thread()
+            .unwrap_or_else(|| wrong_type!(Qthreadp, self))
     }
 }
 

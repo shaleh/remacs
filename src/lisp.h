@@ -1836,6 +1836,26 @@ verify (offsetof (struct Lisp_Sub_Char_Table, contents)
 	== (offsetof (struct Lisp_Vector, contents)
 	    + SUB_CHAR_TABLE_OFFSET * sizeof (Lisp_Object)));
 
+
+/* Save and restore the instruction and environment pointers,
+   without affecting the signal mask.  */
+
+#ifdef HAVE__SETJMP
+typedef jmp_buf sys_jmp_buf;
+# define sys_setjmp(j) _setjmp (j)
+# define sys_longjmp(j, v) _longjmp (j, v)
+#elif defined HAVE_SIGSETJMP
+typedef sigjmp_buf sys_jmp_buf;
+# define sys_setjmp(j) sigsetjmp (j, 0)
+# define sys_longjmp(j, v) siglongjmp (j, v)
+#else
+/* A platform that uses neither _longjmp nor siglongjmp; assume
+   longjmp does not affect the sigmask.  */
+typedef jmp_buf sys_jmp_buf;
+# define sys_setjmp(j) setjmp (j)
+# define sys_longjmp(j, v) longjmp (j, v)
+#endif
+
 #include "thread.h"
 
 /***********************************************************************
@@ -2974,25 +2994,6 @@ extern void defvar_kboard (struct Lisp_Kboard_Objfwd *, const char *, int);
     static struct Lisp_Kboard_Objfwd ko_fwd;			\
     defvar_kboard (&ko_fwd, lname, offsetof (KBOARD, vname ## _)); \
   } while (false)
-
-/* Save and restore the instruction and environment pointers,
-   without affecting the signal mask.  */
-
-#ifdef HAVE__SETJMP
-typedef jmp_buf sys_jmp_buf;
-# define sys_setjmp(j) _setjmp (j)
-# define sys_longjmp(j, v) _longjmp (j, v)
-#elif defined HAVE_SIGSETJMP
-typedef sigjmp_buf sys_jmp_buf;
-# define sys_setjmp(j) sigsetjmp (j, 0)
-# define sys_longjmp(j, v) siglongjmp (j, v)
-#else
-/* A platform that uses neither _longjmp nor siglongjmp; assume
-   longjmp does not affect the sigmask.  */
-typedef jmp_buf sys_jmp_buf;
-# define sys_setjmp(j) setjmp (j)
-# define sys_longjmp(j, v) longjmp (j, v)
-#endif
 
 
 /* Elisp uses several stacks:
@@ -3578,6 +3579,8 @@ extern Lisp_Object list5 (Lisp_Object, Lisp_Object, Lisp_Object, Lisp_Object,
 			  Lisp_Object);
 enum constype {CONSTYPE_HEAP, CONSTYPE_PURE};
 extern Lisp_Object listn (enum constype, ptrdiff_t, Lisp_Object, ...);
+extern Lisp_Object build_marker (struct buffer *, ptrdiff_t, ptrdiff_t);
+extern Lisp_Object bounded_number(EMACS_INT);
 
 /* Build a frequently used 2/3/4-integer lists.  */
 
@@ -3795,6 +3798,7 @@ extern Lisp_Object intern_driver (Lisp_Object, Lisp_Object, Lisp_Object);
 extern Lisp_Object intern_sym (Lisp_Object sym, Lisp_Object obarray, Lisp_Object index);
 extern void init_symbol (Lisp_Object, Lisp_Object);
 extern Lisp_Object oblookup (Lisp_Object, const char *, ptrdiff_t, ptrdiff_t);
+extern Lisp_Object read_internal_start (Lisp_Object, Lisp_Object, Lisp_Object);
 extern void loadhist_attach(Lisp_Object x);
 INLINE void
 LOADHIST_ATTACH (Lisp_Object x)
@@ -3980,7 +3984,6 @@ extern _Noreturn void time_overflow (void);
 extern Lisp_Object make_buffer_string (ptrdiff_t, ptrdiff_t, bool);
 extern Lisp_Object make_buffer_string_both (ptrdiff_t, ptrdiff_t, ptrdiff_t,
 					    ptrdiff_t, bool);
-extern Lisp_Object styled_format (ptrdiff_t, Lisp_Object *, bool, bool);
 extern void init_editfns (bool);
 extern void syms_of_editfns (void);
 
@@ -4013,8 +4016,6 @@ extern Lisp_Object set_marker_restricted (Lisp_Object, Lisp_Object, Lisp_Object)
 extern Lisp_Object set_marker_both (Lisp_Object, Lisp_Object, ptrdiff_t, ptrdiff_t);
 extern Lisp_Object set_marker_restricted_both (Lisp_Object, Lisp_Object,
                                                ptrdiff_t, ptrdiff_t);
-extern Lisp_Object build_marker (struct buffer *, ptrdiff_t, ptrdiff_t);
-extern void syms_of_marker (void);
 
 /* Defined in fileio.c.  */
 
@@ -4076,6 +4077,11 @@ extern ptrdiff_t find_before_next_newline (ptrdiff_t, ptrdiff_t,
 extern void syms_of_search (void);
 extern void clear_regexp_cache (void);
 
+Lisp_Object looking_at_1 (Lisp_Object string, bool posix);
+Lisp_Object match_limit (Lisp_Object num, bool beginningp);
+Lisp_Object search_command (Lisp_Object string, Lisp_Object bound, Lisp_Object noerror, Lisp_Object count, int direction, int RE, bool posix);
+Lisp_Object string_match_1 (Lisp_Object regexp, Lisp_Object string, Lisp_Object start, bool posix);
+
 /* Defined in minibuf.c.  */
 
 extern Lisp_Object Vminibuffer_list;
@@ -4092,6 +4098,8 @@ extern void syms_of_callint (void);
 
 enum case_action {CASE_UP, CASE_DOWN, CASE_CAPITALIZE, CASE_CAPITALIZE_UP};
 Lisp_Object casify_object (enum case_action flag, Lisp_Object obj);
+ptrdiff_t casify_region (enum case_action flag, Lisp_Object b, Lisp_Object e);
+Lisp_Object casify_region_nil (enum case_action flag, Lisp_Object b, Lisp_Object e);
 extern void syms_of_casefiddle (void);
 extern void keys_of_casefiddle (void);
 
@@ -4414,8 +4422,9 @@ extern char *x_get_keysym_name (int);
 
 #ifdef HAVE_LIBXML2
 /* Defined in xml.c.  */
-extern void syms_of_xml (void);
 extern void xml_cleanup_parser (void);
+bool init_libxml2_functions (void);
+Lisp_Object parse_region (Lisp_Object start, Lisp_Object end, Lisp_Object base_url, Lisp_Object discard_comments, bool htmlp);
 #endif
 
 #ifdef HAVE_LCMS2
@@ -4749,6 +4758,12 @@ maybe_gc (void)
 	  && consing_since_gc > memory_full_cons_threshold))
     Fgarbage_collect ();
 }
+
+Lisp_Object funcall_lambda (Lisp_Object, ptrdiff_t, Lisp_Object *);
+
+bool backtrace_debug_on_exit (union specbinding *pdl);
+
+void do_debug_on_call (Lisp_Object code, ptrdiff_t count);
 
 INLINE_HEADER_END
 

@@ -822,7 +822,7 @@ endef
 ###      normally don't want to recompile.  For example, the 'mostlyclean'
 ###      target for GCC does not delete 'libgcc.a', because recompiling it
 ###      is rarely necessary and takes a lot of time.
-mostlyclean_dirs = src oldXMenu lwlib lib lib-src nt doc/emacs doc/misc \
+mostlyclean_dirs = src lib lib-src nt doc/emacs doc/misc \
   doc/lispref doc/lispintro
 
 $(foreach dir,$(mostlyclean_dirs),$(eval $(call submake_template,$(dir),mostlyclean)))
@@ -1128,7 +1128,7 @@ ChangeLog:
 	  ./$(emacslog) -o $(CHANGELOG) -n $(CHANGELOG_HISTORY_INDEX_MAX)
 
 # Check that we are in a good state for changing history.
-PREFERRED_BRANCH = master
+PREFERRED_BRANCH = emacs-26
 preferred-branch-is-current:
 	git branch | grep -q '^\* $(PREFERRED_BRANCH)$$'
 unchanged-history-files:
@@ -1172,8 +1172,8 @@ check-declare:
 .PHONY: rustfmt
 
 rustfmt:
-	(cd rust_src && cargo fmt -- --write-mode overwrite)
-	(cd rust_src/remacs-lib && cargo fmt -- --write-mode overwrite)
-	(cd rust_src/remacs-util && cargo fmt -- --write-mode overwrite)
-	(cd rust_src/remacs-macros && cargo fmt -- --write-mode overwrite lib.rs)
-	(cd rust_src/alloc_unexecmacosx && cargo fmt -- --write-mode overwrite)
+	(cd rust_src && cargo fmt)
+	(cd rust_src/remacs-lib && cargo fmt)
+	(cd rust_src/remacs-util && cargo fmt)
+	(cd rust_src/remacs-macros && cargo fmt)
+	(cd rust_src/alloc_unexecmacosx && cargo fmt)

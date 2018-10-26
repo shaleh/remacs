@@ -2,12 +2,13 @@
 use libc;
 
 use remacs_macros::lisp_fn;
-use remacs_sys::{add_process_read_fd, current_thread, delete_read_fd, get_process as cget_process,
-                 send_process, setup_process_coding_systems, update_status, Fmapcar, STRING_BYTES};
-use remacs_sys::{EmacsInt, Lisp_Process, Lisp_Type, Vprocess_alist};
+use remacs_sys::{add_process_read_fd, current_thread, delete_read_fd, emacs_get_tty_pgrp,
+                 get_process as cget_process, send_process, setup_process_coding_systems,
+                 update_status, Fmapcar, STRING_BYTES};
+use remacs_sys::{pvec_type, EmacsInt, Lisp_Process, Lisp_Type, Vprocess_alist};
 use remacs_sys::{QCbuffer, QCfilter, QCsentinel, Qcdr, Qclosed, Qexit,
                  Qinternal_default_process_filter, Qinternal_default_process_sentinel, Qlisten,
-                 Qlistp, Qnetwork, Qopen, Qpipe, Qrun, Qserial, Qstop, Qt};
+                 Qlistp, Qnetwork, Qnil, Qopen, Qpipe, Qprocessp, Qreal, Qrun, Qserial, Qstop, Qt};
 
 use lisp::defsubr;
 use lisp::{ExternalPtr, LispObject};
@@ -23,64 +24,54 @@ impl LispProcessRef {
         LispObject::tag_ptr(self, Lisp_Type::Lisp_Vectorlike)
     }
 
-    #[inline]
-    fn name(self) -> LispObject {
-        self.name
-    }
-
-    #[inline]
-    fn tty_name(self) -> LispObject {
-        self.tty_name
-    }
-
-    #[inline]
-    fn command(self) -> LispObject {
-        self.command
-    }
-
-    #[inline]
-    fn mark(self) -> LispObject {
-        self.mark
-    }
-
-    #[inline]
-    fn filter(self) -> LispObject {
-        self.filter
-    }
-
-    #[inline]
-    fn sentinel(self) -> LispObject {
-        self.sentinel
-    }
-
-    #[inline]
-    fn plist(self) -> LispObject {
-        self.plist
-    }
-
-    #[inline]
-    fn buffer(self) -> LispObject {
-        self.buffer
-    }
-
-    #[inline]
     fn ptype(self) -> LispObject {
         self.type_
     }
 
-    #[inline]
     fn set_plist(&mut self, plist: LispObject) {
         self.plist = plist;
     }
 
-    #[inline]
     fn set_buffer(&mut self, buffer: LispObject) {
         self.buffer = buffer;
     }
 
-    #[inline]
     fn set_childp(&mut self, childp: LispObject) {
         self.childp = childp;
+    }
+}
+
+impl LispObject {
+    pub fn is_process(self) -> bool {
+        self.as_vectorlike()
+            .map_or(false, |v| v.is_pseudovector(pvec_type::PVEC_PROCESS))
+    }
+
+    pub fn as_process(self) -> Option<LispProcessRef> {
+        self.as_vectorlike().and_then(|v| v.as_process())
+    }
+
+    pub fn as_process_or_error(self) -> LispProcessRef {
+        self.as_process()
+            .unwrap_or_else(|| wrong_type!(Qprocessp, self))
+    }
+}
+
+impl From<LispObject> for LispProcessRef {
+    fn from(o: LispObject) -> Self {
+        o.as_process_or_error()
+    }
+}
+
+impl From<LispProcessRef> for LispObject {
+    fn from(p: LispProcessRef) -> Self {
+        p.as_lisp_obj()
+    }
+}
+
+impl From<LispObject> for Option<LispProcessRef> {
+    fn from(o: LispObject) -> Self {
+        o.as_process()
     }
 }
 
@@ -97,11 +88,7 @@ pub fn get_process(name: LispObject) -> LispObject {
         name
     } else {
         name.as_string_or_error();
-        cdr(assoc(
-            name,
-            unsafe { Vprocess_alist },
-            LispObject::constant_nil(),
-        ))
+        cdr(assoc(name, unsafe { Vprocess_alist }, Qnil))
     }
 }
 
@@ -110,14 +97,14 @@ pub fn get_process(name: LispObject) -> LispObject {
 /// possibly modified to make it unique among process names.
 #[lisp_fn]
 pub fn process_name(process: LispProcessRef) -> LispObject {
-    process.name()
+    process.name
 }
 
 /// Return the buffer PROCESS is associated with.
 /// The default process filter inserts output from PROCESS into this buffer.
 #[lisp_fn]
 pub fn process_buffer(process: LispProcessRef) -> LispObject {
-    process.buffer()
+    process.buffer
 }
 
 /// Return the process id of PROCESS.
@@ -139,19 +126,19 @@ pub fn process_id(process: LispProcessRef) -> Option<EmacsInt> {
 #[lisp_fn]
 pub fn get_buffer_process(buffer: LispObject) -> LispObject {
     if buffer.is_nil() {
-        return LispObject::constant_nil();
+        return Qnil;
     }
     let buf = get_buffer(buffer);
     if buf.is_nil() {
-        return LispObject::constant_nil();
+        return Qnil;
     }
     for tail in unsafe { Vprocess_alist }.iter_tails() {
-        let p = tail.car().as_cons().unwrap().cdr();
-        if buf.eq(p.as_process().unwrap().buffer()) {
+        let p = tail.car().as_cons_or_error().cdr();
+        if buf.eq(p.as_process_or_error().buffer) {
             return p;
         }
     }
-    LispObject::constant_nil()
+    Qnil
 }
 
 /// Return the name of the terminal PROCESS uses, or nil if none.
@@ -159,7 +146,7 @@ pub fn get_buffer_process(buffer: LispObject) -> LispObject {
 /// not the name of the pty that Emacs uses to talk with that terminal.
 #[lisp_fn]
 pub fn process_tty_name(process: LispProcessRef) -> LispObject {
-    process.tty_name()
+    process.tty_name
 }
 
 /// Return the command that was executed to start PROCESS.  This is a
@@ -169,27 +156,27 @@ pub fn process_tty_name(process: LispProcessRef) -> LispObject {
 /// running) or t (process is stopped).
 #[lisp_fn]
 pub fn process_command(process: LispProcessRef) -> LispObject {
-    process.command()
+    process.command
 }
 
 /// Return the filter function of PROCESS.
 /// See `set-process-filter' for more info on filter functions.
 #[lisp_fn]
 pub fn process_filter(process: LispProcessRef) -> LispObject {
-    process.filter()
+    process.filter
 }
 
 /// Return the sentinel of PROCESS.
 /// See `set-process-sentinel' for more info on sentinels.
 #[lisp_fn]
 pub fn process_sentinel(process: LispProcessRef) -> LispObject {
-    process.sentinel()
+    process.sentinel
 }
 
 /// Return the marker for the end of the last output from PROCESS.
 #[lisp_fn]
 pub fn process_mark(process: LispProcessRef) -> LispObject {
-    process.mark()
+    process.mark
 }
 
 /// Return a list of all processes that are Emacs sub-processes.
@@ -201,7 +188,7 @@ pub fn process_list() -> LispObject {
 /// Return the plist of PROCESS.
 #[lisp_fn]
 pub fn process_plist(process: LispProcessRef) -> LispObject {
-    process.plist()
+    process.plist
 }
 
 /// Replace the plist of PROCESS with PLIST.  Return PLIST.
@@ -253,7 +240,7 @@ pub fn process_status(process: LispObject) -> LispObject {
         let process_command = process.command;
         if status.eq(Qexit) {
             status = Qclosed;
-        } else if process_command.eq(LispObject::constant_t()) {
+        } else if process_command.eq(Qt) {
             status = Qstop;
         } else if status.eq(Qrun) {
             status = Qopen;
@@ -349,8 +336,8 @@ fn pset_filter(mut process: LispProcessRef, val: LispObject) -> LispObject {
 }
 
 fn set_process_filter_masks(process: LispProcessRef) -> () {
-    if !(process.infd == -1) && process.filter.eq(Qt) {
-        if !process.status.eq(Qlisten) {
+    if process.infd != -1 && process.filter.eq(Qt) {
+        if process.status.ne(Qlisten) {
             unsafe { delete_read_fd(process.infd) };
         // Network or serial process not stopped:
         } else if process.command.eq(Qt) {
@@ -450,6 +437,41 @@ pub fn process_exit_status(mut process: LispProcessRef) -> LispObject {
     status
         .as_cons()
         .map_or_else(|| LispObject::from(0), |cons| car(cons.cdr()))
+}
+
+/// Return non-nil if PROCESS has given the terminal to a
+/// child.  If the operating system does not make it possible to find out,
+/// return t.  If we can find out, return the numeric ID of the foreground
+/// process group.
+#[lisp_fn(min = "0")]
+pub fn process_running_child_p(mut process: LispObject) -> LispObject {
+    // Initialize in case ioctl doesn't exist or gives an error,
+    // in a way that will cause returning t.
+    process = get_process(process);
+    let mut proc_ref = process.as_process_or_error();
+
+    if proc_ref.ptype().ne(Qreal) {
+        error!(
+            "Process {} is not a subprocess.",
+            proc_ref.name.as_string_or_error()
+        );
+    }
+    if proc_ref.infd < 0 {
+        error!(
+            "Process {} is not active.",
+            proc_ref.name.as_string_or_error()
+        );
+    }
+
+    let gid = unsafe { emacs_get_tty_pgrp(proc_ref.as_mut()) };
+
+    if gid == proc_ref.pid {
+        Qnil
+    } else if gid != -1 {
+        LispObject::from_fixnum(gid.into())
+    } else {
+        Qt
+    }
 }
 
 include!(concat!(env!("OUT_DIR"), "/process_exports.rs"));

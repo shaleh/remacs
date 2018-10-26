@@ -23,7 +23,7 @@ dnl  along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.
 
 AC_PREREQ(2.65)
 dnl Note this is parsed by (at least) make-dist and lisp/cedet/ede/emacs.el.
-AC_INIT(GNU Emacs, 26.0.60, bug-gnu-emacs@gnu.org)
+AC_INIT(GNU Emacs, 27.0.50, bug-gnu-emacs@gnu.org, , https://www.gnu.org/software/emacs/)
 
 dnl Set emacs_config_options to the options of 'configure', quoted for the shell,
 dnl and then quoted again for a C string.  Separate options with spaces.
@@ -232,9 +232,9 @@ AC_DEFUN([OPTION_DEFAULT_ON], [dnl
    m4_bpatsubst([with_$1], [[^0-9a-z]], [_])=$with_features])dnl
 ])dnl
 
-# FIXME: The default options '--without-mailutils --with-pop' result
-# in a movemail implementation that supports only unencrypted POP3
-# connections.  Encrypted connections should be the default.
+# For retrieving mail, unencrypted network connections are the default
+# only on native MS-Windows platforms.  (FIXME: These platforms should
+# also be secure by default.)
 
 AC_ARG_WITH([mailutils],
   [AS_HELP_STRING([--with-mailutils],
@@ -251,9 +251,16 @@ if test "$with_mailutils" = no; then
 fi
 AC_SUBST([with_mailutils])
 
-OPTION_DEFAULT_ON([pop],
-  [don't support POP mail retrieval with movemail (--without-pop or
-   --with-mailutils is recommended, as movemail POP is insecure)])
+AC_ARG_WITH([pop],
+  [AS_HELP_STRING([--with-pop],
+     [Support POP mail retrieval if Emacs movemail is used (not recommended,
+      as Emacs movemail POP is insecure).  This is the default only on
+      native MS-Windows.])],
+  [],
+  [case $host in
+     *-mingw*) with_pop=yes;;
+     *) with_pop=no-by-default;;
+   esac])
 if test "$with_pop" = yes; then
    AC_DEFINE(MAIL_USE_POP)
 fi
@@ -309,21 +316,16 @@ dnl This should be the last --with option, because --with-x is
 dnl added later on when we find the file name of X, and it's best to
 dnl keep them together visually.
 AC_ARG_WITH([x-toolkit],[AS_HELP_STRING([--with-x-toolkit=KIT],
- [use an X toolkit (KIT one of: yes or gtk, gtk2, gtk3, lucid or athena, motif, no)])],
+ [use an X toolkit (KIT one of: yes or gtk, gtk2, gtk3, no)])],
 [	  case "${withval}" in
 	    y | ye | yes )	val=gtk ;;
-	    n | no )		val=no  ;;
-	    l | lu | luc | luci | lucid )	val=lucid ;;
-	    a | at | ath | athe | athen | athena )	val=athena ;;
-	    m | mo | mot | moti | motif )	val=motif ;;
 	    g | gt | gtk  )	val=gtk ;;
 	    gtk2  )	val=gtk2 ;;
 	    gtk3  )	val=gtk3 ;;
 	    * )
 AC_MSG_ERROR(['--with-x-toolkit=$withval' is invalid;
-this option's value should be 'yes', 'no', 'lucid', 'athena', 'motif', 'gtk',
-'gtk2' or 'gtk3'.  'yes' and 'gtk' are synonyms.
-'athena' and 'lucid' are synonyms.])
+this option's value should be 'yes', 'gtk',
+'gtk2' or 'gtk3'.  'yes' and 'gtk' are synonyms.])
 	    ;;
 	  esac
 	  with_x_toolkit=$val
@@ -353,8 +355,6 @@ OPTION_DEFAULT_ON([xft],[don't use XFT for anti aliased fonts])
 OPTION_DEFAULT_ON([libotf],[don't use libotf for OpenType font support])
 OPTION_DEFAULT_ON([m17n-flt],[don't use m17n-flt for text shaping])
 
-OPTION_DEFAULT_ON([toolkit-scroll-bars],[don't use Motif or Xaw3d scroll bars])
-OPTION_DEFAULT_ON([xaw3d],[don't use Xaw3d])
 OPTION_DEFAULT_ON([xim],[don't use X11 XIM])
 AC_ARG_WITH([ns],[AS_HELP_STRING([--with-ns],
 [use Nextstep (macOS Cocoa or GNUstep) windowing system.
@@ -691,6 +691,12 @@ case "${canonical}" in
     esac
   ;;
 
+  ## QNX Neutrino
+  *-nto-qnx* )
+    opsys=qnxnto
+    CFLAGS="$CFLAGS -D__NO_EXT_QNX"
+  ;;
+
   ## Intel 386 machines where we don't care about the manufacturer.
   i[3456]86-*-* )
     case "${canonical}" in
@@ -922,12 +928,6 @@ AS_IF([test $gl_gcc_warnings = no],
   # This, $nw, is the list of warnings we disable.
   nw=
 
-  case $with_x_toolkit in
-    lucid | athena | motif)
-       # Old toolkits mishandle 'const'.
-       nw="$nw -Wwrite-strings"
-       ;;
-  esac
   AS_IF([test $gl_gcc_warnings = yes],
     [WERROR_CFLAGS=-Werror])
 
@@ -1312,7 +1312,7 @@ dnl For a long time, -znocombreloc was added to LDFLAGS rather than
 dnl LD_SWITCH_SYSTEM_TEMACS.  That is:
 dnl * inappropriate, as LDFLAGS is a user option but this is essential.
 dnl   Eg "make LDFLAGS=... all" could run into problems,
-dnl   http://bugs.debian.org/684788
+dnl   https://bugs.debian.org/684788
 dnl * unnecessary, since temacs is the only thing that actually needs it.
 dnl   Indeed this is where it was originally, prior to:
 dnl   https://lists.gnu.org/archive/html/emacs-pretest-bug/2004-03/msg00170.html
@@ -1389,10 +1389,6 @@ case "$opsys" in
    # emacs, instead of the generic ELF dump code found in unexelf.c.
    # The resulting binary has a complete symbol table, and is better
    # for debugging and other observability tools (debuggers, pstack, etc).
-   #
-   # If you encounter a problem using dldump(), please consider sending
-   # a message to the OpenSolaris tools-linking mailing list:
-   #      http://mail.opensolaris.org/mailman/listinfo/tools-linking
    #
    # It is likely that dldump() works with older Solaris too, but this has
    # not been tested, so for now this change is for Solaris 10 or newer.
@@ -1502,10 +1498,11 @@ case "$opsys" in
 
   hpux*) LIBS_SYSTEM="-l:libdld.sl" ;;
 
+  qnxnto) LIBS_SYSTEM="-lsocket" ;;
+
   sol2*) LIBS_SYSTEM="-lsocket -lnsl" ;;
 
-  ## Motif needs -lgen.
-  unixware) LIBS_SYSTEM="-lsocket -lnsl -lelf -lgen" ;;
+  unixware) LIBS_SYSTEM="-lsocket -lnsl -lelf" ;;
 esac
 
 AC_SUBST(LIBS_SYSTEM)
@@ -1956,10 +1953,6 @@ ns_self_contained=no
 NS_OBJ=
 NS_OBJC_OBJ=
 if test "${HAVE_NS}" = yes; then
-  if test "$with_toolkit_scroll_bars" = "no"; then
-    AC_MSG_ERROR([Non-toolkit scroll bars are not implemented for Nextstep.])
-  fi
-
   window_system=nextstep
   # set up packaging dirs
   if test "${EN_NS_SELF_CONTAINED}" = yes; then
@@ -2055,9 +2048,6 @@ CM_OBJ="cm.o"
 XARGS_LIMIT=
 if test "${HAVE_W32}" = "yes"; then
   AC_DEFINE(HAVE_NTGUI, 1, [Define to use native MS Windows GUI.])
-  if test "$with_toolkit_scroll_bars" = "no"; then
-    AC_MSG_ERROR([Non-toolkit scroll bars are not implemented for w32 build.])
-  fi
   AC_CHECK_TOOL(WINDRES, [windres],
                 [AC_MSG_ERROR([No resource compiler found.])])
   W32_OBJ="w32fns.o w32menu.o w32reg.o w32font.o w32term.o"
@@ -2130,8 +2120,6 @@ case "${window_system}" in
     HAVE_X11=yes
     term_header=xterm.h
     case "${with_x_toolkit}" in
-      athena | lucid ) USE_X_TOOLKIT=LUCID ;;
-      motif ) USE_X_TOOLKIT=MOTIF ;;
       gtk ) with_gtk=yes
             term_header=gtkutil.h
 dnl Don't set this for GTK.  A lot of tests below assumes Xt when
@@ -2143,7 +2131,6 @@ dnl USE_X_TOOLKIT is set.
       gtk3 ) with_gtk3=yes
              term_header=gtkutil.h
              USE_X_TOOLKIT=none ;;
-      no ) USE_X_TOOLKIT=none ;;
 dnl If user did not say whether to use a toolkit, make this decision later:
 dnl use the toolkit if we have gtk, or X11R5 or newer.
       * ) USE_X_TOOLKIT=maybe ;;
@@ -2168,7 +2155,7 @@ if test "$window_system" = none && test "X$with_x" != "Xno"; then
    then
         AC_MSG_ERROR([You seem to be running X, but no X development libraries
 were found.  You should install the relevant development files for X
-and for the toolkit you want, such as Gtk+ or Motif.  Also make
+and for the toolkit you want, such as Gtk+.  Also make
 sure you have development files for image handling, i.e.
 tiff, gif, jpeg, png and xpm.
 If you are sure you want Emacs compiled without X window support, pass
@@ -2205,7 +2192,8 @@ test "$CANNOT_DUMP" = yes ||
 case "$opsys" in
   ## darwin ld insists on the use of malloc routines in the System framework.
   darwin | mingw32 | nacl | sol2-10) ;;
-  cygwin) hybrid_malloc=yes
+  cygwin | qnxto)
+	  hybrid_malloc=yes
           system_malloc= ;;
   *) test "$ac_cv_func_sbrk" = yes && system_malloc=$emacs_cv_sanitize_address;;
 esac
@@ -2642,7 +2630,7 @@ if test x"$pkg_check_gtk" = xyes; then
        closing open displays.  This is no problem if you just use
        one display, but if you use more than one and close one of them
        Emacs may crash.
-       See http://bugzilla.gnome.org/show_bug.cgi?id=85715]])
+       See https://bugzilla.gnome.org/show_bug.cgi?id=85715]])
   fi
 
 fi
@@ -2650,12 +2638,6 @@ AC_SUBST(GTK_OBJ)
 
 
 if test "${HAVE_GTK}" = "yes"; then
-
-  dnl  GTK scrollbars resemble toolkit scrollbars a lot, so to avoid
-  dnl  a lot if #ifdef:s, say we have toolkit scrollbars.
-  if test "$with_toolkit_scroll_bars" != no; then
-    with_toolkit_scroll_bars=yes
-  fi
 
   dnl  Check if we have the old file selection dialog declared and
   dnl  in the link library.  In 2.x it may be in the library,
@@ -2944,28 +2926,8 @@ dnl Do not put whitespace before the #include statements below.
 dnl Older compilers (eg sunos4 cc) choke on it.
 HAVE_XAW3D=no
 LUCID_LIBW=
-if test x"${USE_X_TOOLKIT}" = xmaybe || test x"${USE_X_TOOLKIT}" = xLUCID; then
-  if test "$with_xaw3d" != no; then
-    AC_CACHE_VAL(emacs_cv_xaw3d,
-    [AC_LINK_IFELSE([AC_LANG_PROGRAM([[
-#include <X11/Intrinsic.h>
-#include <X11/Xaw3d/Simple.h>]],
-      [[]])],
-      [AC_CHECK_LIB(Xaw3d, XawScrollbarSetThumb,
-                    emacs_cv_xaw3d=yes, emacs_cv_xaw3d=no)],
-      emacs_cv_xaw3d=no)])
-  else
+if test x"${USE_X_TOOLKIT}" = xmaybe; then
     emacs_cv_xaw3d=no
-  fi
-  if test $emacs_cv_xaw3d = yes; then
-    AC_MSG_CHECKING(for xaw3d)
-    AC_MSG_RESULT([yes; using Lucid toolkit])
-    USE_X_TOOLKIT=LUCID
-    HAVE_XAW3D=yes
-    LUCID_LIBW=-lXaw3d
-    AC_DEFINE(HAVE_XAW3D, 1,
-              [Define to 1 if you have the Xaw3d library (-lXaw3d).])
-  else
     AC_MSG_CHECKING(for xaw3d)
     AC_MSG_RESULT(no)
     AC_MSG_CHECKING(for libXaw)
@@ -2976,20 +2938,11 @@ if test x"${USE_X_TOOLKIT}" = xmaybe || test x"${USE_X_TOOLKIT}" = xLUCID; then
       [[]])],
       emacs_cv_xaw=yes,
       emacs_cv_xaw=no)])
-    if test $emacs_cv_xaw = yes; then
-      AC_MSG_RESULT([yes; using Lucid toolkit])
-      USE_X_TOOLKIT=LUCID
-      LUCID_LIBW=-lXaw
-    elif test x"${USE_X_TOOLKIT}" = xLUCID; then
-      AC_MSG_ERROR([Lucid toolkit requires X11/Xaw include files])
-    else
       AC_MSG_ERROR([No X toolkit could be found.
 If you are sure you want Emacs compiled without an X toolkit, pass
   --with-x-toolkit=no
 to configure.  Otherwise, install the development libraries for the toolkit
 that you want to use (e.g. Gtk+) and re-run configure.])
-    fi
-  fi
 fi
 
 X_TOOLKIT_TYPE=$USE_X_TOOLKIT
@@ -3035,93 +2988,6 @@ dnl tranle@intellicorp.com says libXmu.a can need XtMalloc in libXt.a to link.
 fi
 AC_SUBST(LIBXTR6)
 AC_SUBST(LIBXMU)
-
-LIBXP=
-if test "${USE_X_TOOLKIT}" = "MOTIF"; then
-  # OpenMotif may be installed in such a way on some GNU/Linux systems.
-  if test -d /usr/include/openmotif; then
-    CPPFLAGS="-I/usr/include/openmotif $CPPFLAGS"
-    emacs_cv_openmotif=yes
-    case "$canonical" in
-      x86_64-*-linux-gnu* | powerpc64-*-linux-gnu* | sparc64-*-linux-gnu*)
-      test -d /usr/lib64/openmotif && LDFLAGS="-L/usr/lib64/openmotif $LDFLAGS"
-      ;;
-      *)
-      test -d /usr/lib/openmotif && LDFLAGS="-L/usr/lib/openmotif $LDFLAGS"
-    esac
-  else
-    emacs_cv_openmotif=no
-  fi
-  AC_CACHE_CHECK(for (Open)Motif version 2.1, emacs_cv_motif_version_2_1,
-  [AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <Xm/Xm.h>]],
-    [[#if XmVERSION > 2 || (XmVERSION == 2 && XmREVISION >= 1)
-int x = 5;
-#else
-Motif version prior to 2.1.
-#endif]])],
-    emacs_cv_motif_version_2_1=yes, emacs_cv_motif_version_2_1=no)])
-  if test $emacs_cv_motif_version_2_1 = yes; then
-    AC_CHECK_LIB(Xp, XpCreateContext, LIBXP=-lXp)
-    if test x$emacs_cv_openmotif = xyes; then
-      REAL_CPPFLAGS="-I/usr/include/openmotif $REAL_CPPFLAGS"
-    fi
-  else
-    AC_CACHE_CHECK(for LessTif where some systems put it, emacs_cv_lesstif,
-    # We put this in CFLAGS temporarily to precede other -I options
-    # that might be in CFLAGS temporarily.
-    # We put this in CPPFLAGS where it precedes the other -I options.
-    OLD_CPPFLAGS=$CPPFLAGS
-    OLD_CFLAGS=$CFLAGS
-    CPPFLAGS="-I/usr/X11R6/LessTif/Motif1.2/include $CPPFLAGS"
-    CFLAGS="-I/usr/X11R6/LessTif/Motif1.2/include $CFLAGS"
-    [AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include </usr/X11R6/LessTif/Motif1.2/include/Xm/Xm.h>]],
-      [[int x = 5;]])],
-      emacs_cv_lesstif=yes, emacs_cv_lesstif=no)])
-    if test $emacs_cv_lesstif = yes; then
-      # Make sure this -I option remains in CPPFLAGS after it is set
-      # back to REAL_CPPFLAGS.
-      # There is no need to change REAL_CFLAGS, because REAL_CFLAGS does not
-      # have those other -I options anyway.  Ultimately, having this
-      # directory ultimately in CPPFLAGS will be enough.
-      REAL_CPPFLAGS="-I/usr/X11R6/LessTif/Motif1.2/include $REAL_CPPFLAGS"
-      LDFLAGS="-L/usr/X11R6/LessTif/Motif1.2/lib $LDFLAGS"
-    else
-      CFLAGS=$OLD_CFLAGS
-      CPPFLAGS=$OLD_CPPFLAGS
-    fi
-  fi
-  AC_CHECK_HEADER([Xm/BulletinB.h], [],
-    [AC_MSG_ERROR([Motif toolkit requested but requirements not found.])])
-fi
-
-dnl Use toolkit scroll bars if configured for GTK or X toolkit and either
-dnl using Motif or Xaw3d is available, and unless
-dnl --with-toolkit-scroll-bars=no was specified.
-
-AH_TEMPLATE(USE_TOOLKIT_SCROLL_BARS,
-	    [Define to 1 if we should use toolkit scroll bars.])dnl
-USE_TOOLKIT_SCROLL_BARS=no
-if test "${with_toolkit_scroll_bars}" != "no"; then
-  if test "${USE_X_TOOLKIT}" != "none"; then
-    if test "${USE_X_TOOLKIT}" = "MOTIF"; then
-      AC_DEFINE(USE_TOOLKIT_SCROLL_BARS)
-      HAVE_XAW3D=no
-      USE_TOOLKIT_SCROLL_BARS=yes
-    elif test "${HAVE_XAW3D}" = "yes" || test "${USE_X_TOOLKIT}" = "LUCID"; then
-      AC_DEFINE(USE_TOOLKIT_SCROLL_BARS)
-      USE_TOOLKIT_SCROLL_BARS=yes
-    fi
-  elif test "${HAVE_GTK}" = "yes"; then
-    AC_DEFINE(USE_TOOLKIT_SCROLL_BARS)
-    USE_TOOLKIT_SCROLL_BARS=yes
-  elif test "${HAVE_NS}" = "yes"; then
-    AC_DEFINE(USE_TOOLKIT_SCROLL_BARS)
-    USE_TOOLKIT_SCROLL_BARS=yes
-  elif test "${HAVE_W32}" = "yes"; then
-    AC_DEFINE(USE_TOOLKIT_SCROLL_BARS)
-    USE_TOOLKIT_SCROLL_BARS=yes
-  fi
-fi
 
 dnl See if XIM is available.
 AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
@@ -4009,9 +3875,8 @@ AC_CACHE_CHECK([for library containing tputs], [emacs_cv_tputs_lib],
 [if test "${opsys}" = "mingw32"; then
   emacs_cv_tputs_lib='none required'
 else
-  # Maybe curses should be tried earlier?
-  # See https://debbugs.gnu.org/9736#35
-  for tputs_library in '' tinfo ncurses terminfo termcap curses; do
+  # curses precedes termcap because of AIX (Bug#9736#35) and OpenIndiana.
+  for tputs_library in '' tinfo ncurses terminfo curses termcap; do
     OLIBS=$LIBS
     if test -z "$tputs_library"; then
       emacs_cv_tputs_lib='none required'
@@ -4030,7 +3895,7 @@ fi])
 AS_CASE(["$emacs_cv_tputs_lib"],
   [no], [AC_MSG_ERROR([The required function 'tputs' was not found in any library.
 The following libraries were tried (in order):
-  libtinfo, libncurses, libterminfo, libtermcap, libcurses
+  libtinfo, libncurses, libterminfo, libcurses, libtermcap
 Please try installing whichever of these libraries is most appropriate
 for your system, together with its header files.
 For example, a libncurses-dev(el) or similar package.])],
@@ -4433,7 +4298,6 @@ emacs_broken_SIGIO=no
 
 case $opsys in
   dnl SIGIO exists, but the feature doesn't work in the way Emacs needs.
-  dnl See eg <http://article.gmane.org/gmane.os.openbsd.ports/46831>.
   hpux* | nacl | openbsd | sol2* | unixware )
     emacs_broken_SIGIO=yes
     ;;
@@ -4578,7 +4442,7 @@ case $opsys in
     AC_DEFINE(PTY_TTY_NAME_SPRINTF, [])
     ;;
 
-  gnu | openbsd )
+  gnu | openbsd | qnxnto )
     AC_DEFINE(FIRST_PTY_LETTER, ['p'])
     ;;
 
@@ -4963,8 +4827,6 @@ AC_SUBST(LD_SWITCH_X_SITE)
 AC_SUBST(C_SWITCH_X_SITE)
 AC_SUBST(GNUSTEP_CFLAGS)
 AC_SUBST(CFLAGS)
-## Used in lwlib/Makefile.in.
-AC_SUBST(X_TOOLKIT_TYPE)
 AC_SUBST(ns_appdir)
 AC_SUBST(ns_appbindir)
 AC_SUBST(ns_appresdir)
@@ -5009,37 +4871,11 @@ MOTIF_LIBW=
 if test "${USE_X_TOOLKIT}" != "none" ; then
   WIDGET_OBJ=widget.o
   AC_DEFINE(USE_X_TOOLKIT, 1, [Define to 1 if using an X toolkit.])
-  if test "${USE_X_TOOLKIT}" = "LUCID"; then
-    AC_DEFINE(USE_LUCID, 1, [Define to 1 if using the Lucid X toolkit.])
-  elif test "${USE_X_TOOLKIT}" = "MOTIF"; then
-    AC_DEFINE(USE_MOTIF, 1, [Define to 1 if using the Motif X toolkit.])
-    MOTIF_LIBW=-lXm
-    case "$opsys" in
-      gnu-linux)
-        ## Paul Abrahams <abrahams at equinox.shaysnet.com> says this is needed.
-        MOTIF_LIBW="$MOTIF_LIBW -lXpm"
-        ;;
-
-      unixware)
-        ## Richard Anthony Ryan <ryanr at ellingtn.ftc.nrcs.usda.gov>
-        ## says -lXimp is needed in UNIX_SV ... 4.2 1.1.2.
-        MOTIF_LIBW="MOTIF_LIBW -lXimp"
-        ;;
-
-      aix4-2)
-        ## olson@mcs.anl.gov says -li18n is needed by -lXm.
-        MOTIF_LIBW="$MOTIF_LIBW -li18n"
-        ;;
-    esac
-    MOTIF_LIBW="$MOTIF_LIBW $LIBXP"
-  fi
 fi
 AC_SUBST(WIDGET_OBJ)
 
 TOOLKIT_LIBW=
 case "$USE_X_TOOLKIT" in
-  MOTIF) TOOLKIT_LIBW="$MOTIF_LIBW" ;;
-  LUCID) TOOLKIT_LIBW="$LUCID_LIBW" ;;
   none) test "x$HAVE_GTK" = "xyes" && TOOLKIT_LIBW="$GTK_LIBS" ;;
 esac
 if test "$HAVE_XWIDGETS" = "yes"; then
@@ -5065,16 +4901,8 @@ else
 fi
 AC_SUBST(LIBX_OTHER)
 
-HAVE_OLDXMENU=no
 if test "$HAVE_GTK" = yes || test "$HAVE_X11" != yes; then
   LIBXMENU=
-elif test "$USE_X_TOOLKIT" = none; then
-  HAVE_OLDXMENU=yes
-  LIBXMENU='$(oldXMenudir)/libXMenu11.a'
-  AUTODEPEND_PARENTS="$AUTODEPEND_PARENTS oldXMenu"
-else
-  LIBXMENU='$(lwlibdir)/liblw.a'
-  AUTODEPEND_PARENTS="$AUTODEPEND_PARENTS lwlib"
 fi
 AC_SUBST(LIBXMENU)
 
@@ -5368,8 +5196,7 @@ End:
 
 #### Report on what we decided to do.
 #### Report GTK as a toolkit, even if it doesn't use Xt.
-#### It makes printing result more understandable as using GTK sets
-#### toolkit_scroll_bars to yes by default.
+#### It makes printing result more understandable.
 if test "${HAVE_GTK}" = "yes"; then
   USE_X_TOOLKIT="$USE_GTK_TOOLKIT"
 fi
@@ -5397,15 +5224,15 @@ Configured for '${canonical}'.
 
 optsep=
 emacs_config_features=
-for opt in XAW3D XPM JPEG TIFF GIF PNG RSVG CAIRO IMAGEMAGICK SOUND GPM DBUS \
+for opt in XPM JPEG TIFF GIF PNG RSVG CAIRO IMAGEMAGICK SOUND GPM DBUS \
   GCONF GSETTINGS NOTIFY ACL LIBSELINUX GNUTLS LIBXML2 FREETYPE M17N_FLT \
-  LIBOTF XFT ZLIB TOOLKIT_SCROLL_BARS X_TOOLKIT OLDXMENU X11 NS MODULES \
+  LIBOTF XFT ZLIB X_TOOLKIT X11 NS MODULES \
   XWIDGETS LIBSYSTEMD CANNOT_DUMP LCMS2; do
 
     case $opt in
       CANNOT_DUMP) eval val=\${$opt} ;;
       NOTIFY|ACL) eval val=\${${opt}_SUMMARY} ;;
-      TOOLKIT_SCROLL_BARS|X_TOOLKIT) eval val=\${USE_$opt} ;;
+      X_TOOLKIT) eval val=\${USE_$opt} ;;
       *) eval val=\${HAVE_$opt} ;;
     esac
     case x$val in
@@ -5414,7 +5241,7 @@ for opt in XAW3D XPM JPEG TIFF GIF PNG RSVG CAIRO IMAGEMAGICK SOUND GPM DBUS \
     case $opt in
       X_TOOLKIT)
         case $val in
-          GTK*|LUCID|MOTIF) opt=$val ;;
+          GTK*) opt=$val ;;
           *) continue ;;
         esac
       ;;
@@ -5425,8 +5252,7 @@ done
 AC_DEFINE_UNQUOTED(EMACS_CONFIG_FEATURES, "${emacs_config_features}",
   [Summary of some of the main features enabled by configure.])
 
-AS_ECHO(["  Does Emacs use -lXaw3d?                                 ${HAVE_XAW3D}
-  Does Emacs use -lXpm?                                   ${HAVE_XPM}
+AS_ECHO(["  Does Emacs use -lXpm?                                   ${HAVE_XPM}
   Does Emacs use -ljpeg?                                  ${HAVE_JPEG}
   Does Emacs use -ltiff?                                  ${HAVE_TIFF}
   Does Emacs use a gif library?                           ${HAVE_GIF} $LIBGIF
@@ -5451,7 +5277,6 @@ AS_ECHO(["  Does Emacs use -lXaw3d?                                 ${HAVE_XAW3D
   Does Emacs use -lxft?                                   ${HAVE_XFT}
   Does Emacs use -lsystemd?                               ${HAVE_LIBSYSTEMD}
   Does Emacs have dynamic modules support?                ${HAVE_MODULES}
-  Does Emacs use toolkit scroll bars?                     ${USE_TOOLKIT_SCROLL_BARS}
   Does Emacs support Xwidgets (requires gtk3)?            ${HAVE_XWIDGETS}
   Does Emacs have threading support in lisp?              ${threads_enabled}
 "])
@@ -5514,7 +5339,7 @@ dnl config.status treats $srcdir specially, so I think this is ok...
 AC_CONFIG_FILES([$srcdir/doc/man/emacs.1])
 
 m4_define([subdir_makefiles],
-  [lib/Makefile lib-src/Makefile oldXMenu/Makefile doc/emacs/Makefile doc/misc/Makefile doc/lispintro/Makefile doc/lispref/Makefile src/Makefile lwlib/Makefile lisp/Makefile leim/Makefile nextstep/Makefile nt/Makefile])
+  [lib/Makefile lib-src/Makefile doc/emacs/Makefile doc/misc/Makefile doc/lispintro/Makefile doc/lispref/Makefile src/Makefile lisp/Makefile leim/Makefile nextstep/Makefile nt/Makefile])
 SUBDIR_MAKEFILES="subdir_makefiles"
 AC_CONFIG_FILES(subdir_makefiles)
 
@@ -5599,6 +5424,12 @@ if test ! "$with_mailutils"; then
     AC_MSG_WARN([This configuration installs a 'movemail' program
 that retrieves POP3 email via only insecure channels.
 To omit insecure POP3, you can use '$0 --without-pop'.])
+  elif test "$with_pop" = no-by-default; then
+    AC_MSG_WARN([This configuration installs a 'movemail' program
+that does not retrieve POP3 email.  By default, Emacs 25 and earlier
+installed a 'movemail' program that retrieved POP3 email via only
+insecure channels, a practice that is no longer recommended but that
+you can continue to support by using '$0 --with-pop'.])
   fi
 
   case $opsys in
@@ -5610,7 +5441,7 @@ To omit insecure POP3, you can use '$0 --without-pop'.])
       case `(movemail --version) 2>/dev/null` in
 	*Mailutils*) ;;
 	*) emacs_fix_movemail="install GNU Mailutils
-<http://mailutils.org> and $emacs_fix_movemail";;
+<https://mailutils.org> and $emacs_fix_movemail";;
       esac
       AC_MSG_NOTICE([You might want to $emacs_fix_movemail.]);;
   esac

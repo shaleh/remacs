@@ -9,7 +9,7 @@ use remacs_sys::EmacsInt;
 use remacs_sys::{bitch_at_user, concat2, current_column, del_range, frame_make_pointer_invisible,
                  globals, initial_define_key, insert_and_inherit, memory_full, replace_range,
                  run_hook, scan_newline_from_point, set_point, set_point_both, syntax_property,
-                 syntaxcode, translate_char, MOST_POSITIVE_FIXNUM};
+                 syntaxcode, translate_char};
 use remacs_sys::{Fchar_width, Fget, Fmake_string, Fmove_to_column, Fset};
 use remacs_sys::{Qbeginning_of_buffer, Qend_of_buffer, Qexpand_abbrev, Qinternal_auto_fill,
                  Qkill_forward_chars, Qnil, Qoverwrite_mode_binary, Qpost_self_insert_hook,
@@ -23,6 +23,7 @@ use lisp::defsubr;
 use lisp::LispObject;
 use multibyte::{char_to_byte8, single_byte_charp, unibyte_to_char, write_codepoint, Codepoint,
                 MAX_MULTIBYTE_LENGTH};
+use numbers::MOST_POSITIVE_FIXNUM;
 use obarray::intern;
 use threads::ThreadState;
 
@@ -47,7 +48,7 @@ fn move_point(n: LispObject, forward: bool) -> () {
 
     let buffer = ThreadState::current_buffer();
     let mut signal = Qnil;
-    let mut new_point = buffer.pt() + n;
+    let mut new_point = buffer.pt + n;
 
     if new_point < buffer.begv {
         new_point = buffer.begv;
@@ -92,7 +93,7 @@ pub fn backward_char(n: LispObject) -> () {
 /// Return buffer position N characters after (before if N negative) point.
 #[lisp_fn]
 pub fn forward_point(n: EmacsInt) -> EmacsInt {
-    let pt = ThreadState::current_buffer().pt();
+    let pt = ThreadState::current_buffer().pt;
     n + pt as EmacsInt
 }
 
@@ -134,7 +135,7 @@ pub fn end_of_line(n: Option<EmacsInt>) -> () {
     loop {
         newpos = line_end_position(Some(num)) as isize;
         unsafe { set_point(newpos) };
-        pt = cur_buf.pt();
+        pt = cur_buf.pt;
         if pt > newpos && cur_buf.fetch_char(pt - 1) == '\n' as i32 {
             // If we skipped over a newline that follows
             // an invisible intangible run,
@@ -142,7 +143,7 @@ pub fn end_of_line(n: Option<EmacsInt>) -> () {
             // within the line.
             unsafe { set_point(pt - 1) };
             break;
-        } else if pt > newpos && pt < cur_buf.zv() && cur_buf.fetch_char(newpos) != '\n' as i32 {
+        } else if pt > newpos && pt < cur_buf.zv && cur_buf.fetch_char(newpos) != '\n' as i32 {
             // If we skipped something intangible
             // and now we're not really at eol,
             // keep going.
@@ -173,7 +174,7 @@ pub fn forward_line(n: Option<EmacsInt>) -> EmacsInt {
     let count: isize = n.unwrap_or(1) as isize;
 
     let cur_buf = ThreadState::current_buffer();
-    let opoint = cur_buf.pt();
+    let opoint = cur_buf.pt;
 
     let (mut pos, mut pos_byte) = (0, 0);
 
@@ -184,8 +185,8 @@ pub fn forward_line(n: Option<EmacsInt>) -> EmacsInt {
 
     if shortage > 0
         && (count <= 0
-            || (cur_buf.zv() > cur_buf.begv
-                && cur_buf.pt() != opoint
+            || (cur_buf.zv > cur_buf.begv
+                && cur_buf.pt != opoint
                 && cur_buf.fetch_byte(cur_buf.pt_byte - 1) != b'\n'))
     {
         shortage -= 1
@@ -212,18 +213,18 @@ pub fn delete_char(n: EmacsInt, killflag: bool) -> () {
     }
 
     let buffer = ThreadState::current_buffer();
-    let pos = buffer.pt() + n as isize;
+    let pos = buffer.pt + n as isize;
     if !killflag {
         if n < 0 {
             if pos < buffer.begv {
                 xsignal!(Qbeginning_of_buffer);
             } else {
-                unsafe { del_range(pos, buffer.pt()) };
+                unsafe { del_range(pos, buffer.pt) };
             }
         } else if pos > buffer.zv {
             xsignal!(Qend_of_buffer);
         } else {
-            unsafe { del_range(buffer.pt(), pos) };
+            unsafe { del_range(buffer.pt, pos) };
         }
     } else {
         call_raw!(Qkill_forward_chars, LispObject::from(n));
@@ -253,10 +254,7 @@ pub fn self_insert_command(n: EmacsInt) {
     }
 
     // Barf if the key that invoked this was not a character.
-    if !characterp(
-        unsafe { globals.last_command_event },
-        LispObject::constant_nil(),
-    ) {
+    if !characterp(unsafe { globals.last_command_event }, Qnil) {
         unsafe { bitch_at_user() };
     } else {
         let character = unsafe {
@@ -316,7 +314,7 @@ fn internal_self_insert(mut c: Codepoint, n: usize) -> EmacsInt {
         };
         len = 1;
     }
-    if overwrite.is_not_nil() && current_buffer.pt() < current_buffer.zv() {
+    if overwrite.is_not_nil() && current_buffer.pt < current_buffer.zv {
         // In overwrite-mode, we substitute a character at point (C2,
         // hereafter) by C.  For that, we delete C2 in advance.  But,
         // just substituting C2 by C may move a remaining text in the
@@ -327,7 +325,7 @@ fn internal_self_insert(mut c: Codepoint, n: usize) -> EmacsInt {
         // C2 and several characters following C2.
 
         // This is the character after point.
-        let c2 = current_buffer.fetch_char(current_buffer.pt_byte()) as Codepoint;
+        let c2 = current_buffer.fetch_char(current_buffer.pt_byte) as Codepoint;
 
         // Overwriting in binary-mode always replaces C2 by C.
         // Overwriting in textual-mode doesn't always do that.

@@ -3,13 +3,35 @@
 use libc::{c_uchar, ptrdiff_t};
 
 use remacs_macros::lisp_fn;
+use remacs_sys::EmacsInt;
+use remacs_sys::Qcharacterp;
 
+use lisp::defsubr;
+use lisp::LispObject;
+use multibyte::{make_char_multibyte, raw_byte_from_codepoint_safe};
+use multibyte::{Codepoint, MAX_CHAR};
 use threads::ThreadState;
+
+impl LispObject {
+    /// Nonzero iff X is a character.
+    pub fn is_character(self) -> bool {
+        self.as_fixnum()
+            .map_or(false, |i| 0 <= i && i <= EmacsInt::from(MAX_CHAR))
+    }
+
+    /// Check if Lisp object is a character or not and return the codepoint
+    /// Similar to CHECK_CHARACTER
+    pub fn as_character_or_error(self) -> Codepoint {
+        if !self.is_character() {
+            wrong_type!(Qcharacterp, self)
+        }
+        self.as_fixnum().unwrap() as Codepoint
+    }
+}
 
 /// True iff byte starts a character in a multibyte form.
 ///
 /// Same as the `CHAR_HEAD_P` macro.
-#[inline]
 pub fn char_head_p(byte: c_uchar) -> bool {
     (byte & 0xC0) != 0x80
 }
@@ -18,7 +40,6 @@ pub fn char_head_p(byte: c_uchar) -> bool {
 /// to the previous character boundary. No range checking of POS.
 ///
 /// Can be used instead of the `DEC_POS` macro.
-#[inline]
 pub unsafe fn dec_pos(pos_byte: ptrdiff_t) -> ptrdiff_t {
     let buffer_ref = ThreadState::current_buffer();
 
@@ -36,11 +57,6 @@ pub unsafe fn dec_pos(pos_byte: ptrdiff_t) -> ptrdiff_t {
 
     new_pos
 }
-
-use lisp::defsubr;
-use lisp::LispObject;
-use multibyte::MAX_CHAR;
-use multibyte::{make_char_multibyte, raw_byte_from_codepoint_safe};
 
 /// Return the character of the maximum code.
 #[lisp_fn]

@@ -171,12 +171,6 @@ struct frame
      most recently buried buffer is first.  For last-buffer.  */
   Lisp_Object buried_buffer_list;
 
-#if defined (HAVE_X_WINDOWS) && ! defined (USE_X_TOOLKIT) && ! defined (USE_GTK)
-  /* A dummy window used to display menu bars under X when no X
-     toolkit support is available.  */
-  Lisp_Object menu_bar_window;
-#endif
-
 #if defined (HAVE_WINDOW_SYSTEM) && ! defined (USE_GTK) && ! defined (HAVE_NS)
   /* A window used to display the tool-bar of a frame.  */
   Lisp_Object tool_bar_window;
@@ -213,16 +207,11 @@ struct frame
   /* Number of elements in `menu_bar_vector' that have meaningful data.  */
   int menu_bar_items_used;
 
-#if defined (USE_X_TOOLKIT) || defined (HAVE_NTGUI)
+#if defined (HAVE_NTGUI)
   /* A buffer to hold the frame's name.  Since this is used by the
      window system toolkit, we can't use the Lisp string's pointer
      (`name', above) because it might get relocated.  */
   char *namebuf;
-#endif
-
-#ifdef USE_X_TOOLKIT
-  /* Used to pass geometry parameters to toolkit functions.  */
-  char *shell_position;
 #endif
 
   /* Glyph pool and matrix.  */
@@ -274,7 +263,7 @@ struct frame
   /* True if it needs to be redisplayed.  */
   bool_bf redisplay : 1;
 
-#if defined (USE_X_TOOLKIT) || defined (HAVE_NTGUI)	\
+#if defined (HAVE_NTGUI)	\
     || defined (HAVE_NS) || defined (USE_GTK)
   /* True means using a menu bar that comes from the X toolkit.  */
   bool_bf external_menu_bar : 1;
@@ -447,7 +436,7 @@ struct frame
 
   /* New text height and width for pending size change.  0 if no change
      pending.  These values represent pixels or canonical character units
-     according to the value of new_pixelwise and correlate to the the
+     according to the value of new_pixelwise and correlate to the
      text width/height of the frame.  */
   int new_width, new_height;
 
@@ -638,13 +627,6 @@ fset_menu_bar_vector (struct frame *f, Lisp_Object val)
 {
   f->menu_bar_vector = val;
 }
-#if defined (HAVE_X_WINDOWS) && ! defined (USE_X_TOOLKIT) && ! defined (USE_GTK)
-INLINE void
-fset_menu_bar_window (struct frame *f, Lisp_Object val)
-{
-  f->menu_bar_window = val;
-}
-#endif
 INLINE void
 fset_name (struct frame *f, Lisp_Object val)
 {
@@ -879,7 +861,7 @@ default_pixels_per_inch_y (void)
 
 /* True if this frame should display a menu bar
    in a way that does not use any text lines.  */
-#if defined (USE_X_TOOLKIT) || defined (HAVE_NTGUI) \
+#if defined (HAVE_NTGUI) \
      || defined (HAVE_NS) || defined (USE_GTK)
 #define FRAME_EXTERNAL_MENU_BAR(f) (f)->external_menu_bar
 #else
@@ -1570,9 +1552,7 @@ extern enum internal_border_part frame_internal_border_part (struct frame *f, in
 
 #if defined HAVE_X_WINDOWS
 extern void x_wm_set_icon_position (struct frame *, int, int);
-#if !defined USE_X_TOOLKIT
 extern char *x_get_resource_string (const char *, const char *);
-#endif
 extern void x_sync (struct frame *);
 #endif /* HAVE_X_WINDOWS */
 

@@ -1,3 +1,4 @@
+
 ;;; authors.el --- utility for maintaining Emacs's AUTHORS file
 
 ;; Copyright (C) 2000-2017 Free Software Foundation, Inc.
@@ -301,8 +302,6 @@ Changes to files matching one of the regexps in this list are not listed.")
     "gfdl.1"
     "texi/Makefile.in"
     "autodeps.mk"
-    "lwlib/autodeps.mk"
-    "oldXMenu/autodeps.mk"
     "src/autodeps.mk"
     "Imakefile" "icons/sink.ico" "aixcc.lex"
     "nxml/char-name/unicode"
@@ -391,7 +390,7 @@ Changes to files matching one of the regexps in this list are not listed.")
     "vms" "mac" "url" "tree-widget"
     "info/dir"
     ;; Not in gnulib anymore
-    "lib/qset-acl.c" "lib/qcopy-acl.c" "lib/file-has-acl.c"
+    "lib/qset-acl.c" "lib/qcopy-acl.c" "lib/file-has-acl.c" "lib/secure_getenv.c"
     ;; files from old MS Windows build procedures
     "nt/gnulib-modules-to-delete.cfg"
     "makefile.w32-in"
@@ -735,6 +734,8 @@ Changes to files in this list are not listed.")
     "org-exp-blocks.el"		     ; maybe this is ob-exp now? dunno
     "org-lparse.el"
     "org-special-blocks.el" "org-taskjuggler.el"
+    "ob-sh.el"
+    "ob-scala.el"
     "progmodes/cap-words.el"
     "w32-common-fns.el"
     ;; gnus
@@ -750,17 +751,14 @@ Changes to files in this list are not listed.")
     "format-spec.el" "gnus-move.el" "gnus-sync.el"
     "auth-source.el" "ecomplete.el" "gravatar.el" "mailcap.el" "plstore.el"
     "pop3.el" "qp.el" "registry.el" "rfc2231.el" "rtree.el"
-    "sieve.el" "sieve-mode.el"
+    "sieve.el" "sieve-mode.el" "gnus-ems.el"
     ;; doc
     "getopt.c" "texindex.c" "news.texi" "vc.texi" "vc2-xtra.texi"
     "back.texi" "vol1.texi" "vol2.texi" "elisp-covers.texi" "two.el"
     "front-cover-1.texi" "locals.texi" "calendar.texi" "info-stnd.texi"
     "tasks.texi"
     "advice.texi" "picture.texi" "texinfo.tex"
-    ;; lwlib:
     "dispatch.c" "dispatch.h" "xrdb-cpp.c" "xrdb.c"
-    "lwlib-Xol.c" "lwlib-Xol.h" "lwlib-Xolmb.c" "lwlib-Xolmb.h"
-    "lwlib-XolmbP.h"
     ;; lib/
     "lib/stdio.c" "lib/gl_openssl.h" "lib/sigprocmask.c"
     "lib/pthread_sigprocmask.c" "lib/ldtoastr.c" "lib/dummy.c"
@@ -800,7 +798,12 @@ Changes to files in this list are not listed.")
     "cedet-utests.el" "ede-tests.el" "semantic-ia-utest.el"
     "semantic-tests.el" "semantic-utest-c.el" "semantic-utest.el"
     "srecode-tests.el" "make-test-deps.emacs-lisp"
-    )
+    "nxml-uchnm.el"
+    "decoder-tests.el"
+    "obsolete/scribe.el"
+    "cp51932.el"
+    "eucjp-ms.el"
+    "lisp.mk")
   "File names which are valid, but no longer exist (or cannot be found)
 in the repository.")
 
@@ -904,6 +907,9 @@ in the repository.")
     ("patcomp.el" . "patcomp.el")
     ("emulation/ws-mode.el" . "ws-mode.el")
     ("vc/vc-arch.el" . "vc-arch.el")
+    ("lisp/gnus/messcompat.el" . "messcompat.el")
+    ("html2text.el" . "html2text.el")
+    ("lisp/net/html2text.el" . "html2text.el")
     ;; From lisp to etc/forms.
     ("forms-d2.el" . "forms-d2.el")
     ("forms-pass.el" . "forms-pass.el")
@@ -947,9 +953,17 @@ in the repository.")
     ;; Moved from lisp/gnus/ to lisp/mail/
     ("binhex.el" . "mail/binhex.el")
     ("uudecode.el" . "mail/uudecode.el")
+    ("mail-parse.el" . "mail/mail-parse.el")
+    ("yenc.el" . "mail/yenc.el")
+    ("flow-fill.el" . "mail/flow-fill.el")
+    ("ietf-drums.el" . "mail/ietf-drums.el")
+    ("sieve-manage.el" . "mail/sieve-manage.el")
+    ;; Moved from lisp/gnus/ to lisp/image/
+    ("compface.el" . "image/compface.el")
     ;; Moved from lisp/gnus/ to lisp/net/
     ("imap.el" . "net/imap.el")
     ("rfc2104.el" . "net/rfc2104.el")
+    ("starttls.el" . "net/starttls.el")
     ;; And from emacs/ to misc/ and back again.
     ("ns-emacs.texi" . "macos.texi")
     ("overrides.texi" . "gnus-overrides.texi")
@@ -990,6 +1004,7 @@ in the repository.")
     ("edt-user.doc" . "edt.texi")
     ("DEV-NOTES" . "nextstep")
     ("org/COPYRIGHT-AND-LICENSE" . "org/README")
+    ("lisp/net/idna.el" . "puny.el")
     ;; Moved to different directories.
     ("ctags.1" . "ctags.1")
     ("etags.1" . "etags.1")
@@ -1018,6 +1033,8 @@ in the repository.")
     ;; module.* moved to emacs-module.*
     ("src/module.h" . "src/emacs-module.h")
     ("src/module.c" . "src/emacs-module.c")
+    ;; gnulib
+    ("lib/strftime.c" . "lib/nstrftime.c")
     )
   "Alist of files which have been renamed during their lifetime.
 Elements are (OLDNAME . NEWNAME).")
@@ -1296,9 +1313,10 @@ it is found in `authors-fixed-case'."
     (setq author (replace-regexp-in-string "[ \t]+" " " author))
     ;; NB this ignores the first name only case.
     (unless (string-match "[-, \t]" author)
-      (push (format-message "%s:%d: ignored `%s'"
-			    file (1+ (count-lines (point-min) pos)) author)
-	    authors-ignored-names)
+      (or (authors-lax-changelog-p file)
+          (push (format-message "%s:%d: ignored `%s'"
+                                file (1+ (count-lines (point-min) pos)) author)
+                authors-ignored-names))
       (setq author ""))
     (or (car (member author authors-fixed-case))
 	(capitalize author))))

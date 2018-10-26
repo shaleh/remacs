@@ -2,8 +2,8 @@
 
 use remacs_macros::lisp_fn;
 use remacs_sys::{frame_dimension, output_method, Fcons, Fselect_window};
-use remacs_sys::{selected_frame as current_frame, Lisp_Frame, Lisp_Type};
-use remacs_sys::{Qframe_live_p, Qframep, Qicon, Qns, Qpc, Qt, Qw32, Qx};
+use remacs_sys::{pvec_type, selected_frame as current_frame, Lisp_Frame, Lisp_Type};
+use remacs_sys::{Qframe_live_p, Qframep, Qicon, Qnil, Qns, Qpc, Qt, Qw32, Qx};
 
 use lisp::defsubr;
 use lisp::{ExternalPtr, LispObject};
@@ -16,20 +16,61 @@ impl LispFrameRef {
         LispObject::tag_ptr(self, Lisp_Type::Lisp_Vectorlike)
     }
 
-    #[inline]
     pub fn is_live(self) -> bool {
         !self.terminal.is_null()
     }
 
     // Pixel-width of internal border lines.
-    #[inline]
     pub fn internal_border_width(self) -> i32 {
         unsafe { frame_dimension(self.internal_border_width) }
     }
 
-    #[inline]
     pub fn is_visible(self) -> bool {
         self.visible() != 0
+    }
+}
+
+impl From<LispObject> for LispFrameRef {
+    fn from(o: LispObject) -> Self {
+        o.as_frame_or_error()
+    }
+}
+
+impl From<LispFrameRef> for LispObject {
+    fn from(f: LispFrameRef) -> Self {
+        f.as_lisp_obj()
+    }
+}
+
+impl From<LispObject> for Option<LispFrameRef> {
+    fn from(o: LispObject) -> Self {
+        o.as_frame()
+    }
+}
+
+impl LispObject {
+    pub fn is_frame(self) -> bool {
+        self.as_vectorlike()
+            .map_or(false, |v| v.is_pseudovector(pvec_type::PVEC_FRAME))
+    }
+
+    pub fn as_frame(self) -> Option<LispFrameRef> {
+        self.as_vectorlike().and_then(|v| v.as_frame())
+    }
+
+    pub fn as_frame_or_error(self) -> LispFrameRef {
+        self.as_frame()
+            .unwrap_or_else(|| wrong_type!(Qframep, self))
+    }
+
+    pub fn as_live_frame(self) -> Option<LispFrameRef> {
+        self.as_frame()
+            .and_then(|f| if f.is_live() { Some(f) } else { None })
+    }
+
+    pub fn as_live_frame_or_error(self) -> LispFrameRef {
+        self.as_live_frame()
+            .unwrap_or_else(|| wrong_type!(Qframe_live_p, self))
     }
 }
 
@@ -60,7 +101,7 @@ pub fn window_frame_live_or_selected(object: LispObject) -> LispFrameRef {
         selected_frame().as_frame_or_error()
     } else if let Some(win) = object.as_valid_window() {
         // the window's frame does not need a live check
-        win.frame().as_frame_or_error()
+        win.frame.as_frame_or_error()
     } else {
         object.as_live_frame_or_error()
     }
@@ -80,7 +121,7 @@ pub fn window_frame_live_or_selected_with_action<W: FnMut(LispWindowRef) -> ()>(
     if object.is_window() {
         let w = object.as_live_window_or_error();
         window_action(w);
-        object = w.frame();
+        object = w.frame;
     }
 
     object.as_live_frame_or_error()
@@ -105,7 +146,7 @@ pub fn frame_live_p(object: LispObject) -> LispObject {
         }
     }
 
-    LispObject::constant_nil()
+    Qnil
 }
 
 /// Return the selected window of FRAME-OR-WINDOW.
@@ -134,7 +175,7 @@ pub fn set_frame_selected_window(
     let mut frame_ref = frame_live_or_selected(frame);
     let w = window.as_live_window_or_error();
 
-    if frame_ref != w.frame().as_frame().unwrap() {
+    if frame_ref != w.frame.as_frame().unwrap() {
         error!("In `set-frame-selected-window', WINDOW is not on FRAME")
     }
     if frame_ref == selected_frame().as_frame().unwrap() {
@@ -154,9 +195,7 @@ pub fn set_frame_selected_window(
 /// See also `frame-live-p'.
 #[lisp_fn]
 pub fn framep(object: LispObject) -> LispObject {
-    object
-        .as_frame()
-        .map_or_else(LispObject::constant_nil, framep_1)
+    object.as_frame().map_or(Qnil, framep_1)
 }
 
 fn framep_1(frame: LispFrameRef) -> LispObject {
@@ -193,7 +232,7 @@ pub fn window_system(frame: Option<LispFrameRef>) -> LispObject {
     }
 
     if window_system.is_t() {
-        LispObject::constant_nil()
+        Qnil
     } else {
         window_system
     }
@@ -211,11 +250,11 @@ pub fn window_system(frame: Option<LispFrameRef>) -> LispObject {
 #[lisp_fn]
 pub fn frame_visible_p(frame: LispFrameRef) -> LispObject {
     if frame.is_visible() {
-        LispObject::constant_t()
+        Qt
     } else if frame.iconified() {
         Qicon
     } else {
-        LispObject::constant_nil()
+        Qnil
     }
 }
 
@@ -264,11 +303,47 @@ pub fn frame_root_window(frame_or_window: LispObject) -> LispObject {
 pub fn frame_first_window(frame_or_window: LispObject) -> LispWindowRef {
     let mut window = frame_root_window(frame_or_window).as_window_or_error();
 
-    while let Some(win) = window.contents().as_window() {
+    while let Some(win) = window.contents.as_window() {
         window = win;
     }
 
     window
+}
+
+/// Return width in columns of FRAME's text area.
+#[lisp_fn(min = "0")]
+pub fn frame_text_cols(frame: LispObject) -> LispObject {
+    LispObject::from(frame_or_selected(frame).text_cols)
+}
+
+/// Return height in lines of FRAME's text area.
+#[lisp_fn(min = "0")]
+pub fn frame_text_lines(frame: LispObject) -> LispObject {
+    LispObject::from(frame_or_selected(frame).text_lines)
+}
+
+/// Return number of total columns of FRAME.
+#[lisp_fn(min = "0")]
+pub fn frame_total_cols(frame: LispObject) -> LispObject {
+    LispObject::from(frame_or_selected(frame).total_cols)
+}
+
+/// Return number of total lines of FRAME.
+#[lisp_fn(min = "0")]
+pub fn frame_total_lines(frame: LispObject) -> LispObject {
+    LispObject::from(frame_or_selected(frame).total_lines)
+}
+
+/// Return text area width of FRAME in pixels.
+#[lisp_fn(min = "0")]
+pub fn frame_text_width(frame: LispObject) -> LispObject {
+    LispObject::from(frame_or_selected(frame).text_width)
+}
+
+/// Return text area height of FRAME in pixels.
+#[lisp_fn(min = "0")]
+pub fn frame_text_height(frame: LispObject) -> LispObject {
+    LispObject::from(frame_or_selected(frame).text_height)
 }
 
 include!(concat!(env!("OUT_DIR"), "/frames_exports.rs"));

@@ -55,8 +55,10 @@ mod lisp;
 mod vector_macros;
 mod str2sig;
 
+mod alloc;
 mod base64;
 mod buffers;
+mod bytecode;
 mod casefiddle;
 mod casetab;
 mod category;
@@ -73,6 +75,7 @@ mod dired_unix;
 mod dired_windows;
 mod dispnew;
 mod editfns;
+mod emacs;
 mod eval;
 mod ffi;
 mod fileio;
@@ -97,6 +100,7 @@ mod obarray;
 mod objects;
 mod process;
 mod remacs_sys;
+mod search;
 mod strings;
 mod symbols;
 mod syntax;
@@ -107,6 +111,7 @@ mod time;
 mod util;
 mod vectors;
 mod windows;
+mod xml;
 
 #[cfg(all(not(test), target_os = "macos"))]
 use alloc_unexecmacosx::OsxUnexecAlloc;

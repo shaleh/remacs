@@ -35,7 +35,7 @@ include!(concat!(env!("OUT_DIR"), "/globals.rs"));
 pub const VAL_MAX: EmacsInt = (EMACS_INT_MAX >> (GCTYPEBITS - 1));
 pub const VALMASK: EmacsInt = [VAL_MAX, -(1 << GCTYPEBITS)][USE_LSB_TAG as usize];
 pub const INTMASK: EmacsInt = (EMACS_INT_MAX >> (Lisp_Bits::INTTYPEBITS - 1));
-pub const PSEUDOVECTOR_FLAG: usize = 0x4000000000000000;
+pub const PSEUDOVECTOR_FLAG: usize = 0x4000_0000_0000_0000;
 
 // These signal an error, therefore are marked as non-returning.
 extern "C" {
@@ -60,6 +60,15 @@ pub enum EqualKind {
     NoQuit,
     Plain,
     IncludingProperties,
+}
+
+#[repr(C)]
+pub enum BoolVectorOp {
+    BoolVectorExclusiveOr,
+    BoolVectorUnion,
+    BoolVectorIntersection,
+    BoolVectorSetDifference,
+    BoolVectorSubsetp,
 }
 
 // bindgen apparently misses these, for various reasons
@@ -105,7 +114,17 @@ extern "C" {
         depth: EmacsInt,
         sexpflag: bool,
     ) -> LispObject;
-    pub fn is_minibuffer(w: *const Lisp_Window) -> bool;
+    pub fn read_minibuf(
+        map: Lisp_Object,
+        initial: Lisp_Object,
+        prompt: Lisp_Object,
+        expflag: bool,
+        histvar: Lisp_Object,
+        histpos: Lisp_Object,
+        defalt: Lisp_Object,
+        allow_props: bool,
+        inherit_input_method: bool,
+    ) -> Lisp_Object;
     pub static minibuf_prompt: LispObject;
     pub fn add_process_read_fd(fd: libc::c_int);
     pub fn allocate_misc(t: Lisp_Misc_Type) -> LispObject;
@@ -123,12 +142,19 @@ extern "C" {
 
     pub fn wset_update_mode_line(w: *mut Lisp_Window);
     pub fn wset_display_table(w: *mut Lisp_Window, val: LispObject);
-}
+    pub fn drop_overlay(b: *mut Lisp_Buffer, ov: *mut Lisp_Overlay);
+    pub fn unchain_both(b: *mut Lisp_Buffer, ov: LispObject);
+    pub fn emacs_get_tty_pgrp(p: *mut Lisp_Process) -> libc::pid_t;
 
-// Largest and smallest numbers that can be represented as fixnums in
-// Emacs lisp.
-pub const MOST_POSITIVE_FIXNUM: EmacsInt = EMACS_INT_MAX >> Lisp_Bits::INTTYPEBITS as u32;
-pub const MOST_NEGATIVE_FIXNUM: EmacsInt = (-1 - MOST_POSITIVE_FIXNUM);
+    pub fn set_window_hscroll(w: *mut Lisp_Window, hscroll: EMACS_INT) -> Lisp_Object;
+    pub fn scroll_command(n: Lisp_Object, direction: libc::c_int);
+    pub fn bool_vector_binop_driver(
+        a: Lisp_Object,
+        b: Lisp_Object,
+        dest: Lisp_Object,
+        op: BoolVectorOp,
+    ) -> Lisp_Object;
+}
 
 // Max value for the first argument of wait_reading_process_output.
 pub const WAIT_READING_MAX: i64 = std::i64::MAX;

@@ -85,6 +85,9 @@
                 'A)))
   )
 
+(ert-deftest data-test--byteorder ()
+  (should (member (byteorder) '(66 108))))
+
 (ert-deftest data-test--subr-arity ()
   (should-error (subr-arity 'insert))
   (should (equal '(0 . many) (subr-arity (symbol-function 'insert))))
@@ -114,6 +117,24 @@
   ;; so run it here to make sure that it works.
   :expected-result :failed
   (describe-function 'rename-buffer))
+
+(ert-deftest data-test--get-variable-documentation ()
+  ;; Defined in Lisp
+  (should (stringp (get 'split-width-threshold 'variable-documentation)))
+  ;; Defined in C
+  (should (integerp (get 'gc-cons-threshold 'variable-documentation)))
+  ;; Defined in Rust
+  (should (integerp (get 'post-self-insert-hook 'variable-documentation)))
+  (should (integerp (get 'last-command 'variable-documentation)))
+  (should (integerp (get 'header-line-format 'variable-documentation))))
+
+(ert-deftest data-test--find-definition-noselect ()
+  ;; Defined in Lisp
+  (should (consp (find-definition-noselect 'split-width-threshold 'defvar)))
+  ;; Defined in C
+  (should (consp (find-definition-noselect 'gc-cons-threshold 'defvar)))
+  ;; Defined in Rust
+  (should (consp (find-definition-noselect 'post-self-insert-hook 'defvar))))
 
 (provide 'data-tests)
 ;;; data-tests.el ends here
