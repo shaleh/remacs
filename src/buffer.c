@@ -114,6 +114,9 @@ static void call_overlay_mod_hooks (Lisp_Object list, Lisp_Object overlay,
                                     Lisp_Object arg2, Lisp_Object arg3);
 static void reset_buffer_local_variables (struct buffer *, bool);
 
+void drop_overlay (struct buffer *, struct Lisp_Overlay *);
+void unchain_both (struct buffer *, Lisp_Object);
+
 /* Alist of all buffer names vs the buffers.  This used to be
    a Lisp-visible variable, but is no longer, to prevent lossage
    due to user rplac'ing this alist or its elements.  */
