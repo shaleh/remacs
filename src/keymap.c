@@ -94,9 +94,6 @@ static void describe_vector (Lisp_Object, Lisp_Object, Lisp_Object,
 static void silly_event_symbol_error (Lisp_Object);
 static Lisp_Object get_keyelt (Lisp_Object, bool);
 
-void map_keymap_item (map_keymap_function_t, Lisp_Object, Lisp_Object, Lisp_Object, void *);
-void map_keymap_char_table_item (Lisp_Object, Lisp_Object, Lisp_Object);
-
 static void
 CHECK_VECTOR_OR_CHAR_TABLE (Lisp_Object x)
 {
@@ -313,45 +310,9 @@ access_keymap (Lisp_Object map, Lisp_Object idx,
 }
 
 void
-map_keymap_item (map_keymap_function_t fun, Lisp_Object args, Lisp_Object key, Lisp_Object val, void *data)
-{
-  if (EQ (val, Qt))
-    val = Qnil;
-  (*fun) (key, val, args, data);
-}
-
-void
-map_keymap_char_table_item (Lisp_Object args, Lisp_Object key, Lisp_Object val)
-{
-  if (!NILP (val))
-    {
-      map_keymap_function_t fun
-	= (map_keymap_function_t) XSAVE_FUNCPOINTER (args, 0);
-      /* If the key is a range, make a copy since map_char_table modifies
-	 it in place.  */
-      if (CONSP (key))
-	key = Fcons (XCAR (key), XCDR (key));
-      map_keymap_item (fun, XSAVE_OBJECT (args, 2), key,
-		       val, XSAVE_POINTER (args, 1));
-    }
-}
-
-void
 map_keymap_call (Lisp_Object key, Lisp_Object val, Lisp_Object fun, void *dummy)
 {
   call2 (fun, key, val);
-}
-
-/* Same as map_keymap, but does it right, properly eliminating duplicate
-   bindings due to inheritance.   */
-void
-map_keymap_canonical (Lisp_Object map, map_keymap_function_t fun, Lisp_Object args, void *data)
-{
-  /* map_keymap_canonical may be used from redisplay (e.g. when building menus)
-     so be careful to ignore errors and to inhibit redisplay.  */
-  map = safe_call1 (Qkeymap_canonicalize, map);
-  /* No need to use `map_keymap' here because canonical map has no parent.  */
-  map_keymap_internal (map, fun, args, data);
 }
 
 /* Given OBJECT which was found in a slot in a keymap,

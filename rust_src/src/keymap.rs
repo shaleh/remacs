@@ -7,10 +7,11 @@ use libc::c_void;
 
 use remacs_macros::lisp_fn;
 use remacs_sys::{access_keymap, make_save_funcptr_ptr_obj, map_char_table, map_keymap_call,
-                 map_keymap_char_table_item, map_keymap_function_t, map_keymap_item, maybe_quit};
-use remacs_sys::{char_bits, current_global_map as _current_global_map, globals, EmacsInt};
+                 maybe_quit, safe_call1, XSAVE_FUNCPOINTER, XSAVE_OBJECT, XSAVE_POINTER};
+use remacs_sys::{char_bits, current_global_map as _current_global_map, globals,
+                 map_keymap_function_t, voidfuncptr, EmacsInt};
 use remacs_sys::{Fcons, Fevent_convert_list, Ffset, Fmake_char_table, Fpurecopy, Fset};
-use remacs_sys::{Qautoload, Qkeymap, Qkeymapp, Qnil, Qt};
+use remacs_sys::{Qautoload, Qkeymap, Qkeymap_canonicalize, Qkeymapp, Qnil, Qt};
 
 use data::{aref, indirect_function};
 use eval::autoload_do_load;
@@ -317,16 +318,29 @@ pub fn map_keymap_lisp(function: LispObject, keymap: LispObject, sort_first: boo
     Qnil
 }
 
+// Same as map_keymap, but does it right, properly eliminating duplicate
+// bindings due to inheritance.
+fn map_keymap_canonical(
+    map: LispObject,
+    fun: map_keymap_function_t,
+    args: LispObject,
+    data: *mut c_void,
+) {
+    // map_keymap_canonical may be used from redisplay (e.g. when building menus)
+    // so be careful to ignore errors and to inhibit redisplay.
+    let map = safe_call1(Qkeymap_canonicalize, map);
+    // No need to use `map_keymap' here because canonical map has no parent.
+    map_keymap_internal(map, fun, args, data);
+}
+
 /// Call FUN for every binding in MAP and stop at (and return) the parent.
 /// FUN is called with 4 arguments: FUN (KEY, BINDING, ARGS, DATA).
-#[no_mangle]
-pub unsafe extern "C" fn map_keymap_internal(
+fn map_keymap_internal(
     map: LispObject,
     fun: map_keymap_function_t,
     args: LispObject,
     data: *mut c_void,
 ) -> LispObject {
-    let map = map;
     let tail = match map.as_cons() {
         None => Qnil,
         Some(cons) => {
@@ -382,7 +396,7 @@ pub unsafe extern "C" fn map_keymap_internal(
 #[lisp_fn(name = "map-keymap-internal")]
 pub fn map_keymap_internal_lisp(function: LispObject, mut keymap: LispObject) -> LispObject {
     keymap = get_keymap(keymap, true, true);
-    unsafe { map_keymap_internal(keymap, Some(map_keymap_call), function, ptr::null_mut()) }
+    map_keymap_internal(keymap, Some(map_keymap_call), function, ptr::null_mut())
 }
 
 /// Return the binding for command KEYS in current local keymap only.
@@ -562,6 +576,48 @@ pub fn make_sparse_keymap(string: LispObject) -> LispObject {
         list!(Qkeymap, s)
     } else {
         list!(Qkeymap)
+    }
+}
+
+fn map_keymap_item(
+    func: map_keymap_function_t,
+    args: LispObject,
+    key: LispObject,
+    val: LispObject,
+    data: *mut c_void,
+) {
+    if let Some(funcptr) = func {
+        let val = if val.eq(Qt) { Qnil } else { val };
+        funcptr(key, val, args, data);
+    }
+}
+
+type map_keymap_rust_t = unsafe extern "C" fn(LispObject, LispObject, LispObject, *mut c_void);
+
+#[no_mangle]
+extern "C" fn wrap_voidptr_with_map_keymap_function(
+    func: voidfuncptr,
+) -> Box<map_keymap_function_t> {
+    Box::new(
+        move |key: LispObject, val: LispObject, args: LispObject, data: *mut c_void| {
+            if let Some(funcptr) = func {
+                funcptr();
+            }
+        },
+    )
+}
+
+#[no_mangle]
+extern "C" fn map_keymap_char_table_item(args: LispObject, key: LispObject, val: LispObject) {
+    if !val.is_nil() {
+        let fun = wrap_voidptr_with_map_keymap_function(XSAVE_FUNCPOINTER(args, 0));
+        let key = if let Some(cons) = key.as_cons() {
+            // If the key is a range, make a copy since map_char_table modifies it in place.
+            unsafe { Fcons(cons.car(), cons.cdr()) }
+        } else {
+            key
+        };
+        map_keymap_item(fun, XSAVE_OBJECT(args, 2), key, val, XSAVE_POINTER(args, 1));
     }
 }
 
