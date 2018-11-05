@@ -969,10 +969,9 @@ have-tests:
 	  $(CARGO_TEST) --manifest-path ${cargo_manifest}; \
 	fi
 
-.PHONY: check check-maybe check-expensive check-all
-check check-maybe check-expensive check-all: have-tests all
-	$(MAKE) -C test $@
+check check-maybe check-expensive: have-tests all
 	$(MAKE) -C src $@
+	$(MAKE) -C test $@
 
 dist:
 	cd ${srcdir}; ./make-dist
