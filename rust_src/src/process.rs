@@ -338,7 +338,7 @@ fn set_process_filter_masks(process: LispProcessRef) -> () {
             unsafe { delete_read_fd(process.infd) };
         // Network or serial process not stopped:
         } else if process.command.eq(Qt) {
-            add_process_read_fd(process.infd);
+            unsafe { add_process_read_fd(process.infd) };
         }
     }
 }
@@ -472,24 +472,19 @@ pub fn process_running_child_p(mut process: LispObject) -> LispObject {
 }
 
 #[no_mangle]
-unsafe extern "C" fn add_non_keyboard_read_fd(fd: libc::c_int) {
+pub unsafe extern "C" fn add_process_read_fd(fd: libc::c_int) {
     assert!(fd >= 0 && fd < (FD_SETSIZE as libc::c_int));
 
-    let callback_info: &[fd_callback_data] = &fd_callback_info;
-    let info = callback_info[fd as usize];
-    assert!(info.func.is_null());
+    let callback_info: &mut [fd_callback_data] = &mut fd_callback_info;
+    let mut info = callback_info[fd as usize];
+    assert!(info.func.is_none());
 
-    info.flags &= !KEYBOARD_FD;
-    info.flags |= FOR_READ;
+    info.flags &= !KEYBOARD_FD as i32;
+    info.flags |= FOR_READ as i32;
+    info.flags |= PROCESS_FD as i32;
     if fd > max_desc {
         max_desc = fd;
     }
-}
-
-#[no_mangle]
-pub unsafe extern "C" fn add_process_read_fd(fd: libc::c_int) {
-    add_non_keyboard_read_fd(fd);
-    fd_callback_info[fd].flags |= PROCESS_FD;
 }
 
 include!(concat!(env!("OUT_DIR"), "/process_exports.rs"));
