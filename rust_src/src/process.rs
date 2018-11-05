@@ -2,10 +2,12 @@
 use libc;
 
 use remacs_macros::lisp_fn;
-use remacs_sys::{add_process_read_fd, current_thread, delete_read_fd, emacs_get_tty_pgrp,
-                 get_process as cget_process, send_process, setup_process_coding_systems,
-                 update_status, Fmapcar, STRING_BYTES};
-use remacs_sys::{pvec_type, EmacsInt, Lisp_Process, Lisp_Type, Vprocess_alist};
+use remacs_sys::fd_bits::{FOR_READ, KEYBOARD_FD, PROCESS_FD};
+use remacs_sys::{current_thread, delete_read_fd, emacs_get_tty_pgrp, get_process as cget_process,
+                 send_process, setup_process_coding_systems, update_status, Fmapcar, FD_SETSIZE,
+                 STRING_BYTES};
+use remacs_sys::{fd_callback_data, fd_callback_info, max_desc, pvec_type, EmacsInt, Lisp_Process,
+                 Lisp_Type, Vprocess_alist};
 use remacs_sys::{QCbuffer, QCfilter, QCsentinel, Qcdr, Qclosed, Qexit,
                  Qinternal_default_process_filter, Qinternal_default_process_sentinel, Qlisten,
                  Qlistp, Qnetwork, Qnil, Qopen, Qpipe, Qprocessp, Qreal, Qrun, Qserial, Qstop, Qt};
@@ -336,7 +338,7 @@ fn set_process_filter_masks(process: LispProcessRef) -> () {
             unsafe { delete_read_fd(process.infd) };
         // Network or serial process not stopped:
         } else if process.command.eq(Qt) {
-            unsafe { add_process_read_fd(process.infd) };
+            add_process_read_fd(process.infd);
         }
     }
 }
@@ -467,6 +469,27 @@ pub fn process_running_child_p(mut process: LispObject) -> LispObject {
     } else {
         LispObject::from_fixnum(gid.into())
     }
+}
+
+#[no_mangle]
+unsafe extern "C" fn add_non_keyboard_read_fd(fd: libc::c_int) {
+    assert!(fd >= 0 && fd < (FD_SETSIZE as libc::c_int));
+
+    let callback_info: &[fd_callback_data] = &fd_callback_info;
+    let info = callback_info[fd as usize];
+    assert!(info.func.is_null());
+
+    info.flags &= !KEYBOARD_FD;
+    info.flags |= FOR_READ;
+    if fd > max_desc {
+        max_desc = fd;
+    }
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn add_process_read_fd(fd: libc::c_int) {
+    add_non_keyboard_read_fd(fd);
+    fd_callback_info[fd].flags |= PROCESS_FD;
 }
 
 include!(concat!(env!("OUT_DIR"), "/process_exports.rs"));

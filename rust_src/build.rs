@@ -294,6 +294,8 @@ impl<'a> ModuleParser<'a> {
                         self.lineno,
                         format!("\n`{}` is not public.\n{}", name, msg),
                     ))
+                } else if line.starts_with("extern \"C\" ") {
+                    Ok(None)
                 } else {
                     eprintln!(
                         "Unhandled code in the {} module at line {}",
@@ -307,7 +309,9 @@ impl<'a> ModuleParser<'a> {
     }
 
     fn lint_nomangle(&mut self, line: &str) -> Result<(), LintMsg> {
-        if !(line.starts_with("pub extern \"C\" ") || line.starts_with("pub unsafe extern \"C\" "))
+        if !(line.starts_with("extern \"C\" ")
+            || line.starts_with("pub extern \"C\" ")
+            || line.starts_with("pub unsafe extern \"C\" "))
         {
             Err(LintMsg::new(
                 &self.info.name,

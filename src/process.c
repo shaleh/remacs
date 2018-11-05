@@ -261,7 +261,7 @@ pid_t emacs_get_tty_pgrp (struct Lisp_Process *);
 static int num_pending_connects;
 
 /* The largest descriptor currently in use; -1 if none.  */
-static int max_desc;
+int max_desc;
 
 /* Set the external socket descriptor for Emacs to use when
    `make-network-process' is called with a non-nil
@@ -403,35 +403,7 @@ make_lisp_proc (struct Lisp_Process *p)
   return make_lisp_ptr (p, Lisp_Vectorlike);
 }
 
-enum fd_bits
-{
-  /* Read from file descriptor.  */
-  FOR_READ = 1,
-  /* Write to file descriptor.  */
-  FOR_WRITE = 2,
-  /* This descriptor refers to a keyboard.  Only valid if FOR_READ is
-     set.  */
-  KEYBOARD_FD = 4,
-  /* This descriptor refers to a process.  */
-  PROCESS_FD = 8,
-  /* A non-blocking connect.  Only valid if FOR_WRITE is set.  */
-  NON_BLOCKING_CONNECT_FD = 16
-};
-
-static struct fd_callback_data
-{
-  fd_callback func;
-  void *data;
-  /* Flags from enum fd_bits.  */
-  int flags;
-  /* If this fd is locked to a certain thread, this points to it.
-     Otherwise, this is NULL.  If an fd is locked to a thread, then
-     only that thread is permitted to wait on it.  */
-  struct thread_state *thread;
-  /* If this fd is currently being selected on by a thread, this
-     points to the thread.  Otherwise it is NULL.  */
-  struct thread_state *waiting_thread;
-} fd_callback_info[FD_SETSIZE];
+struct fd_callback_data fd_callback_info[FD_SETSIZE];
 
 
 /* Add a file descriptor FD to be monitored for when read is possible.
@@ -444,25 +416,6 @@ add_read_fd (int fd, fd_callback func, void *data)
 
   fd_callback_info[fd].func = func;
   fd_callback_info[fd].data = data;
-}
-
-static void
-add_non_keyboard_read_fd (int fd)
-{
-  eassert (fd >= 0 && fd < FD_SETSIZE);
-  eassert (fd_callback_info[fd].func == NULL);
-
-  fd_callback_info[fd].flags &= ~KEYBOARD_FD;
-  fd_callback_info[fd].flags |= FOR_READ;
-  if (fd > max_desc)
-    max_desc = fd;
-}
-
-void
-add_process_read_fd (int fd)
-{
-  add_non_keyboard_read_fd (fd);
-  fd_callback_info[fd].flags |= PROCESS_FD;
 }
 
 /* Stop monitoring file descriptor FD for when read is possible.  */
@@ -7614,4 +7567,7 @@ returns non-`nil'.  */);
 
   defsubr (&Slist_system_processes);
   defsubr (&Sprocess_attributes);
+
+  memset (fd_callback_info, 0, sizeof(struct fd_callback_data) * FD_SETSIZE);
+  max_desc = -1;
 }

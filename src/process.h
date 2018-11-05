@@ -31,8 +31,43 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 
 INLINE_HEADER_BEGIN
 
+typedef void (*fd_callback) (int fd, void *data);
+
+enum fd_bits
+{
+  /* Read from file descriptor.  */
+  FOR_READ = 1,
+  /* Write to file descriptor.  */
+  FOR_WRITE = 2,
+  /* This descriptor refers to a keyboard.  Only valid if FOR_READ is
+     set.  */
+  KEYBOARD_FD = 4,
+  /* This descriptor refers to a process.  */
+  PROCESS_FD = 8,
+  /* A non-blocking connect.  Only valid if FOR_WRITE is set.  */
+  NON_BLOCKING_CONNECT_FD = 16
+};
+
+struct fd_callback_data
+{
+  fd_callback func;
+  void *data;
+  /* Flags from enum fd_bits.  */
+  int flags;
+  /* If this fd is locked to a certain thread, this points to it.
+     Otherwise, this is NULL.  If an fd is locked to a thread, then
+     only that thread is permitted to wait on it.  */
+  struct thread_state *thread;
+  /* If this fd is currently being selected on by a thread, this
+     points to the thread.  Otherwise it is NULL.  */
+  struct thread_state *waiting_thread;
+};
+
 /* Bound on number of file descriptors opened on behalf of a process,
    that need to be closed.  */
+
+extern struct fd_callback_data fd_callback_info[FD_SETSIZE];
+extern int max_desc;
 
 enum { PROCESS_OPEN_FDS = 6 };
 
@@ -279,8 +314,6 @@ extern Lisp_Object conv_sockaddr_to_lisp (struct sockaddr *, ptrdiff_t);
 extern void hold_keyboard_input (void);
 extern void unhold_keyboard_input (void);
 extern bool kbd_on_hold_p (void);
-
-typedef void (*fd_callback) (int fd, void *data);
 
 extern void add_read_fd (int fd, fd_callback func, void *data);
 extern void delete_read_fd (int fd);
