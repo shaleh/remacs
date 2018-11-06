@@ -12,7 +12,7 @@ use std::slice;
 
 use remacs_sys;
 use remacs_sys::{build_string, internal_equal, make_float};
-use remacs_sys::{pvec_type, EmacsDouble, EmacsInt, EmacsUint, EqualKind, Lisp_Bits, USE_LSB_TAG,
+use remacs_sys::{equal_kind, pvec_type, EmacsDouble, EmacsInt, EmacsUint, Lisp_Bits, USE_LSB_TAG,
                  VALMASK};
 use remacs_sys::{Lisp_Misc_Any, Lisp_Misc_Type, Lisp_Subr, Lisp_Type};
 use remacs_sys::{Qautoload, Qlistp, Qnil, Qsubrp, Qt, Vbuffer_alist};
@@ -514,11 +514,11 @@ impl LispObject {
     }
 
     pub fn equal(self, other: LispObject) -> bool {
-        unsafe { internal_equal(self, other, EqualKind::Plain, 0, Qnil) }
+        unsafe { internal_equal(self, other, equal_kind::EQUAL_PLAIN, 0, Qnil) }
     }
 
     pub fn equal_no_quit(self, other: LispObject) -> bool {
-        unsafe { internal_equal(self, other, EqualKind::NoQuit, 0, Qnil) }
+        unsafe { internal_equal(self, other, equal_kind::EQUAL_NO_QUIT, 0, Qnil) }
     }
 
     pub fn is_function(self) -> bool {

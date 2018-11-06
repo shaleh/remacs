@@ -954,6 +954,9 @@ check check-maybe check-expensive: have-tests all
 	$(MAKE) -C src $@
 	$(MAKE) -C test $@
 
+unit-test: have-tests all
+	$(MAKE) -C src $@
+
 dist:
 	cd ${srcdir}; ./make-dist
 

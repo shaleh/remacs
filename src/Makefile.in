@@ -386,7 +386,7 @@ ALL_OBJC_CFLAGS = $(EMACS_CFLAGS) \
 base_obj = dispnew.o frame.o scroll.o xdisp.o menu.o $(XMENU_OBJ) window.o \
 	charset.o coding.o category.o ccl.o character.o chartab.o bidi.o \
 	$(CM_OBJ) term.o terminal.o xfaces.o $(XOBJ) $(GTK_OBJ) $(DBUS_OBJ) \
-	emacs.o keyboard.o macros.o keymap.o sysdep.o \
+	keyboard.o macros.o keymap.o sysdep.o \
 	buffer.o filelock.o insdel.o \
 	minibuf.o fileio.o dired.o \
 	casetab.o casefiddle.o indent.o search.o regex.o undo.o \
@@ -613,6 +613,9 @@ check check-maybe check-expensive: $(libsrc)/hashdir/target/$(CARGO_BUILD_DIR)/h
 	SRC_HASH="$(shell EMACS_CFLAGS="-I../rust_src $(EMACS_CFLAGS)" ../lib-src/hashdir)" \
 	$(CARGO_TEST) $(CARGO_FLAGS) --manifest-path $(cargo_manifest)
 
+unit-test: $(libsrc)/hashdir/target/$(CARGO_BUILD_DIR)/hashdir$(EXEEXT)
+	$(MAKE) -C unit_tests run
+
 $(libsrc)/hashdir/target/$(CARGO_BUILD_DIR)/hashdir$(EXEEXT): ${libsrc}/hashdir/Cargo.toml ${libsrc}/hashdir/src/main.rs
 	RUSTFLAGS="$(RUSTFLAGS)" $(CARGO_BUILD) --manifest-path=${libsrc}/hashdir/Cargo.toml
 
@@ -629,9 +632,9 @@ $(LIBEGNU_ARCHIVE): $(config_h)
 ## to start if Vinstallation_directory has the wrong value.
 temacs$(EXEEXT): $(LIBXMENU) $(ALLOBJS) \
 	         $(LIBREMACS_ARCHIVE) $(RUSTFLAGS_FILE) \
-	         $(LIBEGNU_ARCHIVE) $(EMACSRES) ${charsets} ${charscript}
+	         $(LIBEGNU_ARCHIVE) $(EMACSRES) ${charsets} ${charscript} emacs.o
 	$(AM_V_CCLD)$(CC) $(ALL_CFLAGS) $(TEMACS_LDFLAGS) $(LDFLAGS) \
-	  -o temacs $(ALLOBJS) $(LIBEGNU_ARCHIVE) $(W32_RES_LINK) $(LIBES)
+	  -o temacs $(ALLOBJS) emacs.o $(LIBEGNU_ARCHIVE) $(W32_RES_LINK) $(LIBES)
 	$(MKDIR_P) $(etc)
 ifneq ($(CANNOT_DUMP),yes)
   ifneq ($(PAXCTL_notdumped),)
@@ -770,3 +773,7 @@ else
 endif
 	@: Compile some files earlier to speed up further compilation.
 	$(MAKE) -C ../lisp compile-first EMACS="$(bootstrap_exe)"
+
+unit-tests: $(ALLOBJS) unit-tests.o
+	$(AM_V_CCLD)$(CC) $(ALL_CFLAGS) $(TEMACS_LDFLAGS) $(LDFLAGS) \
+	  -o unit-tests $(ALLOBJS) unit-tests.o $(LIBEGNU_ARCHIVE) $(W32_RES_LINK) $(LIBES)
