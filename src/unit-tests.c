@@ -77,6 +77,8 @@ emacs_tests() {
 
 int
 main(int argc, char **argv) {
+  set_initial_environment ();
+  init_callproc_1 ();
   init_globals(argc, argv);
 
   emacs_unit_tests_run = 0;
