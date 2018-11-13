@@ -127,7 +127,7 @@ impl LispVectorlikeRef {
     }
 
     pub fn raw_size(self) -> isize {
-        self.header.size
+        unsafe { self.header.size }
     }
 
     pub fn pseudovector_size(self) -> EmacsInt {
@@ -343,11 +343,22 @@ impl LispBoolVecRef {
         LispObject::tag_ptr(self, Lisp_Type::Lisp_Vectorlike)
     }
 
+    pub fn equal(self, other: LispBoolVecRef) -> bool {
+        // Bool Vectors are compared much like strings.
+        (self.len() == other.len())
+            && unsafe {
+                libc::memcmp(
+                    self.data.as_ptr() as *const libc::c_void,
+                    other.data.as_ptr() as *const libc::c_void,
+                    (self.len() + (BOOL_VECTOR_BITS_PER_CHAR as usize) - 1)
+                        / (BOOL_VECTOR_BITS_PER_CHAR as usize),
+                ) == 0
+            }
+    }
+
     pub fn as_slice(&self) -> &[usize] {
-        //let l = self.len() / BITS_PER_BITS_WORD as usize + 1;
         let l = (self.len() + (BOOL_VECTOR_BITS_PER_CHAR as usize) - 1)
             / (BOOL_VECTOR_BITS_PER_CHAR as usize);
-        println!("Rust: BV len: {}", l);
         unsafe { self.data.as_slice(l) }
     }
 
@@ -360,7 +371,7 @@ impl LispBoolVecRef {
         self.size as usize
     }
 
-    unsafe fn get_bit(self, idx: usize) -> bool {
+    pub unsafe fn get_bit(self, idx: usize) -> bool {
         let limb = self.as_slice()[idx / BITS_PER_BITS_WORD as usize];
         limb & (1 << (idx % BITS_PER_BITS_WORD as usize)) != 0
     }

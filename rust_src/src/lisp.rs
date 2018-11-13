@@ -11,7 +11,7 @@ use std::ops::{Deref, DerefMut};
 use std::slice;
 
 use remacs_sys;
-use remacs_sys::{build_string, make_float};
+use remacs_sys::{build_string, make_float, reference_internal_equal};
 use remacs_sys::{equal_kind, pvec_type, EmacsDouble, EmacsInt, EmacsUint, Lisp_Bits, USE_LSB_TAG,
                  VALMASK};
 use remacs_sys::{Lisp_Misc_Any, Lisp_Misc_Type, Lisp_Subr, Lisp_Type};
@@ -517,11 +517,11 @@ impl LispObject {
     }
 
     pub fn equal(self, other: LispObject) -> bool {
-        internal_equal(self, other, equal_kind::EQUAL_PLAIN, 0, Qnil)
+        unsafe { reference_internal_equal(self, other, equal_kind::EQUAL_PLAIN, 0, Qnil) }
     }
 
     pub fn equal_no_quit(self, other: LispObject) -> bool {
-        internal_equal(self, other, equal_kind::EQUAL_NO_QUIT, 0, Qnil)
+        unsafe { reference_internal_equal(self, other, equal_kind::EQUAL_NO_QUIT, 0, Qnil) }
     }
 
     pub fn is_function(self) -> bool {
@@ -591,7 +591,7 @@ impl Debug for LispObject {
                 if cdr.is_nil() {
                     write!(f, ")")?;
                 } else {
-                    write!(f, ". {:?}", cdr)?;
+                    write!(f, ". {:?})", cdr)?;
                 }
             }
             Lisp_Type::Lisp_Float => {
@@ -599,12 +599,17 @@ impl Debug for LispObject {
             }
             Lisp_Type::Lisp_Vectorlike => {
                 let vl = self.as_vectorlike().unwrap();
-                if vl.is_vector() {
+                if let Some(v) = vl.as_vector() {
                     write!(f, "[")?;
-                    for el in vl.as_vector().unwrap().as_slice() {
+                    for el in v.as_slice() {
                         write!(f, "{:?} ", el)?;
                     }
                     write!(f, "]")?;
+                } else if let Some(bv) = vl.as_bool_vector() {
+                    write!(f, "#<BOOL VECTOR> ")?;
+                    for i in 0..bv.len() {
+                        write!(f, "{} ", unsafe { bv.get_bit(i) });
+                    }
                 } else {
                     write!(
                         f,

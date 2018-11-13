@@ -1,10 +1,10 @@
 //! Various functions operating on any object.
 
 use remacs_macros::lisp_fn;
-use remacs_sys::equal_kind;
 use remacs_sys::Qnil;
+use remacs_sys::{equal_kind, reference_internal_equal};
 
-use fns::internal_equal;
+use fns::{internal_equal, rust_internal_equal};
 use lisp::defsubr;
 use lisp::LispObject;
 
@@ -35,16 +35,26 @@ pub fn eql(obj1: LispObject, obj2: LispObject) -> bool {
 ///  (Use `=' if you want integers and floats to be able to be equal.)
 /// Symbols must match exactly.
 #[lisp_fn]
-pub fn equal(o1: LispObject, o2: LispObject) -> bool {
+pub fn reference_equal(o1: LispObject, o2: LispObject) -> bool {
     o1.equal(o2)
+}
+
+#[lisp_fn]
+pub fn equal(o1: LispObject, o2: LispObject) -> bool {
+    rust_internal_equal(o1, o2, equal_kind::EQUAL_PLAIN, 0, Qnil)
 }
 
 /// Return t if two Lisp objects have similar structure and contents.
 /// This is like `equal' except that it compares the text properties
 /// of strings.  (`equal' ignores text properties.)
 #[lisp_fn]
+pub fn reference_equal_including_properties(o1: LispObject, o2: LispObject) -> bool {
+    unsafe { reference_internal_equal(o1, o2, equal_kind::EQUAL_INCLUDING_PROPERTIES, 0, Qnil) }
+}
+
+#[lisp_fn]
 pub fn equal_including_properties(o1: LispObject, o2: LispObject) -> bool {
-    internal_equal(o1, o2, equal_kind::EQUAL_INCLUDING_PROPERTIES, 0, Qnil)
+    rust_internal_equal(o1, o2, equal_kind::EQUAL_INCLUDING_PROPERTIES, 0, Qnil)
 }
 
 /// Return the argument unchanged.

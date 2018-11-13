@@ -1441,44 +1441,32 @@ reference_internal_equal (Lisp_Object o1, Lisp_Object o2, enum equal_kind equal_
 	register int i;
 	ptrdiff_t size = ASIZE (o1);
 
-        printf("In vectorlike\n");
 	/* Pseudovectors have the type encoded in the size field, so this test
 	   actually checks that the objects have the same type as well as the
 	   same size.  */
 	if (ASIZE (o2) != size)
           {
-            printf("Vectorlike size differs\n");
             return false;
           }
 	/* Boolvectors are compared much like strings.  */
 	if (BOOL_VECTOR_P (o1))
 	  {
 	    EMACS_INT size = bool_vector_size (o1);
-            printf("In bool vector %d\n", o1);
 	    if (size != bool_vector_size (o2))
               {
-                printf("bool vector size differs\n");
                 return false;
               }
 	    if (memcmp (bool_vector_data (o1), bool_vector_data (o2),
 			bool_vector_bytes (size)))
               {
-                printf("bool vectors do not match\n");
                 return false;
               }
-            printf("bool vector %lx %lx matches! %d\n", o1, o2, bool_vector_bytes(size));
-            for (int i = 0; i < 8; i++)
-              {
-                printf("%x        %x\n", bool_vector_data (o1) + i, bool_vector_data (o2) + i);
-              }
-            printf("\n");
 	    return true;
 	  }
 	if (WINDOW_CONFIGURATIONP (o1))
 	  {
 	    // eassert (equal_kind != EQUAL_NO_QUIT);
 	    bool result = compare_window_configurations (o1, o2, false);
-            printf("Window configuration: %d\n", result);
             return result;
 	  }
 
@@ -1487,11 +1475,9 @@ reference_internal_equal (Lisp_Object o1, Lisp_Object o2, enum equal_kind equal_
 	   are sensible to compare, so eliminate the others now.  */
 	if (size & PSEUDOVECTOR_FLAG)
 	  {
-            printf("Pseudo vector flag\n");
 	    if (((size & PVEC_TYPE_MASK) >> PSEUDOVECTOR_AREA_BITS)
 		< PVEC_COMPILED)
               {
-                printf("Less than compiled\n");
                 return false;
               }
 	    size &= PSEUDOVECTOR_SIZE_MASK;
@@ -1503,11 +1489,9 @@ reference_internal_equal (Lisp_Object o1, Lisp_Object o2, enum equal_kind equal_
 	    v2 = AREF (o2, i);
 	    if (!reference_internal_equal (v1, v2, equal_kind, depth + 1, ht))
               {
-                printf("Vector element does not match\n");
                 return false;
               }
 	  }
-        printf("Vectors match!\n");
 	return true;
       }
       break;

@@ -119,7 +119,8 @@ impl LispCharTableRef {
     }
 
     pub fn as_slice(&self) -> &[LispObject] {
-        let size = (self.header.size & (More_Lisp_Bits::PSEUDOVECTOR_SIZE_MASK as isize)) as usize;
+        let size = (unsafe { self.header.size } & (More_Lisp_Bits::PSEUDOVECTOR_SIZE_MASK as isize))
+            as usize;
         &self.contents[0..size]
     }
 
