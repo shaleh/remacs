@@ -17,11 +17,10 @@ use remacs_sys::{make_specified_string, make_uninit_string, EmacsInt};
 use remacs_sys::{Qbuffer_file_coding_system, Qcoding_system_error, Qmd5, Qnil, Qraw_text, Qsha1,
                  Qsha224, Qsha256, Qsha384, Qsha512, Qstringp, Qwrite_region};
 
-use buffers::{buffer_file_name, current_buffer, get_buffer, nsberror, LispBufferRef};
+use buffers::{buffer_file_name, LispBufferOrName, LispBufferRef};
 use lisp::defsubr;
 use lisp::LispObject;
 use multibyte::LispStringRef;
-use numbers::LispNumber;
 use symbols::{fboundp, symbol_name};
 use threads::ThreadState;
 
@@ -112,9 +111,10 @@ fn get_coding_system_for_buffer(
     {
         return Qraw_text;
     }
-    if buffer_file_name(object).is_not_nil() {
-        /* Check file-coding-system-alist. */
-        let mut args = [Qwrite_region, start, end, buffer_file_name(object)];
+    let file_name = buffer_file_name(object.into());
+    if file_name.is_not_nil() {
+        // Check file-coding-system-alist.
+        let mut args = [Qwrite_region, start, end, file_name];
         let val = unsafe { Ffind_operation_coding_system(4, args.as_mut_ptr()) };
         if val.is_cons() && val.as_cons_or_error().cdr().is_not_nil() {
             return val.as_cons_or_error().cdr();
@@ -189,22 +189,14 @@ fn get_input_from_buffer(
     let prev_buffer = ThreadState::current_buffer().as_mut();
     unsafe { record_unwind_current_buffer() };
     unsafe { set_buffer_internal(buffer.as_mut()) };
-    *start_byte = if start.is_nil() {
-        buffer.begv
-    } else {
-        match start.as_number_coerce_marker_or_error() {
-            LispNumber::Fixnum(n) => n as ptrdiff_t,
-            LispNumber::Float(n) => n as ptrdiff_t,
-        }
-    };
-    *end_byte = if end.is_nil() {
-        buffer.zv
-    } else {
-        match end.as_number_coerce_marker_or_error() {
-            LispNumber::Fixnum(n) => n as ptrdiff_t,
-            LispNumber::Float(n) => n as ptrdiff_t,
-        }
-    };
+
+    *start_byte = start.map_or(buffer.begv, |v| {
+        v.as_number_coerce_marker_or_error().to_fixnum() as ptrdiff_t
+    });
+    *end_byte = end.map_or(buffer.zv, |v| {
+        v.as_number_coerce_marker_or_error().to_fixnum() as ptrdiff_t
+    });
+
     if start_byte > end_byte {
         std::mem::swap(start_byte, end_byte);
     }
@@ -450,17 +442,8 @@ fn sha512_buffer(buffer: &[u8], dest_buf: &mut [u8]) {
 /// This hash is performed on the raw internal format of the buffer,
 /// disregarding any coding systems.  If nil, use the current buffer.
 #[lisp_fn(min = "0")]
-pub fn buffer_hash(buffer_or_name: LispObject) -> LispObject {
-    let buffer = if buffer_or_name.is_nil() {
-        current_buffer()
-    } else {
-        get_buffer(buffer_or_name)
-    };
-
-    if buffer.is_nil() {
-        nsberror(buffer_or_name);
-    }
-    let b = buffer.as_buffer().unwrap();
+pub fn buffer_hash(buffer_or_name: Option<LispBufferOrName>) -> LispObject {
+    let b = buffer_or_name.map_or_else(ThreadState::current_buffer, |b| b.into());
     let mut ctx = sha1::Sha1::new();
 
     ctx.update(unsafe {

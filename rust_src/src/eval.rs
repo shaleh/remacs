@@ -8,7 +8,7 @@ use remacs_sys::{backtrace_debug_on_exit, build_string, call_debugger, check_con
                  globals, list2, maybe_gc, maybe_quit, record_in_backtrace, record_unwind_protect,
                  record_unwind_save_match_data, specbind, unbind_to, COMPILEDP, MODULE_FUNCTIONP};
 use remacs_sys::{pvec_type, EmacsInt, Lisp_Compiled};
-use remacs_sys::{Fapply, Fcons, Fdefault_value, Ffset, Fload, Fpurecopy, Fset, Fset_default};
+use remacs_sys::{Fapply, Fcons, Fdefault_value, Ffset, Fload, Fpurecopy};
 use remacs_sys::{QCdocumentation, Qautoload, Qclosure, Qerror, Qexit, Qfunction, Qinteractive,
                  Qinteractive_form, Qinternal_interpreter_environment, Qinvalid_function, Qlambda,
                  Qmacro, Qnil, Qrisky_local_variable, Qsetq, Qt, Qunbound,
@@ -16,7 +16,7 @@ use remacs_sys::{QCdocumentation, Qautoload, Qclosure, Qerror, Qexit, Qfunction,
 
 use remacs_sys::{Vautoload_queue, Vrun_hooks};
 
-use data::{defalias, indirect_function, indirect_function_lisp};
+use data::{defalias, indirect_function, indirect_function_lisp, set, set_default};
 use lisp::{defsubr, is_autoload};
 use lisp::{LispObject, LispSubrRef};
 use lists::{assq, car, cdr, get, memq, nth, put, Fcar, Fcdr, LispCons};
@@ -193,7 +193,7 @@ pub fn setq(args: LispObject) -> LispObject {
         }
 
         if !lexical {
-            unsafe { Fset(sym, val) }; /* SYM is dynamically bound. */
+            set(sym.as_symbol_or_error(), val); /* SYM is dynamically bound. */
         }
     }
 
@@ -302,8 +302,8 @@ pub fn defconst(args: LispObject) -> LispSymbolRef {
     if unsafe { globals.Vpurify_flag } != Qnil {
         tem = unsafe { Fpurecopy(tem) };
     }
-    unsafe { Fset_default(sym, tem) };
     let sym_ref = sym.as_symbol_or_error();
+    set_default(sym_ref, tem);
     sym_ref.set_declared_special(true);
     if docstring.is_not_nil() {
         if unsafe { globals.Vpurify_flag } != Qnil {
@@ -460,13 +460,8 @@ pub fn lisp_let(args: LispCons) -> LispObject {
 /// The order of execution is thus TEST, BODY, TEST, BODY and so on
 /// until TEST returns nil.
 /// usage: (while TEST BODY...)
-#[lisp_fn(
-    name = "while",
-    c_name = "while",
-    min = "1",
-    unevalled = "true"
-)]
-pub fn lisp_while(args: LispCons) -> LispObject {
+#[lisp_fn(name = "while", c_name = "while", min = "1", unevalled = "true")]
+pub fn lisp_while(args: LispCons) {
     let (test, body) = args.as_tuple();
 
     while unsafe { eval_sub(test) } != Qnil {
@@ -474,8 +469,6 @@ pub fn lisp_while(args: LispCons) -> LispObject {
 
         progn(body);
     }
-
-    Qnil
 }
 
 /// Return result of expanding macros at top level of FORM.
@@ -503,7 +496,7 @@ pub fn macroexpand(mut form: LispObject, environment: LispObject) -> LispObject 
             sym = def;
             tem = assq(sym, environment);
             if tem.is_nil() {
-                def = sym_ref.function;
+                def = sym_ref.get_function();
                 if def.is_not_nil() {
                     continue;
                 }
@@ -678,7 +671,7 @@ pub fn autoload(
     ty: LispObject,
 ) -> LispObject {
     // If function is defined and not as an autoload, don't override.
-    if function.function != Qnil && !is_autoload(function.function) {
+    if function.get_function() != Qnil && !is_autoload(function.get_function()) {
         return Qnil;
     }
 

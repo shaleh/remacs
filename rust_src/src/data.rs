@@ -4,11 +4,11 @@ use libc::c_int;
 
 use remacs_macros::lisp_fn;
 use remacs_sys;
-use remacs_sys::{aset_multibyte_string, bool_vector_binop_driver, build_string, emacs_abort,
-                 globals, update_buffer_defaults, wrong_choice, wrong_range, CHAR_TABLE_SET,
-                 CHECK_IMPURE};
+use remacs_sys::{aset_multibyte_string, bool_vector_binop_driver, buffer_defaults, build_string,
+                 emacs_abort, globals, set_default_internal, set_internal, wrong_choice,
+                 wrong_range, CHAR_TABLE_SET, CHECK_IMPURE};
 use remacs_sys::{buffer_local_flags, per_buffer_default, symbol_redirect};
-use remacs_sys::{pvec_type, BoolVectorOp, EmacsInt, Lisp_Misc_Type, Lisp_Type};
+use remacs_sys::{pvec_type, BoolVectorOp, EmacsInt, Lisp_Misc_Type, Lisp_Type, Set_Internal_Bind};
 use remacs_sys::{Fcons, Ffset, Fget, Fpurecopy};
 use remacs_sys::{Lisp_Buffer, Lisp_Subr_Lang};
 use remacs_sys::{Qargs_out_of_range, Qarrayp, Qautoload, Qbool_vector, Qbuffer, Qchar_table,
@@ -20,10 +20,11 @@ use remacs_sys::{Qargs_out_of_range, Qarrayp, Qautoload, Qbool_vector, Qbuffer, 
                  Qterminal, Qthread, Qunbound, Qunevalled, Quser_ptr, Qvector, Qvoid_variable,
                  Qwindow, Qwindow_configuration};
 
+use buffers::per_buffer_idx;
 use frames::selected_frame;
 use keymap::get_keymap;
 use lisp::{defsubr, is_autoload};
-use lisp::{LispObject, LispSubrRef};
+use lisp::{LispObject, LispSubrRef, LiveBufferIter};
 use lists::{get, memq, put};
 use math::leq;
 use multibyte::{is_ascii, is_single_byte_char};
@@ -77,11 +78,7 @@ pub fn indirect_function(object: LispObject) -> LispObject {
 /// function indirections to find the final function binding and return it.
 /// Signal a cyclic-function-indirection error if there is a loop in the
 /// function chain of symbols.
-#[lisp_fn(
-    min = "1",
-    c_name = "indirect_function",
-    name = "indirect-function"
-)]
+#[lisp_fn(min = "1", c_name = "indirect_function", name = "indirect-function")]
 pub fn indirect_function_lisp(object: LispObject, _noerror: LispObject) -> LispObject {
     match object.as_symbol() {
         None => object,
@@ -284,7 +281,7 @@ pub fn defalias(sym: LispObject, mut definition: LispObject, docstring: LispObje
         // Only add autoload entries after dumping, because the ones before are
         // not useful and else we get loads of them from the loaddefs.el.
 
-        if is_autoload(symbol.function) {
+        if is_autoload(symbol.get_function()) {
             // Remember that the function was already an autoload.
             loadhist_attach(unsafe { Fcons(Qt, sym) });
         }
@@ -355,13 +352,13 @@ fn default_value(mut symbol: LispSymbolRef) -> LispObject {
         symbol = symbol.get_indirect_variable();
     }
     match symbol.get_redirect() {
-        symbol_redirect::SYMBOL_PLAINVAL => symbol.get_value(),
+        symbol_redirect::SYMBOL_PLAINVAL => unsafe { symbol.get_value() },
         symbol_redirect::SYMBOL_LOCALIZED => {
             // If var is set up for a buffer that lacks a local value for it,
             // the current value is nominally the default value.
             // But the `realvalue' slot may be more up to date, since
             // ordinary setq stores just that slot.  So use that.
-            let blv = symbol.get_blv();
+            let blv = unsafe { symbol.get_blv() };
             let fwd = blv.get_fwd();
             if !fwd.is_null() && blv.valcell.eq(blv.defcell) {
                 unsafe { do_symval_forwarding(fwd) }
@@ -370,7 +367,7 @@ fn default_value(mut symbol: LispSymbolRef) -> LispObject {
             }
         }
         symbol_redirect::SYMBOL_FORWARDED => {
-            let valcontents = symbol.get_fwd();
+            let valcontents = unsafe { symbol.get_fwd() };
 
             // For a built-in buffer-local variable, get the default value
             // rather than letting do_symval_forwarding get the current value.
@@ -597,6 +594,29 @@ pub unsafe extern "C" fn store_symval_forwarding(
     }
 }
 
+unsafe fn update_buffer_defaults(objvar: *const LispObject, newval: LispObject) {
+    // If this variable is a default for something stored
+    // in the buffer itself, such as default-fill-column,
+    // find the buffers that don't have local values for it
+    // and update them.
+    let defaults: *mut Lisp_Buffer = &mut buffer_defaults;
+    let defaults_as_object_ptr = defaults as *const LispObject;
+    if objvar > defaults_as_object_ptr && objvar < (defaults.add(1) as *const LispObject) {
+        let offset = objvar.offset_from(defaults_as_object_ptr);
+        let idx = per_buffer_idx(offset);
+
+        if idx <= 0 {
+            return;
+        }
+
+        LiveBufferIter::new().for_each(|mut buf| {
+            if !buf.value_p(idx as isize) {
+                buf.set_value(offset as usize, newval);
+            }
+        });
+    }
+}
+
 /// Return A ^ B, bitwise exclusive or.
 /// If optional third argument C is given, store result into C.
 /// A, B, and C must be bool vectors of the same length.
@@ -638,6 +658,35 @@ pub fn bool_vector_set_difference(a: LispObject, b: LispObject, c: LispObject) -
 #[lisp_fn]
 pub fn bool_vector_subsetp(a: LispObject, b: LispObject) -> LispObject {
     unsafe { bool_vector_binop_driver(a, b, b, BoolVectorOp::BoolVectorSubsetp) }
+}
+
+/// Set SYMBOL's value to NEWVAL, and return NEWVAL.
+#[lisp_fn]
+pub fn set(symbol: LispSymbolRef, newval: LispObject) -> LispObject {
+    unsafe {
+        set_internal(
+            LispObject::from(symbol),
+            newval,
+            Qnil,
+            Set_Internal_Bind::SET_INTERNAL_SET,
+        )
+    };
+    newval
+}
+
+/// Set SYMBOL's default value to VALUE.  SYMBOL and VALUE are evaluated.
+/// The default value is seen in buffers that do not have their own
+/// values for this variable.
+#[lisp_fn]
+pub fn set_default(symbol: LispSymbolRef, value: LispObject) -> LispObject {
+    unsafe {
+        set_default_internal(
+            LispObject::from(symbol),
+            value,
+            Set_Internal_Bind::SET_INTERNAL_SET,
+        )
+    };
+    value
 }
 
 include!(concat!(env!("OUT_DIR"), "/data_exports.rs"));

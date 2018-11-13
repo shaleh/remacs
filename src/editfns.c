@@ -1884,15 +1884,6 @@ they can be in either order.  */)
   return make_buffer_string (b, e, 0);
 }
 
-DEFUN ("buffer-string", Fbuffer_string, Sbuffer_string, 0, 0, 0,
-       doc: /* Return the contents of the current buffer as a string.
-If narrowing is in effect, this function returns only the visible part
-of the buffer.  */)
-  (void)
-{
-  return make_buffer_string_both (BEGV, BEGV_BYTE, ZV, ZV_BYTE, 1);
-}
-
 DEFUN ("compare-buffer-substrings", Fcompare_buffer_substrings, Scompare_buffer_substrings,
        6, 6, 0,
        doc: /* Compare two substrings of two buffers; return result as number.
@@ -2663,7 +2654,7 @@ It returns the number of characters changed.  */)
 		}
 	      else
 		{
-		  string = Fmake_string (make_number (1), val);
+		  string = Fmake_string (make_number (1), val, Qnil);
 		}
 	      replace_range (pos, pos + len, string, 1, 0, 1, 0);
 	      pos_byte += SBYTES (string);
@@ -2911,36 +2902,6 @@ usage: (message FORMAT-STRING &rest ARGS)  */)
     }
 }
 
-DEFUN ("message-box", Fmessage_box, Smessage_box, 1, MANY, 0,
-       doc: /* Display a message, in a dialog box if possible.
-If a dialog box is not available, use the echo area.
-The first argument is a format control string, and the rest are data
-to be formatted under control of the string.  See `format-message' for
-details.
-
-If the first argument is nil or the empty string, clear any existing
-message; let the minibuffer contents show.
-
-usage: (message-box FORMAT-STRING &rest ARGS)  */)
-  (ptrdiff_t nargs, Lisp_Object *args)
-{
-  if (NILP (args[0]))
-    {
-      message1 (0);
-      return Qnil;
-    }
-  else
-    {
-      Lisp_Object val = Fformat_message (nargs, args);
-      Lisp_Object pane, menu;
-
-      pane = list1 (Fcons (build_string ("OK"), Qt));
-      menu = Fcons (val, pane);
-      Fx_popup_dialog (Qt, menu, Qt);
-      return val;
-    }
-}
-
 DEFUN ("message-or-box", Fmessage_or_box, Smessage_or_box, 1, MANY, 0,
        doc: /* Display a message in a dialog box or in the echo area.
 If this command was invoked with the mouse, use a dialog box if
@@ -2960,13 +2921,6 @@ usage: (message-or-box FORMAT-STRING &rest ARGS)  */)
       && use_dialog_box)
     return Fmessage_box (nargs, args);
   return Fmessage (nargs, args);
-}
-
-DEFUN ("current-message", Fcurrent_message, Scurrent_message, 0, 0, 0,
-       doc: /* Return the string currently displayed in the echo area, or nil if none.  */)
-  (void)
-{
-  return current_message ();
 }
 
 /* Convert the prefix of STR from ASCII decimal digits to a number.
@@ -3032,8 +2986,8 @@ The # flag means to use an alternate display form for %o, %x, %X, %e,
 %f, and %g sequences: for %o, it ensures that the result begins with
 \"0\"; for %x and %X, it prefixes the result with \"0x\" or \"0X\";
 for %e and %f, it causes a decimal point to be included even if the
-the precision is zero; for %g, it causes a decimal point to be
-included even if the the precision is zero, and also forces trailing
+precision is zero; for %g, it causes a decimal point to be
+included even if the precision is zero, and also forces trailing
 zeros after the decimal point to be left in place.
 
 The width specifier supplies a lower limit for the length of the
@@ -4334,7 +4288,6 @@ functions if all the text being accessed has this property.  */);
 
   defsubr (&Sbuffer_substring);
   defsubr (&Sbuffer_substring_no_properties);
-  defsubr (&Sbuffer_string);
   defsubr (&Sget_pos_property);
 
   /* Symbol for the text property used to mark fields.  */
@@ -4370,9 +4323,7 @@ functions if all the text being accessed has this property.  */);
   defsubr (&Sset_time_zone_rule);
   defsubr (&Ssystem_name);
   defsubr (&Smessage);
-  defsubr (&Smessage_box);
   defsubr (&Smessage_or_box);
-  defsubr (&Scurrent_message);
   defsubr (&Sformat);
   defsubr (&Sformat_message);
 

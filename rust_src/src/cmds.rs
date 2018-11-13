@@ -10,12 +10,13 @@ use remacs_sys::{bitch_at_user, concat2, current_column, del_range, frame_make_p
                  globals, initial_define_key, insert_and_inherit, memory_full, replace_range,
                  run_hook, scan_newline_from_point, set_point, set_point_both, syntax_property,
                  syntaxcode, translate_char};
-use remacs_sys::{Fchar_width, Fget, Fmake_string, Fmove_to_column, Fset};
+use remacs_sys::{Fchar_width, Fget, Fmake_string, Fmove_to_column};
 use remacs_sys::{Qbeginning_of_buffer, Qend_of_buffer, Qexpand_abbrev, Qinternal_auto_fill,
                  Qkill_forward_chars, Qnil, Qoverwrite_mode_binary, Qpost_self_insert_hook,
                  Qundo_auto__this_command_amalgamating, Qundo_auto_amalgamate};
 
 use character::{self, characterp};
+use data::set;
 use editfns::{line_beginning_position, line_end_position, preceding_char};
 use frames::selected_frame;
 use keymap::{current_global_map, Ctl};
@@ -263,7 +264,10 @@ pub fn self_insert_command(n: EmacsInt) {
         };
         let val = internal_self_insert(character as Codepoint, n as usize);
         if val == 2 {
-            unsafe { Fset(Qundo_auto__this_command_amalgamating, Qnil) };
+            set(
+                Qundo_auto__this_command_amalgamating.as_symbol_or_error(),
+                Qnil,
+            );
         }
         unsafe { frame_make_pointer_invisible(selected_frame().as_frame_or_error().as_mut()) };
     }
@@ -390,7 +394,7 @@ fn internal_self_insert(mut c: Codepoint, n: usize) -> EmacsInt {
         // and the hook has a non-nil `no-self-insert' property,
         // return right away--don't really self-insert.  */
         if let Some(s) = sym.as_symbol() {
-            if let Some(f) = s.function.as_symbol() {
+            if let Some(f) = s.get_function().as_symbol() {
                 let prop = unsafe { Fget(LispObject::from(f), intern("no-self-insert")) };
                 if prop.is_not_nil() {
                     return 1;
@@ -409,12 +413,13 @@ fn internal_self_insert(mut c: Codepoint, n: usize) -> EmacsInt {
         } else {
             c
         };
-        let mut string = unsafe { Fmake_string(LispObject::from(n), LispObject::from(mc)) };
+        let mut string = unsafe { Fmake_string(LispObject::from(n), LispObject::from(mc), Qnil) };
         if spaces_to_insert > 0 {
             let tem = unsafe {
                 Fmake_string(
                     LispObject::from(spaces_to_insert),
                     LispObject::from(' ' as Codepoint),
+                    Qnil,
                 )
             };
             string = unsafe { concat2(string, tem) };

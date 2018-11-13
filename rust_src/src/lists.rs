@@ -216,12 +216,12 @@ impl LispCons {
 
     /// Return the car (first cell).
     pub fn car(self) -> LispObject {
-        unsafe { (*self._extract()).car }
+        unsafe { (*self._extract()).u.s.as_ref().car }
     }
 
     /// Return the cdr (second cell).
     pub fn cdr(self) -> LispObject {
-        unsafe { (*self._extract()).u.cdr }
+        unsafe { (*self._extract()).u.s.as_ref().u.cdr }
     }
 
     pub fn as_tuple(self) -> (LispObject, LispObject) {
@@ -231,14 +231,14 @@ impl LispCons {
     /// Set the car of the cons cell.
     pub fn set_car(self, n: LispObject) {
         unsafe {
-            (*self._extract()).car = n;
+            (*self._extract()).u.s.as_mut().car = n;
         }
     }
 
     /// Set the car of the cons cell.
     pub fn set_cdr(self, n: LispObject) {
         unsafe {
-            (*self._extract()).u.cdr = n;
+            (*self._extract()).u.s.as_mut().u.cdr = n;
         }
     }
 
@@ -396,7 +396,8 @@ where
         .find(|item| {
             item.as_cons()
                 .map_or_else(|| false, |cons| cmp(key, cons.car()))
-        }).unwrap_or(Qnil)
+        })
+        .unwrap_or(Qnil)
 }
 
 /// Return non-nil if KEY is `eq' to the car of an element of LIST.
@@ -428,7 +429,8 @@ where
         .find(|item| {
             item.as_cons()
                 .map_or_else(|| false, |cons| cmp(key, cons.cdr()))
-        }).unwrap_or(Qnil)
+        })
+        .unwrap_or(Qnil)
 }
 
 /// Return non-nil if KEY is `eq' to the cdr of an element of LIST.

@@ -1,12 +1,13 @@
 //! Functions operating on buffers.
 
-use libc::{self, c_int, c_uchar, c_void, ptrdiff_t};
+use libc::{self, c_char, c_int, c_uchar, c_void, ptrdiff_t};
 use std::{self, mem, ptr};
 
 use remacs_macros::lisp_fn;
-use remacs_sys::{allocate_misc, bset_update_mode_line, buffer_local_value, buffer_window_count,
-                 del_range, delete_all_overlays, drop_overlay, globals, last_per_buffer_idx,
-                 set_buffer_internal_1, specbind, unbind_to, unchain_both, update_mode_lines};
+use remacs_sys::{allocate_misc, bset_update_mode_line, buffer_local_flags, buffer_local_value,
+                 buffer_window_count, del_range, delete_all_overlays, drop_overlay, globals,
+                 last_per_buffer_idx, set_buffer_internal_1, specbind, unbind_to, unchain_both,
+                 update_mode_lines};
 use remacs_sys::{pvec_type, EmacsInt, Lisp_Buffer, Lisp_Buffer_Local_Value, Lisp_Misc_Type,
                  Lisp_Overlay, Lisp_Type, Vbuffer_alist};
 use remacs_sys::{windows_or_buffers_changed, Fcons, Fcopy_sequence, Fexpand_file_name,
@@ -19,9 +20,10 @@ use character::char_head_p;
 use chartable::LispCharTableRef;
 use data::Lisp_Fwd;
 use editfns::point;
+use frames::LispFrameRef;
 use lisp::defsubr;
 use lisp::{ExternalPtr, LispMiscRef, LispObject, LiveBufferIter};
-use lists::{car, cdr, Flist, Fmember};
+use lists::{car, cdr, list, member};
 use marker::{marker_buffer, marker_position_lisp, set_marker_both, LispMarkerRef};
 use multibyte::{multibyte_length_by_head, string_char};
 use numbers::MOST_POSITIVE_FIXNUM;
@@ -51,6 +53,7 @@ pub const BEG_BYTE: ptrdiff_t = 1;
 //    }
 //}
 // TODO(db48x): use the nicer implementation above once const functions can have conditionals in them
+// https://github.com/rust-lang/rust/issues/24111
 const fn buf_bytes_max() -> ptrdiff_t {
     const p: [ptrdiff_t; 2] = [
         EmacsInt::max_value() as ptrdiff_t,
@@ -172,6 +175,13 @@ impl LispBufferRef {
         self.syntax_table_ = LispObject::from(table);
     }
 
+    pub fn value_p(self, idx: isize) -> bool {
+        if idx < 0 || idx >= (unsafe { last_per_buffer_idx } as isize) {
+            panic!("buffer value_p called with an invalid index!");
+        }
+        self.local_flags[idx as usize] != 0
+    }
+
     // Similar to SET_PER_BUFFER_VALUE_P macro in C
     /// Set whether per-buffer variable with index IDX has a buffer-local
     /// value in buffer.  VAL zero means it does't.
@@ -186,10 +196,9 @@ impl LispBufferRef {
         }
         self.local_flags[idx] = val;
     }
-}
 
-// Characters, positions and byte positions.
-impl LispBufferRef {
+    // Characters, positions and byte positions.
+
     /// Return the address of byte position N in current buffer.
     pub fn byte_pos_addr(self, n: ptrdiff_t) -> *mut c_uchar {
         unsafe { (*self.text).beg.offset(n - BEG_BYTE) }
@@ -280,10 +289,9 @@ impl LispBufferRef {
         }
         new_pos
     }
-}
 
-// Methods for accessing struct buffer_text fields
-impl LispBufferRef {
+    // Methods for accessing struct buffer_text fields
+
     pub fn beg_addr(self) -> *mut c_uchar {
         unsafe { (*self.text).beg }
     }
@@ -326,15 +334,27 @@ impl LispBufferRef {
     pub fn z(self) -> ptrdiff_t {
         unsafe { (*self.text).z }
     }
-}
 
-impl LispBufferRef {
     pub fn overlays_before(self) -> Option<LispOverlayRef> {
         unsafe { self.overlays_before.as_ref().map(|m| mem::transmute(m)) }
     }
 
     pub fn overlays_after(self) -> Option<LispOverlayRef> {
         unsafe { self.overlays_after.as_ref().map(|m| mem::transmute(m)) }
+    }
+
+    pub fn as_live(self) -> Option<LispBufferRef> {
+        if self.is_live() {
+            Some(self)
+        } else {
+            None
+        }
+    }
+
+    pub unsafe fn set_value(&mut self, offset: usize, value: LispObject) {
+        let buffer_bytes = self.as_mut() as *mut c_char;
+        let pos = buffer_bytes.add(offset) as *mut LispObject;
+        *pos = value;
     }
 }
 
@@ -363,8 +383,7 @@ impl LispObject {
     }
 
     pub fn as_live_buffer(self) -> Option<LispBufferRef> {
-        self.as_buffer()
-            .and_then(|b| if b.is_live() { Some(b) } else { None })
+        self.as_buffer().and_then(|b| b.as_live())
     }
 
     pub fn as_buffer_or_error(self) -> LispBufferRef {
@@ -480,32 +499,119 @@ impl LispBufferLocalValueRef {
     }
 }
 
+#[derive(Clone, Copy, PartialEq, Eq)]
+pub enum LispBufferOrName {
+    Buffer(LispObject),
+    Name(LispObject),
+}
+
+impl LispBufferOrName {
+    pub fn as_buffer(self) -> Option<LispBufferRef> {
+        self.into()
+    }
+
+    pub fn as_buffer_or_current_buffer(self) -> Option<LispBufferRef> {
+        let obj = LispObject::from(self);
+        if obj.is_nil() {
+            Some(ThreadState::current_buffer())
+        } else {
+            self.as_buffer()
+        }
+    }
+}
+
+impl From<LispBufferOrName> for LispObject {
+    fn from(buffer_or_name: LispBufferOrName) -> LispObject {
+        match buffer_or_name {
+            LispBufferOrName::Buffer(b) => b,
+            LispBufferOrName::Name(n) => n,
+        }
+    }
+}
+
+impl From<LispObject> for LispBufferOrName {
+    fn from(v: LispObject) -> LispBufferOrName {
+        if v.is_string() {
+            LispBufferOrName::Name(v)
+        } else {
+            v.as_buffer_or_error();
+            LispBufferOrName::Buffer(v)
+        }
+    }
+}
+
+impl From<LispObject> for Option<LispBufferOrName> {
+    fn from(v: LispObject) -> Option<LispBufferOrName> {
+        if v.is_nil() {
+            None
+        } else if v.is_string() {
+            Some(LispBufferOrName::Name(v))
+        } else if v.is_buffer() {
+            Some(LispBufferOrName::Buffer(v))
+        } else {
+            None
+        }
+    }
+}
+
+impl From<LispBufferOrName> for Option<LispBufferRef> {
+    fn from(v: LispBufferOrName) -> Option<LispBufferRef> {
+        let buffer = match v {
+            LispBufferOrName::Buffer(b) => b,
+            LispBufferOrName::Name(n) => {
+                cdr(assoc_ignore_text_properties(n, unsafe { Vbuffer_alist }))
+            }
+        };
+        buffer.as_buffer()
+    }
+}
+
+impl From<LispBufferOrName> for LispBufferRef {
+    fn from(v: LispBufferOrName) -> LispBufferRef {
+        v.as_buffer().unwrap_or_else(|| nsberror(v.into()))
+    }
+}
+
+pub struct LispBufferOrCurrent(LispBufferRef);
+
+impl From<LispObject> for LispBufferOrCurrent {
+    fn from(obj: LispObject) -> LispBufferOrCurrent {
+        LispBufferOrCurrent(obj.as_buffer_or_current_buffer())
+    }
+}
+
+impl From<LispBufferOrCurrent> for LispObject {
+    fn from(buffer: LispBufferOrCurrent) -> LispObject {
+        buffer.unwrap().into()
+    }
+}
+
+impl LispBufferOrCurrent {
+    pub fn unwrap(self) -> LispBufferRef {
+        self.0
+    }
+}
+
 /// Return a list of all existing live buffers.
 /// If the optional arg FRAME is a frame, we return the buffer list in the
 /// proper order for that frame: the buffers show in FRAME come first,
 /// followed by the rest of the buffers.
 #[lisp_fn(min = "0")]
-pub fn buffer_list(frame: LispObject) -> LispObject {
+pub fn buffer_list(frame: Option<LispFrameRef>) -> LispObject {
     let mut buffers: Vec<LispObject> = unsafe { Vbuffer_alist }.iter_cars_safe().map(cdr).collect();
 
-    match frame.as_frame() {
-        None => Flist(buffers.len() as isize, buffers.as_mut_ptr()),
+    match frame {
+        None => list(&buffers),
 
-        Some(frame) => unsafe {
-            let framelist = Fcopy_sequence(frame.buffer_list);
-            let prevlist = Fnreverse(Fcopy_sequence(frame.buried_buffer_list));
+        Some(frame) => {
+            let framelist = unsafe { Fcopy_sequence(frame.buffer_list) };
+            let prevlist = unsafe { Fnreverse(Fcopy_sequence(frame.buried_buffer_list)) };
 
-            // Remove any buffer that duplicates one in
-            // FRAMELIST or PREVLIST.
-            buffers.retain(|e| Fmember(*e, framelist) == Qnil || Fmember(*e, prevlist) == Qnil);
+            // Remove any buffer that duplicates one in FRAMELIST or PREVLIST.
+            buffers.retain(|e| member(*e, framelist) == Qnil && member(*e, prevlist) == Qnil);
 
-            callN_raw!(
-                Fnconc,
-                framelist,
-                Flist(buffers.len() as isize, buffers.as_mut_ptr()),
-                prevlist
-            )
-        },
+            callN_raw!(Fnconc, framelist, list(&buffers), prevlist)
+        }
     }
 }
 
@@ -540,15 +646,8 @@ fn assoc_ignore_text_properties(key: LispObject, list: LispObject) -> LispObject
 /// is a string and there is no buffer with that name, return nil.  If
 /// BUFFER-OR-NAME is a buffer, return it as given.
 #[lisp_fn]
-pub fn get_buffer(buffer_or_name: LispObject) -> LispObject {
-    if buffer_or_name.is_buffer() {
-        buffer_or_name
-    } else {
-        buffer_or_name.as_string_or_error();
-        cdr(assoc_ignore_text_properties(buffer_or_name, unsafe {
-            Vbuffer_alist
-        }))
-    }
+pub fn get_buffer(buffer_or_name: LispBufferOrName) -> Option<LispBufferRef> {
+    buffer_or_name.into()
 }
 
 /// Return the current buffer as a Lisp object.
@@ -560,12 +659,8 @@ pub fn current_buffer() -> LispObject {
 /// Return name of file BUFFER is visiting, or nil if none.
 /// No argument or nil as argument means use the current buffer.
 #[lisp_fn(min = "0")]
-pub fn buffer_file_name(buffer: LispObject) -> LispObject {
-    let buf = if buffer.is_nil() {
-        ThreadState::current_buffer()
-    } else {
-        buffer.as_buffer_or_error()
-    };
+pub fn buffer_file_name(buffer: LispBufferOrCurrent) -> LispObject {
+    let buf = buffer.unwrap();
 
     buf.filename_
 }
@@ -667,16 +762,12 @@ pub unsafe extern "C" fn validate_region(b: *mut LispObject, e: *mut LispObject)
 /// `pop-to-buffer' to switch buffers permanently.
 /// The return value is the buffer made current.
 #[lisp_fn]
-pub fn set_buffer(buffer_or_name: LispObject) -> LispObject {
-    let buffer = get_buffer(buffer_or_name);
-    if buffer.is_nil() {
-        nsberror(buffer_or_name)
-    };
-    let mut buf = buffer.as_buffer_or_error();
-    if !buf.is_live() {
+pub fn set_buffer(buffer_or_name: LispBufferOrName) -> LispBufferRef {
+    let mut buffer: LispBufferRef = buffer_or_name.into();
+    if !buffer.is_live() {
         error!("Selecting deleted buffer");
     };
-    unsafe { set_buffer_internal_1(buf.as_mut()) };
+    unsafe { set_buffer_internal_1(buffer.as_mut()) };
     buffer
 }
 
@@ -732,7 +823,8 @@ fn get_truename_buffer_1(filename: LispObject) -> LispObject {
         .find(|buf| {
             let buf_truename = buf.truename();
             buf_truename.is_string() && string_equal(buf_truename, filename)
-        }).into()
+        })
+        .into()
 }
 
 // to be removed once all references in C are ported
@@ -876,11 +968,11 @@ pub extern "C" fn build_overlay(
 
 /// Delete the overlay OVERLAY from its buffer.
 #[lisp_fn]
-pub fn delete_overlay(overlay: LispObject) -> LispObject {
+pub fn delete_overlay(overlay: LispObject) {
     let mut ov_ref = overlay.as_overlay_or_error();
     let mut buf_ref = match marker_buffer(ov_ref.start.as_marker_or_error()) {
         Some(b) => b,
-        None => return Qnil,
+        None => return,
     };
     let count = c_specpdl_index();
 
@@ -901,22 +993,20 @@ pub fn delete_overlay(overlay: LispObject) -> LispObject {
     }
 
     unsafe { unbind_to(count, Qnil) };
-    Qnil
 }
 
 /// Delete all overlays of BUFFER.
 /// BUFFER omitted or nil means delete all overlays of the current buffer.
 #[lisp_fn(min = "0", name = "delete-all-overlays")]
-pub fn delete_all_overlays_lisp(buffer: LispObject) -> LispObject {
+pub fn delete_all_overlays_lisp(buffer: LispObject) {
     unsafe { delete_all_overlays(buffer.as_buffer_or_current_buffer().as_mut()) };
-    Qnil
 }
 
 /// Delete the entire contents of the current buffer.
 /// Any narrowing restriction in effect (see `narrow-to-region') is removed,
 /// so the buffer is truly empty after this.
 #[lisp_fn]
-pub fn erase_buffer() -> LispObject {
+pub fn erase_buffer() {
     unsafe {
         Fwiden();
 
@@ -930,7 +1020,12 @@ pub fn erase_buffer() -> LispObject {
         // implies that the future text is not really related to the past text.
         cur_buf.save_length_ = LispObject::from(0);
     }
-    Qnil
+}
+
+pub unsafe fn per_buffer_idx(offset: isize) -> isize {
+    let flags = &mut buffer_local_flags as *mut Lisp_Buffer as *mut LispObject;
+    let obj = flags.offset(offset);
+    (*obj).as_fixnum_or_error() as isize
 }
 
 #[no_mangle]

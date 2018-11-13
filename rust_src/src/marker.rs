@@ -9,7 +9,7 @@ use remacs_sys::{allocate_misc, set_point_both, Fmake_marker};
 use remacs_sys::{EmacsInt, Lisp_Buffer, Lisp_Marker, Lisp_Misc_Type};
 use remacs_sys::{Qinteger_or_marker_p, Qmarkerp, Qnil};
 
-use buffers::LispBufferRef;
+use buffers::{current_buffer, LispBufferRef};
 use lisp::{defsubr, ExternalPtr, LispMiscRef, LispObject};
 use multibyte::multibyte_chars_in_text;
 use threads::ThreadState;
@@ -430,7 +430,10 @@ pub extern "C" fn set_marker_both(
     bytepos: ptrdiff_t,
 ) -> LispObject {
     let mut m = marker.as_marker_or_error();
-    if let Some(mut b) = live_buffer(buffer) {
+    if let Some(mut b) = buffer
+        .as_live_buffer()
+        .or_else(|| current_buffer().as_live_buffer())
+    {
         attach_marker(m.as_mut(), b.as_mut(), charpos, bytepos);
     } else {
         unchain_marker(m.as_mut());
@@ -448,7 +451,10 @@ pub extern "C" fn set_marker_restricted_both(
 ) -> LispObject {
     let mut m = marker.as_marker_or_error();
 
-    if let Some(mut b) = live_buffer(buffer) {
+    if let Some(mut b) = buffer
+        .as_live_buffer()
+        .or_else(|| current_buffer().as_live_buffer())
+    {
         let cur_buf = ThreadState::current_buffer();
         let clipped_charpos = clip_to_bounds(cur_buf.begv, charpos as EmacsInt, cur_buf.zv);
         let clipped_bytepos =
@@ -476,18 +482,6 @@ pub extern "C" fn marker_byte_position(marker: LispObject) -> ptrdiff_t {
     m.bytepos_or_error()
 }
 
-/// If BUFFER is nil, return current buffer pointer.  Next, check
-/// whether BUFFER is a buffer object and return buffer pointer
-/// corresponding to BUFFER if BUFFER is live, or NULL otherwise.
-pub fn live_buffer(buffer: LispObject) -> Option<LispBufferRef> {
-    let b = buffer.as_buffer_or_current_buffer();
-    if b.is_live() {
-        Some(b)
-    } else {
-        None
-    }
-}
-
 impl LispObject {
     pub fn has_buffer(self) -> bool {
         self.as_marker().map_or(false, |m| m.buffer().is_some())
@@ -502,7 +496,9 @@ fn set_marker_internal(
     buffer: LispObject,
     restricted: bool,
 ) -> LispObject {
-    let buf = live_buffer(buffer);
+    let buf = buffer
+        .as_live_buffer()
+        .or_else(|| current_buffer().as_live_buffer());
     let mut m = marker.as_marker_or_error();
 
     // Set MARKER to point nowhere if BUFFER is dead, or
@@ -551,9 +547,10 @@ fn set_marker_internal_else(
     // Don't believe BYTEPOS if it comes from a different buffer,
     // since that buffer might have a very different correspondence
     // between character and byte positions.
-    if bytepos == -1 || !position
-        .as_marker()
-        .map_or(false, |m| m.buffer() == Some(buf))
+    if bytepos == -1
+        || !position
+            .as_marker()
+            .map_or(false, |m| m.buffer() == Some(buf))
     {
         bytepos = unsafe { buf_charpos_to_bytepos(buf.as_mut(), charpos) };
     } else {

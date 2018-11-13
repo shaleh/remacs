@@ -45,7 +45,6 @@ extern "C" {
     // number of arguments.
     // TODO: define a Rust version of this that uses Rust strings.
     pub fn error(m: *const u8, ...) -> !;
-    pub fn nsberror(spec: Lisp_Object) -> !;
     pub fn emacs_abort() -> !;
     pub fn Fsignal(error_symbol: Lisp_Object, data: Lisp_Object) -> !;
     pub fn memory_full(nbytes: libc::size_t) -> !;
@@ -67,9 +66,7 @@ pub enum BoolVectorOp {
 extern "C" {
     // these weren't declared in a header, for example
     pub static Vprocess_alist: Lisp_Object;
-    pub fn hash_clear(h: *mut Lisp_Hash_Table);
     pub fn uniprop_table_uncompress(table: Lisp_Object, idx: u32) -> Lisp_Object;
-    pub fn update_buffer_defaults(objvar: *mut LispObject, newval: LispObject);
     pub fn find_field(
         pos: LispObject,
         merge_at_boundary: LispObject,
@@ -125,8 +122,6 @@ extern "C" {
     #[cfg(unix)]
     pub fn filemode_string(f: LispObject) -> LispObject;
 
-    pub fn wset_update_mode_line(w: *mut Lisp_Window);
-    pub fn wset_display_table(w: *mut Lisp_Window, val: LispObject);
     pub fn drop_overlay(b: *mut Lisp_Buffer, ov: *mut Lisp_Overlay);
     pub fn unchain_both(b: *mut Lisp_Buffer, ov: LispObject);
     pub fn emacs_get_tty_pgrp(p: *mut Lisp_Process) -> libc::pid_t;

@@ -9,14 +9,16 @@ use std;
 use remacs_macros::lisp_fn;
 
 use remacs_sys::EmacsInt;
-use remacs_sys::{buffer_overflow, downcase, find_before_next_newline, find_field, find_newline,
-                 globals, insert, insert_and_inherit, insert_from_buffer, make_string_from_bytes,
-                 maybe_quit, scan_newline_from_point, set_buffer_internal_1, set_point,
-                 set_point_both, update_buffer_properties};
-use remacs_sys::{Fadd_text_properties, Fcons, Fcopy_sequence, Fget_pos_property};
-use remacs_sys::{Qfield, Qinteger_or_marker_p, Qmark_inactive, Qnil};
+use remacs_sys::{buffer_overflow, build_string, current_message, downcase,
+                 find_before_next_newline, find_field, find_newline, globals, insert,
+                 insert_and_inherit, insert_from_buffer, make_buffer_string_both,
+                 make_string_from_bytes, maybe_quit, message1, scan_newline_from_point,
+                 set_buffer_internal_1, set_point, set_point_both, update_buffer_properties};
+use remacs_sys::{Fadd_text_properties, Fcons, Fcopy_sequence, Fformat_message, Fget_pos_property,
+                 Fx_popup_dialog};
+use remacs_sys::{Qfield, Qinteger_or_marker_p, Qmark_inactive, Qnil, Qt};
 
-use buffers::{get_buffer, nsberror, BUF_BYTES_MAX};
+use buffers::{LispBufferOrCurrent, LispBufferOrName, LispBufferRef, BUF_BYTES_MAX};
 use character::{char_head_p, dec_pos};
 use lisp::{defsubr, LispObject};
 use marker::{buf_bytepos_to_charpos, buf_charpos_to_bytepos, marker_position_lisp,
@@ -46,12 +48,8 @@ pub fn point() -> EmacsInt {
 /// in some other BUFFER, use
 /// `(with-current-buffer BUFFER (- (point-max) (point-min)))'.
 #[lisp_fn(min = "0")]
-pub fn buffer_size(buffer: LispObject) -> EmacsInt {
-    let buffer_ref = if buffer.is_not_nil() {
-        get_buffer(buffer).as_buffer_or_error()
-    } else {
-        ThreadState::current_buffer()
-    };
+pub fn buffer_size(buffer: LispBufferOrCurrent) -> EmacsInt {
+    let buffer_ref = buffer.unwrap();
     (buffer_ref.z() - buffer_ref.beg()) as EmacsInt
 }
 
@@ -183,8 +181,8 @@ pub fn goto_char(position: LispObject) -> LispObject {
 /// Return the byte position for character position POSITION.
 /// If POSITION is out of range, the value is nil.
 #[lisp_fn]
-pub fn position_bytes(position: LispObject) -> Option<EmacsInt> {
-    let pos = position.as_fixnum_coerce_marker_or_error() as ptrdiff_t;
+pub fn position_bytes(position: LispNumber) -> Option<EmacsInt> {
+    let pos = position.to_fixnum() as ptrdiff_t;
     let mut cur_buf = ThreadState::current_buffer();
 
     if pos >= cur_buf.begv && pos <= cur_buf.zv {
@@ -856,26 +854,17 @@ pub fn emacs_pid() -> LispObject {
 /// versa, strings are converted from unibyte to multibyte or vice versa
 /// using `string-make-multibyte' or `string-make-unibyte', which see.
 #[lisp_fn(min = "1")]
-pub fn insert_buffer_substring(buffer: LispObject, beg: LispObject, end: LispObject) -> LispObject {
-    let buf = get_buffer(buffer);
-    if buf.is_nil() {
-        nsberror(buffer);
-    }
-    let mut buf_ref = match buf.as_live_buffer() {
-        Some(b) => b,
-        None => error!("Selecting deleted buffer"),
-    };
+pub fn insert_buffer_substring(
+    buffer: LispBufferOrName,
+    beg: Option<LispNumber>,
+    end: Option<LispNumber>,
+) {
+    let mut buf_ref = LispBufferRef::from(buffer)
+        .as_live()
+        .unwrap_or_else(|| error!("Selecting deleted buffer"));
 
-    let get_pos = |pos: LispObject, default: isize| {
-        if pos.is_nil() {
-            default
-        } else {
-            pos.as_number_coerce_marker_or_error();
-            pos.as_fixnum_or_error() as isize
-        }
-    };
-    let mut b = get_pos(beg, buf_ref.begv);
-    let mut e = get_pos(end, buf_ref.zv);
+    let mut b = beg.map_or(buf_ref.begv, |n| n.to_fixnum() as isize);
+    let mut e = end.map_or(buf_ref.zv, |n| n.to_fixnum() as isize);
 
     if b > e {
         let temp = b;
@@ -884,7 +873,7 @@ pub fn insert_buffer_substring(buffer: LispObject, beg: LispObject, end: LispObj
     }
 
     if !(buf_ref.begv <= b && e <= buf_ref.zv) {
-        args_out_of_range!(beg, end);
+        args_out_of_range!(beg.into(), end.into());
     }
 
     let mut cur_buf = ThreadState::current_buffer();
@@ -894,7 +883,57 @@ pub fn insert_buffer_substring(buffer: LispObject, beg: LispObject, end: LispObj
         set_buffer_internal_1(cur_buf.as_mut());
         insert_from_buffer(buf_ref.as_mut(), b, e - b, false)
     };
-    Qnil
+}
+
+/// Display a message, in a dialog box if possible.
+/// If a dialog box is not available, use the echo area.
+/// The first argument is a format control string, and the rest are data
+/// to be formatted under control of the string.  See `format-message' for
+/// details.
+///
+/// If the first argument is nil or the empty string, clear any existing
+/// message; let the minibuffer contents show.
+///
+/// usage: (message-box FORMAT-STRING &rest ARGS)
+#[lisp_fn]
+pub fn message_box(args: &mut [LispObject]) -> LispObject {
+    unsafe {
+        if args[0].is_nil() {
+            message1("".as_ptr() as *const ::libc::c_char);
+            Qnil
+        } else {
+            let val = Fformat_message(args.len() as isize, args.as_mut_ptr() as *mut LispObject);
+            let pane = list!(Fcons(
+                build_string("OK".as_ptr() as *const ::libc::c_char),
+                Qt
+            ));
+            let menu = Fcons(val, pane);
+            Fx_popup_dialog(Qt, menu, Qt);
+            val
+        }
+    }
+}
+
+/// Return the string currently displayed in the echo area, or nil if none.
+#[lisp_fn(name = "current-message", c_name = "current_message")]
+pub fn lisp_current_message() -> LispObject {
+    unsafe { current_message() }
+}
+
+/// Return the contents of the current buffer as a string.
+/// If narrowing is in effect, this function returns only the visible part
+/// of the buffer.
+#[lisp_fn]
+pub fn buffer_string() -> LispObject {
+    let cur_buf = ThreadState::current_buffer();
+
+    let begv = cur_buf.begv;
+    let begv_byte = cur_buf.begv_byte;
+
+    let zv = cur_buf.zv;
+    let zv_byte = cur_buf.zv_byte;
+
+    unsafe { make_buffer_string_both(begv, begv_byte, zv, zv_byte, true) }
 }
 
 include!(concat!(env!("OUT_DIR"), "/editfns_exports.rs"));
