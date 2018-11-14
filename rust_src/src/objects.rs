@@ -3,8 +3,10 @@
 use remacs_macros::lisp_fn;
 
 use crate::{
+    fns::{internal_equal, rust_internal_equal},
     lisp::{defsubr, LispObject},
-    remacs_sys::{internal_equal, EqualKind, Qnil},
+    remacs_sys::reference_internal_equal,
+    remacs_sys::{equal_kind, Qnil},
 };
 
 /// Return t if OBJECT is nil, and return nil otherwise.

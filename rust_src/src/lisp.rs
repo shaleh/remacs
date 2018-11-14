@@ -13,11 +13,12 @@ use std::slice;
 use crate::{
     buffers::LispBufferRef,
     eval::FUNCTIONP,
+    fns::{internal_equal, rust_internal_equal},
     lists::{list, CarIter},
     remacs_sys,
-    remacs_sys::{build_string, internal_equal, make_float},
+    remacs_sys::{build_string, make_float, reference_internal_equal},
     remacs_sys::{
-        pvec_type, EmacsDouble, EmacsInt, EmacsUint, EqualKind, Lisp_Bits, USE_LSB_TAG, VALMASK,
+        equal_kind, pvec_type, EmacsDouble, EmacsInt, EmacsUint, Lisp_Bits, USE_LSB_TAG, VALMASK,
     },
     remacs_sys::{Lisp_Misc_Any, Lisp_Misc_Type, Lisp_Subr, Lisp_Type},
     remacs_sys::{Qautoload, Qlistp, Qnil, Qsubrp, Qt, Vbuffer_alist},
@@ -74,6 +75,18 @@ impl LispObject {
     pub fn from_float(v: EmacsDouble) -> LispObject {
         unsafe { make_float(v) }
     }
+}
+
+pub trait LispEqual {
+    type Item;
+
+    fn equal(
+        self,
+        other: Self::Item,
+        kind: equal_kind::Type,
+        depth: libc::c_int,
+        ht: LispObject,
+    ) -> bool;
 }
 
 impl<T> From<Option<T>> for LispObject

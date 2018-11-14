@@ -3,23 +3,26 @@
 use libc;
 use libc::c_int;
 
-use std::f64;
-
 use remacs_macros::lisp_fn;
 
 use crate::{
     eval::un_autoload,
+    hashtable::HashLookupResult,
     lisp::defsubr,
-    lisp::LispObject,
-    lists::{assq, car, get, member, memq, put, LispCons},
+    lisp::{LispEqual, LispObject},
+    lists::LispCons,
+    lists::{assq, car, get, member, memq, put},
     obarray::loadhist_attach,
     objects::equal,
-    remacs_sys::Lisp_Type,
     remacs_sys::Vautoload_queue,
-    remacs_sys::{concat as lisp_concat, globals, record_unwind_protect, unbind_to},
-    remacs_sys::{Fcons, Fload, Fmapc},
     remacs_sys::{
-        Qfuncall, Qlistp, Qnil, Qprovide, Qquote, Qrequire, Qsubfeatures, Qt,
+        compare_string_intervals, compare_window_configurations, concat as lisp_concat, globals,
+        record_unwind_protect, reference_internal_equal, unbind_to,
+    },
+    remacs_sys::{equal_kind, pvec_type, Lisp_Type, More_Lisp_Bits, PSEUDOVECTOR_FLAG},
+    remacs_sys::{Fcons, Fload, Fmake_hash_table, Fmapc},
+    remacs_sys::{
+        QCtest, Qeq, Qfuncall, Qlistp, Qnil, Qprovide, Qquote, Qrequire, Qsubfeatures, Qt,
         Qwrong_number_of_arguments,
     },
     symbols::LispSymbolRef,
@@ -277,11 +280,10 @@ pub extern "C" fn internal_equal(
     depth: c_int,
     mut ht: LispObject,
 ) -> bool {
-    unsafe { reference_internal_equal(o1, o2, kind, depth, ht) }
+    rust_internal_equal(o1, o2, kind, depth, ht)
 }
 
-#[no_mangle]
-pub extern "C" fn rust_internal_equal(
+pub fn rust_internal_equal(
     o1: LispObject,
     o2: LispObject,
     kind: equal_kind::Type,

@@ -10,9 +10,10 @@ use crate::{
     chartable::LispCharTableRef,
     data::Lisp_Fwd,
     editfns::point,
+    fns::rust_internal_equal,
     frames::LispFrameRef,
     lisp::defsubr,
-    lisp::{ExternalPtr, LispObject, LiveBufferIter},
+    lisp::{ExternalPtr, LispEqual, LispMiscRef, LispObject, LiveBufferIter},
     lists::{car, cdr, list, member},
     marker::{marker_buffer, marker_position_lisp, set_marker_both, LispMarkerRef},
     multibyte::{multibyte_length_by_head, string_char},
@@ -24,8 +25,8 @@ use crate::{
         update_mode_lines,
     },
     remacs_sys::{
-        pvec_type, EmacsInt, Lisp_Buffer, Lisp_Buffer_Local_Value, Lisp_Misc_Type, Lisp_Overlay,
-        Lisp_Type, Vbuffer_alist,
+        equal_kind, pvec_type, EmacsInt, Lisp_Buffer, Lisp_Buffer_Local_Value, Lisp_Misc_Type,
+        Lisp_Overlay, Lisp_Type, Vbuffer_alist,
     },
     remacs_sys::{
         windows_or_buffers_changed, Fcons, Fcopy_sequence, Fexpand_file_name,
@@ -476,6 +477,22 @@ impl LispOverlayRef {
         LispOverlayIter {
             current: Some(self),
         }
+    }
+}
+
+impl LispEqual for LispOverlayRef {
+    type Item = LispOverlayRef;
+
+    fn equal(
+        self,
+        other: Self::Item,
+        kind: equal_kind::Type,
+        depth: libc::c_int,
+        ht: LispObject,
+    ) -> bool {
+        let overlay_equal = rust_internal_equal(self.start, other.start, kind, depth + 1, ht)
+            && rust_internal_equal(self.end, other.end, kind, depth + 1, ht);
+        overlay_equal && rust_internal_equal(self.plist, other.plist, kind, depth + 1, ht)
     }
 }
 

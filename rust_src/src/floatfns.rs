@@ -3,17 +3,17 @@
 
 use libc;
 
-use std::mem;
+use std::{f64, mem};
 
 use remacs_macros::lisp_fn;
 
 use crate::{
     libm,
     lisp::defsubr,
-    lisp::{ExternalPtr, LispObject},
+    lisp::{ExternalPtr, LispEqual, LispObject},
     math::ArithOp,
     numbers::{LispNumber, MOST_NEGATIVE_FIXNUM, MOST_POSITIVE_FIXNUM},
-    remacs_sys::{EmacsDouble, EmacsInt, EmacsUint, Lisp_Float, Lisp_Type},
+    remacs_sys::{equal_kind, EmacsDouble, EmacsInt, EmacsUint, Lisp_Float, Lisp_Type},
     remacs_sys::{Qarith_error, Qfloatp, Qinteger_or_marker_p, Qnumberp, Qrange_error},
 };
 
@@ -24,6 +24,20 @@ pub type LispFloatRef = ExternalPtr<Lisp_Float>;
 impl LispFloatRef {
     pub fn as_data(&self) -> &EmacsDouble {
         unsafe { &*(&self.u.data as *const EmacsDouble) }
+    }
+}
+
+impl LispEqual for EmacsDouble {
+    type Item = EmacsDouble;
+
+    fn equal(
+        self,
+        other: Self::Item,
+        _kind: equal_kind::Type,
+        _depth: libc::c_int,
+        mut _ht: LispObject,
+    ) -> bool {
+        self == other || (self == f64::NAN && other == f64::NAN)
     }
 }
 

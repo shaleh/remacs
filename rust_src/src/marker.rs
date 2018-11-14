@@ -8,9 +8,10 @@ use remacs_macros::lisp_fn;
 
 use crate::{
     buffers::{current_buffer, LispBufferRef},
-    lisp::{defsubr, ExternalPtr, LispObject},
+    lisp::{defsubr, ExternalPtr, LispMiscRef, LispObject},
     multibyte::multibyte_chars_in_text,
-    remacs_sys::{allocate_misc, set_point_both, Fmake_marker},
+    remacs_sys::Fmake_marker,
+    remacs_sys::{allocate_misc, reference_internal_equal, set_point_both},
     remacs_sys::{EmacsInt, Lisp_Buffer, Lisp_Marker, Lisp_Misc_Type},
     remacs_sys::{Qinteger_or_marker_p, Qmarkerp, Qnil},
     threads::ThreadState,
@@ -36,6 +37,20 @@ impl LispMiscRef {
 
     pub fn to_marker_unchecked(self) -> LispMarkerRef {
         unsafe { mem::transmute(self) }
+    }
+}
+
+impl LispEqual for LispMarkerRef {
+    type Item = LispMarkerRef;
+
+    fn equal(
+        self,
+        other: Self::Item,
+        kind: equal_kind::Type,
+        depth: libc::c_int,
+        ht: LispObject,
+    ) -> bool {
+        false
     }
 }
 
@@ -100,6 +115,14 @@ impl LispMarkerRef {
 
     pub fn set_next(mut self, m: *mut Lisp_Marker) -> () {
         self.next = m;
+    }
+}
+
+impl LispEqual for LispMarkerRef {
+    type Item = LispMarkerRef;
+
+    fn equal() -> bool {
+        self.buffer == other.buffer && (self.buffer.is_null() || self.bytepos == other.bytepos)
     }
 }
 

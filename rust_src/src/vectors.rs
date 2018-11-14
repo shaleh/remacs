@@ -20,8 +20,11 @@ use crate::{
     numbers::MOST_POSITIVE_FIXNUM,
     process::LispProcessRef,
     remacs_sys::{
-        pvec_type, EmacsInt, Lisp_Bool_Vector, Lisp_Type, Lisp_Vector, Lisp_Vectorlike,
-        Lisp_Vectorlike_With_Slots, More_Lisp_Bits, BITS_PER_BITS_WORD, PSEUDOVECTOR_FLAG,
+        pvec_type, EmacsInt, More_Lisp_Bits, BITS_PER_BITS_WORD, BOOL_VECTOR_BITS_PER_CHAR,
+        PSEUDOVECTOR_FLAG,
+    },
+    remacs_sys::{
+        Lisp_Bool_Vector, Lisp_Type, Lisp_Vector, Lisp_Vectorlike, Lisp_Vectorlike_With_Slots,
     },
     remacs_sys::{Qarrayp, Qsequencep, Qvectorp},
     threads::ThreadStateRef,
