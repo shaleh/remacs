@@ -1940,7 +1940,7 @@ The value is non-nil if there were no errors, nil if errors."
 		       ;; parallel bootstrap), it does not risk getting a
 		       ;; half-finished file.  (Bug#4196)
 		       (tempfile
-			(make-temp-file (expand-file-name target-file)))
+                        (make-temp-file (file-name-nondirectory target-file)))
 		       (default-modes (default-file-modes))
 		       (temp-modes (logand default-modes #o600))
 		       (desired-modes (logand default-modes #o666))
