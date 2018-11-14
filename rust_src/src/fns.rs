@@ -324,17 +324,14 @@ pub fn rust_internal_equal(
     }
 
     if let (Some(d1), Some(d2)) = (o1.as_float(), o2.as_float()) {
-        d1 == d2 || (d1 == f64::NAN && d2 == f64::NAN)
+        d1.equal(d2, kind, depth, ht)
     } else if let (Some(m1), Some(m2)) = (o1.as_misc(), o2.as_misc()) {
         if let (Some(ov1), Some(ov2)) = (m1.as_overlay(), m2.as_overlay()) {
-            let overlays_equal = rust_internal_equal(ov1.start, ov2.start, kind, depth + 1, ht)
-                && rust_internal_equal(ov1.end, ov2.end, kind, depth + 1, ht);
-            overlays_equal && rust_internal_equal(ov1.plist, ov2.plist, kind, depth + 1, ht)
+            ov1.equal(ov2, kind, depth, ht)
         } else if let (Some(marker1), Some(marker2)) = (m1.as_marker(), m2.as_marker()) {
-            marker1.buffer == marker2.buffer
-                && (marker1.buffer.is_null() || marker1.bytepos == marker2.bytepos)
+            marker1.equal(marker2, kind, depth, ht)
         } else {
-            false
+            m1.equal(m2, kind, depth, ht)
         }
     } else if let (Some(s1), Some(s2)) = (o1.as_string(), o2.as_string()) {
         if s1.len_chars() == s2.len_chars()
