@@ -1,12 +1,11 @@
 //! Various functions operating on any object.
 
 use remacs_macros::lisp_fn;
-use remacs_sys::Qnil;
-use remacs_sys::{equal_kind, reference_internal_equal};
 
-use fns::{internal_equal, rust_internal_equal};
-use lisp::defsubr;
-use lisp::LispObject;
+use crate::{
+    lisp::{defsubr, LispObject},
+    remacs_sys::{internal_equal, EqualKind, Qnil},
+};
 
 /// Return t if OBJECT is nil, and return nil otherwise.
 #[lisp_fn]

@@ -6,25 +6,26 @@ use libc::c_int;
 use std::f64;
 
 use remacs_macros::lisp_fn;
-use remacs_sys::Vautoload_queue;
-use remacs_sys::{compare_string_intervals, compare_window_configurations, concat as lisp_concat,
-                 globals, record_unwind_protect, reference_internal_equal, unbind_to};
-use remacs_sys::{equal_kind, pvec_type};
-use remacs_sys::{Fcons, Fload, Fmake_hash_table, Fmapc};
-use remacs_sys::{Lisp_Type, More_Lisp_Bits, BOOL_VECTOR_BITS_PER_CHAR, PSEUDOVECTOR_FLAG};
-use remacs_sys::{QCtest, Qeq, Qfuncall, Qlistp, Qnil, Qprovide, Qquote, Qrequire, Qsubfeatures,
-                 Qt, Qwrong_number_of_arguments};
 
-use eval::un_autoload;
-use hashtable::HashLookupResult;
-use lisp::defsubr;
-use lisp::LispObject;
-use lists::{assq, car, get, member, memq, put, LispCons};
-use obarray::loadhist_attach;
-use objects::equal;
-use symbols::LispSymbolRef;
-use threads::c_specpdl_index;
-use vectors::length;
+use crate::{
+    eval::un_autoload,
+    lisp::defsubr,
+    lisp::LispObject,
+    lists::{assq, car, get, member, memq, put, LispCons},
+    obarray::loadhist_attach,
+    objects::equal,
+    remacs_sys::Lisp_Type,
+    remacs_sys::Vautoload_queue,
+    remacs_sys::{concat as lisp_concat, globals, record_unwind_protect, unbind_to},
+    remacs_sys::{Fcons, Fload, Fmapc},
+    remacs_sys::{
+        Qfuncall, Qlistp, Qnil, Qprovide, Qquote, Qrequire, Qsubfeatures, Qt,
+        Qwrong_number_of_arguments,
+    },
+    symbols::LispSymbolRef,
+    threads::c_specpdl_index,
+    vectors::length,
+};
 
 /// Return t if FEATURE is present in this Emacs.
 ///
