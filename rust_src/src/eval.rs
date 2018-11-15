@@ -45,7 +45,7 @@ use crate::{
 pub fn or(args: LispObject) -> LispObject {
     let mut val = Qnil;
 
-    for elt in args.iter_cars_safe() {
+    for elt in args.iter_cars_unchecked() {
         val = unsafe { eval_sub(elt) };
         if val != Qnil {
             break;
@@ -63,7 +63,7 @@ pub fn or(args: LispObject) -> LispObject {
 pub fn and(args: LispObject) -> LispObject {
     let mut val = Qt;
 
-    for elt in args.iter_cars_safe() {
+    for elt in args.iter_cars_unchecked() {
         val = unsafe { eval_sub(elt) };
         if val == Qnil {
             break;
@@ -104,13 +104,12 @@ pub fn lisp_if(args: LispObject) -> LispObject {
 pub fn cond(args: LispObject) -> LispObject {
     let mut val = Qnil;
 
-    for clause in args.iter_cars_safe() {
-        let cell = clause.as_cons_or_error();
-        val = unsafe { eval_sub(cell.car()) };
+    for cell in args.iter_tails_unchecked() {
+        let (car, cdr) = cell.as_tuple();
+        val = unsafe { eval_sub(car) };
         if val != Qnil {
-            let tail = cell.cdr();
-            if tail.is_not_nil() {
-                val = progn(tail);
+            if cdr.is_not_nil() {
+                val = progn(cdr);
             }
             break;
         }
@@ -123,7 +122,7 @@ pub fn cond(args: LispObject) -> LispObject {
 /// usage: (progn BODY...)
 #[lisp_fn(min = "0", unevalled = "true")]
 pub fn progn(body: LispObject) -> LispObject {
-    body.iter_cars_safe()
+    body.iter_cars_unchecked()
         .map(|form| unsafe { eval_sub(form) })
         .last()
         .into()
@@ -140,8 +139,8 @@ pub extern "C" fn prog_ignore(body: LispObject) {
 /// whose values are discarded.
 /// usage: (prog1 FIRST BODY...)
 #[lisp_fn(min = "1", unevalled = "true")]
-pub fn prog1(args: LispObject) -> LispObject {
-    let (first, body) = args.as_cons_or_error().as_tuple();
+pub fn prog1(args: LispCons) -> LispObject {
+    let (first, body) = args.as_tuple();
 
     let val = unsafe { eval_sub(first) };
     progn(body);
@@ -153,8 +152,8 @@ pub fn prog1(args: LispObject) -> LispObject {
 /// remaining args, whose values are discarded.
 /// usage: (prog2 FORM1 FORM2 BODY...)
 #[lisp_fn(min = "2", unevalled = "true")]
-pub fn prog2(args: LispObject) -> LispObject {
-    let (form1, tail) = args.as_cons_or_error().as_tuple();
+pub fn prog2(args: LispCons) -> LispObject {
+    let (form1, tail) = args.as_tuple();
 
     unsafe { eval_sub(form1) };
     prog1(tail)
@@ -211,9 +210,8 @@ def_lisp_sym!(Qsetq, "setq");
 /// `quote' cannot do that.
 /// usage: (function ARG)
 #[lisp_fn(min = "1", unevalled = "true")]
-pub fn function(args: LispObject) -> LispObject {
-    let cell = args.as_cons_or_error();
-    let (quoted, tail) = cell.as_tuple();
+pub fn function(args: LispCons) -> LispObject {
+    let (quoted, tail) = args.as_tuple();
 
     if tail.is_not_nil() {
         xsignal!(Qwrong_number_of_arguments, Qfunction, length(args));
@@ -239,16 +237,17 @@ pub fn function(args: LispObject) -> LispObject {
                         let docstring = unsafe { eval_sub(car(tail)) };
                         docstring.as_string_or_error();
                         let (a, b) = cdr.as_cons().unwrap().as_tuple();
-                        cdr = unsafe { Fcons(a, Fcons(docstring, b.as_cons().unwrap().cdr())) };
+                        cdr = LispObject::cons(
+                            a,
+                            LispObject::cons(docstring, b.as_cons().unwrap().cdr()),
+                        );
                     }
                 }
 
-                return unsafe {
-                    Fcons(
-                        Qclosure,
-                        Fcons(globals.Vinternal_interpreter_environment, cdr),
-                    )
-                };
+                return LispObject::cons(
+                    Qclosure,
+                    LispObject::cons(globals.Vinternal_interpreter_environment, cdr),
+                );
             }
         }
     }
@@ -290,8 +289,8 @@ pub fn special_variable_p(symbol: LispSymbolRef) -> bool {
 /// The optional DOCSTRING specifies the variable's documentation string.
 /// usage: (defconst SYMBOL INITVALUE [DOCSTRING])
 #[lisp_fn(min = "2", unevalled = "true")]
-pub fn defconst(args: LispObject) -> LispSymbolRef {
-    let (sym, tail) = args.as_cons_or_error().as_tuple();
+pub fn defconst(args: LispCons) -> LispSymbolRef {
+    let (sym, tail) = args.as_tuple();
 
     let mut docstring = if cdr(tail).is_not_nil() {
         if cdr(cdr(tail)).is_not_nil() {
@@ -335,17 +334,13 @@ fn let_binding_value(obj: LispObject) -> (LispObject, LispObject) {
         (obj, Qnil)
     } else {
         let (front, tail) = obj.as_cons_or_error().as_tuple();
-        let (to_eval, tail) = if tail.is_nil() {
-            (Qnil, tail)
-        } else {
-            tail.as_cons_or_error().as_tuple()
-        };
+        let (to_eval, tail) =
+            tail.map_or_else(|| (Qnil, tail), |t| t.as_cons_or_error().as_tuple());
 
-        if tail.is_nil() {
-            (front, unsafe { eval_sub(to_eval) })
-        } else {
-            signal_error("`let' bindings can have only one value-form", obj);
-        }
+        tail.map_or_else(
+            || (front, unsafe { eval_sub(to_eval) }),
+            |_| signal_error("`let' bindings can have only one value-form", obj),
+        )
     }
 }
 
@@ -372,16 +367,16 @@ pub fn letX(args: LispCons) -> LispObject {
         if lexenv != Qnil {
             if let Some(sym) = var.as_symbol() {
                 if !sym.get_declared_special() {
-                    let bound = memq(var, unsafe { globals.Vinternal_interpreter_environment })
-                        .is_not_nil();
+                    let not_bound =
+                        memq(var, unsafe { globals.Vinternal_interpreter_environment }).is_nil();
 
-                    if !bound {
+                    if not_bound {
                         // Lexically bind VAR by adding it to the interpreter's binding alist.
 
+                        let newenv = LispObject::cons(LispObject::cons(var, val), unsafe {
+                            globals.Vinternal_interpreter_environment
+                        });
                         unsafe {
-                            let newenv =
-                                Fcons(Fcons(var, val), globals.Vinternal_interpreter_environment);
-
                             if globals.Vinternal_interpreter_environment == lexenv {
                                 // Save the old lexical environment on the specpdl stack,
                                 // but only for the first lexical binding, since we'll never
@@ -430,12 +425,12 @@ pub fn lisp_let(args: LispCons) -> LispObject {
         if lexenv != Qnil {
             if let Some(sym) = var.as_symbol() {
                 if !sym.get_declared_special() {
-                    let bound = memq(var, unsafe { globals.Vinternal_interpreter_environment })
-                        .is_not_nil();
+                    let not_bound =
+                        memq(var, unsafe { globals.Vinternal_interpreter_environment }).is_nil();
 
-                    if !bound {
+                    if not_bound {
                         // Lexically bind VAR by adding it to the lexenv alist.
-                        lexenv = unsafe { Fcons(Fcons(var, val), lexenv) };
+                        lexenv = LispObject::cons(LispObject::cons(var, val), lexenv);
                         dyn_bind = false;
                     }
                 }
@@ -472,7 +467,7 @@ pub fn lisp_while(args: LispCons) {
     while unsafe { eval_sub(test) } != Qnil {
         unsafe { maybe_quit() };
 
-        progn(body);
+        Fprogn(body);
     }
 }
 
@@ -689,10 +684,11 @@ pub fn autoload(
     }
 
     defalias(
-        function.as_lisp_obj(),
+        function,
         list!(Qautoload, file.as_lisp_obj(), docstring, interactive, ty),
         Qnil,
     )
+    .into()
 }
 
 def_lisp_sym!(Qautoload, "autoload");
@@ -749,7 +745,7 @@ pub unsafe extern "C" fn un_autoload(oldqueue: LispObject) {
     let queue = Vautoload_queue;
     Vautoload_queue = oldqueue;
 
-    for first in queue.iter_cars_safe() {
+    for first in queue.iter_cars_unchecked() {
         let (first, second) = first.as_cons_or_error().as_tuple();
 
         if first.eq(LispObject::from(0)) {
@@ -919,7 +915,7 @@ fn run_hook_with_args_internal(
         args[0] = val;
         func(args)
     } else {
-        for item in val.iter_cars_safe() {
+        for item in val.iter_cars_unchecked() {
             if ret.is_not_nil() {
                 break;
             }
@@ -936,7 +932,7 @@ fn run_hook_with_args_internal(
                     args[0] = global_vals;
                     ret = func(args);
                 } else {
-                    for gval in global_vals.iter_cars_safe() {
+                    for gval in global_vals.iter_cars_unchecked() {
                         if ret.is_not_nil() {
                             break;
                         }

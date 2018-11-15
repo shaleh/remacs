@@ -31,10 +31,9 @@ impl LispObject {
     }
 
     pub fn as_char_table_or_error(self) -> LispCharTableRef {
-        if let Some(chartable) = self.as_char_table() {
-            chartable
-        } else {
-            wrong_type!(Qchar_table_p, self)
+        match self.as_char_table() {
+            Some(chartable) => chartable,
+            None => wrong_type!(Qchar_table_p, self),
         }
     }
 }
@@ -125,20 +124,18 @@ impl LispCharTableRef {
     pub fn get(self, c: isize) -> LispObject {
         let mut val = if is_ascii(c) {
             let tmp = self.ascii;
-            if let Some(sub) = tmp.as_sub_char_table_ascii() {
-                sub.get(c)
-            } else {
-                tmp
+            match tmp.as_sub_char_table_ascii() {
+                Some(sub) => sub.get(c),
+                None => tmp,
             }
         } else {
             let tmp = self
                 .contents
                 .get(chartab_idx(c, 0, 0) as usize)
                 .map_or_else(|| error!("Index out of range"), |tmp| *tmp);
-            if let Some(sub) = tmp.as_sub_char_table() {
-                sub.get(c, self.is_uniprop())
-            } else {
-                tmp
+            match tmp.as_sub_char_table() {
+                Some(sub) => sub.get(c, self.is_uniprop()),
+                None => tmp,
             }
         };
 
@@ -193,11 +190,10 @@ impl LispSubCharTableRef {
             val = unsafe { uniprop_table_uncompress(self.as_lisp_obj(), idx as libc::c_int) };
         }
 
-        if let Some(sub) = val.as_sub_char_table() {
-            val = sub.get(c, is_uniprop)
+        match val.as_sub_char_table() {
+            Some(sub) => sub.get(c, is_uniprop),
+            None => val,
         }
-
-        val
     }
 }
 
@@ -229,21 +225,14 @@ pub fn set_char_table_parent(
     parent: Option<LispCharTableRef>,
 ) -> () {
     let mut temp = parent;
-    while temp.is_some() {
-        if let Some(p) = temp {
-            if chartable.eq(&p) {
-                error!("Attempt to make a chartable to be its own parent");
-            }
-            temp = char_table_parent(p);
+    while let Some(p) = temp {
+        if chartable.eq(&p) {
+            error!("Attempt to make a chartable to be its own parent");
         }
+        temp = char_table_parent(p);
     }
 
-    chartable.parent = if let Some(p) = parent {
-        p.as_lisp_obj()
-    } else {
-        Qnil
-    };
-    //parent
+    chartable.parent = parent.map_or(Qnil, |p| p.as_lisp_obj());
 }
 
 include!(concat!(env!("OUT_DIR"), "/chartable_exports.rs"));

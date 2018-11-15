@@ -23,7 +23,7 @@ use crate::{
     },
     remacs_sys::{buffer_local_flags, per_buffer_default, symbol_redirect},
     remacs_sys::{pvec_type, BoolVectorOp, EmacsInt, Lisp_Misc_Type, Lisp_Type, Set_Internal_Bind},
-    remacs_sys::{Fcons, Ffset, Fget, Fpurecopy},
+    remacs_sys::{Ffset, Fget, Fpurecopy},
     remacs_sys::{Lisp_Buffer, Lisp_Subr_Lang},
     remacs_sys::{
         Qargs_out_of_range, Qarrayp, Qautoload, Qbool_vector, Qbuffer, Qchar_table, Qchoice,
@@ -268,8 +268,12 @@ pub fn aset(array: LispObject, idx: EmacsInt, newelt: LispObject) -> LispObject 
 ///
 /// The return value is undefined.
 #[lisp_fn(min = "2")]
-pub fn defalias(sym: LispObject, mut definition: LispObject, docstring: LispObject) -> LispObject {
-    let symbol = sym.as_symbol_or_error();
+pub fn defalias(
+    symbol: LispSymbolRef,
+    mut definition: LispObject,
+    docstring: LispObject,
+) -> LispSymbolRef {
+    let sym = symbol.as_lisp_obj();
 
     unsafe {
         if globals.Vpurify_flag != Qnil
@@ -287,9 +291,12 @@ pub fn defalias(sym: LispObject, mut definition: LispObject, docstring: LispObje
 
         if is_autoload(symbol.get_function()) {
             // Remember that the function was already an autoload.
-            loadhist_attach(unsafe { Fcons(Qt, sym) });
+            loadhist_attach(LispObject::cons(Qt, sym));
         }
-        loadhist_attach(unsafe { Fcons(if autoload { Qautoload } else { Qdefun }, sym) });
+        loadhist_attach(LispObject::cons(
+            if autoload { Qautoload } else { Qdefun },
+            sym,
+        ));
     }
 
     // Handle automatic advice activation.
@@ -307,7 +314,7 @@ pub fn defalias(sym: LispObject, mut definition: LispObject, docstring: LispObje
     // We used to return `definition', but now that `defun' and `defmacro' expand
     // to a call to `defalias', we return `symbol' for backward compatibility
     // (bug#11686).
-    sym
+    symbol
 }
 
 /// Return minimum and maximum number of args allowed for SUBR.

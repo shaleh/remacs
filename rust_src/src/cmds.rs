@@ -38,22 +38,21 @@ use crate::{
 
 /// Add N to point; or subtract N if FORWARD is false. N defaults to 1.
 /// Validate the new location. Return nil.
-fn move_point(n: LispObject, forward: bool) -> () {
+fn move_point(n: Option<EmacsInt>, forward: bool) -> () {
     // This used to just set point to 'point + n', and then check
     // to see if it was within boundaries. But now that SET_POINT can
     // potentially do a lot of stuff (calling entering and exiting
     // hooks, et cetera), that's not a good approach. So we validate the
     // proposed position, then set point.
 
-    let mut n = if n.is_nil() {
-        1
-    } else {
-        n.as_fixnum_or_error() as isize
+    let n = {
+        let val = n.unwrap_or(1) as isize;
+        if forward {
+            val
+        } else {
+            -val
+        }
     };
-
-    if !forward {
-        n = -n;
-    }
 
     let buffer = ThreadState::current_buffer();
     let mut signal = Qnil;
@@ -82,7 +81,7 @@ fn move_point(n: LispObject, forward: bool) -> () {
 /// right or to the left on the screen.  This is in contrast with
 /// \\[right-char], which see.
 #[lisp_fn(min = "0", intspec = "^p")]
-pub fn forward_char(n: LispObject) -> () {
+pub fn forward_char(n: Option<EmacsInt>) -> () {
     move_point(n, true)
 }
 
@@ -95,7 +94,7 @@ pub fn forward_char(n: LispObject) -> () {
 /// right or to the left on the screen.  This is in contrast with
 /// \\[left-char], which see.
 #[lisp_fn(min = "0", intspec = "^p")]
-pub fn backward_char(n: LispObject) -> () {
+pub fn backward_char(n: Option<EmacsInt>) -> () {
     move_point(n, false)
 }
 
@@ -444,7 +443,7 @@ fn internal_self_insert(mut c: Codepoint, n: usize) -> EmacsInt {
                 false,
             )
         };
-        forward_char(LispObject::from(n));
+        forward_char(Some(n as EmacsInt));
     } else if n > 1 {
         let mut strn: Vec<libc::c_uchar> = match n.checked_mul(len) {
             Some(size_bytes) => Vec::with_capacity(size_bytes),
