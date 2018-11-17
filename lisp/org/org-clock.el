@@ -956,7 +956,7 @@ If necessary, clock-out of the currently active clock."
 	(unless (org-is-active-clock clock)
 	  (org-clock-clock-in clock t))))
 
-     ((not (time-less-p resolve-to nil))
+     ((not (time-less-p resolve-to (current-time)))
       (error "RESOLVE-TO must refer to a time in the past"))
 
      (t
@@ -1058,7 +1058,7 @@ to be CLOCKED OUT."))))
 		(and (not (memq char-pressed '(?i ?q))) char-pressed)))))
 	 (default
 	   (floor (/ (float-time
-		      (time-subtract nil last-valid)) 60)))
+		      (time-subtract (current-time) last-valid)) 60)))
 	 (keep
 	  (and (memq ch '(?k ?K))
 	       (read-number "Keep how many minutes? " default)))
@@ -1095,7 +1095,8 @@ to be CLOCKED OUT."))))
 	      (keep
 	       (time-add last-valid (seconds-to-time (* 60 keep))))
 	      (gotback
-	       (time-subtract nil (seconds-to-time (* 60 gotback))))
+	       (time-subtract (current-time)
+			      (seconds-to-time (* 60 gotback))))
 	      (t
 	       (error "Unexpected, please report this as a bug")))
        (and gotback last-valid)
@@ -1177,7 +1178,7 @@ so long."
 	     org-clock-marker (marker-buffer org-clock-marker))
     (let* ((org-clock-user-idle-seconds (org-user-idle-seconds))
 	   (org-clock-user-idle-start
-	    (time-subtract nil
+	    (time-subtract (current-time)
 			   (seconds-to-time org-clock-user-idle-seconds)))
 	   (org-clock-resolving-clocks-due-to-idleness t))
       (if (> org-clock-user-idle-seconds (* 60 org-clock-idle-time))
@@ -1187,7 +1188,8 @@ so long."
 	   (lambda (_)
 	     (format "Clocked in & idle for %.1f mins"
 		     (/ (float-time
-			 (time-subtract nil org-clock-user-idle-start))
+			 (time-subtract (current-time)
+					org-clock-user-idle-start))
 			60.0)))
 	   org-clock-user-idle-start)))))
 
@@ -1707,8 +1709,8 @@ Optional argument N tells to change by that many units."
 	      (begts (if updatets1 begts1 begts2)))
 	  (setq tdiff
 		(time-subtract
-		 (org-time-string-to-time org-last-changed-timestamp t)
-		 (org-time-string-to-time ts t)))
+		 (org-time-string-to-time org-last-changed-timestamp)
+		 (org-time-string-to-time ts)))
 	  (save-excursion
 	    (goto-char begts)
 	    (org-timestamp-change
@@ -2725,37 +2727,34 @@ LEVEL is an integer.  Indent by two spaces per level above 1."
     (setq tsb
 	  (if (eq step0 'week)
 	      (let ((dow (nth 6 (decode-time (seconds-to-time ts)))))
-		(if (<= dow ws) ts
+		(if (< dow ws) ts
 		  (- ts (* 86400 (- dow ws)))))
 	    ts))
     (while (< tsb te)
-      (unless (bolp) (insert "\n"))
-      (let ((start-time (seconds-to-time (max tsb ts))))
-	(cl-incf tsb (let ((dow (nth 6 (decode-time (seconds-to-time tsb)))))
-		       (if (or (eq step0 'day)
-			       (= dow ws))
-			   step
-			 (* 86400 (- ws dow)))))
-	(insert "\n"
-		(if (eq step0 'day) "Daily report: "
-		  "Weekly report starting on: ")
-		(format-time-string (org-time-stamp-format nil t) start-time)
-		"\n")
-	(let ((table-begin (line-beginning-position 0))
-	      (step-time
-	       (org-dblock-write:clocktable
-		(org-combine-plists
-		 params
-		 (list
-		  :header "" :step nil :block nil
-		  :tstart (format-time-string (org-time-stamp-format t t)
-					      start-time)
-		  :tend (format-time-string (org-time-stamp-format t t)
-					    (seconds-to-time (min te tsb))))))))
-	  (re-search-forward "^[ \t]*#\\+END:")
-	  (when (and stepskip0 (equal step-time 0))
-	    ;; Remove the empty table
-	    (delete-region (line-beginning-position) table-begin))))
+      (or (bolp) (insert "\n"))
+      (setq p1 (plist-put p1 :tstart (format-time-string
+				      (org-time-stamp-format nil t)
+				      (seconds-to-time (max tsb ts)))))
+      (cl-incf tsb (let ((dow (nth 6 (decode-time (seconds-to-time tsb)))))
+		     (if (or (eq step0 'day)
+			     (= dow ws))
+			 step
+		       (* 86400 (- ws dow)))))
+      (setq p1 (plist-put p1 :tend (format-time-string
+				    (org-time-stamp-format nil t)
+				    (seconds-to-time (min te tsb)))))
+      (insert "\n" (if (eq step0 'day) "Daily report: "
+		     "Weekly report starting on: ")
+	      (plist-get p1 :tstart) "\n")
+      (setq step-time (org-dblock-write:clocktable p1))
+      (re-search-forward "^[ \t]*#\\+END:")
+      (when (and (equal step-time 0) stepskip0)
+	;; Remove the empty table
+	(delete-region (point-at-bol)
+		       (save-excursion
+			 (re-search-backward "^\\(Daily\\|Weekly\\) report"
+					     nil t)
+			 (point))))
       (end-of-line 0))))
 
 (defun org-clock-get-table-data (file params)

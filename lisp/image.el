@@ -986,11 +986,12 @@ default is 20%."
     image))
 
 (defun image--get-imagemagick-and-warn ()
-  (unless (fboundp 'imagemagick-types)
-    (error "Cannot rescale images without ImageMagick support"))
+  (unless (or (fboundp 'imagemagick-types) (featurep 'ns))
+    (error "Can't rescale images without ImageMagick support"))
   (let ((image (image--get-image)))
     (image-flush image)
-    (plist-put (cdr image) :type 'imagemagick)
+    (when (fboundp 'imagemagick-types)
+      (plist-put (cdr image) :type 'imagemagick))
     image))
 
 (defun image--change-size (factor)

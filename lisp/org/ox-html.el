@@ -2161,13 +2161,14 @@ CODE is a string representing the source code to colorize.  LANG
 is the language used for CODE, as a string, or nil."
   (when code
     (cond
-     ;; Case 1: No lang.  Possibly an example block.
-     ((not lang)
-      ;; Simple transcoding.
-      (org-html-encode-plain-text code))
-     ;; Case 2: No htmlize or an inferior version of htmlize
+     ;; No language.  Possibly an example block.
+     ((not lang) (org-html-encode-plain-text code))
+     ;; Plain text explicitly set.
+     ((not org-html-htmlize-output-type) (org-html-encode-plain-text code))
+     ;; No htmlize library or an inferior version of htmlize.
      ((not (and (or (require 'htmlize nil t)
-		    (error "Please install htmlize from https://github.com/hniksic/emacs-htmlize"))
+		    (error "Please install htmlize from \
+https://github.com/hniksic/emacs-htmlize"))
 		(fboundp 'htmlize-region-for-paste)))
       ;; Emit a warning.
       (message "Cannot fontify src block (htmlize.el >= 1.34 required)")

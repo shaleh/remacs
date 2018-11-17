@@ -183,7 +183,8 @@ Stars are put in group 1 and the trimmed body in group 2.")
 (declare-function org-export-get-environment "ox" (&optional backend subtreep ext-plist))
 (declare-function org-latex-make-preamble "ox-latex" (info &optional template snippet?))
 
-(defvar ffap-url-regexp)		;Silence byte-compiler
+(defvar ffap-url-regexp)
+(defvar org-element-paragraph-separate)
 
 (defsubst org-uniquify (list)
   "Non-destructively remove duplicate elements from LIST."
@@ -228,7 +229,7 @@ file to byte-code before it is loaded."
   (interactive "fFile to load: \nP")
   (let* ((age (lambda (file)
 		(float-time
-		 (time-subtract nil
+		 (time-subtract (current-time)
 				(nth 5 (or (file-attributes (file-truename file))
 					   (file-attributes file)))))))
 	 (base-name (file-name-sans-extension file))
@@ -5307,7 +5308,8 @@ is available.  This option applies only if FILE is a URL."
 	;; Move point to after the url-retrieve header.
 	(search-forward "\n\n" nil :move)
 	;; Search for the success code only in the url-retrieve header.
-	(if (save-excursion (re-search-backward "HTTP.*\\s-+200\\s-OK" nil :noerror))
+	(if (save-excursion
+	      (re-search-backward "HTTP.*\\s-+200\\s-OK" nil :noerror))
 	    ;; Update the cache `org--file-cache' and return contents.
 	    (puthash file
 		     (buffer-substring-no-properties (point) (point-max))
@@ -5317,13 +5319,14 @@ is available.  This option applies only if FILE is a URL."
 		   file))))
      (t
       (with-temp-buffer
-        (condition-case err
+        (condition-case nil
 	    (progn
 	      (insert-file-contents file)
 	      (buffer-string))
 	  (file-error
            (funcall (if noerror #'message #'user-error)
-		    (error-message-string err)))))))))
+		    "Unable to read file %S"
+		    file))))))))
 
 (defun org-extract-log-state-settings (x)
   "Extract the log state setting from a TODO keyword string.
@@ -5614,14 +5617,15 @@ the rounding returns a past time."
 	    (apply 'encode-time
 		   (append (list 0 (* r (floor (+ .5 (/ (float (nth 1 time)) r)))))
 			   (nthcdr 2 time))))
-      (if (and past (< (float-time (time-subtract nil res)) 0))
+      (if (and past (< (float-time (time-subtract (current-time) res)) 0))
 	  (seconds-to-time (- (float-time res) (* r 60)))
 	res))))
 
 (defun org-today ()
   "Return today date, considering `org-extend-today-until'."
   (time-to-days
-   (time-subtract nil (list 0 (* 3600 org-extend-today-until) 0))))
+   (time-subtract (current-time)
+		  (list 0 (* 3600 org-extend-today-until) 0))))
 
 ;;;; Font-Lock stuff, including the activators
 
@@ -5766,18 +5770,27 @@ This should be called after the variable `org-link-parameters' has changed."
 	       (verbatim? (member marker '("~" "="))))
 	  (when (save-excursion
 		  (goto-char (match-beginning 0))
-		  ;; Do not match headline stars.  Do not consider
-		  ;; stars of a headline as closing marker for bold
-		  ;; markup either.  Do not match table hlines.
 		  (and
-		   (not (looking-at-p org-outline-regexp-bol))
+		   ;; Do not match table hlines.
 		   (not (and (equal marker "+")
 			     (org-match-line
-			      "^[ \t]*\\(|[-+]+|?\\|\\+[-+]+\\+\\)[ \t]*$")))
+			      "[ \t]*\\(|[-+]+|?\\|\\+[-+]+\\+\\)[ \t]*$")))
+		   ;; Do not match headline stars.  Do not consider
+		   ;; stars of a headline as closing marker for bold
+		   ;; markup either.
+		   (not (and (equal marker "*")
+			     (save-excursion
+			       (forward-char)
+			       (skip-chars-backward "*")
+			       (looking-at-p org-outline-regexp-bol))))
+		   ;; Match full emphasis markup regexp.
 		   (looking-at (if verbatim? org-verbatim-re org-emph-re))
-		   (not (string-match-p
-			 (concat org-outline-regexp-bol "\\'")
-			 (match-string 0)))))
+		   ;; Do not span over paragraph boundaries.
+		   (not (string-match-p org-element-paragraph-separate
+					(match-string 2)))
+		   ;; Do not span over cells in table rows.
+		   (not (and (save-match-data (org-match-line "[ \t]*|"))
+			     (string-match-p "|" (match-string 4))))))
 	    (pcase-let ((`(,_ ,face ,_) (assoc marker org-emphasis-alist)))
 	      (font-lock-prepend-text-property
 	       (match-beginning 2) (match-end 2) 'face face)
@@ -9683,8 +9696,7 @@ active region."
 			 (cdr (assoc-string
 			       (completing-read
 				"Which function for creating the link? "
-				(mapcar #'car results-alist)
-				nil t (symbol-name name))
+				(mapcar #'car results-alist) nil t name)
 			       results-alist)))
 		  t))))
 	(setq link (plist-get org-store-link-plist :link))
@@ -13091,7 +13103,8 @@ This function is run automatically after each state change to a DONE state."
 			(while (re-search-forward org-clock-line-re end t)
 			  (when (org-at-clock-log-p) (throw :clock t))))))
 	    (org-entry-put nil "LAST_REPEAT" (format-time-string
-					      (org-time-stamp-format t t))))
+					      (org-time-stamp-format t t)
+					      (current-time))))
 	  (when org-log-repeat
 	    (if (or (memq 'org-add-log-note (default-value 'post-command-hook))
 		    (memq 'org-add-log-note post-command-hook))
@@ -13150,7 +13163,7 @@ has been set"
 			  (let ((nshiftmax 10)
 				(nshift 0))
 			    (while (or (= nshift 0)
-				       (not (time-less-p nil time)))
+				       (not (time-less-p (current-time) time)))
 			      (when (= (cl-incf nshift) nshiftmax)
 				(or (y-or-n-p
 				     (format "%d repeater intervals were not \
@@ -16928,7 +16941,7 @@ user."
   ;; overridden in tests.
   (let ((org-def def)
 	(org-defdecode defdecode)
-	(nowdecode (decode-time))
+	(nowdecode (decode-time (current-time)))
 	delta deltan deltaw deltadef year month day
 	hour minute second wday pm h2 m2 tl wday1
 	iso-year iso-weekday iso-week iso-date futurep kill-year)
@@ -17094,7 +17107,7 @@ user."
 					;      (when (and org-read-date-prefer-future
 					;		 (not iso-year)
 					;		 (< (calendar-absolute-from-gregorian iso-date)
-					;		    (time-to-days nil)))
+					;		    (time-to-days (current-time))))
 					;	(setq year (1+ year)
 					;	      iso-date (calendar-gregorian-from-absolute
 					;			(calendar-iso-to-absolute
@@ -17108,7 +17121,7 @@ user."
 	;; Pass `current-time' result to `decode-time' (instead of
 	;; calling without arguments) so that only `current-time' has
 	;; to be overridden in tests.
-	(let ((now (decode-time)))
+	(let ((now (decode-time (current-time))))
 	  (setq day (nth 3 now) month (nth 4 now) year (nth 5 now))))
       (cond ((member deltaw '("d" "")) (setq day (+ day deltan)))
 	    ((equal deltaw "w") (setq day (+ day (* 7 deltan))))
@@ -17393,8 +17406,8 @@ both scheduled and deadline timestamps."
 			   'timestamp)
 		     (org-at-planning-p))
 		   (time-less-p
-		    (org-time-string-to-time match t)
-		    (org-time-string-to-time d t)))))))
+		    (org-time-string-to-time match)
+		    (org-time-string-to-time d)))))))
     (message "%d entries before %s"
 	     (org-occur regexp nil callback)
 	     d)))
@@ -17415,8 +17428,8 @@ both scheduled and deadline timestamps."
 			   'timestamp)
 		     (org-at-planning-p))
 		   (not (time-less-p
-			 (org-time-string-to-time match t)
-			 (org-time-string-to-time d t))))))))
+			 (org-time-string-to-time match)
+			 (org-time-string-to-time d))))))))
     (message "%d entries after %s"
 	     (org-occur regexp nil callback)
 	     d)))
@@ -17439,11 +17452,11 @@ both scheduled and deadline timestamps."
 			'timestamp)
 		  (org-at-planning-p))
 		(not (time-less-p
-		      (org-time-string-to-time match t)
-		      (org-time-string-to-time start-date t)))
+		      (org-time-string-to-time match)
+		      (org-time-string-to-time start-date)))
 		(time-less-p
-		 (org-time-string-to-time match t)
-		 (org-time-string-to-time end-date t))))))))
+		 (org-time-string-to-time match)
+		 (org-time-string-to-time end-date))))))))
     (message "%d entries between %s and %s"
 	     (org-occur regexp nil callback) start-date end-date)))
 
@@ -17528,19 +17541,13 @@ days in order to avoid rounding problems."
       (push m l))
     (apply 'format fmt (nreverse l))))
 
-(defun org-time-string-to-time (s &optional zone)
-  "Convert timestamp string S into internal time.
-The optional ZONE is omitted or nil for Emacs local time, t for
-Universal Time, ‘wall’ for system wall clock time, or a string as
-in the TZ environment variable."
-  (apply #'encode-time (org-parse-time-string s nil zone)))
+(defun org-time-string-to-time (s)
+  "Convert timestamp string S into internal time."
+  (apply #'encode-time (org-parse-time-string s)))
 
-(defun org-time-string-to-seconds (s &optional zone)
-  "Convert a timestamp string S into a number of seconds.
-The optional ZONE is omitted or nil for Emacs local time, t for
-Universal Time, ‘wall’ for system wall clock time, or a string as
-in the TZ environment variable."
-  (float-time (org-time-string-to-time s zone)))
+(defun org-time-string-to-seconds (s)
+  "Convert a timestamp string S into a number of seconds."
+  (float-time (org-time-string-to-time s)))
 
 (org-define-error 'org-diary-sexp-no-match "Unable to match diary sexp")
 
@@ -17588,7 +17595,7 @@ signaled."
 YEAR is expanded into one of the 30 next years, if possible, or
 into a past one.  Any year larger than 99 is returned unchanged."
   (if (>= year 100) year
-    (let* ((current (string-to-number (format-time-string "%Y")))
+    (let* ((current (string-to-number (format-time-string "%Y" (current-time))))
 	   (century (/ current 100))
 	   (offset (- year (% current 100))))
       (cond ((> offset 30) (+ (* (1- century) 100) year))
@@ -18108,7 +18115,7 @@ A prefix ARG can be used to force the current date."
 	diff)
     (when (or (org-at-timestamp-p 'lax)
 	      (org-match-line (concat ".*" org-ts-regexp)))
-      (let ((d1 (time-to-days nil))
+      (let ((d1 (time-to-days (current-time)))
 	    (d2 (time-to-days (org-time-string-to-time (match-string 1)))))
 	(setq diff (- d2 d1))))
     (calendar)
@@ -19347,9 +19354,9 @@ boundaries."
 	    ;; "file:" links.  Also check link abbreviations since
 	    ;; some might expand to "file" links.
 	    (file-types-re (format "[][]\\[\\(?:file\\|[./~]%s\\)"
-				   (and link-abbrevs
-					(format "\\|\\(?:%s:\\)"
-						(regexp-opt link-abbrevs))))))
+				   (if (not link-abbrevs) ""
+				     (format "\\|\\(?:%s:\\)"
+					     (regexp-opt link-abbrevs))))))
        (while (re-search-forward file-types-re end t)
 	 (let ((link (save-match-data (org-element-context))))
 	   ;; Check if we're at an inline image, i.e., an image file
@@ -20956,7 +20963,8 @@ Use `\\[org-edit-special]' to edit table.el tables"))
 	     (cond (arg (call-interactively #'org-table-recalculate))
 		   ((org-table-maybe-recalculate-line))
 		   (t (org-table-align))))))
-	(`timestamp (org-timestamp-change 0 'day))
+	((or `timestamp (and `planning (guard (org-at-timestamp-p 'lax))))
+	 (org-timestamp-change 0 'day))
 	((and `nil (guard (org-at-heading-p)))
 	 ;; When point is on an unsupported object type, we can miss
 	 ;; the fact that it also is at a heading.  Handle it here.
@@ -23652,7 +23660,9 @@ depending on context."
 					(skip-chars-forward " \r\t\n"))))
 	    (narrow-to-region (org-element-property :contents-begin element)
 			      contents-end))
-	  (call-interactively #'forward-sentence))))))
+	  ;; End of heading is considered as the end of a sentence.
+	  (let ((sentence-end (concat (sentence-end) "\\|^\\*+ .*$")))
+	    (call-interactively #'forward-sentence)))))))
 
 (define-key org-mode-map "\M-a" 'org-backward-sentence)
 (define-key org-mode-map "\M-e" 'org-forward-sentence)

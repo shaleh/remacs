@@ -670,6 +670,8 @@ typedef id instancetype;
 - (NSColor *)stippleMask;
 - (Lisp_Object)getMetadata;
 - (BOOL)setFrame: (unsigned int) index;
+- (void)setSizeFromSpec: (Lisp_Object) spec;
+- (instancetype)rotate: (double)rotation;
 @end
 
 
@@ -1320,6 +1322,11 @@ extern char gnustep_base_version[];  /* version tracking */
 #define NSWindowStyleMaskTitled            NSTitledWindowMask
 #define NSAlertStyleCritical               NSCriticalAlertStyle
 #define NSControlSizeRegular               NSRegularControlSize
+#define NSCompositingOperationCopy         NSCompositeCopy
+
+/* And adds NSWindowStyleMask. */
+#ifdef __OBJC__
+typedef NSUInteger NSWindowStyleMask;
 #endif
 
 #endif	/* HAVE_NS */
