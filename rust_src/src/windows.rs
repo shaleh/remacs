@@ -535,17 +535,16 @@ pub fn set_window_combination_limit(mut window: LispWindowRef, limit: LispObject
 /// Return the window selected just before minibuffer window was selected.
 /// Return nil if the selected window is not a minibuffer window.
 #[lisp_fn]
-pub fn minibuffer_selected_window() -> LispObject {
+pub fn minibuffer_selected_window() -> Option<LispWindowRef> {
     let level = unsafe { minibuf_level };
-    let current_minibuf = unsafe { current_minibuf_window };
-    if level > 0
-        && selected_window().as_window_or_error().is_minibuffer()
-        && current_minibuf.as_window().unwrap().is_live()
-    {
-        current_minibuf
-    } else {
-        Qnil
+    if level > 0 {
+        let minibuf_win = unsafe { current_minibuf_window }.as_window().unwrap();
+        if selected_window().is_minibuffer() && minibuf_win.is_live() {
+            return Some(minibuf_win);
+        }
     }
+
+    None
 }
 
 /// Return the total width of window WINDOW in columns.
@@ -695,10 +694,9 @@ pub extern "C" fn CURRENT_MODE_LINE_FACE_ID_3(
     mbw: LispWindowRef,
     scrw: LispWindowRef,
 ) -> face_id {
-    let current = if let Some(w) = selected_window().as_window() {
-        w
-    } else {
-        LispWindowRef::new(ptr::null_mut())
+    let current = match selected_window() {
+        Some(w) => w,
+        None => LispWindowRef::new(ptr::null_mut())
     };
 
     unsafe {
@@ -719,10 +717,9 @@ pub extern "C" fn CURRENT_MODE_LINE_FACE_ID_3(
 /// Return the desired face id for the mode line of window W.
 #[no_mangle]
 pub extern "C" fn CURRENT_MODE_LINE_FACE_ID(window: LispWindowRef) -> face_id {
-    let current = if let Some(w) = selected_window().as_window() {
-        w
-    } else {
-        LispWindowRef::new(ptr::null_mut())
+    let current = match selected_window() {
+        Some(w) => w
+        None => LispWindowRef::new(ptr::null_mut())
     };
 
     CURRENT_MODE_LINE_FACE_ID_3(window, current, window)
@@ -746,10 +743,10 @@ pub fn window_list(
     minibuf: LispObject,
     window: Option<LispWindowRef>,
 ) -> LispObject {
-    let w_obj = match window {
-        Some(w) => w.as_lisp_obj(),
-        None => LispFrameRef::from(frame).selected_window,
-    };
+    if window.is_none() {
+        match LispFrameRef::from(frame).selected_window.as_window() {
+            Some(sw) => sw,
+    let w_obj = window.unwrap_or();
 
     let w_ref = w_obj
         .as_window()
