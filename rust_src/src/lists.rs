@@ -313,6 +313,56 @@ impl LispCons {
             CHECK_IMPURE(self.0, self._extract() as *mut c_void);
         }
     }
+
+    pub fn equal(
+        self,
+        other: LispCons,
+        kind: equal_kind::Type,
+        depth: i32,
+        ht: LispObject,
+    ) -> bool {
+        if kind == equal_kind::EQUAL_NO_QUIT {
+            let mut it1 = self.iter_tails_unchecked();
+            let mut it2 = other.iter_tails_unchecked();
+            loop {
+                match (it1.next(), it2.next()) {
+                    (Some(cons1), Some(cons2)) => {
+                        let (item1, tail1) = cons1.as_tuple();
+                        let (item2, tail2) = cons2.as_tuple();
+                        if !unsafe { equal_no_quit(item1, item2) } {
+                            return false;
+                        } else if tail1.eq(tails2) {
+                            return true;
+                        }
+                    }
+                    (None, None) => break,
+                    _ => return false,
+                }
+            }
+
+            unsafe { internal_equal(it1.rest(), it2.rest(), kind, depth + 1, ht) }
+        } else {
+            let mut it1 = self.iter_tails_unchecked();
+            let mut it2 = other.iter_tails_unchecked();
+            loop {
+                match (it1.next(), it2.next()) {
+                    (Some(cons1), Some(cons2)) => {
+                        let (item1, tail1) = cons1.as_tuple();
+                        let (item2, tail2) = cons2.as_tuple();
+                        if !unsafe { internal_equal(item1, item2, kind, depth + 1, ht) } {
+                            return false;
+                        } else if tail1.eq(tails2) {
+                            return true;
+                        }
+                    }
+                    (None, None) => break,
+                    _ => return false,
+                }
+            }
+
+            unsafe { internal_equal(it1.rest(), it2.rest(), kind, depth + 1, ht) }
+        }
+    }
 }
 
 /// Return t if OBJECT is not a cons cell.  This includes nil.
