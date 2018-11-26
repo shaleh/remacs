@@ -190,6 +190,10 @@ impl LispVectorlikeRef {
         }
     }
 
+    pub fn is_char_table(self) -> bool {
+        self.is_pseudovector(pvec_type::PVEC_CHAR_TABLE)
+    }
+
     pub fn as_char_table(self) -> Option<LispCharTableRef> {
         if self.is_pseudovector(pvec_type::PVEC_CHAR_TABLE) {
             Some(unsafe { mem::transmute(self) })

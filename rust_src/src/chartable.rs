@@ -9,8 +9,7 @@ use crate::{
     lisp::{ExternalPtr, LispObject},
     remacs_sys::uniprop_table_uncompress,
     remacs_sys::{
-        pvec_type, Lisp_Char_Table, Lisp_Sub_Char_Table, Lisp_Type, More_Lisp_Bits,
-        CHARTAB_SIZE_BITS,
+        Lisp_Char_Table, Lisp_Sub_Char_Table, Lisp_Type, More_Lisp_Bits, CHARTAB_SIZE_BITS,
     },
     remacs_sys::{Qchar_code_property_table, Qchar_table_p, Qnil},
 };
@@ -22,8 +21,7 @@ pub struct LispSubCharTableAsciiRef(ExternalPtr<Lisp_Sub_Char_Table>);
 
 impl LispObject {
     pub fn is_char_table(self) -> bool {
-        self.as_vectorlike()
-            .map_or(false, |v| v.is_pseudovector(pvec_type::PVEC_CHAR_TABLE))
+        self.as_vectorlike().map_or(false, |v| v.is_char_table())
     }
 
     pub fn as_char_table(self) -> Option<LispCharTableRef> {
