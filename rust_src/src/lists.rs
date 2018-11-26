@@ -8,7 +8,7 @@ use crate::{
     lisp::defsubr,
     lisp::LispObject,
     remacs_sys::{equal_kind, globals, EmacsInt, EmacsUint, Lisp_Cons, Lisp_Type},
-    remacs_sys::{equal_no_quit, internal_equal, Fcons, CHECK_IMPURE},
+    remacs_sys::{internal_equal, Fcons, CHECK_IMPURE},
     remacs_sys::{Qcircular_list, Qconsp, Qlistp, Qnil, Qplistp},
     symbols::LispSymbolRef,
 };
@@ -324,12 +324,13 @@ impl LispCons {
         if kind == equal_kind::EQUAL_NO_QUIT {
             let mut it1 = LispObject::from(self).iter_tails_unchecked();
             let mut it2 = LispObject::from(other).iter_tails_unchecked();
+
             loop {
                 match (it1.next(), it2.next()) {
                     (Some(cons1), Some(cons2)) => {
                         let (item1, tail1) = cons1.as_tuple();
                         let (item2, tail2) = cons2.as_tuple();
-                        if !unsafe { equal_no_quit(item1, item2) } {
+                        if !unsafe { internal_equal(item1, item2, kind, 0, Qnil) } {
                             return false;
                         } else if tail1.eq(tail2) {
                             return true;
@@ -342,8 +343,9 @@ impl LispCons {
 
             unsafe { internal_equal(it1.rest(), it2.rest(), kind, depth + 1, ht) }
         } else {
-            let mut it1 = LispObject::from(self).iter_tails();
-            let mut it2 = LispObject::from(other).iter_tails();
+            let mut it1 = LispObject::from(self).iter_tails_safe();
+            let mut it2 = LispObject::from(other).iter_tails_safe();
+
             loop {
                 match (it1.next(), it2.next()) {
                     (Some(cons1), Some(cons2)) => {

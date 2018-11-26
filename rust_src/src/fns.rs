@@ -272,12 +272,10 @@ pub extern "C" fn internal_equal_cons(
     depth: i32,
     ht: LispObject,
 ) -> bool {
-    let (cons1, cons2) = match (o1.as_cons(), o2.as_cons()) {
-        (Some(cons1), Some(cons2)) => (cons1, cons2),
+    match (o1.as_cons(), o2.as_cons()) {
+        (Some(cons1), Some(cons2)) => cons1.equal(cons2, kind, depth, ht),
         _ => return false,
-    };
-
-    cons1.equal(cons2)
+    }
 }
 
 #[no_mangle]
