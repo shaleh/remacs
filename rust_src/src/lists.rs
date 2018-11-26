@@ -58,6 +58,10 @@ impl LispObject {
         TailsIter::new(self, Some(Qlistp))
     }
 
+    pub fn iter_tails_endchecked(self) -> TailsIterEndChecked {
+        TailsIterEndChecked::new(self, Some(Qlistp), Some(Qlistp))
+    }
+
     /// Iterate over all tails of self.  If self is not a cons-chain,
     /// iteration will stop at the first non-cons without signaling.
     pub fn iter_tails_safe(self) -> TailsIter {
@@ -146,6 +150,88 @@ impl Iterator for TailsIter {
                     wrong_type!(self.errsym.unwrap(), self.list)
                 }
                 None
+            }
+            Some(tail_cons) => {
+                self.tail = tail_cons.cdr();
+                self.q = self.q.wrapping_sub(1);
+                if self.q != 0 {
+                    if self.tail == self.tortoise {
+                        return self.circular();
+                    }
+                } else {
+                    self.n = self.n.wrapping_sub(1);
+                    if self.n > 0 {
+                        if self.tail == self.tortoise {
+                            return self.circular();
+                        }
+                    } else {
+                        self.max <<= 1;
+                        self.q = self.max as u16;
+                        self.n = self.max >> 16;
+                        self.tortoise = self.tail;
+                    }
+                }
+                Some(tail_cons)
+            }
+        }
+    }
+}
+
+pub struct TailsIterEndChecked {
+    list: LispObject,
+    tail: LispObject,
+    tortoise: LispObject,
+    errsym: Option<LispObject>,
+    circular_errsym: Option<LispObject>,
+    max: isize,
+    n: isize,
+    q: u16,
+}
+
+impl TailsIterEndChecked {
+    fn new(
+        list: LispObject,
+        errsym: Option<LispObject>,
+        circular_errsym: Option<LispObject>,
+    ) -> Self {
+        Self {
+            list,
+            tail: list,
+            tortoise: list,
+            errsym,
+            circular_errsym,
+            max: 2,
+            n: 0,
+            q: 2,
+        }
+    }
+
+    pub fn rest(&self) -> LispObject {
+        // This is kind of like Peekable but even when None is returned there
+        // might still be a valid item in self.tail.
+        self.tail
+    }
+
+    fn circular(&self) -> Option<LispCons> {
+        if self.circular_errsym.is_some() {
+            circular_list(self.tail);
+        } else {
+            None
+        }
+    }
+}
+
+impl Iterator for TailsIterEndChecked {
+    type Item = LispCons;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        match self.tail.as_cons() {
+            None => {
+                if self.tail.is_not_nil() && self.errsym.is_some() {
+                    wrong_type!(self.errsym.unwrap(), self.list);
+                } else {
+                    None
+                }
             }
             Some(tail_cons) => {
                 self.tail = tail_cons.cdr();
@@ -525,14 +611,13 @@ pub fn rassoc(key: LispObject, list: LispObject) -> LispObject {
 #[lisp_fn]
 pub fn delq(elt: LispObject, list: LispObject) -> LispObject {
     let mut prev = None;
-    list.iter_tails().fold(list, |remaining, tail| {
+    list.iter_tails_endchecked().fold(list, |remaining, tail| {
         let (item, rest) = tail.as_tuple();
         if elt.eq(item) {
-            if let Some(cons) = prev {
-                setcdr(cons, rest);
-            } else {
-                return rest;
-            }
+            match prev {
+                Some(cons) => setcdr(cons, rest),
+                None => return rest,
+            };
         } else {
             prev = Some(tail);
         }
