@@ -1387,7 +1387,7 @@ internal_equal (Lisp_Object o1, Lisp_Object o2, enum equal_kind equal_kind,
       }
 
     case Lisp_Cons:
-      return internal_equal_cons(o1, o2, kind, depth, ht);
+      return internal_equal_cons(o1, o2, equal_kind, depth, ht);
 
     case Lisp_Misc:
       if (XMISCTYPE (o1) != XMISCTYPE (o2))
