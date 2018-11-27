@@ -375,10 +375,9 @@ pub fn letX(args: LispCons) -> LispObject {
         if lexenv != Qnil {
             if let Some(sym) = var.as_symbol() {
                 if !sym.get_declared_special() {
-                    let bound = memq(var, unsafe { globals.Vinternal_interpreter_environment })
-                        .is_not_nil();
+                    let bound = memq(var, unsafe { globals.Vinternal_interpreter_environment });
 
-                    if !bound {
+                    if bound.is_none() {
                         // Lexically bind VAR by adding it to the interpreter's binding alist.
 
                         unsafe {
@@ -436,10 +435,9 @@ pub fn lisp_let(args: LispCons) -> LispObject {
         if lexenv != Qnil {
             if let Some(sym) = var.as_symbol() {
                 if !sym.get_declared_special() {
-                    let bound = memq(var, unsafe { globals.Vinternal_interpreter_environment })
-                        .is_not_nil();
+                    let bound = memq(var, unsafe { globals.Vinternal_interpreter_environment });
 
-                    if !bound {
+                    if bound.is_none() {
                         // Lexically bind VAR by adding it to the lexenv alist.
                         lexenv = LispObject::cons(LispObject::cons(var, val), lexenv);
                         dyn_bind = false;

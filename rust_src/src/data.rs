@@ -571,7 +571,7 @@ pub unsafe extern "C" fn store_symval_forwarding(
             if newval.is_not_nil() && predicate.is_symbol() {
                 let mut prop = Fget(predicate, Qchoice);
                 if prop.is_not_nil() {
-                    if memq(newval, prop).is_nil() {
+                    if memq(newval, prop).is_none() {
                         wrong_choice(prop, newval);
                     }
                 } else {
@@ -736,7 +736,7 @@ pub fn add_variable_watcher(symbol: LispSymbolRef, watch_function: LispObject) {
     let watchers = unsafe { Fget(symbol.into(), Qwatchers) };
     let mem = member(watch_function, watchers);
 
-    if mem.is_nil() {
+    if mem.is_none() {
         put(
             symbol,
             Qwatchers,

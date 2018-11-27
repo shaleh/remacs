@@ -32,10 +32,10 @@ use crate::{
 #[lisp_fn(min = "1")]
 pub fn featurep(feature: LispSymbolRef, subfeature: LispObject) -> bool {
     let mut tem = memq(feature.as_lisp_obj(), unsafe { globals.Vfeatures });
-    if tem.is_not_nil() && subfeature.is_not_nil() {
+    if tem.is_some() && subfeature.is_not_nil() {
         tem = member(subfeature, get(feature, Qsubfeatures));
     }
-    tem.is_not_nil()
+    tem.is_some()
 }
 
 /// Announce that FEATURE is a feature of the current Emacs.
@@ -54,7 +54,7 @@ pub fn provide(feature: LispSymbolRef, subfeature: LispObject) -> LispObject {
             );
         }
     }
-    if memq(feature.as_lisp_obj(), unsafe { globals.Vfeatures }).is_nil() {
+    if memq(feature.as_lisp_obj(), unsafe { globals.Vfeatures }).is_none() {
         unsafe {
             globals.Vfeatures = LispObject::cons(feature.as_lisp_obj(), globals.Vfeatures);
         }
@@ -140,12 +140,12 @@ pub fn require(feature: LispObject, filename: LispObject, noerror: LispObject) -
 
     if from_file {
         let tem = LispObject::cons(Qrequire, feature);
-        if member(tem, current_load_list).is_nil() {
+        if member(tem, current_load_list).is_none() {
             loadhist_attach(tem);
         }
     }
 
-    if memq(feature, unsafe { globals.Vfeatures }).is_not_nil() {
+    if memq(feature, unsafe { globals.Vfeatures }).is_some() {
         return feature;
     }
 
@@ -203,8 +203,7 @@ pub fn require(feature: LispObject, filename: LispObject, noerror: LispObject) -
         }
     }
 
-    let tem = memq(feature, unsafe { globals.Vfeatures });
-    if tem.is_nil() {
+    if memq(feature, unsafe { globals.Vfeatures }).is_none() {
         let tem3 = car(car(unsafe { globals.Vload_history }));
 
         if tem3.is_nil() {

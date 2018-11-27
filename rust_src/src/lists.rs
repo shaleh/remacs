@@ -508,24 +508,25 @@ pub fn nth(n: EmacsInt, list: LispObject) -> LispObject {
     }
 }
 
-fn lookup_member<CmpFunc>(elt: LispObject, list: LispObject, cmp: CmpFunc) -> LispObject
+fn lookup_member<CmpFunc>(elt: LispObject, list: LispObject, cmp: CmpFunc) -> Option<LispCons>
 where
     CmpFunc: Fn(LispObject, LispObject) -> bool,
 {
-    list.iter_tails().find(|item| cmp(elt, item.car())).into()
+    list.iter_tails_endchecked()
+        .find(|item| cmp(elt, item.car()))
 }
 
 /// Return non-nil if ELT is an element of LIST.  Comparison done with `eq'.
 /// The value is actually the tail of LIST whose car is ELT.
 #[lisp_fn]
-pub fn memq(elt: LispObject, list: LispObject) -> LispObject {
+pub fn memq(elt: LispObject, list: LispObject) -> Option<LispCons> {
     lookup_member(elt, list, LispObject::eq)
 }
 
 /// Return non-nil if ELT is an element of LIST.  Comparison done with `eql'.
 /// The value is actually the tail of LIST whose car is ELT.
 #[lisp_fn]
-pub fn memql(elt: LispObject, list: LispObject) -> LispObject {
+pub fn memql(elt: LispObject, list: LispObject) -> Option<LispCons> {
     if !elt.is_float() {
         return memq(elt, list);
     }
@@ -535,7 +536,7 @@ pub fn memql(elt: LispObject, list: LispObject) -> LispObject {
 /// Return non-nil if ELT is an element of LIST.  Comparison done with `equal'.
 /// The value is actually the tail of LIST whose car is ELT.
 #[lisp_fn]
-pub fn member(elt: LispObject, list: LispObject) -> LispObject {
+pub fn member(elt: LispObject, list: LispObject) -> Option<LispCons> {
     lookup_member(elt, list, LispObject::equal)
 }
 

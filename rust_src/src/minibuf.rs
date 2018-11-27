@@ -30,7 +30,7 @@ use crate::{
 #[lisp_fn(min = "0")]
 pub fn minibufferp(buffer_or_name: Option<LispBufferOrName>) -> bool {
     let buffer = buffer_or_name.map_or_else(current_buffer, LispObject::from);
-    memq(buffer, unsafe { Vminibuffer_list }).is_not_nil()
+    memq(buffer, unsafe { Vminibuffer_list }).is_some()
 }
 
 /// Return the currently active minibuffer window, or nil if none.
@@ -79,7 +79,7 @@ pub fn minibuffer_prompt() -> LispObject {
 pub fn minibuffer_prompt_end() -> EmacsInt {
     let buffer = ThreadState::current_buffer();
     let beg = buffer.beg() as EmacsInt;
-    if memq(buffer.into(), unsafe { Vminibuffer_list }).is_nil() {
+    if memq(buffer.into(), unsafe { Vminibuffer_list }).is_none() {
         return beg;
     }
 
