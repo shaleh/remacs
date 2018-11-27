@@ -90,7 +90,11 @@ pub fn provide(feature: LispSymbolRef, subfeature: LispObject) -> LispObject {
 #[lisp_fn(unevalled = "true")]
 pub fn quote(args: LispCons) -> LispObject {
     if args.cdr().is_not_nil() {
-        xsignal!(Qwrong_number_of_arguments, Qquote, length(args.as_obj()));
+        xsignal!(
+            Qwrong_number_of_arguments,
+            Qquote,
+            Flength(args.as_obj())A
+        );
     }
 
     args.car()
