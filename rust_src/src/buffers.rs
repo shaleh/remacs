@@ -572,7 +572,10 @@ impl From<LispBufferOrName> for Option<LispBufferRef> {
         let buffer = match v {
             LispBufferOrName::Buffer(b) => b,
             LispBufferOrName::Name(n) => {
-                cdr(assoc_ignore_text_properties(n, unsafe { Vbuffer_alist }))
+                match assoc_ignore_text_properties(n, unsafe { Vbuffer_alist }) {
+                    Some(obj) => cdr(obj),
+                    None => return None,
+                }
             }
         };
         buffer.as_buffer()
@@ -643,14 +646,9 @@ pub fn buffer_live_p(object: Option<LispBufferRef>) -> bool {
 
 /// Like Fassoc, but use `Fstring_equal` to compare
 /// (which ignores text properties), and don't ever quit.
-fn assoc_ignore_text_properties(key: LispObject, list: LispObject) -> LispObject {
-    let result = list
-        .iter_tails_safe()
-        .find(|&item| string_equal(car(item.car()), key));
-    match result {
-        Some(elt) => elt.car(),
-        None => Qnil,
-    }
+fn assoc_ignore_text_properties(key: LispObject, list: LispObject) -> Option<LispObject> {
+    list.iter_cars_unchecked()
+        .find(|&item| string_equal(car(item), key))
 }
 
 /// Return the buffer named BUFFER-OR-NAME.

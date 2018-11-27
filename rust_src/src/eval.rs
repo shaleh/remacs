@@ -723,7 +723,7 @@ pub extern "C" fn FUNCTIONP(object: LispObject) -> bool {
                 if cons.car().eq(Qautoload) {
                     // Autoloaded symbols are functions, except if they load
                     // macros or keymaps.
-                    let mut it = obj.iter_tails_safe();
+                    let mut it = obj.iter_tails_unchecked();
                     for _ in 0..4 {
                         if it.next().is_none() {
                             break;
