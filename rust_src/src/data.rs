@@ -1,7 +1,7 @@
 //! data helpers
 
 use field_offset::FieldOffset;
-use libc::c_int;
+use libc::{c_char, c_int};
 
 use remacs_macros::lisp_fn;
 
@@ -13,13 +13,14 @@ use crate::{
     lisp::{LispObject, LispSubrRef, LiveBufferIter},
     lists::{get, member, memq, put},
     math::leq,
-    multibyte::{is_ascii, is_single_byte_char},
+    multibyte::{is_ascii, is_single_byte_char, LispStringRef},
     obarray::{loadhist_attach, map_obarray},
     remacs_sys,
     remacs_sys::{
         aset_multibyte_string, bool_vector_binop_driver, buffer_defaults, build_string,
         emacs_abort, globals, rust_count_one_bits, set_default_internal, set_internal,
-        symbol_trapped_write, wrong_choice, wrong_range, CHAR_TABLE_SET, CHECK_IMPURE,
+        string_to_number, symbol_trapped_write, wrong_choice, wrong_range, CHAR_TABLE_SET,
+        CHECK_IMPURE,
     },
     remacs_sys::{buffer_local_flags, per_buffer_default, symbol_redirect},
     remacs_sys::{pvec_type, BoolVectorOp, EmacsInt, Lisp_Misc_Type, Lisp_Type, Set_Internal_Bind},
@@ -787,6 +788,38 @@ pub fn get_variable_watchers(symbol: LispSymbolRef) -> LispObject {
 pub fn logcount(value: EmacsInt) -> i32 {
     let value = if value < 0 { -1 - value } else { value };
     unsafe { rust_count_one_bits(value as usize) }
+}
+
+/// Parse STRING as a decimal number and return the number.
+/// Ignore leading spaces and tabs, and all trailing chars.  Return 0 if
+/// STRING cannot be parsed as an integer or floating point number.
+///
+/// If BASE, interpret STRING as a number in that base.  If BASE isn't
+/// present, base 10 is used.  BASE must be between 2 and 16 (inclusive).
+/// If the base used is not 10, STRING is always parsed as an integer.
+#[lisp_fn(min = "1", name = "string-to-number", c_name = "string_to_number")]
+pub fn string_to_number_lisp(mut string: LispStringRef, base: Option<EmacsInt>) -> LispObject {
+    let b = match base {
+        None => 10,
+        Some(n) => {
+            if !(n >= 2 && n <= 16) {
+                xsignal!(Qargs_out_of_range, base.into());
+            }
+            n
+        }
+    };
+
+    let p = string.sdata_ptr();
+    unsafe {
+        while *p == ' ' as c_char || *p == '\t' as c_char {
+            *p += 1;
+        }
+    }
+
+    match unsafe { string_to_number(p, b as i32, true) } {
+        Qnil => LispObject::from(0),
+        n => n,
+    }
 }
 
 include!(concat!(env!("OUT_DIR"), "/data_exports.rs"));

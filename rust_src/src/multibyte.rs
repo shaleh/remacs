@@ -92,11 +92,14 @@ impl LispStringRef {
         s.size_byte >= 0
     }
 
+    // Same as SDATA function
     pub fn data_ptr(&mut self) -> *mut c_uchar {
         let s = unsafe { self.u.s };
         s.data as *mut c_uchar
     }
 
+    // Same as SSDATA function
+    // Avoid "differ in sign" warnings.
     pub fn sdata_ptr(&mut self) -> *mut c_char {
         let s = unsafe { self.u.s };
         s.data as *mut c_char
