@@ -341,9 +341,8 @@ pub unsafe extern "C" fn map_keymap_internal(
     args: LispObject,
     data: *mut c_void,
 ) -> LispObject {
-    let map = map;
     let tail = match map.as_cons() {
-        None => Qnil,
+        None => map,
         Some(cons) => {
             let (car, cdr) = cons.as_tuple();
             if car.eq(Qkeymap) {
@@ -355,25 +354,24 @@ pub unsafe extern "C" fn map_keymap_internal(
     };
 
     let mut parent = tail;
-    for tail_cons in tail.iter_tails_safe() {
+    for tail_cons in tail.iter_tails_unchecked() {
         let binding = tail_cons.car();
         if binding.eq(Qkeymap) {
             break;
-        } else {
-            // An embedded parent.
-            if keymapp(binding) {
-                break;
-            }
+        }
+        // An embedded parent.
+        if keymapp(binding) {
+            break;
+        }
 
-            if let Some(binding_cons) = binding.as_cons() {
-                let (car, cdr) = binding_cons.as_tuple();
-                map_keymap_item(fun, args, car, cdr, data);
-            } else if binding.is_vector() {
-                if let Some(binding_vec) = binding.as_vectorlike() {
-                    for c in 0..binding_vec.pseudovector_size() {
-                        let character = LispObject::from(c);
-                        map_keymap_item(fun, args, character, aref(binding, c), data);
-                    }
+        if let Some(binding_cons) = binding.as_cons() {
+            let (car, cdr) = binding_cons.as_tuple();
+            map_keymap_item(fun, args, car, cdr, data);
+        } else if let Some(vl) = binding.as_vectorlike() {
+            if let Some(binding_vec) = vl.as_vector() {
+                for c in 0..binding_vec.len() {
+                    let character = LispObject::from(c);
+                    map_keymap_item(fun, args, character, binding_vec.get(c), data);
                 }
             } else if binding.is_char_table() {
                 let saved = match fun {
