@@ -178,14 +178,11 @@ pub fn keymapp(object: LispObject) -> bool {
 #[no_mangle]
 pub extern "C" fn keymap_parent(keymap: LispObject, autoload: bool) -> LispObject {
     let map = get_keymap(keymap, true, autoload);
-    let mut current = Qnil;
-    for elt in map.iter_tails_safe() {
-        current = elt.cdr();
-        if keymapp(current) {
-            return current;
-        }
+    let mut it = map.iter_tails_unchecked();
+    match it.find(|elt| keymapp(elt.cdr())) {
+        Some(cons) => cons.cdr(),
+        None => get_keymap(it.rest(), false, autoload),
     }
-    get_keymap(current, false, autoload)
 }
 
 /// Return the parent keymap of KEYMAP.
@@ -354,8 +351,10 @@ pub unsafe extern "C" fn map_keymap_internal(
     };
 
     let mut parent = tail;
-    for tail_cons in tail.iter_tails_unchecked() {
-        let binding = tail_cons.car();
+
+    for cons in tail.iter_tails_unchecked() {
+        let (binding, rest) = cons.as_tuple();
+
         if binding.eq(Qkeymap) {
             break;
         }
@@ -382,7 +381,7 @@ pub unsafe extern "C" fn map_keymap_internal(
             }
         }
 
-        parent = tail_cons.cdr();
+        parent = rest;
     }
 
     parent
