@@ -29,7 +29,7 @@ use crate::{
     remacs_sys::{Vautoload_queue, Vrun_hooks},
     symbols::{fboundp, symbol_function, LispSymbolRef},
     threads::{c_specpdl_index, ThreadState},
-    vectors::length,
+    vectors::Flength,
 };
 
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *

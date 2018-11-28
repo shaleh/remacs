@@ -19,7 +19,7 @@ use crate::{
     },
     symbols::LispSymbolRef,
     threads::c_specpdl_index,
-    vectors::length,
+    vectors::Flength,
 };
 
 /// Return t if FEATURE is present in this Emacs.
@@ -90,11 +90,7 @@ pub fn provide(feature: LispSymbolRef, subfeature: LispObject) -> LispObject {
 #[lisp_fn(unevalled = "true")]
 pub fn quote(args: LispCons) -> LispObject {
     if args.cdr().is_not_nil() {
-        xsignal!(
-            Qwrong_number_of_arguments,
-            Qquote,
-            Flength(args.as_obj())A
-        );
+        xsignal!(Qwrong_number_of_arguments, Qquote, Flength(args.as_obj()));
     }
 
     args.car()
