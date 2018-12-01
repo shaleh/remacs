@@ -1,6 +1,10 @@
 //! data helpers
 
 use field_offset::FieldOffset;
+use std::mem;
+use std::slice;
+use std::str;
+
 use libc::{c_char, c_int};
 
 use remacs_macros::lisp_fn;
@@ -809,16 +813,22 @@ pub fn string_to_number_lisp(mut string: LispStringRef, base: Option<EmacsInt>) 
         }
     };
 
-    let p = string.sdata_ptr();
     unsafe {
-        while *p == ' ' as c_char || *p == '\t' as c_char {
-            *p += 1;
-        }
-    }
+        let slice = slice::from_raw_parts(
+            mem::transmute(string.sdata_ptr()),
+            string.len_chars() as usize,
+        );
+        let tmp = str::from_utf8(slice).trim();
+        let first_non_number = tmp.find(|c| c < '0' || c > '9');
+        let pieces = tmp.split(|v| v == '.').collect();
 
-    match unsafe { string_to_number(p, b as i32, true) } {
-        Qnil => LispObject::from(0),
-        n => n,
+        match pieces.len() {
+            1 => i64::from_str_radix(pieces[0], base)
+                .unwrap_or_else(|e| xsignal!(Qoverflow_error, pieces[0]))
+                .into(),
+            2 => tmp.parse::<f64>().unwrap_or(0).into(),
+            _ => 0.into(),
+        }
     }
 }
 
