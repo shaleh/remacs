@@ -164,8 +164,6 @@ union u_sockaddr
 #endif
 };
 
-#ifdef subprocesses
-
 #ifndef SOCK_CLOEXEC
 # define SOCK_CLOEXEC 0
 #endif
