@@ -1747,7 +1747,6 @@ characters.  This variable should never be set globally.  */);
 
   defsubr (&Sinternal_complete_buffer);
   defsubr (&Sread_buffer);
-
   defsubr (&Stry_completion);
   defsubr (&Sall_completions);
   defsubr (&Stest_completion);
