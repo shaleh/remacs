@@ -41,7 +41,7 @@ pub fn syntax_table() -> LispObject {
 ///
 /// If we reach the beginning or end of the accessible part of the buffer
 /// before we have scanned over COUNT lists, return nil if the depth at
-/// that point is zero, and signal a error if the depth is nonzero.
+/// that point is zero, and signal an error if the depth is nonzero.
 
 // We don't name it scan_lists because there is an internal function
 // with the same name
