@@ -9390,6 +9390,7 @@ This variable is ignored on macOS < 10.7 and GNUstep.  Default is t.  */);
 
   DEFVAR_BOOL ("x-underline-at-descent-line",
 	       x_underline_at_descent_line,
+
      doc: /* SKIP: real doc in xterm.c.  */);
   x_underline_at_descent_line = 0;
 
