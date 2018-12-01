@@ -50,7 +50,7 @@ to reduce differences between developer and production builds.
 * Startup Changes in Emacs 27.1
 
 
-* Changes in Emacs 26.1
+* Changes in Emacs 27.1
 
 +++
 ** Option 'buffer-offer-save' can be set to new value, 'always'.  When
