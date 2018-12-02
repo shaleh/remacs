@@ -55,13 +55,17 @@ impl LispObject {
     /// of cons cells ending in nil.  Otherwise a wrong-type-argument error
     /// will be signaled.
     pub fn iter_tails(self) -> TailsIter {
-        TailsIter::new(self, Some(Qlistp))
+        TailsIter::new(self, Some(Qlistp), Some(Qlistp))
+    }
+
+    pub fn iter_tails_noendchecked(self) -> TailsIter {
+        TailsIter::new(self, None, Some(Qlistp))
     }
 
     /// Iterate over all tails of self.  If self is not a cons-chain,
     /// iteration will stop at the first non-cons without signaling.
     pub fn iter_tails_safe(self) -> TailsIter {
-        TailsIter::new(self, None)
+        TailsIter::new(self, None, None)
     }
 
     /// Iterate over all tails of self.  If self is not a cons-chain,
@@ -75,7 +79,7 @@ impl LispObject {
     /// of cons cells ending in nil.  Otherwise a wrong-type-argument error
     /// will be signaled.
     pub fn iter_tails_plist(self) -> TailsIter {
-        TailsIter::new(self, Some(Qplistp))
+        TailsIter::new(self, Some(Qplistp), Some(Qplistp))
     }
 
     /// Iterate over the car cells of a list.
@@ -103,18 +107,24 @@ pub struct TailsIter {
     tail: LispObject,
     tortoise: LispObject,
     errsym: Option<LispObject>,
+    circular_errsym: Option<LispObject>,
     max: isize,
     n: isize,
     q: u16,
 }
 
 impl TailsIter {
-    fn new(list: LispObject, errsym: Option<LispObject>) -> Self {
+    fn new(
+        list: LispObject,
+        errsym: Option<LispObject>,
+        circular_errsym: Option<LispObject>,
+    ) -> Self {
         Self {
             list,
             tail: list,
             tortoise: list,
             errsym,
+            circular_errsym,
             max: 2,
             n: 0,
             q: 2,
@@ -128,7 +138,7 @@ impl TailsIter {
     }
 
     fn circular(&self) -> Option<LispCons> {
-        if self.errsym.is_some() {
+        if self.circular_errsym.is_some() {
             circular_list(self.tail);
         } else {
             None
@@ -142,8 +152,8 @@ impl Iterator for TailsIter {
     fn next(&mut self) -> Option<Self::Item> {
         match self.tail.as_cons() {
             None => {
-                if self.errsym.is_some() && self.tail.is_not_nil() {
-                    wrong_type!(self.errsym.unwrap(), self.list)
+                if self.tail.is_not_nil() && self.errsym.is_some() {
+                    wrong_type!(self.errsym.unwrap(), self.list);
                 }
                 None
             }
@@ -207,7 +217,7 @@ pub struct CarIter {
 impl CarIter {
     pub fn new(list: LispObject, errsym: Option<LispObject>) -> Self {
         Self {
-            tails: TailsIter::new(list, errsym),
+            tails: TailsIter::new(list, errsym, errsym),
         }
     }
 
@@ -343,8 +353,8 @@ impl LispCons {
 
             unsafe { internal_equal(it1.rest(), it2.rest(), kind, depth + 1, ht) }
         } else {
-            let mut it1 = LispObject::from(self).iter_tails_safe();
-            let mut it2 = LispObject::from(other).iter_tails_safe();
+            let mut it1 = LispObject::from(self).iter_tails_noendchecked();
+            let mut it2 = LispObject::from(other).iter_tails_noendchecked();
 
             loop {
                 match (it1.next(), it2.next()) {
