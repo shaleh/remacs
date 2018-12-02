@@ -277,7 +277,7 @@ On graphical displays, @kbd{C-@key{HOME}} does the same.
 
 @item M->
 @kindex M->
-@kindex C-END
+@kindex C-@key{END}
 @findex end-of-buffer
 Move to the end of the buffer (@code{end-of-buffer}).  On graphical
 displays, @kbd{C-@key{END}} does the same.
@@ -819,6 +819,9 @@ documentation string.
 such arguments @emph{before} the command, and to distinguish them from
 minibuffer arguments (@pxref{Minibuffer}), which are entered
 @emph{after} invoking the command.
+
+  On graphical displays, @kbd{C-0}, @kbd{C-1}, etc.@ act the same as
+@kbd{M-0}, @kbd{M-1}, etc.
 
   On graphical displays, @kbd{C-0}, @kbd{C-1}, etc.@ act the same as
 @kbd{M-0}, @kbd{M-1}, etc.

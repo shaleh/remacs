@@ -1023,7 +1023,6 @@ can.
 @cindex android (with @option{adb} method)
 
 @vindex tramp-adb-program
-@vindex PATH@r{, environment variable}
 This method uses Android Debug Bridge program for accessing Android
 devices.  The Android Debug Bridge must be installed locally for
 @value{tramp} to work.  Some GNU/Linux distributions provide Android
@@ -1956,6 +1955,7 @@ echo $INSIDE_EMACS
 @cindex unix command @command{tset}
 @cindex @command{tset} unix command
 
+@vindex tramp-terminal-type
 To suppress inappropriate prompts for terminal type, @value{tramp}
 sets the @env{TERM} environment variable before the remote login
 process begins via the user option @code{tramp-terminal-type} (see
@@ -2232,6 +2232,7 @@ Disabling backups can be targeted to just the @option{su} and
 @end group
 @end lisp
 
+@vindex backup-directory-alist
 @vindex tramp-backup-directory-alist
 Another option is to create better backup file naming with user and
 host names prefixed to the file name.  For example, transforming
@@ -2278,7 +2279,7 @@ Set @code{auto-save-file-name-transforms} to @code{nil} to save
 auto-saved files to the same directory as the original file.
 
 @vindex tramp-auto-save-directory
-Alternatively, set the user option @code{tramp-auto-save-directory}
+Alternatively, set the user option @option{tramp-auto-save-directory}
 to direct all auto saves to that location.
 
 @node Windows setup hints
@@ -2573,7 +2574,7 @@ Example:
      @print{} @trampfn{ssh,melancholia,/etc}
 
 @kbd{C-x C-f @trampfn{ssh,melancholia,//etc} @key{TAB}}
-     @print{} /etc
+     @print{} @trampfn{ssh,melancholia,/etc}
 
 @kbd{C-x C-f @trampfn{ssh,melancholia,/usr/local/bin///etc} @key{TAB}}
      @print{} /etc
@@ -2682,7 +2683,7 @@ upon first connection.  Alternatively, use an absolute path or extend
 @end lisp
 
 @vindex tramp-remote-process-environment
-Customize user option @code{tramp-remote-process-environment} to
+Customize user option @option{tramp-remote-process-environment} to
 suit the remote program's environment for the remote host.
 @code{tramp-remote-process-environment} is a list of strings
 structured similar to @code{process-environment}, where each element
@@ -2729,12 +2730,12 @@ this.  You could overwrite this behavior by evaluating
 @end group
 @end lisp
 
-In addition to @code{tramp-remote-process-environment}, you can set
-environment variables for individual remote process calls by
-let-binding @code{process-environment}.  @value{tramp} applies any
-entries not present in the global default value of
+In addition to @option{tramp-remote-process-environment}, you can set
+environment variables for invidivual remote process calls by
+let-binding @code{process-environment}.  @value{tramp} will apply any
+entries which are not present in the global default value of
 @code{process-environment} (overriding
-@code{tramp-remote-process-environment} settings, if they conflict).
+@option{tramp-remote-process-environment} settings, if they conflict).
 For example:
 
 @lisp
@@ -2744,7 +2745,6 @@ For example:
 @end group
 @end lisp
 
-@vindex HGPLAIN@r{, environment variable}
 Let-binding in this way works regardless of whether the process to be
 called is local or remote, since @value{tramp} would add just the
 @env{HGPLAIN} setting and local processes would take whole value of
@@ -3193,15 +3193,14 @@ similar @samp{/scp:user@@host:...}.  See the constant
 @code{tramp-archive-all-gvfs-methods} for a complete list of
 @code{tramp-gvfs} supported method names.
 
-If @value{tramp} is loaded and @code{url-handler-mode} is enabled,
-archives could be visited via URLs, like
+If @code{url-handler-mode} is enabled, archives could be visited via
+URLs, like
 @file{https://ftp.gnu.org/gnu/tramp/tramp-2.3.2.tar.gz/INSTALL}.  This
 allows complex file operations like
 
 @lisp
 @group
 (progn
-  (require 'tramp)
   (url-handler-mode 1)
   (ediff-directories
    "https://ftp.gnu.org/gnu/tramp/tramp-2.3.1.tar.gz/tramp-2.3.1"
@@ -3213,8 +3212,10 @@ It is even possible to access file archives in file archives, as
 
 @lisp
 @group
-(find-file
- "http://ftp.debian.org/debian/pool/main/c/coreutils/coreutils_8.28-1_amd64.deb/control.tar.gz/control")
+(progn
+  (url-handler-mode 1)
+  (find-file
+   "http://ftp.debian.org/debian/pool/main/c/coreutils/coreutils_8.28-1_amd64.deb/control.tar.gz/control"))
 @end group
 @end lisp
 
@@ -3600,7 +3601,6 @@ the following code in @file{~/.emacs}.
 How to get a Visual Warning when working with @samp{root} privileges?
 Host indication in the mode line?
 
-@cindex @value{tramp} theme
 @vindex tramp-theme-face-remapping-alist
 Install @file{tramp-theme} from GNU ELPA via Emacs' Package Manager.
 Enable it via @kbd{M-x load-theme @key{RET} tramp @key{RET}}.  Further
@@ -3630,13 +3630,10 @@ then set them with a hook as follows:
 Why is @file{~/.sh_history} on the remote host growing?
 
 @vindex tramp-histfile-override
-@vindex HISTFILE@r{, environment variable}
-@vindex HISTFILESIZE@r{, environment variable}
-@vindex HISTSIZE@r{, environment variable}
 Due to the remote shell saving tilde expansions triggered by
 @value{tramp}, the history file is probably growing rapidly.
-@value{tramp} can suppress this behavior with the user option
-@code{tramp-histfile-override}.  When set to @code{t}, environment
+@value{tramp} can suppress this behaviour with the user option
+@option{tramp-histfile-override}.  When set to @code{t}, environment
 variable @env{HISTFILE} is unset, and environment variables
 @env{HISTFILESIZE} and @env{HISTSIZE} are set to 0.  Don't use this
 with @command{bash} 5.0.0.  There is a bug in @command{bash} which

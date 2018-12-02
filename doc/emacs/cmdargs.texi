@@ -336,9 +336,10 @@ initialization file (@pxref{Resources}).
 @opindex -Q
 @itemx --quick
 @opindex --quick
-Start Emacs with minimum customizations.  This is similar to using
-@samp{-q}, @samp{--no-site-file}, @samp{--no-site-lisp},
-@samp{--no-x-resources}, and @samp{--no-splash} together..
+Start Emacs with minimum customizations.  This is similar to using @samp{-q},
+@samp{--no-site-file}, @samp{--no-site-lisp}, and @samp{--no-splash}
+together.  This also stops Emacs from processing X resources by
+setting @code{inhibit-x-resources} to @code{t} (@pxref{Resources}).
 
 @item -daemon
 @opindex -daemon
@@ -347,15 +348,13 @@ Start Emacs with minimum customizations.  This is similar to using
 @itemx --bg-daemon[=@var{name}]
 @itemx --fg-daemon[=@var{name}]
 Start Emacs as a daemon: after Emacs starts up, it starts the Emacs
-server without opening any frames.  You can then use the
-@command{emacsclient} command to connect to Emacs for editing.
-(Optionally, you can specify an explicit @var{name} for the server; if
-you do, you will need to specify the same @var{name} when you invoke
-@command{emacsclient}, via its @option{--socket-name} option, see
-@ref{emacsclient Options}.)  @xref{Emacs Server}, for information
-about using Emacs as a daemon.  A ``background'' daemon disconnects
-from the terminal and runs in the background (@samp{--daemon} is an
-alias for @samp{--bg-daemon}).
+server without opening any frames.
+(Optionally, you can specify an explicit @var{name} for the server.)
+You can then use the @command{emacsclient} command to connect to Emacs
+for editing.  @xref{Emacs Server}, for information about using Emacs
+as a daemon.  A ``background'' daemon disconnects from the terminal
+and runs in the background (@samp{--daemon} is an alias for
+@samp{--bg-daemon}).
 
 @item --no-desktop
 @opindex --no-desktop

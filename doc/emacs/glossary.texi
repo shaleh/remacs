@@ -729,6 +729,9 @@ Keys}.
 @item i.e.
 Short for ``id est'' in Latin, which means ``that is''.
 
+@item i.e.
+Short for ``id est'' in Latin, which means ``that is''.
+
 @item Iff
 ``Iff'' means ``if and only if''.  This terminology comes from
 mathematics.  Try to avoid using this term in documentation, since
@@ -881,7 +884,7 @@ A local value of a variable (q.v.@:) applies to only one buffer.
 @xref{Locals}.
 
 @item @kbd{M-}
-@kbd{M-} in the name of a character is an abbreviation for @key{Meta},
+@kbd{M-} in the name of a character is an abbreviation for @key{META},
 one of the modifier keys that can accompany any character.
 @xref{User Input,M-}.
 
@@ -939,15 +942,15 @@ a keyboard interface to navigate it.  @xref{Menu Bars}.
 
 @item Meta
 Meta is the name of a modifier bit which you can use in a command
-character.  To enter a meta character, you hold down the @key{Meta}
+character.  To enter a meta character, you hold down the @key{META}
 key while typing the character.  We refer to such characters with
 names that start with @kbd{Meta-} (usually written @kbd{M-} for
-short).  For example, @kbd{M-<} is typed by holding down @key{Meta}
+short).  For example, @kbd{M-<} is typed by holding down @key{META}
 and at the same time typing @kbd{<} (which itself is done, on most
 terminals, by holding down @key{SHIFT} and typing @kbd{,}).
 @xref{User Input,Meta}.
 
-On some terminals, the @key{Meta} key is actually labeled @key{Alt}
+On some terminals, the @key{META} key is actually labeled @key{Alt}
 or @key{Edit}.
 
 @item Meta Character

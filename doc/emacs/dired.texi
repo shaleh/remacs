@@ -236,21 +236,18 @@ the buffer, and no files actually deleted.
 @cindex recursive deletion
 @vindex dired-recursive-deletes
   You can delete empty directories just like other files, but normally
-Dired cannot delete directories that are nonempty.  However, if the
-variable @code{dired-recursive-deletes} is non-@code{nil}, then Dired
-is allowed to delete nonempty directories including all their
-contents.  That can be somewhat risky.  If the value of the variable
-is @code{always}, Dired will delete nonempty directories recursively,
-which is even more risky.
-
-Even if you have set @code{dired-recursive-deletes} to @code{nil}, you
-might want sometimes to delete directories recursively without being
-asked for confirmation for all of them.  For example, you may want
-that when you have marked many directories for deletion and you are
-very sure that all of them can safely be deleted.  For every nonempty
-directory you are asked for confirmation to delete, if you answer
-@code{all}, then all the remaining directories will be deleted without
-any further questions.
+Dired cannot delete directories that are nonempty.  If the variable
+@code{dired-recursive-deletes} is non-@code{nil}, then Dired can
+delete nonempty directories including all their contents.  That can
+be somewhat risky.
+Even if you have set @code{dired-recursive-deletes} to @code{nil},
+you might want sometimes to delete recursively directories
+without being asked for confirmation for all of them.  This is handy
+when you have marked many directories for deletion and you are very
+sure that all of them can safely be deleted.  For every nonempty
+directory you are asked for confirmation; if you answer @code{all},
+then all the remaining directories will be deleted without more
+questions.
 
 @vindex delete-by-moving-to-trash@r{, and Dired}
   If you change the variable @code{delete-by-moving-to-trash} to
@@ -589,11 +586,10 @@ command will look in the buffer without revisiting the file, so the results
 might be inconsistent with the file on disk if its contents have changed
 since it was last visited.  If you don't want this, you may wish to
 revert the files you have visited in your buffers, or to turn on
-Auto-Revert mode in those buffers, before invoking this command.
-@xref{Reverting}.  If you prefer that this command should always
-revisit the file, without you having to revert the file or enable
-Auto-Revert mode, you might want to set
-@code{dired-always-read-filesystem} to non-@code{nil}.
+the @code{auto-revert} mode in those buffers, before invoking this
+command.  @xref{Reverting}.  If you prefer that this command always revisit
+the file, without having to revert the file or enable @code{auto-revert}
+mode, you might want to set @code{dired-always-read-filesystem} to non-@code{nil}.
 
 @item C-/
 @itemx C-x u
