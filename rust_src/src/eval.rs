@@ -140,8 +140,8 @@ pub extern "C" fn prog_ignore(body: LispObject) {
 /// whose values are discarded.
 /// usage: (prog1 FIRST BODY...)
 #[lisp_fn(min = "1", unevalled = "true")]
-pub fn prog1(args: LispObject) -> LispObject {
-    let (first, body) = args.as_cons_or_error().as_tuple();
+pub fn prog1(args: LispCons) -> LispObject {
+    let (first, body) = args.as_tuple();
 
     let val = unsafe { eval_sub(first) };
     progn(body);
@@ -153,11 +153,11 @@ pub fn prog1(args: LispObject) -> LispObject {
 /// remaining args, whose values are discarded.
 /// usage: (prog2 FORM1 FORM2 BODY...)
 #[lisp_fn(min = "2", unevalled = "true")]
-pub fn prog2(args: LispObject) -> LispObject {
-    let (form1, tail) = args.as_cons_or_error().as_tuple();
+pub fn prog2(args: LispCons) -> LispObject {
+    let (form1, tail) = args.as_tuple();
 
     unsafe { eval_sub(form1) };
-    prog1(tail)
+    prog1(tail.as_cons_or_error())
 }
 
 /// Set each SYM to the value of its VAL.
@@ -293,8 +293,8 @@ pub fn special_variable_p(symbol: LispSymbolRef) -> bool {
 /// The optional DOCSTRING specifies the variable's documentation string.
 /// usage: (defconst SYMBOL INITVALUE [DOCSTRING])
 #[lisp_fn(min = "2", unevalled = "true")]
-pub fn defconst(args: LispObject) -> LispSymbolRef {
-    let (sym, tail) = args.as_cons_or_error().as_tuple();
+pub fn defconst(args: LispCons) -> LispSymbolRef {
+    let (sym, tail) = args.as_tuple();
 
     let mut docstring = if cdr(tail).is_not_nil() {
         if cdr(cdr(tail)).is_not_nil() {
@@ -306,7 +306,7 @@ pub fn defconst(args: LispObject) -> LispSymbolRef {
         Qnil
     };
 
-    let mut tem = unsafe { eval_sub(car(cdr(args))) };
+    let mut tem = unsafe { eval_sub(car(tail)) };
     if unsafe { globals.Vpurify_flag } != Qnil {
         tem = unsafe { Fpurecopy(tem) };
     }
@@ -899,6 +899,65 @@ fn funcall_nil(args: &mut [LispObject]) -> LispObject {
     Qnil
 }
 
+// NB this one still documents a specific non-nil return value.  (As
+// did run-hook-with-args and run-hook-with-args-until-failure until
+// they were changed in 24.1.)
+
+/// Run HOOK with the specified arguments ARGS.
+/// HOOK should be a symbol, a hook variable.  The value of HOOK
+/// may be nil, a function, or a list of functions.  Call each
+/// function in order with arguments ARGS, stopping at the first
+/// one that returns non-nil, and return that value.  Otherwise (if
+/// all functions return nil, or if there are no functions to call),
+/// return nil.
+///
+/// Do not use `make-local-variable' to make a hook variable buffer-local.
+/// Instead, use `add-hook' and specify t for the LOCAL argument.
+/// usage: (run-hook-with-args-until-success HOOK &rest ARGS)
+#[lisp_fn(min = "1")]
+pub fn run_hook_with_args_until_success(args: &mut [LispObject]) -> LispObject {
+    run_hook_with_args_internal(args, funcall)
+}
+
+fn funcall_not(args: &mut [LispObject]) -> LispObject {
+    funcall(args).is_nil().into()
+}
+
+/// Run HOOK with the specified arguments ARGS.
+/// HOOK should be a symbol, a hook variable.  The value of HOOK may
+/// be nil, a function, or a list of functions.  Call each function in
+/// order with arguments ARGS, stopping at the first one that returns
+/// nil, and return nil.  Otherwise (if all functions return non-nil,
+/// or if there are no functions to call), return non-nil (do not rely
+/// on the precise return value in this case).
+///
+/// Do not use `make-local-variable' to make a hook variable buffer-local.
+/// Instead, use `add-hook' and specify t for the LOCAL argument.
+/// usage: (run-hook-with-args-until-failure HOOK &rest ARGS)
+#[lisp_fn(min = "1")]
+pub fn run_hook_with_args_until_failure(args: &mut [LispObject]) -> bool {
+    run_hook_with_args_internal(args, funcall_not).is_nil()
+}
+
+fn run_hook_wrapped_funcall(args: &mut [LispObject]) -> LispObject {
+    args.swap(0, 1);
+    let ret = funcall(args);
+    args.swap(0, 1);
+    ret
+}
+
+/// Run HOOK, passing each function through WRAP-FUNCTION.
+/// I.e. instead of calling each function FUN directly with arguments
+/// ARGS, it calls WRAP-FUNCTION with arguments FUN and ARGS.
+///
+/// As soon as a call to WRAP-FUNCTION returns non-nil,
+/// `run-hook-wrapped' aborts and returns that value.
+/// usage: (run-hook-wrapped HOOK WRAP-FUNCTION &rest ARGS)
+#[lisp_fn(min = "2")]
+pub fn run_hook_wrapped(args: &mut [LispObject]) -> LispObject {
+    run_hook_with_args_internal(args, run_hook_wrapped_funcall)
+}
+
 /// Run the hook HOOK, giving each function no args.
 #[no_mangle]
 pub extern "C" fn run_hook(hook: LispObject) {
@@ -1139,6 +1198,21 @@ pub extern "C" fn unbind_to(count: libc::ptrdiff_t, value: LispObject) -> LispOb
     }
 
     value
+}
+
+/// Do BODYFORM, protecting with UNWINDFORMS.
+/// If BODYFORM completes normally, its value is returned
+/// after executing the UNWINDFORMS.
+/// If BODYFORM exits nonlocally, the UNWINDFORMS are executed anyway.
+/// usage: (unwind-protect BODYFORM UNWINDFORMS...)
+#[lisp_fn(min = "1", unevalled = "true")]
+pub fn unwind_protect(args: LispCons) -> LispObject {
+    let (bodyform, unwindforms) = args.as_tuple();
+    let count = c_specpdl_index();
+
+    unsafe { record_unwind_protect(Some(prog_ignore), unwindforms) };
+
+    unbind_to(count, unsafe { eval_sub(bodyform) })
 }
 
 include!(concat!(env!("OUT_DIR"), "/eval_exports.rs"));

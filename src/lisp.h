@@ -4155,6 +4155,10 @@ extern Lisp_Object set_marker_restricted_both (Lisp_Object, Lisp_Object,
 
 /* Defined in fileio.c.  */
 
+extern bool check_executable (char *);
+extern bool check_existing (const char *);
+extern bool file_name_absolute_p (const char *);
+extern bool file_name_case_insensitive_p (const char *);
 extern Lisp_Object expand_and_dir_to_file (Lisp_Object);
 extern Lisp_Object write_region (Lisp_Object, Lisp_Object, Lisp_Object,
 				 Lisp_Object, Lisp_Object, Lisp_Object,
@@ -4246,6 +4250,7 @@ extern void syms_of_casetab (void);
 
 /* Defined in keyboard.c.  */
 
+extern void recursive_edit_unwind (Lisp_Object buffer);
 extern Lisp_Object echo_message_buffer;
 extern struct kboard *echo_kboard;
 extern void cancel_echoing (void);
@@ -4377,6 +4382,7 @@ extern void init_callproc_1 (void);
 extern void init_callproc (void);
 extern void set_initial_environment (void);
 extern void syms_of_callproc (void);
+extern Lisp_Object call_process (ptrdiff_t, Lisp_Object *, int, ptrdiff_t);
 
 /* Defined in doc.c.  */
 enum text_quoting_style
