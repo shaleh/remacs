@@ -304,8 +304,20 @@ frame_windows_min_size (Lisp_Object frame, Lisp_Object horizontal,
 			    : FRAME_COLUMN_WIDTH (f)));
     }
   else
-    return XINT (call4 (Qframe_windows_min_size, frame, horizontal,
-		      ignore, pixelwise));
+    retval = XINT (call4 (Qframe_windows_min_size, frame, horizontal,
+			  ignore, pixelwise));
+  /* Don't allow too small height of text-mode frames, or else cm.c
+     might abort in cmcheckmagic.  */
+  if (FRAME_TERMCAP_P (f) && NILP (horizontal))
+    {
+      int min_height = (FRAME_MENU_BAR_LINES (f)
+			+ FRAME_WANTS_MODELINE_P (f)
+			+ 2);	/* one text line and one echo-area line */
+      if (retval < min_height)
+	retval = min_height;
+    }
+
+  return retval;
 }
 
 
