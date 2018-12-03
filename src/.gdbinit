@@ -826,7 +826,6 @@ define xcompiled
   xgetptr $
   print (struct Lisp_Vector *) $ptr
   output ($->contents[0])@($->header.size & 0xff)
-  echo \n
 end
 document xcompiled
 Print $ as a compiled function pointer.
@@ -1278,12 +1277,6 @@ end
 
 python
 
-# Python 3 compatibility.
-try:
-  long
-except:
-  long = int
-
 # Omit pretty-printing in older (pre-7.3) GDBs that lack it.
 if hasattr(gdb, 'printing'):
 
@@ -1320,13 +1313,13 @@ if hasattr(gdb, 'printing'):
       # symbol table, guess reasonable defaults.
       sym = gdb.lookup_symbol ("EMACS_INT_WIDTH")[0]
       if sym:
-        EMACS_INT_WIDTH = long (sym.value ())
+        EMACS_INT_WIDTH = int (sym.value ())
       else:
         sym = gdb.lookup_symbol ("EMACS_INT")[0]
         EMACS_INT_WIDTH = 8 * sym.type.sizeof
       sym = gdb.lookup_symbol ("USE_LSB_TAG")[0]
       if sym:
-        USE_LSB_TAG = long (sym.value ())
+        USE_LSB_TAG = int (sym.value ())
       else:
         USE_LSB_TAG = 1
 
@@ -1348,7 +1341,7 @@ if hasattr(gdb, 'printing'):
       # integer.  Also, val.cast (gdb.lookup.type ("EMACS_UINT"))
       # would have problems with GDB 7.12.1; see
       # <http://patchwork.sourceware.org/patch/11557/>.
-      ival = long (val)
+      ival = int (val)
 
       # For nil, yield "XIL(0)", which is easier to read than "XIL(0x0)".
       if not ival:
