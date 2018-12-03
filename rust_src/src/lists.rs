@@ -7,8 +7,8 @@ use remacs_macros::lisp_fn;
 use crate::{
     lisp::defsubr,
     lisp::LispObject,
-    remacs_sys::{globals, EmacsInt, EmacsUint, Lisp_Cons, Lisp_Type},
-    remacs_sys::{Fcons, CHECK_IMPURE},
+    remacs_sys::{equal_kind, globals, EmacsInt, EmacsUint, Lisp_Cons, Lisp_Type},
+    remacs_sys::{internal_equal, Fcons, CHECK_IMPURE},
     remacs_sys::{Qcircular_list, Qconsp, Qlistp, Qnil, Qplistp},
     symbols::LispSymbolRef,
 };
@@ -55,13 +55,17 @@ impl LispObject {
     /// of cons cells ending in nil.  Otherwise a wrong-type-argument error
     /// will be signaled.
     pub fn iter_tails(self) -> TailsIter {
-        TailsIter::new(self, Some(Qlistp))
+        TailsIter::new(self, Some(Qlistp), Some(Qlistp))
+    }
+
+    pub fn iter_tails_noendchecked(self) -> TailsIter {
+        TailsIter::new(self, None, Some(Qlistp))
     }
 
     /// Iterate over all tails of self.  If self is not a cons-chain,
     /// iteration will stop at the first non-cons without signaling.
     pub fn iter_tails_safe(self) -> TailsIter {
-        TailsIter::new(self, None)
+        TailsIter::new(self, None, None)
     }
 
     /// Iterate over all tails of self.  If self is not a cons-chain,
@@ -75,7 +79,7 @@ impl LispObject {
     /// of cons cells ending in nil.  Otherwise a wrong-type-argument error
     /// will be signaled.
     pub fn iter_tails_plist(self) -> TailsIter {
-        TailsIter::new(self, Some(Qplistp))
+        TailsIter::new(self, Some(Qplistp), Some(Qplistp))
     }
 
     /// Iterate over the car cells of a list.
@@ -109,18 +113,24 @@ pub struct TailsIter {
     tail: LispObject,
     tortoise: LispObject,
     errsym: Option<LispObject>,
+    circular_errsym: Option<LispObject>,
     max: isize,
     n: isize,
     q: u16,
 }
 
 impl TailsIter {
-    fn new(list: LispObject, errsym: Option<LispObject>) -> Self {
+    fn new(
+        list: LispObject,
+        errsym: Option<LispObject>,
+        circular_errsym: Option<LispObject>,
+    ) -> Self {
         Self {
             list,
             tail: list,
             tortoise: list,
             errsym,
+            circular_errsym,
             max: 2,
             n: 0,
             q: 2,
@@ -131,7 +141,7 @@ impl TailsIter {
         self.q = self.q.wrapping_sub(1);
         if self.q != 0 {
             if self.tail == self.tortoise {
-                if self.errsym.is_some() {
+                if self.circular_errsym.is_some() {
                     circular_list(self.tail);
                 }
                 return None;
@@ -140,7 +150,7 @@ impl TailsIter {
             self.n = self.n.wrapping_sub(1);
             if self.n > 0 {
                 if self.tail == self.tortoise {
-                    if self.errsym.is_some() {
+                    if self.circular_errsym.is_some() {
                         circular_list(self.tail);
                     }
                     return None;
@@ -232,7 +242,7 @@ macro_rules! derive_car_iter {
 derive_car_iter!(CarIter, TailsIter);
 impl CarIter {
     pub fn new(list: LispObject, errsym: Option<LispObject>) -> Self {
-        Self(TailsIter::new(list, errsym))
+        Self(TailsIter::new(list, errsym, errsym))
     }
 }
 
@@ -307,6 +317,68 @@ impl LispCons {
         unsafe {
             CHECK_IMPURE(self.0, self._extract() as *mut c_void);
         }
+    }
+
+    pub fn equal(
+        self,
+        other: LispCons,
+        kind: equal_kind::Type,
+        depth: i32,
+        ht: LispObject,
+    ) -> bool {
+        if kind == equal_kind::EQUAL_NO_QUIT {
+            self.equal_1(
+                LispObject::from(self).iter_tails_unchecked(),
+                LispObject::from(other).iter_tails_unchecked(),
+                kind,
+                0,
+                Qnil,
+                depth,
+                ht,
+            )
+        } else {
+            self.equal_1(
+                LispObject::from(self).iter_tails_noendchecked(),
+                LispObject::from(other).iter_tails_noendchecked(),
+                kind,
+                depth + 1,
+                ht,
+                depth,
+                ht,
+            )
+        }
+    }
+
+    fn equal_1<T>(
+        self,
+        mut it1: T,
+        mut it2: T,
+        kind: equal_kind::Type,
+        item_depth: i32,
+        item_ht: LispObject,
+        depth: i32,
+        ht: LispObject,
+    ) -> bool
+    where
+        T: LispConsIterator<Item = LispCons>,
+    {
+        loop {
+            match (it1.next(), it2.next()) {
+                (Some(cons1), Some(cons2)) => {
+                    let (item1, tail1) = cons1.as_tuple();
+                    let (item2, tail2) = cons2.as_tuple();
+                    if !unsafe { internal_equal(item1, item2, kind, item_depth, item_ht) } {
+                        return false;
+                    } else if tail1.eq(tail2) {
+                        return true;
+                    }
+                }
+                (None, None) => break,
+                _ => return false,
+            }
+        }
+
+        unsafe { internal_equal(it1.rest(), it2.rest(), kind, depth + 1, ht) }
     }
 }
 
