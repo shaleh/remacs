@@ -127,8 +127,7 @@ impl TailsIter {
         }
     }
 
-    fn check_circular(&mut self, cons: LispCons) -> Option<Self::Item> {
-        self.tail = cons.cdr();
+    fn check_circular(&mut self, cons: LispCons) -> Option<LispCons> {
         self.q = self.q.wrapping_sub(1);
         if self.q != 0 {
             if self.tail == self.tortoise {
@@ -175,7 +174,10 @@ impl Iterator for TailsIter {
                 }
                 None
             }
-            Some(tail_cons) => self.check_circular(tail_cons),
+            Some(cons) => {
+                self.tail = cons.cdr();
+                self.check_circular(cons)
+            }
         }
     }
 }
@@ -240,58 +242,6 @@ impl CarNoCircularChecksIter {
         Self(TailsNoCircularChecksIter::new(list))
     }
 }
-
-// pub struct CarIter(TailsIter);
-
-// impl CarIter {
-//     pub fn new(list: LispObject, errsym: Option<LispObject>) -> Self {
-//         Self(TailsIter::new(list, errsym))
-//     }
-// }
-
-// impl LispConsIterator for CarIter {
-//     fn rest(&self) -> LispObject {
-//         self.0.tail
-//     }
-
-//     fn check_circular(&mut self, cons: LispCons) -> Option<Self::Item> {
-//         self.0.check_circular(cons).map(|cons| cons.car())
-//     }
-// }
-
-// impl Iterator for CarIter {
-//     type Item = LispObject;
-
-//     fn next(&mut self) -> Option<Self::Item> {
-//         self.0.next().map(|cons| cons.car())
-//     }
-// }
-
-// pub struct CarNoCircularCheckIter(TailsNoCircularChecksIter);
-
-// impl CarNoCircularCheckIter {
-//     pub fn new(list: LispObject) -> Self {
-//         Self(TailsNoCircularChecksIter::new(list))
-//     }
-// }
-
-// impl LispConsIterator for CarNoCircularCheckIter {
-//     fn rest(&self) -> LispObject {
-//         self.0.tail
-//     }
-
-//     fn check_circular(&mut self, _cons: LispCons) -> Option<Self::Item> {
-//         unimplemented!()
-//     }
-// }
-
-// impl Iterator for CarNoCircularCheckIter {
-//     type Item = LispObject;
-
-//     fn next(&mut self) -> Option<Self::Item> {
-//         self.0.next().map(|cons| cons.car())
-//     }
-// }
 
 impl From<LispObject> for LispCons {
     fn from(o: LispObject) -> Self {
