@@ -8,7 +8,7 @@ use crate::{
     data::{defalias, indirect_function, indirect_function_lisp, set, set_default},
     lisp::{defsubr, is_autoload},
     lisp::{LispObject, LispSubrRef},
-    lists::{assq, car, cdr, get, memq, nth, put, Fcar, Fcdr, LispCons},
+    lists::{assq, car, cdr, get, memq, nth, put, Fcar, Fcdr, LispCons, LispConsIterator},
     multibyte::LispStringRef,
     obarray::loadhist_attach,
     objects::equal,

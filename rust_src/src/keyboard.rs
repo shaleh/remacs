@@ -8,7 +8,7 @@ use crate::{
     frames::{selected_frame, window_frame_live_or_selected_with_action},
     lisp::defsubr,
     lisp::LispObject,
-    lists::LispCons,
+    lists::{LispCons, LispConsIterator},
     numbers::IsLispNatnum,
     remacs_sys::{
         command_loop_level, glyph_row_area, interrupt_input_blocked, minibuf_level,
