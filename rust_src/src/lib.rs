@@ -1,13 +1,10 @@
-#![cfg_attr(feature = "clippy", feature(plugin))]
-#![cfg_attr(feature = "clippy", plugin(clippy))]
-#![cfg_attr(
-    feature = "clippy",
-    allow(not_unsafe_ptr_arg_deref, wrong_self_convention)
-)]
+#![allow(clippy::cyclomatic_complexity)]
+#![allow(clippy::wrong_self_convention)]
+#![allow(clippy::too_many_arguments)]
+#![allow(clippy::not_unsafe_ptr_arg_deref)]
 #![feature(const_fn)]
 #![allow(non_upper_case_globals)]
 #![allow(non_snake_case)]
-#![allow(private_no_mangle_fns)]
 #![allow(non_camel_case_types, non_snake_case, non_upper_case_globals)]
 // we need this to be able to inclde FieldOffsets in C structs
 #![allow(improper_ctypes)]
@@ -19,7 +16,11 @@
 #![feature(untagged_unions)]
 #![feature(never_type)]
 #![feature(const_fn_union)]
+#![feature(ptr_offset_from)]
 
+extern crate errno;
+#[macro_use]
+extern crate if_chain;
 #[macro_use]
 extern crate lazy_static;
 
@@ -52,6 +53,8 @@ mod eval_macros;
 #[macro_use]
 mod lisp;
 #[macro_use]
+mod frames;
+#[macro_use]
 mod vector_macros;
 mod str2sig;
 
@@ -59,10 +62,13 @@ mod alloc;
 mod base64;
 mod buffers;
 mod bytecode;
+mod callint;
+mod callproc;
 mod casefiddle;
 mod casetab;
 mod category;
 mod character;
+mod charset;
 mod chartable;
 mod cmds;
 mod crypto;
@@ -82,7 +88,6 @@ mod fileio;
 mod floatfns;
 mod fns;
 mod fonts;
-mod frames;
 mod hashtable;
 mod indent;
 mod interactive;
@@ -99,11 +104,14 @@ mod numbers;
 mod obarray;
 mod objects;
 mod process;
+mod profiler;
+#[allow(clippy::all)]
 mod remacs_sys;
 mod search;
 mod strings;
 mod symbols;
 mod syntax;
+mod terminal;
 mod textprop;
 mod threads;
 mod time;
@@ -123,7 +131,7 @@ static ALLOCATOR: OsxUnexecAlloc = OsxUnexecAlloc;
 include!(concat!(env!("OUT_DIR"), "/c_exports.rs"));
 
 #[cfg(test)]
-pub use functions::{lispsym, make_string, make_unibyte_string, Fcons, Fsignal};
+pub use crate::functions::{lispsym, make_string, make_unibyte_string, Fcons, Fsignal};
 
 #[cfg(feature = "compile-errors")]
 mod compile_errors {

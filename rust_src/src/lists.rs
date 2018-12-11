@@ -1,13 +1,319 @@
 //! Operations on lists.
 
-use remacs_macros::lisp_fn;
-use remacs_sys::globals;
-use remacs_sys::{EmacsInt, EmacsUint};
-use remacs_sys::{Qcircular_list, Qnil, Qplistp};
+use libc::c_void;
 
-use lisp::defsubr;
-use lisp::{LispCons, LispObject};
-use symbols::LispSymbolRef;
+use remacs_macros::lisp_fn;
+
+use crate::{
+    lisp::defsubr,
+    lisp::LispObject,
+    remacs_sys::{globals, EmacsInt, EmacsUint, Lisp_Cons, Lisp_Type},
+    remacs_sys::{Fcons, CHECK_IMPURE},
+    remacs_sys::{Qcircular_list, Qconsp, Qlistp, Qnil, Qplistp},
+    symbols::LispSymbolRef,
+};
+
+// Cons support (LispType == 6 | 3)
+
+/// A newtype for objects we know are conses.
+#[repr(transparent)]
+#[derive(Clone, Copy)]
+pub struct LispCons(LispObject);
+
+impl LispObject {
+    pub fn is_cons(self) -> bool {
+        self.get_type() == Lisp_Type::Lisp_Cons
+    }
+
+    pub fn as_cons(self) -> Option<LispCons> {
+        if self.is_cons() {
+            Some(LispCons(self))
+        } else {
+            None
+        }
+    }
+
+    pub fn as_cons_or_error(self) -> LispCons {
+        if self.is_cons() {
+            LispCons(self)
+        } else {
+            wrong_type!(Qconsp, self)
+        }
+    }
+}
+
+impl LispObject {
+    pub fn cons(car: LispObject, cdr: LispObject) -> Self {
+        unsafe { Fcons(car, cdr) }
+    }
+
+    pub fn is_list(self) -> bool {
+        self.is_cons() || self.is_nil()
+    }
+
+    /// Iterate over all tails of self.  self should be a list, i.e. a chain
+    /// of cons cells ending in nil.  Otherwise a wrong-type-argument error
+    /// will be signaled.
+    pub fn iter_tails(self) -> TailsIter {
+        TailsIter::new(self, Some(Qlistp))
+    }
+
+    /// Iterate over all tails of self.  If self is not a cons-chain,
+    /// iteration will stop at the first non-cons without signaling.
+    pub fn iter_tails_safe(self) -> TailsIter {
+        TailsIter::new(self, None)
+    }
+
+    /// Iterate over all tails of self.  If self is not a cons-chain,
+    /// iteration will stop at the first non-cons without signaling.
+    /// No circular checks are performed.
+    pub fn iter_tails_unchecked(self) -> TailsNoCircularCheckIter {
+        TailsNoCircularCheckIter::new(self)
+    }
+
+    /// Iterate over all tails of self.  self should be a plist, i.e. a chain
+    /// of cons cells ending in nil.  Otherwise a wrong-type-argument error
+    /// will be signaled.
+    pub fn iter_tails_plist(self) -> TailsIter {
+        TailsIter::new(self, Some(Qplistp))
+    }
+
+    /// Iterate over the car cells of a list.
+    pub fn iter_cars(self) -> CarIter {
+        CarIter::new(self, Some(Qlistp))
+    }
+
+    /// Iterate over all cars of self. If self is not a cons-chain,
+    /// iteration will stop at the first non-cons without signaling.
+    pub fn iter_cars_safe(self) -> CarIter {
+        CarIter::new(self, None)
+    }
+
+    /// Iterate over all cars of self. If self is not a cons-chain,
+    /// iteration will stop at the first non-cons without signaling.
+    /// No circular checks are performed.
+    pub fn iter_cars_unchecked(self) -> CarNoCircularCheckIter {
+        CarNoCircularCheckIter::new(self)
+    }
+}
+
+/// From `FOR_EACH_TAIL_INTERNAL` in `lisp.h`
+pub struct TailsIter {
+    list: LispObject,
+    tail: LispObject,
+    tortoise: LispObject,
+    errsym: Option<LispObject>,
+    max: isize,
+    n: isize,
+    q: u16,
+}
+
+impl TailsIter {
+    fn new(list: LispObject, errsym: Option<LispObject>) -> Self {
+        Self {
+            list,
+            tail: list,
+            tortoise: list,
+            errsym,
+            max: 2,
+            n: 0,
+            q: 2,
+        }
+    }
+
+    pub fn rest(&self) -> LispObject {
+        // This is kind of like Peekable but even when None is returned there
+        // might still be a valid item in self.tail.
+        self.tail
+    }
+
+    fn circular(&self) -> Option<LispCons> {
+        if self.errsym.is_some() {
+            circular_list(self.tail);
+        } else {
+            None
+        }
+    }
+}
+
+impl Iterator for TailsIter {
+    type Item = LispCons;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        match self.tail.as_cons() {
+            None => {
+                if self.errsym.is_some() && self.tail.is_not_nil() {
+                    wrong_type!(self.errsym.unwrap(), self.list)
+                }
+                None
+            }
+            Some(tail_cons) => {
+                self.tail = tail_cons.cdr();
+                self.q = self.q.wrapping_sub(1);
+                if self.q != 0 {
+                    if self.tail == self.tortoise {
+                        return self.circular();
+                    }
+                } else {
+                    self.n = self.n.wrapping_sub(1);
+                    if self.n > 0 {
+                        if self.tail == self.tortoise {
+                            return self.circular();
+                        }
+                    } else {
+                        self.max <<= 1;
+                        self.q = self.max as u16;
+                        self.n = self.max >> 16;
+                        self.tortoise = self.tail;
+                    }
+                }
+                Some(tail_cons)
+            }
+        }
+    }
+}
+
+pub struct TailsNoCircularCheckIter {
+    tail: LispObject,
+}
+
+impl TailsNoCircularCheckIter {
+    fn new(list: LispObject) -> Self {
+        Self { tail: list }
+    }
+
+    pub fn rest(&self) -> LispObject {
+        // This is kind of like Peekable but even when None is returned there
+        // might still be a valid item in self.tail.
+        self.tail
+    }
+}
+
+impl Iterator for TailsNoCircularCheckIter {
+    type Item = LispCons;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        self.tail.as_cons().and_then(|cons| {
+            self.tail = cons.cdr();
+            Some(cons)
+        })
+    }
+}
+
+pub struct CarIter {
+    tails: TailsIter,
+}
+
+impl CarIter {
+    pub fn new(list: LispObject, errsym: Option<LispObject>) -> Self {
+        Self {
+            tails: TailsIter::new(list, errsym),
+        }
+    }
+
+    pub fn rest(&self) -> LispObject {
+        self.tails.tail
+    }
+}
+
+impl Iterator for CarIter {
+    type Item = LispObject;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        self.tails.next().map(|c| c.car())
+    }
+}
+
+pub struct CarNoCircularCheckIter {
+    tails: TailsNoCircularCheckIter,
+}
+
+impl CarNoCircularCheckIter {
+    pub fn new(list: LispObject) -> Self {
+        Self {
+            tails: TailsNoCircularCheckIter::new(list),
+        }
+    }
+
+    pub fn rest(&self) -> LispObject {
+        self.tails.tail
+    }
+}
+
+impl Iterator for CarNoCircularCheckIter {
+    type Item = LispObject;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        self.tails.next().map(|c| c.car())
+    }
+}
+
+impl From<LispObject> for LispCons {
+    fn from(o: LispObject) -> Self {
+        o.as_cons_or_error()
+    }
+}
+
+impl From<LispObject> for Option<LispCons> {
+    fn from(o: LispObject) -> Self {
+        if o.is_list() {
+            Some(o.as_cons_or_error())
+        } else {
+            None
+        }
+    }
+}
+
+impl From<LispCons> for LispObject {
+    fn from(c: LispCons) -> Self {
+        c.as_obj()
+    }
+}
+
+impl LispCons {
+    pub fn as_obj(self) -> LispObject {
+        self.0
+    }
+
+    fn _extract(self) -> *mut Lisp_Cons {
+        self.0.get_untaggedptr() as *mut Lisp_Cons
+    }
+
+    /// Return the car (first cell).
+    pub fn car(self) -> LispObject {
+        unsafe { (*self._extract()).u.s.as_ref().car }
+    }
+
+    /// Return the cdr (second cell).
+    pub fn cdr(self) -> LispObject {
+        unsafe { (*self._extract()).u.s.as_ref().u.cdr }
+    }
+
+    pub fn as_tuple(self) -> (LispObject, LispObject) {
+        (self.car(), self.cdr())
+    }
+
+    /// Set the car of the cons cell.
+    pub fn set_car(self, n: LispObject) {
+        unsafe {
+            (*self._extract()).u.s.as_mut().car = n;
+        }
+    }
+
+    /// Set the car of the cons cell.
+    pub fn set_cdr(self, n: LispObject) {
+        unsafe {
+            (*self._extract()).u.s.as_mut().u.cdr = n;
+        }
+    }
+
+    /// Check that "self" is an impure (i.e. not readonly) cons cell.
+    pub fn check_impure(self) {
+        unsafe {
+            CHECK_IMPURE(self.0, self._extract() as *mut c_void);
+        }
+    }
+}
 
 /// Return t if OBJECT is not a cons cell.  This includes nil.
 #[lisp_fn]
@@ -155,7 +461,8 @@ where
         .find(|item| {
             item.as_cons()
                 .map_or_else(|| false, |cons| cmp(key, cons.car()))
-        }).unwrap_or(Qnil)
+        })
+        .unwrap_or(Qnil)
 }
 
 /// Return non-nil if KEY is `eq' to the car of an element of LIST.
@@ -187,7 +494,8 @@ where
         .find(|item| {
             item.as_cons()
                 .map_or_else(|| false, |cons| cmp(key, cons.cdr()))
-        }).unwrap_or(Qnil)
+        })
+        .unwrap_or(Qnil)
 }
 
 /// Return non-nil if KEY is `eq' to the cdr of an element of LIST.
@@ -245,9 +553,11 @@ pub fn plist_get(plist: LispObject, prop: LispObject) -> LispObject {
         if prop_item {
             match tail.cdr().as_cons() {
                 None => break,
-                Some(tail_cdr_cons) => if tail.car().eq(prop) {
-                    return tail_cdr_cons.car();
-                },
+                Some(tail_cdr_cons) => {
+                    if tail.car().eq(prop) {
+                        return tail_cdr_cons.car();
+                    }
+                }
             }
         }
         prop_item = !prop_item;
@@ -273,9 +583,11 @@ pub fn lax_plist_get(plist: LispObject, prop: LispObject) -> LispObject {
                     }
                     break;
                 }
-                Some(tail_cdr_cons) => if tail.car().equal(prop) {
-                    return tail_cdr_cons.car();
-                },
+                Some(tail_cdr_cons) => {
+                    if tail.car().equal(prop) {
+                        return tail_cdr_cons.car();
+                    }
+                }
             }
         }
         prop_item = !prop_item;
@@ -379,10 +691,9 @@ pub fn get(symbol: LispSymbolRef, propname: LispObject) -> LispObject {
 /// Store SYMBOL's PROPNAME property with value VALUE.
 /// It can be retrieved with `(get SYMBOL PROPNAME)'.
 #[lisp_fn]
-pub fn put(symbol: LispObject, propname: LispObject, value: LispObject) -> LispObject {
-    let mut sym = symbol.as_symbol_or_error();
-    let new_plist = plist_put(sym.get_plist(), propname, value);
-    sym.set_plist(new_plist);
+pub fn put(mut symbol: LispSymbolRef, propname: LispObject, value: LispObject) -> LispObject {
+    let new_plist = plist_put(symbol.get_plist(), propname, value);
+    symbol.set_plist(new_plist);
     value
 }
 
@@ -475,6 +786,66 @@ pub fn merge(mut l1: LispObject, mut l2: LispObject, pred: LispObject) -> LispOb
 
 pub fn circular_list(obj: LispObject) -> ! {
     xsignal!(Qcircular_list, obj);
+}
+
+fn mapcar_over_iterator<I: Iterator<Item = LispObject>>(
+    output: &mut [LispObject],
+    fun: LispObject,
+    it: I,
+) -> EmacsInt {
+    let mut mapped = 0;
+
+    for (i, elt) in it.enumerate() {
+        let dummy = call!(fun, elt);
+        if output.len() > i {
+            output[i as usize] = dummy;
+        }
+        mapped = i + 1;
+    }
+
+    mapped as EmacsInt
+}
+
+// This is the guts of all mapping functions.
+// Apply FUN to each element of SEQ, one by one, storing the results
+// into elements of VALS, a C vector of Lisp_Objects.  LENI is the
+// length of VALS, which should also be the length of SEQ.  Return the
+// number of results; although this is normally LENI, it can be less
+// if SEQ is made shorter as a side effect of FN.
+#[no_mangle]
+pub extern "C" fn mapcar1(
+    leni: EmacsInt,
+    vals: *mut LispObject,
+    fun: LispObject,
+    seq: LispObject,
+) -> EmacsInt {
+    let mut safe_value = [Qnil];
+
+    let output = if vals.is_null() {
+        &mut safe_value
+    } else {
+        unsafe { std::slice::from_raw_parts_mut(vals, leni as usize) }
+    };
+
+    if let Some(v) = seq.as_vectorlike() {
+        if let Some(vc) = v.as_vector() {
+            return mapcar_over_iterator(output, fun, vc.iter());
+        } else if let Some(cf) = v.as_compiled() {
+            return mapcar_over_iterator(output, fun, cf.iter());
+        } else if let Some(bv) = v.as_bool_vector() {
+            return mapcar_over_iterator(output, fun, bv.iter());
+        }
+    }
+    if let Some(s) = seq.as_string() {
+        return mapcar_over_iterator(
+            output,
+            fun,
+            s.char_indices()
+                .map(|(_, c)| LispObject::from_fixnum(c as EmacsInt)),
+        );
+    }
+
+    mapcar_over_iterator(output, fun, seq.iter_cars_safe())
 }
 
 include!(concat!(env!("OUT_DIR"), "/lists_exports.rs"));

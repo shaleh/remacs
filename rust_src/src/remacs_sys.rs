@@ -21,9 +21,12 @@ use std;
 use libc::timespec;
 use remacs_lib::current_timespec;
 
-use data::{Lisp_Boolfwd, Lisp_Buffer_Objfwd, Lisp_Fwd, Lisp_Intfwd, Lisp_Kboard_Objfwd,
-           Lisp_Objfwd};
-use lisp::LispObject;
+use crate::{
+    data::{
+        Lisp_Boolfwd, Lisp_Buffer_Objfwd, Lisp_Fwd, Lisp_Intfwd, Lisp_Kboard_Objfwd, Lisp_Objfwd,
+    },
+    lisp::LispObject,
+};
 
 include!(concat!(env!("OUT_DIR"), "/definitions.rs"));
 
@@ -45,21 +48,11 @@ extern "C" {
     // number of arguments.
     // TODO: define a Rust version of this that uses Rust strings.
     pub fn error(m: *const u8, ...) -> !;
-    pub fn nsberror(spec: Lisp_Object) -> !;
-    pub fn emacs_abort() -> !;
     pub fn Fsignal(error_symbol: Lisp_Object, data: Lisp_Object) -> !;
     pub fn memory_full(nbytes: libc::size_t) -> !;
     pub fn bitch_at_user() -> !;
     pub fn wrong_choice(choice: LispObject, wrong: LispObject) -> !;
     pub fn wrong_range(min: LispObject, max: LispObject, wrong: LispObject) -> !;
-}
-
-/// Type of comparison for `internal_equal()`.
-#[repr(C)]
-pub enum EqualKind {
-    NoQuit,
-    Plain,
-    IncludingProperties,
 }
 
 #[repr(C)]
@@ -75,24 +68,7 @@ pub enum BoolVectorOp {
 extern "C" {
     // these weren't declared in a header, for example
     pub static Vprocess_alist: Lisp_Object;
-    pub fn hash_clear(h: *mut Lisp_Hash_Table);
-    pub fn internal_equal(
-        o1: Lisp_Object,
-        o2: Lisp_Object,
-        kind: EqualKind,
-        depth: libc::c_int,
-        ht: Lisp_Object,
-    ) -> bool;
-    pub fn uniprop_table_uncompress(table: Lisp_Object, idx: u32) -> Lisp_Object;
     pub fn update_buffer_defaults(objvar: *mut LispObject, newval: LispObject);
-    pub fn find_field(
-        pos: LispObject,
-        merge_at_boundary: LispObject,
-        beg_limit: LispObject,
-        beg: *mut ptrdiff_t,
-        end_limit: LispObject,
-        end: *mut ptrdiff_t,
-    );
     pub fn concat(
         nargs: ptrdiff_t,
         args: *mut LispObject,
@@ -140,12 +116,9 @@ extern "C" {
     #[cfg(unix)]
     pub fn filemode_string(f: LispObject) -> LispObject;
 
-    pub fn wset_update_mode_line(w: *mut Lisp_Window);
-    pub fn wset_display_table(w: *mut Lisp_Window, val: LispObject);
-    pub fn drop_overlay(b: *mut Lisp_Buffer, ov: *mut Lisp_Overlay);
     pub fn unchain_both(b: *mut Lisp_Buffer, ov: LispObject);
     pub fn emacs_get_tty_pgrp(p: *mut Lisp_Process) -> libc::pid_t;
-
+    pub fn update_buffer_properties(start: ptrdiff_t, end: ptrdiff_t);
     pub fn set_window_hscroll(w: *mut Lisp_Window, hscroll: EMACS_INT) -> Lisp_Object;
     pub fn scroll_command(n: Lisp_Object, direction: libc::c_int);
     pub fn bool_vector_binop_driver(
@@ -155,11 +128,6 @@ extern "C" {
         op: BoolVectorOp,
     ) -> Lisp_Object;
 }
-
-// Largest and smallest numbers that can be represented as fixnums in
-// Emacs lisp.
-pub const MOST_POSITIVE_FIXNUM: EmacsInt = EMACS_INT_MAX >> Lisp_Bits::INTTYPEBITS as u32;
-pub const MOST_NEGATIVE_FIXNUM: EmacsInt = (-1 - MOST_POSITIVE_FIXNUM);
 
 // Max value for the first argument of wait_reading_process_output.
 pub const WAIT_READING_MAX: i64 = std::i64::MAX;
@@ -173,8 +141,9 @@ pub const WAIT_READING_MAX: i64 = std::i64::MAX;
 unsafe impl Sync for Lisp_Subr {}
 
 pub type Lisp_Buffer = buffer;
-pub type Lisp_Window = window;
 pub type Lisp_Frame = frame;
+pub type Lisp_Glyph = glyph;
+pub type Lisp_Window = window;
 
 #[repr(C)]
 pub struct Lisp_Vectorlike {

@@ -4,17 +4,30 @@ use libc::c_void;
 use std::ptr;
 
 use remacs_macros::lisp_fn;
-use remacs_sys::Qhash_table_test;
-use remacs_sys::{gc_aset, hash_clear, hash_lookup, hash_put, hash_remove_from_table,
-                 Fcopy_sequence};
-use remacs_sys::{pvec_type, EmacsDouble, EmacsInt, EmacsUint, Lisp_Hash_Table, CHECK_IMPURE};
 
-use data::aref;
-use lisp::defsubr;
-use lisp::{ExternalPtr, LispObject};
-use lists::{list, put};
+use crate::{
+    data::aref,
+    lisp::defsubr,
+    lisp::{ExternalPtr, LispObject},
+    lists::{list, put},
+    remacs_sys::{
+        gc_aset, hash_clear, hash_lookup, hash_put, hash_remove_from_table, Fcopy_sequence,
+    },
+    remacs_sys::{
+        pvec_type, EmacsDouble, EmacsInt, EmacsUint, Lisp_Hash_Table, Lisp_Type, CHECK_IMPURE,
+    },
+    remacs_sys::{Qhash_table_p, Qhash_table_test},
+    symbols::LispSymbolRef,
+};
 
 pub type LispHashTableRef = ExternalPtr<Lisp_Hash_Table>;
+
+#[derive(Clone, Copy, PartialEq, PartialOrd, Eq, Ord, Debug)]
+pub enum HashLookupResult {
+    Missing(EmacsUint),
+    Found(isize),
+}
+use self::HashLookupResult::{Found, Missing};
 
 impl LispHashTableRef {
     pub fn allocate() -> LispHashTableRef {
@@ -70,39 +83,40 @@ impl LispHashTableRef {
         self.weak
     }
 
-    #[inline]
     pub fn get_hash_value(self, idx: isize) -> LispObject {
         aref(self.key_and_value, (2 * idx + 1) as EmacsInt)
     }
 
-    #[inline]
     pub fn set_hash_value(self, idx: isize, value: LispObject) {
         unsafe { gc_aset(self.key_and_value, 2 * idx + 1, value) };
     }
 
-    pub fn lookup(self, key: LispObject, hashptr: *mut EmacsUint) -> isize {
-        let mutself = self.as_ptr() as *mut Lisp_Hash_Table;
-        unsafe { hash_lookup(mutself, key, hashptr) }
-    }
-
-    pub fn put(mut self, key: LispObject, value: LispObject, hash: EmacsUint) -> isize {
-        unsafe { hash_put(self.as_mut(), key, value, hash) }
-    }
-
-    pub fn check_impure(self, object: LispHashTableRef) {
-        unsafe { CHECK_IMPURE(LispObject::from(object), self.as_ptr() as *mut c_void) };
-    }
-
-    pub fn remove(mut self, key: LispObject) {
-        unsafe { hash_remove_from_table(self.as_mut(), key) };
+    pub fn get_hash_key(self, idx: isize) -> LispObject {
+        aref(self.key_and_value, (2 * idx) as EmacsInt)
     }
 
     pub fn get_hash_hash(self, idx: isize) -> LispObject {
         aref(self.hash, idx as EmacsInt)
     }
 
-    pub fn get_hash_key(self, idx: isize) -> LispObject {
-        aref(self.key_and_value, (2 * idx) as EmacsInt)
+    pub fn lookup(self, key: LispObject) -> HashLookupResult {
+        // This allows `self` to be immutable.
+        let mutself = self.as_ptr() as *mut Lisp_Hash_Table;
+        let mut hash = 0;
+        let idx = unsafe { hash_lookup(mutself, key, &mut hash) };
+        if idx < 0 {
+            Missing(hash)
+        } else {
+            Found(idx)
+        }
+    }
+
+    pub fn put(mut self, key: LispObject, value: LispObject, hash: EmacsUint) -> isize {
+        unsafe { hash_put(self.as_mut(), key, value, hash) }
+    }
+
+    pub fn remove(mut self, key: LispObject) {
+        unsafe { hash_remove_from_table(self.as_mut(), key) };
     }
 
     pub fn size(self) -> usize {
@@ -111,6 +125,47 @@ impl LispHashTableRef {
 
     pub fn clear(mut self) {
         unsafe { hash_clear(self.as_mut()) }
+    }
+
+    pub fn check_impure(self, object: LispHashTableRef) {
+        unsafe { CHECK_IMPURE(LispObject::from(object), self.as_ptr() as *mut c_void) };
+    }
+}
+
+impl From<LispObject> for LispHashTableRef {
+    fn from(o: LispObject) -> Self {
+        o.as_hash_table_or_error()
+    }
+}
+
+impl From<LispHashTableRef> for LispObject {
+    fn from(h: LispHashTableRef) -> Self {
+        LispObject::from_hash_table(h)
+    }
+}
+
+impl LispObject {
+    pub fn is_hash_table(self) -> bool {
+        self.as_vectorlike()
+            .map_or(false, |v| v.is_pseudovector(pvec_type::PVEC_HASH_TABLE))
+    }
+
+    pub fn as_hash_table_or_error(self) -> LispHashTableRef {
+        if self.is_hash_table() {
+            LispHashTableRef::new(self.get_untaggedptr() as *mut Lisp_Hash_Table)
+        } else {
+            wrong_type!(Qhash_table_p, self);
+        }
+    }
+
+    pub fn from_hash_table(hashtable: LispHashTableRef) -> LispObject {
+        let object = LispObject::tag_ptr(hashtable, Lisp_Type::Lisp_Vectorlike);
+        debug_assert!(
+            object.is_vectorlike() && object.get_untaggedptr() == hashtable.as_ptr() as *mut c_void
+        );
+
+        debug_assert!(object.is_hash_table());
+        object
     }
 }
 
@@ -207,12 +262,9 @@ pub fn copy_hash_table(mut table: LispHashTableRef) -> LispHashTableRef {
 /// If KEY is not found, return DFLT which defaults to nil.
 #[lisp_fn(min = "2")]
 pub fn gethash(key: LispObject, hash_table: LispHashTableRef, dflt: LispObject) -> LispObject {
-    let idx = hash_table.lookup(key, ptr::null_mut());
-
-    if idx >= 0 {
-        hash_table.get_hash_value(idx)
-    } else {
-        dflt
+    match hash_table.lookup(key) {
+        Found(idx) => hash_table.get_hash_value(idx),
+        Missing(_) => dflt,
     }
 }
 
@@ -223,13 +275,13 @@ pub fn gethash(key: LispObject, hash_table: LispHashTableRef, dflt: LispObject) 
 pub fn puthash(key: LispObject, value: LispObject, hash_table: LispHashTableRef) -> LispObject {
     hash_table.check_impure(hash_table);
 
-    let mut hash: EmacsUint = 0;
-    let idx = hash_table.lookup(key, &mut hash);
-
-    if idx >= 0 {
-        hash_table.set_hash_value(idx, value);
-    } else {
-        hash_table.put(key, value, hash);
+    match hash_table.lookup(key) {
+        Found(idx) => {
+            hash_table.set_hash_value(idx, value);
+        }
+        Missing(hash) => {
+            hash_table.put(key, value, hash);
+        }
     }
 
     value
@@ -237,7 +289,7 @@ pub fn puthash(key: LispObject, value: LispObject, hash_table: LispHashTableRef)
 
 /// Remove KEY from TABLE.
 #[lisp_fn]
-pub fn remhash(key: LispObject, hash_table: LispHashTableRef) -> () {
+pub fn remhash(key: LispObject, hash_table: LispHashTableRef) {
     hash_table.check_impure(hash_table);
     hash_table.remove(key);
 }
@@ -246,7 +298,7 @@ pub fn remhash(key: LispObject, hash_table: LispHashTableRef) -> () {
 /// FUNCTION is called with two arguments, KEY and VALUE.
 /// `maphash' always returns nil.
 #[lisp_fn]
-pub fn maphash(function: LispObject, hash_table: LispHashTableRef) -> () {
+pub fn maphash(function: LispObject, hash_table: LispHashTableRef) {
     for (key, value) in hash_table.iter() {
         call!(function, key, value);
     }
@@ -310,7 +362,11 @@ pub fn clrhash(hash_table: LispHashTableRef) -> LispHashTableRef {
 /// It should be the case that if (eq (funcall HASH x1) (funcall HASH x2))
 /// returns nil, then (funcall TEST x1 x2) also returns nil.
 #[lisp_fn]
-pub fn define_hash_table_test(name: LispObject, test: LispObject, hash: LispObject) -> LispObject {
+pub fn define_hash_table_test(
+    name: LispSymbolRef,
+    test: LispObject,
+    hash: LispObject,
+) -> LispObject {
     let sym = Qhash_table_test;
     put(name, sym, list(&[test, hash]))
 }

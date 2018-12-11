@@ -1,6 +1,6 @@
 /* Updating of data structures for redisplay.
 
-Copyright (C) 1985-1988, 1993-1995, 1997-2017 Free Software Foundation,
+Copyright (C) 1985-1988, 1993-1995, 1997-2018 Free Software Foundation,
 Inc.
 
 This file is part of GNU Emacs.
@@ -25,6 +25,7 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 #include <unistd.h>
 
 #include "lisp.h"
+#include "ptr-bounds.h"
 #include "termchar.h"
 /* cm.h must come after dispextern.h on Windows.  */
 #include "dispextern.h"
@@ -93,7 +94,7 @@ static bool scrolling (struct frame *);
 static void set_window_cursor_after_update (struct window *);
 static void adjust_frame_glyphs_for_window_redisplay (struct frame *);
 static void adjust_frame_glyphs_for_frame_redisplay (struct frame *);
-static void set_window_update_flags (struct window *w, bool on_p);
+void set_window_update_flags (struct window *w, bool on_p);
 
 /* True means last display completed.  False means it was preempted.  */
 
@@ -1686,7 +1687,7 @@ required_matrix_height (struct window *w)
 
   if (FRAME_WINDOW_P (f))
     {
-      /* https://lists.gnu.org/archive/html/emacs-devel/2015-11/msg00194.html  */
+      /* https://lists.gnu.org/r/emacs-devel/2015-11/msg00194.html  */
       int ch_height = max (FRAME_SMALLEST_FONT_HEIGHT (f), 1);
       int window_pixel_height = window_box_height (w) + eabs (w->vscroll);
 
@@ -1713,7 +1714,7 @@ required_matrix_width (struct window *w)
   struct frame *f = XFRAME (w->frame);
   if (FRAME_WINDOW_P (f))
     {
-      /* https://lists.gnu.org/archive/html/emacs-devel/2015-11/msg00194.html  */
+      /* https://lists.gnu.org/r/emacs-devel/2015-11/msg00194.html  */
       int ch_width = max (FRAME_SMALLEST_CHAR_WIDTH (f), 1);
 
       /* Compute number of glyphs needed in a glyph row.  */
@@ -2930,53 +2931,6 @@ window_to_frame_hpos (struct window *w, int hpos)
 
 
 
-/**********************************************************************
-			    Redrawing Frames
- **********************************************************************/
-
-/* Redraw frame F.  */
-
-void
-redraw_frame (struct frame *f)
-{
-  /* Error if F has no glyphs.  */
-  eassert (f->glyphs_initialized_p);
-  update_begin (f);
-  clear_frame (f);
-  clear_current_matrices (f);
-  update_end (f);
-  fset_redisplay (f);
-  /* Mark all windows as inaccurate, so that every window will have
-     its redisplay done.  */
-  mark_window_display_accurate (FRAME_ROOT_WINDOW (f), 0);
-  set_window_update_flags (XWINDOW (FRAME_ROOT_WINDOW (f)), true);
-  f->garbaged = false;
-}
-
-DEFUN ("redraw-frame", Fredraw_frame, Sredraw_frame, 0, 1, 0,
-       doc: /* Clear frame FRAME and output again what is supposed to appear on it.
-If FRAME is omitted or nil, the selected frame is used.  */)
-  (Lisp_Object frame)
-{
-  redraw_frame (decode_live_frame (frame));
-  return Qnil;
-}
-
-DEFUN ("redraw-display", Fredraw_display, Sredraw_display, 0, 0, "",
-       doc: /* Clear and redisplay all visible frames.  */)
-  (void)
-{
-  Lisp_Object tail, frame;
-
-  FOR_EACH_FRAME (tail, frame)
-    if (FRAME_VISIBLE_P (XFRAME (frame)))
-      redraw_frame (XFRAME (frame));
-
-  return Qnil;
-}
-
-
-
 /***********************************************************************
 			     Frame Update
  ***********************************************************************/
@@ -3892,24 +3846,6 @@ set_window_cursor_after_update (struct window *w)
 }
 
 
-/* Set WINDOW->must_be_updated_p to ON_P for all windows in
-   the window tree rooted at W.  */
-
-static void
-set_window_update_flags (struct window *w, bool on_p)
-{
-  while (w)
-    {
-      if (WINDOWP (w->contents))
-	set_window_update_flags (XWINDOW (w->contents), on_p);
-      else
-	w->must_be_updated_p = on_p;
-
-      w = NILP (w->next) ? 0 : XWINDOW (w->next);
-    }
-}
-
-
 
 /***********************************************************************
 			Window-Based Scrolling
@@ -4584,6 +4520,11 @@ scrolling (struct frame *frame)
   unsigned *new_hash = old_hash + height;
   int *draw_cost = (int *) (new_hash + height);
   int *old_draw_cost = draw_cost + height;
+  old_hash = ptr_bounds_clip (old_hash, height * sizeof *old_hash);
+  new_hash = ptr_bounds_clip (new_hash, height * sizeof *new_hash);
+  draw_cost = ptr_bounds_clip (draw_cost, height * sizeof *draw_cost);
+  old_draw_cost = ptr_bounds_clip (old_draw_cost,
+				   height * sizeof *old_draw_cost);
 
   eassert (current_matrix);
 
@@ -5081,6 +5022,29 @@ buffer_posn_from_coords (struct window *w, int *x, int *y, struct display_pos *p
      include the hscroll. */
   to_x += it.first_visible_x;
 
+  /* If we are hscrolling only the current line, and Y is at the line
+     containing point, augment TO_X with the hscroll amount of the
+     current line.  */
+  if (it.line_wrap == TRUNCATE
+      && EQ (automatic_hscrolling, Qcurrent_line) && IT_CHARPOS (it) < PT)
+    {
+      struct it it2 = it;
+      void *it2data = bidi_shelve_cache ();
+      it2.last_visible_x = 1000000;
+      /* If the line at Y shows point, the call below to
+	 move_it_in_display_line will succeed in reaching point.  */
+      move_it_in_display_line (&it2, PT, -1, MOVE_TO_POS);
+      if (IT_CHARPOS (it2) >= PT)
+	{
+	  to_x += (w->hscroll - w->min_hscroll) * FRAME_COLUMN_WIDTH (it.f);
+	  /* We need to pretend the window is hscrolled, so that
+	     move_it_in_display_line below will DTRT with TO_X.  */
+	  it.first_visible_x += w->hscroll * FRAME_COLUMN_WIDTH (it.f);
+	  it.last_visible_x += w->hscroll * FRAME_COLUMN_WIDTH (it.f);
+	}
+      bidi_unshelve_cache (it2data, 0);
+    }
+
   /* Now move horizontally in the row to the glyph under *X.  Second
      argument is ZV to prevent move_it_in_display_line from matching
      based on buffer positions.  */
@@ -5117,6 +5081,11 @@ buffer_posn_from_coords (struct window *w, int *x, int *y, struct display_pos *p
 #ifdef HAVE_WINDOW_SYSTEM
   if (it.what == IT_IMAGE)
     {
+      /* Note that this ignores images that are fringe bitmaps,
+	 because their image ID is zero, and so IMAGE_OPT_FROM_ID will
+	 return NULL.  This is okay, since fringe bitmaps are not
+	 displayed in the text area, and so are never the object we
+	 are interested in.  */
       img = IMAGE_OPT_FROM_ID (it.f, it.image_id);
       if (img && !NILP (img->spec))
 	*object = img->spec;
@@ -6022,50 +5991,17 @@ init_display (void)
 
 
 /***********************************************************************
-			   Blinking cursor
- ***********************************************************************/
-
-DEFUN ("internal-show-cursor", Finternal_show_cursor,
-       Sinternal_show_cursor, 2, 2, 0,
-       doc: /* Set the cursor-visibility flag of WINDOW to SHOW.
-WINDOW nil means use the selected window.  SHOW non-nil means
-show a cursor in WINDOW in the next redisplay.  SHOW nil means
-don't show a cursor.  */)
-  (Lisp_Object window, Lisp_Object show)
-{
-  /* Don't change cursor state while redisplaying.  This could confuse
-     output routines.  */
-  if (!redisplaying_p)
-    decode_any_window (window)->cursor_off_p = NILP (show);
-  return Qnil;
-}
-
-
-DEFUN ("internal-show-cursor-p", Finternal_show_cursor_p,
-       Sinternal_show_cursor_p, 0, 1, 0,
-       doc: /* Value is non-nil if next redisplay will display a cursor in WINDOW.
-WINDOW nil or omitted means report on the selected window.  */)
-  (Lisp_Object window)
-{
-  return decode_any_window (window)->cursor_off_p ? Qnil : Qt;
-}
-
-/***********************************************************************
 			    Initialization
  ***********************************************************************/
 
 void
 syms_of_display (void)
 {
-  defsubr (&Sredraw_frame);
-  defsubr (&Sredraw_display);
   defsubr (&Sframe_or_buffer_changed_p);
   defsubr (&Sopen_termscript);
   defsubr (&Sding);
   defsubr (&Sredisplay);
   defsubr (&Ssend_string_to_terminal);
-  defsubr (&Sinternal_show_cursor);
-  defsubr (&Sinternal_show_cursor_p);
 
 #ifdef GLYPH_DEBUG
   defsubr (&Sdump_redisplay_history);

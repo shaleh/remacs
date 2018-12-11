@@ -1,6 +1,6 @@
 /* Evaluator for GNU Emacs Lisp interpreter.
 
-Copyright (C) 1985-1987, 1993-1995, 1999-2017 Free Software Foundation,
+Copyright (C) 1985-1987, 1993-1995, 1999-2018 Free Software Foundation,
 Inc.
 
 This file is part of GNU Emacs.
@@ -373,7 +373,7 @@ The return value is BASE-VARIABLE.  */)
 
   sym = XSYMBOL (new_alias);
 
-  switch (sym->redirect)
+  switch (sym->u.s.redirect)
     {
     case SYMBOL_FORWARDED:
       error ("Cannot make an internal variable an alias");
@@ -386,7 +386,7 @@ The return value is BASE-VARIABLE.  */)
       emacs_abort ();
     }
 
-  /* https://lists.gnu.org/archive/html/emacs-devel/2008-04/msg00834.html
+  /* https://lists.gnu.org/r/emacs-devel/2008-04/msg00834.html
      If n_a is bound, but b_v is not, set the value of b_v to n_a,
      so that old-code that affects n_a before the aliasing is setup
      still works.  */
@@ -402,14 +402,14 @@ The return value is BASE-VARIABLE.  */)
 	error ("Don't know how to make a let-bound variable an alias");
   }
 
-  if (sym->trapped_write == SYMBOL_TRAPPED_WRITE)
+  if (sym->u.s.trapped_write == SYMBOL_TRAPPED_WRITE)
     notify_variable_watchers (new_alias, base_variable, Qdefvaralias, Qnil);
 
-  sym->declared_special = 1;
-  XSYMBOL (base_variable)->declared_special = 1;
-  sym->redirect = SYMBOL_VARALIAS;
+  sym->u.s.declared_special = true;
+  XSYMBOL (base_variable)->u.s.declared_special = true;
+  sym->u.s.redirect = SYMBOL_VARALIAS;
   SET_SYMBOL_ALIAS (sym, XSYMBOL (base_variable));
-  sym->trapped_write = XSYMBOL (base_variable)->trapped_write;
+  sym->u.s.trapped_write = XSYMBOL (base_variable)->u.s.trapped_write;
   LOADHIST_ATTACH (new_alias);
   /* Even if docstring is nil: remove old docstring.  */
   Fput (new_alias, Qvariable_documentation, docstring);
@@ -515,7 +515,7 @@ usage: (defvar SYMBOL &optional INITVALUE DOCSTRING)  */)
       tem = Fdefault_boundp (sym);
 
       /* Do it before evaluating the initial value, for self-references.  */
-      XSYMBOL (sym)->declared_special = 1;
+      XSYMBOL (sym)->u.s.declared_special = true;
 
       if (NILP (tem))
 	Fset_default (sym, eval_sub (XCAR (tail)));
@@ -539,7 +539,7 @@ usage: (defvar SYMBOL &optional INITVALUE DOCSTRING)  */)
       LOADHIST_ATTACH (sym);
     }
   else if (!NILP (Vinternal_interpreter_environment)
-	   && !XSYMBOL (sym)->declared_special)
+	   && !XSYMBOL (sym)->u.s.declared_special)
     /* A simple (defvar foo) with lexical scoping does "nothing" except
        declare that var to be dynamically scoped *locally* (i.e. within
        the current file or let-block).  */
@@ -553,22 +553,6 @@ usage: (defvar SYMBOL &optional INITVALUE DOCSTRING)  */)
     }
 
   return sym;
-}
-
-
-DEFUN ("catch", Fcatch, Scatch, 1, UNEVALLED, 0,
-       doc: /* Eval BODY allowing nonlocal exits using `throw'.
-TAG is evalled to get the tag to use; it must not be nil.
-
-Then the BODY is executed.
-Within BODY, a call to `throw' with the same TAG exits BODY and this `catch'.
-If no throw happens, `catch' returns the value of the last BODY form.
-If a throw happens, it specifies the value to return from `catch'.
-usage: (catch TAG BODY...)  */)
-  (Lisp_Object args)
-{
-  Lisp_Object tag = eval_sub (XCAR (args));
-  return internal_catch (tag, Fprogn, XCDR (args));
 }
 
 /* Assert that E is true, but do not evaluate E.  Use this instead of
@@ -670,23 +654,6 @@ Both TAG and VALUE are evalled.  */
 	  unwind_to_catch (c, value);
       }
   xsignal2 (Qno_catch, tag, value);
-}
-
-
-DEFUN ("unwind-protect", Funwind_protect, Sunwind_protect, 1, UNEVALLED, 0,
-       doc: /* Do BODYFORM, protecting with UNWINDFORMS.
-If BODYFORM completes normally, its value is returned
-after executing the UNWINDFORMS.
-If BODYFORM exits nonlocally, the UNWINDFORMS are executed anyway.
-usage: (unwind-protect BODYFORM UNWINDFORMS...)  */)
-  (Lisp_Object args)
-{
-  Lisp_Object val;
-  ptrdiff_t count = SPECPDL_INDEX ();
-
-  record_unwind_protect (prog_ignore, XCDR (args));
-  val = eval_sub (XCAR (args));
-  return unbind_to (count, val);
 }
 
 DEFUN ("condition-case", Fcondition_case, Scondition_case, 2, UNEVALLED, 0,
@@ -910,6 +877,57 @@ internal_condition_case_n (Lisp_Object (*bfun) (ptrdiff_t, Lisp_Object *),
       eassert (handlerlist == c);
       handlerlist = c->next;
       return val;
+    }
+}
+
+static Lisp_Object
+internal_catch_all_1 (Lisp_Object (*function) (void *), void *argument)
+{
+  struct handler *c = push_handler_nosignal (Qt, CATCHER_ALL);
+  if (c == NULL)
+    return Qcatch_all_memory_full;
+
+  if (sys_setjmp (c->jmp) == 0)
+    {
+      Lisp_Object val = function (argument);
+      eassert (handlerlist == c);
+      handlerlist = c->next;
+      return val;
+    }
+  else
+    {
+      eassert (handlerlist == c);
+      Lisp_Object val = c->val;
+      handlerlist = c->next;
+      Fsignal (Qno_catch, val);
+    }
+}
+
+/* Like a combination of internal_condition_case_1 and internal_catch.
+   Catches all signals and throws.  Never exits nonlocally; returns
+   Qcatch_all_memory_full if no handler could be allocated.  */
+
+Lisp_Object
+internal_catch_all (Lisp_Object (*function) (void *), void *argument,
+                    Lisp_Object (*handler) (Lisp_Object))
+{
+  struct handler *c = push_handler_nosignal (Qt, CONDITION_CASE);
+  if (c == NULL)
+    return Qcatch_all_memory_full;
+
+  if (sys_setjmp (c->jmp) == 0)
+    {
+      Lisp_Object val = internal_catch_all_1 (function, argument);
+      eassert (handlerlist == c);
+      handlerlist = c->next;
+      return val;
+    }
+  else
+    {
+      eassert (handlerlist == c);
+      Lisp_Object val = c->val;
+      handlerlist = c->next;
+      return handler (val);
     }
 }
 
@@ -1455,7 +1473,7 @@ eval_sub (Lisp_Object form)
   fun = original_fun;
   if (!SYMBOLP (fun))
     fun = Ffunction (Fcons (fun, Qnil));
-  else if (!NILP (fun) && (fun = XSYMBOL (fun)->function, SYMBOLP (fun)))
+  else if (!NILP (fun) && (fun = XSYMBOL (fun)->u.s.function, SYMBOLP (fun)))
     fun = indirect_function (fun);
 
   if (SUBRP (fun))
@@ -1638,7 +1656,7 @@ usage: (apply FUNCTION &rest ARGUMENTS)  */)
 
   /* Optimize for no indirection.  */
   if (SYMBOLP (fun) && !NILP (fun)
-      && (fun = XSYMBOL (fun)->function, SYMBOLP (fun)))
+      && (fun = XSYMBOL (fun)->u.s.function, SYMBOLP (fun)))
     {
       fun = indirect_function (fun);
       if (NILP (fun))
@@ -1681,75 +1699,6 @@ usage: (apply FUNCTION &rest ARGUMENTS)  */)
 }
 
 /* Run hook variables in various ways.  */
-
-/* NB this one still documents a specific non-nil return value.
-   (As did run-hook-with-args and run-hook-with-args-until-failure
-   until they were changed in 24.1.)  */
-DEFUN ("run-hook-with-args-until-success", Frun_hook_with_args_until_success,
-       Srun_hook_with_args_until_success, 1, MANY, 0,
-       doc: /* Run HOOK with the specified arguments ARGS.
-HOOK should be a symbol, a hook variable.  The value of HOOK
-may be nil, a function, or a list of functions.  Call each
-function in order with arguments ARGS, stopping at the first
-one that returns non-nil, and return that value.  Otherwise (if
-all functions return nil, or if there are no functions to call),
-return nil.
-
-Do not use `make-local-variable' to make a hook variable buffer-local.
-Instead, use `add-hook' and specify t for the LOCAL argument.
-usage: (run-hook-with-args-until-success HOOK &rest ARGS)  */)
-  (ptrdiff_t nargs, Lisp_Object *args)
-{
-  return run_hook_with_args (nargs, args, Ffuncall);
-}
-
-static Lisp_Object
-funcall_not (ptrdiff_t nargs, Lisp_Object *args)
-{
-  return NILP (Ffuncall (nargs, args)) ? Qt : Qnil;
-}
-
-DEFUN ("run-hook-with-args-until-failure", Frun_hook_with_args_until_failure,
-       Srun_hook_with_args_until_failure, 1, MANY, 0,
-       doc: /* Run HOOK with the specified arguments ARGS.
-HOOK should be a symbol, a hook variable.  The value of HOOK
-may be nil, a function, or a list of functions.  Call each
-function in order with arguments ARGS, stopping at the first
-one that returns nil, and return nil.  Otherwise (if all functions
-return non-nil, or if there are no functions to call), return non-nil
-\(do not rely on the precise return value in this case).
-
-Do not use `make-local-variable' to make a hook variable buffer-local.
-Instead, use `add-hook' and specify t for the LOCAL argument.
-usage: (run-hook-with-args-until-failure HOOK &rest ARGS)  */)
-  (ptrdiff_t nargs, Lisp_Object *args)
-{
-  return NILP (run_hook_with_args (nargs, args, funcall_not)) ? Qt : Qnil;
-}
-
-static Lisp_Object
-run_hook_wrapped_funcall (ptrdiff_t nargs, Lisp_Object *args)
-{
-  Lisp_Object tmp = args[0], ret;
-  args[0] = args[1];
-  args[1] = tmp;
-  ret = Ffuncall (nargs, args);
-  args[1] = args[0];
-  args[0] = tmp;
-  return ret;
-}
-
-DEFUN ("run-hook-wrapped", Frun_hook_wrapped, Srun_hook_wrapped, 2, MANY, 0,
-       doc: /* Run HOOK, passing each function through WRAP-FUNCTION.
-I.e. instead of calling each function FUN directly with arguments ARGS,
-it calls WRAP-FUNCTION with arguments FUN and ARGS.
-As soon as a call to WRAP-FUNCTION returns non-nil, `run-hook-wrapped'
-aborts and returns that value.
-usage: (run-hook-wrapped HOOK WRAP-FUNCTION &rest ARGS)  */)
-     (ptrdiff_t nargs, Lisp_Object *args)
-{
-  return run_hook_with_args (nargs, args, run_hook_wrapped_funcall);
-}
 
 /* ARGS[0] should be a hook symbol.
    Call each of the functions in the hook value, passing each of them
@@ -2187,7 +2136,7 @@ function with `&rest' args, or `unevalled' for a special form.  */)
   function = original;
   if (SYMBOLP (function) && !NILP (function))
     {
-      function = XSYMBOL (function)->function;
+      function = XSYMBOL (function)->u.s.function;
       if (SYMBOLP (function))
 	function = indirect_function (function);
     }
@@ -2326,7 +2275,7 @@ let_shadows_buffer_binding_p (struct Lisp_Symbol *symbol)
     if ((--p)->kind > SPECPDL_LET)
       {
 	struct Lisp_Symbol *let_bound_symbol = XSYMBOL (specpdl_symbol (p));
-	eassert (let_bound_symbol->redirect != SYMBOL_VARALIAS);
+	eassert (let_bound_symbol->u.s.redirect != SYMBOL_VARALIAS);
 	if (symbol == let_bound_symbol
 	    && EQ (specpdl_where (p), buf))
 	  return 1;
@@ -2339,10 +2288,10 @@ static void
 do_specbind (struct Lisp_Symbol *sym, union specbinding *bind,
              Lisp_Object value, enum Set_Internal_Bind bindflag)
 {
-  switch (sym->redirect)
+  switch (sym->u.s.redirect)
     {
     case SYMBOL_PLAINVAL:
-      if (!sym->trapped_write)
+      if (!sym->u.s.trapped_write)
 	SET_SYMBOL_VAL (sym, value);
       else
         set_internal (specpdl_symbol (bind), value, Qnil, bindflag);
@@ -2386,7 +2335,7 @@ specbind (Lisp_Object symbol, Lisp_Object value)
   sym = XSYMBOL (symbol);
 
  start:
-  switch (sym->redirect)
+  switch (sym->u.s.redirect)
     {
     case SYMBOL_VARALIAS:
       sym = indirect_variable (sym); XSETSYMBOL (symbol, sym); goto start;
@@ -2410,10 +2359,10 @@ specbind (Lisp_Object symbol, Lisp_Object value)
 	specpdl_ptr->let.where = Fcurrent_buffer ();
 	specpdl_ptr->let.saved_value = Qnil;
 
-	eassert (sym->redirect != SYMBOL_LOCALIZED
+	eassert (sym->u.s.redirect != SYMBOL_LOCALIZED
 		 || (EQ (SYMBOL_BLV (sym)->where, Fcurrent_buffer ())));
 
-	if (sym->redirect == SYMBOL_LOCALIZED)
+	if (sym->u.s.redirect == SYMBOL_LOCALIZED)
 	  {
 	    if (!blv_found (SYMBOL_BLV (sym)))
 	      specpdl_ptr->let.kind = SPECPDL_LET_DEFAULT;
@@ -2499,7 +2448,7 @@ rebind_for_thread_switch (void)
     }
 }
 
-static void
+void
 do_one_unbind (union specbinding *this_binding, bool unwinding,
                enum Set_Internal_Bind bindflag)
 {
@@ -2524,9 +2473,9 @@ do_one_unbind (union specbinding *this_binding, bool unwinding,
       { /* If variable has a trivial value (no forwarding), and isn't
 	   trapped, we can just set it.  */
 	Lisp_Object sym = specpdl_symbol (this_binding);
-	if (SYMBOLP (sym) && XSYMBOL (sym)->redirect == SYMBOL_PLAINVAL)
+	if (SYMBOLP (sym) && XSYMBOL (sym)->u.s.redirect == SYMBOL_PLAINVAL)
 	  {
-	    if (XSYMBOL (sym)->trapped_write == SYMBOL_UNTRAPPED_WRITE)
+	    if (XSYMBOL (sym)->u.s.trapped_write == SYMBOL_UNTRAPPED_WRITE)
 	      SET_SYMBOL_VAL (XSYMBOL (sym), specpdl_old_value (this_binding));
 	    else
 	      set_internal (sym, specpdl_old_value (this_binding),
@@ -2603,36 +2552,6 @@ set_unwind_protect_ptr (ptrdiff_t count, void (*func) (void *), void *arg)
   p->unwind_ptr.kind = SPECPDL_UNWIND_PTR;
   p->unwind_ptr.func = func;
   p->unwind_ptr.arg = arg;
-}
-
-/* Pop and execute entries from the unwind-protect stack until the
-   depth COUNT is reached.  Return VALUE.  */
-
-Lisp_Object
-unbind_to (ptrdiff_t count, Lisp_Object value)
-{
-  Lisp_Object quitf = Vquit_flag;
-
-  Vquit_flag = Qnil;
-
-  while (specpdl_ptr != specpdl + count)
-    {
-      /* Copy the binding, and decrement specpdl_ptr, before we do
-	 the work to unbind it.  We decrement first
-	 so that an error in unbinding won't try to unbind
-	 the same entry again, and we copy the binding first
-	 in case more bindings are made during some of the code we run.  */
-
-      union specbinding this_binding;
-      this_binding = *--specpdl_ptr;
-
-      do_one_unbind (&this_binding, true, SET_INTERNAL_UNBIND);
-    }
-
-  if (NILP (Vquit_flag) && !NILP (quitf))
-    Vquit_flag = quitf;
-
-  return value;
 }
 
 void
@@ -2804,7 +2723,8 @@ backtrace_eval_unrewind (int distance)
 	       just set it.  No need to check for constant symbols here,
 	       since that was already done by specbind.  */
 	    Lisp_Object sym = specpdl_symbol (tmp);
-	    if (SYMBOLP (sym) && XSYMBOL (sym)->redirect == SYMBOL_PLAINVAL)
+	    if (SYMBOLP (sym)
+		&& XSYMBOL (sym)->u.s.redirect == SYMBOL_PLAINVAL)
 	      {
 		Lisp_Object old_value = specpdl_old_value (tmp);
 		set_specpdl_old_value (tmp, SYMBOL_VAL (XSYMBOL (sym)));
@@ -3164,21 +3084,19 @@ alist of active lexical bindings.  */);
 
   inhibit_lisp_code = Qnil;
 
+  DEFSYM (Qcatch_all_memory_full, "catch-all-memory-full");
+  Funintern (Qcatch_all_memory_full, Qnil);
+
   defsubr (&Sdefault_toplevel_value);
   defsubr (&Sset_default_toplevel_value);
   defsubr (&Sdefvar);
   defsubr (&Sdefvaralias);
   DEFSYM (Qdefvaralias, "defvaralias");
-  defsubr (&Scatch);
   defsubr (&Sthrow);
-  defsubr (&Sunwind_protect);
   defsubr (&Scondition_case);
   defsubr (&Ssignal);
   defsubr (&Sapply);
   defsubr (&Sfunc_arity);
-  defsubr (&Srun_hook_with_args_until_success);
-  defsubr (&Srun_hook_with_args_until_failure);
-  defsubr (&Srun_hook_wrapped);
   defsubr (&Sfetch_bytecode);
   defsubr (&Sbacktrace_debug);
   DEFSYM (QCdebug_on_exit, ":debug-on-exit");

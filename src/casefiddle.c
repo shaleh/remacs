@@ -1,7 +1,7 @@
 /* -*- coding: utf-8 -*- */
 /* GNU Emacs case conversion functions.
 
-Copyright (C) 1985, 1994, 1997-1999, 2001-2017 Free Software Foundation,
+Copyright (C) 1985, 1994, 1997-1999, 2001-2018 Free Software Foundation,
 Inc.
 
 This file is part of GNU Emacs.
@@ -131,9 +131,9 @@ case_character_impl (struct casing_str_buf *buf,
           struct Lisp_String *str = XSTRING (prop);
           if (STRING_BYTES (str) <= sizeof buf->data)
 	    {
-	      buf->len_chars = str->size;
+	      buf->len_chars = str->u.s.size;
 	      buf->len_bytes = STRING_BYTES (str);
-	      memcpy (buf->data, str->data, buf->len_bytes);
+	      memcpy (buf->data, str->u.s.data, buf->len_bytes);
 	      return 1;
 	    }
         }
@@ -465,14 +465,4 @@ casify_region (enum case_action flag, Lisp_Object b, Lisp_Object e)
     }
 
   return orig_end + added;
-}
-
-/* casify_region returns a pointer, which complicates interaction
-   with Rust. This wraps that and returns nil. It can be deleted once
-   casify_region is ported. */
-Lisp_Object
-casify_region_nil (enum case_action flag, Lisp_Object b, Lisp_Object e)
-{
-  casify_region(flag, b, e);
-  return Qnil;
 }

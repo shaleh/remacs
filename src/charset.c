@@ -1,6 +1,6 @@
 /* Basic character set support.
 
-Copyright (C) 2001-2017 Free Software Foundation, Inc.
+Copyright (C) 2001-2018 Free Software Foundation, Inc.
 
 Copyright (C) 1995, 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004,
   2005, 2006, 2007, 2008, 2009, 2010, 2011
@@ -644,15 +644,6 @@ load_charset (struct charset *charset, int control_flag)
   else
     load_charset_map_from_vector (charset, map, control_flag);
 }
-
-
-DEFUN ("charsetp", Fcharsetp, Scharsetp, 1, 1, 0,
-       doc: /* Return non-nil if and only if OBJECT is a charset.*/)
-  (Lisp_Object object)
-{
-  return (CHARSETP (object) ? Qt : Qnil);
-}
-
 
 static void
 map_charset_for_dump (void (*c_function) (Lisp_Object, Lisp_Object),
@@ -2364,7 +2355,6 @@ syms_of_charset (void)
   charset_table_size = ARRAYELTS (charset_table_init);
   charset_table_used = 0;
 
-  defsubr (&Scharsetp);
   defsubr (&Smap_charset_chars);
   defsubr (&Sdefine_charset_internal);
   defsubr (&Sdefine_charset_alias);

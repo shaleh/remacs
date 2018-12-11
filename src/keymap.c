@@ -1,5 +1,5 @@
 /* Manipulation of keymaps
-   Copyright (C) 1985-1988, 1993-1995, 1998-2017 Free Software
+   Copyright (C) 1985-1988, 1993-1995, 1998-2018 Free Software
    Foundation, Inc.
 
 This file is part of GNU Emacs.
@@ -88,11 +88,11 @@ static void describe_translation (Lisp_Object, Lisp_Object);
 static void describe_map (Lisp_Object, Lisp_Object,
                           void (*) (Lisp_Object, Lisp_Object),
 			  bool, Lisp_Object, Lisp_Object *, bool, bool);
-static void describe_vector (Lisp_Object, Lisp_Object, Lisp_Object,
-                             void (*) (Lisp_Object, Lisp_Object), bool,
-                             Lisp_Object, Lisp_Object, bool, bool);
 static void silly_event_symbol_error (Lisp_Object);
 static Lisp_Object get_keyelt (Lisp_Object, bool);
+
+void map_keymap_item (map_keymap_function_t, Lisp_Object, Lisp_Object, Lisp_Object, void *);
+void map_keymap_char_table_item (Lisp_Object, Lisp_Object, Lisp_Object);
 
 static void
 CHECK_VECTOR_OR_CHAR_TABLE (Lisp_Object x)
@@ -584,7 +584,7 @@ store_in_keymap (Lisp_Object keymap, register Lisp_Object idx, Lisp_Object def)
   return def;
 }
 
-static Lisp_Object
+Lisp_Object
 copy_keymap_item (Lisp_Object elt)
 {
   Lisp_Object res, tem;
@@ -642,67 +642,6 @@ copy_keymap_item (Lisp_Object elt)
 	res = Fcopy_keymap (elt);
     }
   return res;
-}
-
-static void
-copy_keymap_1 (Lisp_Object chartable, Lisp_Object idx, Lisp_Object elt)
-{
-  Fset_char_table_range (chartable, idx, copy_keymap_item (elt));
-}
-
-DEFUN ("copy-keymap", Fcopy_keymap, Scopy_keymap, 1, 1, 0,
-       doc: /* Return a copy of the keymap KEYMAP.
-
-Note that this is almost never needed.  If you want a keymap that's like
-another yet with a few changes, you should use map inheritance rather
-than copying.  I.e. something like:
-
-    (let ((map (make-sparse-keymap)))
-      (set-keymap-parent map <theirmap>)
-      (define-key map ...)
-      ...)
-
-After performing `copy-keymap', the copy starts out with the same definitions
-of KEYMAP, but changing either the copy or KEYMAP does not affect the other.
-Any key definitions that are subkeymaps are recursively copied.
-However, a key definition which is a symbol whose definition is a keymap
-is not copied.  */)
-  (Lisp_Object keymap)
-{
-  Lisp_Object copy, tail;
-  keymap = get_keymap (keymap, 1, 0);
-  copy = tail = list1 (Qkeymap);
-  keymap = XCDR (keymap);		/* Skip the `keymap' symbol.  */
-
-  while (CONSP (keymap) && !EQ (XCAR (keymap), Qkeymap))
-    {
-      Lisp_Object elt = XCAR (keymap);
-      if (CHAR_TABLE_P (elt))
-	{
-	  elt = Fcopy_sequence (elt);
-	  map_char_table (copy_keymap_1, Qnil, elt, elt);
-	}
-      else if (VECTORP (elt))
-	{
-	  int i;
-	  elt = Fcopy_sequence (elt);
-	  for (i = 0; i < ASIZE (elt); i++)
-	    ASET (elt, i, copy_keymap_item (AREF (elt, i)));
-	}
-      else if (CONSP (elt))
-	{
-	  if (EQ (XCAR (elt), Qkeymap))
-	    /* This is a sub keymap.  */
-	    elt = Fcopy_keymap (elt);
-	  else
-	    elt = Fcons (XCAR (elt), copy_keymap_item (XCDR (elt)));
-	}
-      XSETCDR (tail, list1 (elt));
-      tail = XCDR (tail);
-      keymap = XCDR (keymap);
-    }
-  XSETCDR (tail, keymap);
-  return copy;
 }
 
 /* Simple Keymap mutators and accessors.				*/
@@ -2838,31 +2777,6 @@ describe_map (Lisp_Object map, Lisp_Object prefix,
   SAFE_FREE ();
 }
 
-static void
-describe_vector_princ (Lisp_Object elt, Lisp_Object fun)
-{
-  Findent_to (make_number (16), make_number (1));
-  call1 (fun, elt);
-  Fterpri (Qnil, Qnil);
-}
-
-DEFUN ("describe-vector", Fdescribe_vector, Sdescribe_vector, 1, 2, 0,
-       doc: /* Insert a description of contents of VECTOR.
-This is text showing the elements of vector matched against indices.
-DESCRIBER is the output function used; nil means use `princ'.  */)
-  (Lisp_Object vector, Lisp_Object describer)
-{
-  ptrdiff_t count = SPECPDL_INDEX ();
-  if (NILP (describer))
-    describer = intern ("princ");
-  specbind (Qstandard_output, Fcurrent_buffer ());
-  CHECK_VECTOR_OR_CHAR_TABLE (vector);
-  describe_vector (vector, Qnil, describer, describe_vector_princ, 0,
-		   Qnil, Qnil, 0, 0);
-
-  return unbind_to (count, Qnil);
-}
-
 /* Insert in the current buffer a description of the contents of VECTOR.
    We call ELT_DESCRIBER to insert the description of one value found
    in VECTOR.
@@ -2895,7 +2809,7 @@ DESCRIBER is the output function used; nil means use `princ'.  */)
 
    ARGS is simply passed as the second argument to ELT_DESCRIBER.  */
 
-static void
+void
 describe_vector (Lisp_Object vector, Lisp_Object prefix, Lisp_Object args,
 		 void (*elt_describer) (Lisp_Object, Lisp_Object),
 		 bool partial, Lisp_Object shadow, Lisp_Object entire_map,
@@ -3235,7 +3149,6 @@ be preferred.  */);
   command_remapping_vector = Fmake_vector (make_number (2), Qremap);
   staticpro (&command_remapping_vector);
 
-  defsubr (&Scopy_keymap);
   defsubr (&Scommand_remapping);
   defsubr (&Skey_binding);
   defsubr (&Sminor_mode_key_binding);
@@ -3244,7 +3157,6 @@ be preferred.  */);
   defsubr (&Scurrent_active_maps);
   defsubr (&Saccessible_keymaps);
   defsubr (&Skey_description);
-  defsubr (&Sdescribe_vector);
   defsubr (&Ssingle_key_description);
   defsubr (&Stext_char_description);
   defsubr (&Swhere_is_internal);

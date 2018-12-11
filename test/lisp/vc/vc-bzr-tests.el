@@ -1,6 +1,6 @@
 ;;; vc-bzr.el --- tests for vc/vc-bzr.el
 
-;; Copyright (C) 2011-2017 Free Software Foundation, Inc.
+;; Copyright (C) 2011-2018 Free Software Foundation, Inc.
 
 ;; Author: Glenn Morris <rgm@gnu.org>
 ;; Maintainer: emacs-devel@gnu.org
@@ -56,7 +56,8 @@
             (insert (file-name-nondirectory ignored-dir))
             (write-region nil nil (expand-file-name ".bzrignore" bzrdir)
                           nil 'silent))
-          (call-process vc-bzr-program nil nil nil "init")
+          (skip-unless (eq 0            ; some internal bzr error
+                           (call-process vc-bzr-program nil nil nil "init")))
           (call-process vc-bzr-program nil nil nil "add")
           (call-process vc-bzr-program nil nil nil "commit" "-m" "Commit 1")
           (with-temp-buffer
@@ -90,7 +91,8 @@
                                     process-environment)))
     (unwind-protect
         (progn
-          (call-process vc-bzr-program nil nil nil "init")
+          (skip-unless (eq 0            ; some internal bzr error
+                           (call-process vc-bzr-program nil nil nil "init")))
           (make-directory subdir)
           (with-temp-buffer
             (insert "text")
@@ -112,7 +114,7 @@
           (should (get-buffer "*vc-log*")))
       (delete-directory homedir t))))
 
-;; https://lists.gnu.org/archive/html/help-gnu-emacs/2012-04/msg00145.html
+;; https://lists.gnu.org/r/help-gnu-emacs/2012-04/msg00145.html
 (ert-deftest vc-bzr-test-faulty-bzr-autoloads ()
   "Test we can generate autoloads in a bzr directory when bzr is faulty."
   ;; Skipping on remacs until we figure out what's wrong.

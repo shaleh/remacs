@@ -3,14 +3,19 @@ use std::cmp::min;
 use std::io::prelude::Read;
 use std::slice;
 
-use buffers::validate_region;
 use flate2::read::{DeflateDecoder, GzDecoder, ZlibDecoder};
-use lisp::defsubr;
-use lisp::LispObject;
 use remacs_macros::lisp_fn;
-use remacs_sys::{buf_charpos_to_bytepos, del_range, insert_from_gap, make_gap, maybe_quit,
-                 move_gap_both};
-use threads::ThreadState;
+
+use crate::{
+    buffers::validate_region,
+    lisp::defsubr,
+    lisp::LispObject,
+    remacs_sys::{
+        buf_charpos_to_bytepos, del_range_2, insert_from_gap, make_gap, maybe_quit, modify_text,
+        move_gap_both, signal_after_change, update_compositions, CHECK_HEAD,
+    },
+    threads::ThreadState,
+};
 
 /// Return t if zlib decompression is available in this instance of Emacs.
 #[lisp_fn]
@@ -53,7 +58,12 @@ pub fn zlib_decompress_region(mut start: LispObject, mut end: LispObject) -> boo
         return false;
     }
 
-    unsafe { move_gap_both(iend, iend) };
+    unsafe {
+        // Do the following before manipulating the gap.
+        modify_text(istart, iend);
+
+        move_gap_both(iend, iend);
+    }
 
     // Insert the decompressed data at the end of the compressed data.
     let charpos = iend;
@@ -92,7 +102,15 @@ pub fn zlib_decompress_region(mut start: LispObject, mut end: LispObject) -> boo
             // Decompress all data finished.
             Ok(0) => {
                 // Delete the compressed data.
-                unsafe { del_range(istart, iend) };
+                unsafe {
+                    del_range_2(
+                        istart, istart, // byte, char offsets the same
+                        iend, iend, false,
+                    );
+                    signal_after_change(istart, iend - istart, decompressed_bytes);
+
+                    update_compositions(istart, istart, CHECK_HEAD as i32);
+                };
                 return true;
             }
 
@@ -109,8 +127,23 @@ pub fn zlib_decompress_region(mut start: LispObject, mut end: LispObject) -> boo
 
             // Decompress failed.
             _ => {
-                // Delete any uncompressed data already inserted on error.
-                unsafe { del_range(iend, iend + decompressed_bytes) };
+                // Delete any uncompressed data already inserted on error, but
+                // without calling the change hooks.
+
+                let data_orig = istart;
+                let data_start = iend;
+                let data_end = iend + decompressed_bytes;
+
+                unsafe {
+                    del_range_2(
+                        data_start, data_start, // byte, char offsets the same
+                        data_end, data_end, false,
+                    );
+                    update_compositions(data_start, data_start, CHECK_HEAD as i32);
+                    // "Balance" the before-change-functions call, which would
+                    // otherwise be left "hanging".
+                    signal_after_change(data_orig, data_start - data_orig, data_start - data_orig);
+                };
 
                 // Put point where it was, or if the buffer has shrunk because the
                 // compressed data is bigger than the uncompressed, at

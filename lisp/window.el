@@ -1,6 +1,6 @@
 ;;; window.el --- GNU Emacs window commands aside from those written in C  -*- lexical-binding:t -*-
 
-;; Copyright (C) 1985, 1989, 1992-1994, 2000-2017 Free Software
+;; Copyright (C) 1985, 1989, 1992-1994, 2000-2018 Free Software
 ;; Foundation, Inc.
 
 ;; Maintainer: emacs-devel@gnu.org
@@ -1008,8 +1008,9 @@ do not permit making a new window, a suitable existing window may
 be reused and have its `window-slot' parameter value accordingly
 modified.
 
-Unless `display-buffer-mark-dedicated' is non-nil, softly
-dedicate the side window used to BUFFER.  Return the window used
+Unless `display-buffer-mark-dedicated' is non-nil, dedicate the
+side window used to BUFFER so that it does not get reused by
+other `display-buffer' action functions.  Return the window used
 for displaying BUFFER, nil if no suitable window can be found.
 
 This function installs the `window-side' and `window-slot'
@@ -2583,7 +2584,7 @@ and no others."
 
 (defun minibuffer-window-active-p (window)
   "Return t if WINDOW is the currently active minibuffer window."
-  (eq window (active-minibuffer-window)))
+  (and (window-live-p window) (eq window (active-minibuffer-window))))
 
 (defun count-windows (&optional minibuf)
    "Return the number of live windows on the selected frame.
@@ -6465,8 +6466,9 @@ If this is an integer, `split-window-sensibly' may split a window
 vertically only if it has at least this many lines.  If this is
 nil, `split-window-sensibly' is not allowed to split a window
 vertically.  If, however, a window is the only window on its
-frame, `split-window-sensibly' may split it vertically
-disregarding the value of this variable."
+frame, or all the other ones are dedicated,
+`split-window-sensibly' may split it vertically disregarding the
+value of this variable."
   :type '(choice (const nil) (integer :tag "lines"))
   :version "23.1"
   :group 'windows)
@@ -6573,15 +6575,27 @@ split."
 	     ;; Split window horizontally.
 	     (with-selected-window window
 	       (split-window-right)))
-	(and (eq window (frame-root-window (window-frame window)))
-	     (not (window-minibuffer-p window))
-	     ;; If WINDOW is the only window on its frame and is not the
-	     ;; minibuffer window, try to split it vertically disregarding
-	     ;; the value of `split-height-threshold'.
-	     (let ((split-height-threshold 0))
-	       (when (window-splittable-p window)
-		 (with-selected-window window
-		   (split-window-below))))))))
+	(and
+         ;; If WINDOW is the only usable window on its frame (it is
+         ;; the only one or, not being the only one, all the other
+         ;; ones are dedicated) and is not the minibuffer window, try
+         ;; to split it vertically disregarding the value of
+         ;; `split-height-threshold'.
+         (let ((frame (window-frame window)))
+           (or
+            (eq window (frame-root-window frame))
+            (catch 'done
+              (walk-window-tree (lambda (w)
+                                  (unless (or (eq w window)
+                                              (window-dedicated-p w))
+                                    (throw 'done nil)))
+                                frame)
+              t)))
+	 (not (window-minibuffer-p window))
+	 (let ((split-height-threshold 0))
+	   (when (window-splittable-p window)
+	     (with-selected-window window
+	       (split-window-below))))))))
 
 (defun window--try-to-split-window (window &optional alist)
   "Try to split WINDOW.
@@ -7275,12 +7289,23 @@ text-only terminal), try with `display-buffer-pop-up-frame'.
 
 If that cannot be done, and `pop-up-windows' is non-nil, try
 again with `display-buffer-pop-up-window'."
-  (or (and (if (eq pop-up-frames 'graphic-only)
-	       (display-graphic-p)
-	     pop-up-frames)
-	   (display-buffer-pop-up-frame buffer alist))
-      (and pop-up-windows
-	   (display-buffer-pop-up-window buffer alist))))
+  (or (display-buffer--maybe-pop-up-frame buffer alist)
+      (display-buffer--maybe-pop-up-window buffer alist)))
+
+(defun display-buffer--maybe-pop-up-frame (buffer alist)
+  "Try displaying BUFFER based on `pop-up-frames'.
+If `pop-up-frames' is non-nil (and not `graphic-only' on a
+text-only terminal), try with `display-buffer-pop-up-frame'."
+  (and (if (eq pop-up-frames 'graphic-only)
+	   (display-graphic-p)
+	 pop-up-frames)
+       (display-buffer-pop-up-frame buffer alist)))
+
+(defun display-buffer--maybe-pop-up-window (buffer alist)
+  "Try displaying BUFFER based on `pop-up-windows'.
+If `pop-up-windows' is non-nil, try with `display-buffer-pop-up-window'."
+  (and pop-up-windows
+       (display-buffer-pop-up-window buffer alist)))
 
 (defun display-buffer-in-child-frame (buffer alist)
   "Display BUFFER in a child frame.
@@ -7346,6 +7371,17 @@ below the selected one, use that window."
 	     (window--display-buffer
 	      buffer window 'reuse alist display-buffer-mark-dedicated)))))
 
+(defun display-buffer--maybe-at-bottom (buffer alist)
+  (let ((alist (append alist `(,(if temp-buffer-resize-mode
+		                    '(window-height . resize-temp-buffer-window)
+	                          '(window-height . fit-window-to-buffer))
+	                       ,(when temp-buffer-resize-mode
+	                          '(preserve-size . (nil . t)))))))
+    (or (display-buffer--maybe-same-window buffer alist)
+        (display-buffer-reuse-window buffer alist)
+        (display-buffer--maybe-pop-up-frame buffer alist)
+        (display-buffer-at-bottom buffer alist))))
+
 (defun display-buffer-at-bottom (buffer alist)
   "Try displaying BUFFER in a window at the bottom of the selected frame.
 This either reuses such a window provided it shows BUFFER
@@ -7362,8 +7398,8 @@ selected frame."
 	 (setq bottom-window-shows-buffer t)
 	 (setq bottom-window window))
 	((not bottom-window)
-	 (setq bottom-window window)))
-       nil nil 'nomini))
+	 (setq bottom-window window))))
+     nil nil 'nomini)
     (or (and bottom-window-shows-buffer
 	     (window--display-buffer
 	      buffer bottom-window 'reuse alist display-buffer-mark-dedicated))
@@ -7642,10 +7678,11 @@ another window.  In interactive use, if the selected window is
 strongly dedicated to its buffer, the value of the option
 `switch-to-buffer-in-dedicated-window' specifies how to proceed.
 
-If called interactively, read the buffer name using the
-minibuffer.  The variable `confirm-nonexistent-file-or-buffer'
-determines whether to request confirmation before creating a new
-buffer.
+If called interactively, read the buffer name using `read-buffer'.
+The variable `confirm-nonexistent-file-or-buffer' determines
+whether to request confirmation before creating a new buffer.
+See `read-buffer' for features related to input and completion
+of buffer names.
 
 BUFFER-OR-NAME may be a buffer, a string (a buffer name), or nil.
 If BUFFER-OR-NAME is a string that does not identify an existing
@@ -7722,10 +7759,11 @@ Return the buffer switched to."
 BUFFER-OR-NAME may be a buffer, a string (a buffer name), or
 nil.  Return the buffer switched to.
 
-If called interactively, prompt for the buffer name using the
-minibuffer.  The variable `confirm-nonexistent-file-or-buffer'
-determines whether to request confirmation before creating a new
-buffer.
+If called interactively, read the buffer name using `read-buffer'.
+The variable `confirm-nonexistent-file-or-buffer' determines
+whether to request confirmation before creating a new buffer.
+See `read-buffer' for features related to input and completion
+of buffer names.
 
 If BUFFER-OR-NAME is a string and does not identify an existing
 buffer, create a new buffer with that name.  If BUFFER-OR-NAME is
@@ -7746,10 +7784,11 @@ documentation for additional customization information."
 BUFFER-OR-NAME may be a buffer, a string (a buffer name), or
 nil.  Return the buffer switched to.
 
-If called interactively, prompt for the buffer name using the
-minibuffer.  The variable `confirm-nonexistent-file-or-buffer'
-determines whether to request confirmation before creating a new
-buffer.
+If called interactively, read the buffer name using `read-buffer'.
+The variable `confirm-nonexistent-file-or-buffer' determines
+whether to request confirmation before creating a new buffer.
+See `read-buffer' for features related to input and completion
+of buffer names.
 
 If BUFFER-OR-NAME is a string and does not identify an existing
 buffer, create a new buffer with that name.  If BUFFER-OR-NAME is
@@ -8021,7 +8060,7 @@ parameters of FRAME."
                              (- (nth 3 outer-edges) (nth 1 outer-edges))
                            ;; Another poor guess.
                            (frame-pixel-height frame)))
-           ;; The text size of of FRAME.  Needed to specify FRAME's
+           ;; The text size of FRAME.  Needed to specify FRAME's
            ;; text size after the root window's body's new sizes have
            ;; been calculated.
            (text-width (frame-text-width frame))
@@ -8435,7 +8474,7 @@ of WINDOW.
 Optional argument LEFT, if non-nil, means to return values suitable for
 buffers displaying right to left text."
   ;; Process lines as returned by ‘window-lines-pixel-dimensions’.
-  ;; STACK is a stack that contains rows that have to be processed yet.
+  ;; STACK is a stack that contains rows that have yet to be processed.
   (let* ((window (window-normalize-window window t))
 	 (disjoint (and (consp count) (cdr count)))
 	 (count (or (and (numberp count) count)
@@ -8678,7 +8717,7 @@ result is a list containing only the selected window."
 (make-variable-buffer-local 'move-to-window-group-line-function)
 (put 'move-to-window-group-line-function 'permanent-local t)
 (defun move-to-window-group-line (arg)
-  "Position point relative to the the current group of windows.
+  "Position point relative to the current group of windows.
 When a grouping mode (such as Follow Mode) is not active, this
 function is identical to `move-to-window-line'.
 

@@ -245,7 +245,9 @@
                             (lambda () (+ 3 3))))
   (run-hooks 'function-hook 'list-of-functions)
   (makunbound 'function-hook)
-  (makunbound 'list-of-functions))
+  (makunbound 'list-of-functions)
+
+  (should-error (run-hook-with-args)))
 
 (ert-deftest eval-tests--funcall()
   (let ((f (lambda () 1)))
@@ -269,6 +271,21 @@
   ;; Checks that Bug#24673 has been fixed.
   (should-error (funcall '(closure)) :type 'invalid-function)
 
-  (should-error (funcall (lambda)) :type 'invalid-function))
+  (should-error (funcall (lambda)) :type 'invalid-function)
+
+  (should-error (funcall)))
+
+(ert-deftest eval-tests--catch-base()
+  "Check (catch) base cases"
+
+  (should (eq (catch 'found) nil))
+  (should (eq (catch 'found (throw 'found t)) t))
+  (should (eq (catch 'found t) t))
+  (should (eq (catch 'found (dolist (n '(1 2 3)) (throw 'found n))) 1))
+  (should (eq (catch 'found (dolist (n '(1 (error "Should not be evaluated"))) (throw 'found n))) 1)))
+
+;; Local Variables:
+;; byte-compile-warnings: (not lexical free-vars unresolved)
+;; End:
 
 ;;; eval-tests.el ends here

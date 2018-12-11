@@ -6,21 +6,32 @@ use std::ptr;
 use libc::c_void;
 
 use remacs_macros::lisp_fn;
-use remacs_sys::{access_keymap, make_save_funcptr_ptr_obj, map_char_table, map_keymap_call,
-                 map_keymap_char_table_item, map_keymap_function_t, map_keymap_item, maybe_quit};
-use remacs_sys::{char_bits, current_global_map as _current_global_map, globals, EmacsInt};
-use remacs_sys::{Fcons, Fevent_convert_list, Ffset, Fmake_char_table, Fpurecopy, Fset};
-use remacs_sys::{Qautoload, Qkeymap, Qkeymapp, Qnil, Qt};
 
-use data::{aref, indirect_function};
-use eval::autoload_do_load;
-use keyboard::lucid_event_type_list_p;
-use lisp::{defsubr, LispObject};
-use lists::nth;
-use obarray::intern;
-use threads::ThreadState;
+use crate::{
+    buffers::current_buffer,
+    data::{aref, fset, indirect_function, set},
+    eval::{autoload_do_load, unbind_to},
+    keyboard::lucid_event_type_list_p,
+    lisp::{defsubr, LispObject},
+    lists::{nth, setcdr},
+    obarray::intern,
+    remacs_sys::{
+        access_keymap, copy_keymap_item, describe_vector, make_save_funcptr_ptr_obj,
+        map_char_table, map_keymap_call, map_keymap_char_table_item, map_keymap_function_t,
+        map_keymap_item, maybe_quit, specbind,
+    },
+    remacs_sys::{char_bits, current_global_map as _current_global_map, globals, EmacsInt},
+    remacs_sys::{
+        Fcopy_sequence, Fevent_convert_list, Findent_to, Fmake_char_table, Fpurecopy,
+        Fset_char_table_range, Fterpri,
+    },
+    remacs_sys::{
+        Qautoload, Qkeymap, Qkeymapp, Qnil, Qstandard_output, Qt, Qvector_or_char_table_p,
+    },
+    symbols::LispSymbolRef,
+    threads::{c_specpdl_index, ThreadState},
+};
 
-#[inline]
 pub fn Ctl(c: char) -> i32 {
     (c as i32) & 0x1f
 }
@@ -95,25 +106,23 @@ pub extern "C" fn get_keymap(
         }
 
         if let Some(cons) = object.as_cons() {
-            if cons.car().eq_raw(Qkeymap) {
+            if cons.car().eq(Qkeymap) {
                 return object;
             }
         }
 
         let tem = indirect_function(object);
         if let Some(cons) = tem.as_cons() {
-            if cons.car().eq_raw(Qkeymap) {
+            if cons.car().eq(Qkeymap) {
                 return tem;
             }
 
             // Should we do an autoload?  Autoload forms for keymaps have
             // Qkeymap as their fifth element.
-            if (autoload || !error_if_not_keymap)
-                && cons.car().eq_raw(Qautoload)
-                && object.is_symbol()
+            if (autoload || !error_if_not_keymap) && cons.car().eq(Qautoload) && object.is_symbol()
             {
                 let tail = nth(4, tem);
-                if tail.eq_raw(Qkeymap) {
+                if tail.eq(Qkeymap) {
                     if autoload {
                         autoload_do_load(tem, object, Qnil);
                         autoload_retry = true;
@@ -142,14 +151,14 @@ pub extern "C" fn get_keymap(
 /// in case you use it as a menu with `x-popup-menu'.
 #[lisp_fn(min = "0")]
 pub fn make_keymap(string: LispObject) -> LispObject {
-    let tail: LispObject = if !string.is_nil() {
+    let tail: LispObject = if string.is_not_nil() {
         list!(string)
     } else {
         Qnil
     };
 
     let char_table = unsafe { Fmake_char_table(Qkeymap, Qnil) };
-    unsafe { Fcons(Qkeymap, Fcons(char_table, tail)) }
+    LispObject::cons(Qkeymap, LispObject::cons(char_table, tail))
 }
 
 /// Return t if OBJECT is a keymap.
@@ -195,7 +204,7 @@ pub extern "C" fn keymap_memberp(map: LispObject, maps: LispObject) -> bool {
     if map.is_nil() {
         return false;
     }
-    while keymapp(maps) && map.ne(maps) {
+    while keymapp(maps) && !map.eq(maps) {
         maps = keymap_parent(maps, false);
     }
     map.eq(maps)
@@ -233,11 +242,13 @@ pub fn set_keymap_parent(keymap: LispObject, parent: LispObject) -> LispObject {
         // If we came to the end, add the parent in PREV.
         match list.as_cons() {
             None => break,
-            Some(cons) => if keymapp(list) {
-                break;
-            } else {
-                prev = cons;
-            },
+            Some(cons) => {
+                if keymapp(list) {
+                    break;
+                } else {
+                    prev = cons;
+                }
+            }
         }
     }
     prev.check_impure();
@@ -304,7 +315,11 @@ pub unsafe extern "C" fn map_keymap(
 #[lisp_fn(name = "map-keymap", min = "2")]
 pub fn map_keymap_lisp(function: LispObject, keymap: LispObject, sort_first: bool) -> LispObject {
     if sort_first {
-        return call!(intern("map-keymap-sorted"), function, keymap);
+        return call!(
+            LispObject::from(intern("map-keymap-sorted")),
+            function,
+            keymap
+        );
     }
     unsafe {
         map_keymap(
@@ -332,7 +347,7 @@ pub unsafe extern "C" fn map_keymap_internal(
         None => Qnil,
         Some(cons) => {
             let (car, cdr) = cons.as_tuple();
-            if car.eq_raw(Qkeymap) {
+            if car.eq(Qkeymap) {
                 cdr
             } else {
                 map
@@ -343,7 +358,7 @@ pub unsafe extern "C" fn map_keymap_internal(
     let mut parent = tail;
     for tail_cons in tail.iter_tails_safe() {
         let binding = tail_cons.car();
-        if binding.eq_raw(Qkeymap) {
+        if binding.eq(Qkeymap) {
             break;
         } else {
             // An embedded parent.
@@ -411,7 +426,7 @@ pub fn current_local_map() -> LispObject {
 /// Select KEYMAP as the local keymap.
 /// If KEYMAP is nil, that means no local keymap.
 #[lisp_fn]
-pub fn use_local_map(mut keymap: LispObject) -> () {
+pub fn use_local_map(mut keymap: LispObject) {
     if !keymap.is_nil() {
         let map = get_keymap(keymap, true, true);
         keymap = map;
@@ -446,7 +461,7 @@ pub fn current_global_map() -> LispObject {
 
 /// Select KEYMAP as the global keymap.
 #[lisp_fn]
-pub fn use_global_map(keymap: LispObject) -> () {
+pub fn use_global_map(keymap: LispObject) {
     unsafe { _current_global_map = get_keymap(keymap, true, true) };
 }
 
@@ -530,16 +545,16 @@ pub fn lookup_key(keymap: LispObject, key: LispObject, accept_default: LispObjec
 /// This function returns COMMAND.
 #[lisp_fn(min = "1")]
 pub fn define_prefix_command(
-    command: LispObject,
+    command: LispSymbolRef,
     mapvar: LispObject,
     name: LispObject,
-) -> LispObject {
+) -> LispSymbolRef {
     let map = make_sparse_keymap(name);
-    unsafe { Ffset(command, map) };
+    fset(command, map);
     if mapvar.is_not_nil() {
-        unsafe { Fset(mapvar, map) };
+        set(mapvar.as_symbol_or_error(), map);
     } else {
-        unsafe { Fset(command, map) };
+        set(command, map);
     }
     command
 }
@@ -564,6 +579,107 @@ pub fn make_sparse_keymap(string: LispObject) -> LispObject {
     } else {
         list!(Qkeymap)
     }
+}
+
+#[no_mangle]
+pub extern "C" fn describe_vector_princ(elt: LispObject, fun: LispObject) {
+    unsafe { Findent_to(LispObject::from_fixnum(16), LispObject::from_fixnum(1)) };
+    call!(fun, elt);
+    unsafe { Fterpri(Qnil, Qnil) };
+}
+
+/// Insert a description of contents of VECTOR.
+/// This is text showing the elements of vector matched against indices.
+/// DESCRIBER is the output function used; nil means use `princ'.
+#[lisp_fn(min = "1", name = "describe-vector")]
+pub fn describe_vector_lisp(vector: LispObject, mut describer: LispObject) {
+    if describer.is_nil() {
+        describer = LispObject::from(intern("princ"));
+    }
+    unsafe { specbind(Qstandard_output, current_buffer()) };
+    if !(vector.is_vector() || vector.is_char_table()) {
+        wrong_type!(Qvector_or_char_table_p, vector);
+    }
+
+    let count = c_specpdl_index();
+    unsafe {
+        describe_vector(
+            vector,
+            Qnil,
+            describer,
+            Some(describe_vector_princ),
+            false,
+            Qnil,
+            Qnil,
+            false,
+            false,
+        )
+    };
+
+    unbind_to(count, Qnil);
+}
+
+#[no_mangle]
+pub extern "C" fn copy_keymap_1(chartable: LispObject, idx: LispObject, elt: LispObject) {
+    unsafe { Fset_char_table_range(chartable, idx, copy_keymap_item(elt)) };
+}
+
+/// Return a copy of the keymap KEYMAP.
+///
+/// Note that this is almost never needed.  If you want a keymap that's like
+/// another yet with a few changes, you should use map inheritance rather
+/// than copying.  I.e. something like:
+///
+/// (let ((map (make-sparse-keymap)))
+/// (set-keymap-parent map <theirmap>)
+/// (define-key map ...)
+/// ...)
+///
+/// After performing `copy-keymap', the copy starts out with the same definitions
+/// of KEYMAP, but changing either the copy or KEYMAP does not affect the other.
+/// Any key definitions that are subkeymaps are recursively copied.
+/// However, a key definition which is a symbol whose definition is a keymap
+/// is not copied.
+#[lisp_fn]
+pub fn copy_keymap(keymap: LispObject) -> LispObject {
+    let mut keymap = get_keymap(keymap, true, false);
+    let mut tail = list!(Qkeymap);
+    let copy = tail;
+
+    keymap = keymap.as_cons_or_error().cdr(); // Skip the `keymap' symbol.
+
+    while let Some(cons) = keymap.as_cons() {
+        let mut elt = cons.car();
+        if elt.eq(Qkeymap) {
+            break;
+        }
+
+        if elt.is_char_table() {
+            elt = unsafe { Fcopy_sequence(elt) };
+            unsafe { map_char_table(Some(copy_keymap_1), Qnil, elt, elt) };
+        } else if let Some(v) = elt.as_vector() {
+            elt = unsafe { Fcopy_sequence(elt) };
+            let mut v2 = elt.as_vector().unwrap();
+            for (i, obj) in v.iter().enumerate() {
+                v2.set(i, unsafe { copy_keymap_item(obj) });
+            }
+        } else if let Some(cons_1) = elt.as_cons() {
+            let front = cons_1.car();
+            if front.eq(Qkeymap) {
+                // This is a sub keymap
+                elt = copy_keymap(elt);
+            } else {
+                elt = LispObject::cons(front, unsafe { copy_keymap_item(cons_1.cdr()) });
+            }
+        }
+
+        setcdr(tail.as_cons().unwrap(), list!(elt));
+        tail = tail.as_cons().unwrap().cdr();
+        keymap = cons.cdr();
+    }
+
+    setcdr(tail.as_cons().unwrap(), keymap);
+    copy
 }
 
 include!(concat!(env!("OUT_DIR"), "/keymap_exports.rs"));

@@ -5,15 +5,17 @@ use std::mem;
 use std::ptr;
 
 use remacs_macros::lisp_fn;
-use remacs_sys::{allocate_misc, set_point_both, Fmake_marker};
-use remacs_sys::{EmacsInt, Lisp_Buffer, Lisp_Marker, Lisp_Misc_Type};
-use remacs_sys::{Qinteger_or_marker_p, Qnil};
 
-use buffers::LispBufferRef;
-use lisp::{defsubr, ExternalPtr, LispObject};
-use multibyte::multibyte_chars_in_text;
-use threads::ThreadState;
-use util::clip_to_bounds;
+use crate::{
+    buffers::{current_buffer, LispBufferRef},
+    lisp::{defsubr, ExternalPtr, LispMiscRef, LispObject},
+    multibyte::multibyte_chars_in_text,
+    remacs_sys::{allocate_misc, set_point_both, Fmake_marker},
+    remacs_sys::{equal_kind, EmacsInt, Lisp_Buffer, Lisp_Marker, Lisp_Misc_Type},
+    remacs_sys::{Qinteger_or_marker_p, Qmarkerp, Qnil},
+    threads::ThreadState,
+    util::clip_to_bounds,
+};
 
 pub type LispMarkerRef = ExternalPtr<Lisp_Marker>;
 
@@ -28,39 +30,39 @@ impl LispMarkerRef {
         unsafe { mem::transmute(self.as_ptr()) }
     }
 
-    pub fn charpos(self) -> Option<ptrdiff_t> {
+    pub fn charpos(self) -> Option<isize> {
         match self.buffer() {
             None => None,
             Some(_) => Some(self.charpos),
         }
     }
 
-    pub fn charpos_or_error(self) -> ptrdiff_t {
+    pub fn charpos_or_error(self) -> isize {
         match self.buffer() {
             None => error!("Marker does not point anywhere"),
             Some(_) => self.charpos,
         }
     }
 
-    pub fn set_charpos(&mut self, charpos: ptrdiff_t) -> () {
+    pub fn set_charpos(&mut self, charpos: isize) {
         self.charpos = charpos;
     }
 
-    pub fn bytepos(self) -> Option<ptrdiff_t> {
+    pub fn bytepos(self) -> Option<isize> {
         match self.buffer() {
             None => None,
             Some(_) => Some(self.bytepos),
         }
     }
 
-    pub fn bytepos_or_error(self) -> ptrdiff_t {
+    pub fn bytepos_or_error(self) -> isize {
         match self.buffer() {
             None => error!("Marker does not point anywhere"),
             Some(_) => self.bytepos,
         }
     }
 
-    pub fn set_bytepos(&mut self, bytepos: ptrdiff_t) -> () {
+    pub fn set_bytepos(&mut self, bytepos: isize) {
         self.bytepos = bytepos;
     }
 
@@ -68,7 +70,7 @@ impl LispMarkerRef {
         unsafe { self.buffer.as_ref().map(|b| mem::transmute(b)) }
     }
 
-    pub fn set_buffer(mut self, b: *mut Lisp_Buffer) -> () {
+    pub fn set_buffer(mut self, b: *mut Lisp_Buffer) {
         self.buffer = b;
     }
 
@@ -82,8 +84,68 @@ impl LispMarkerRef {
         unsafe { self.next.as_ref().map(|n| mem::transmute(n)) }
     }
 
-    pub fn set_next(mut self, m: *mut Lisp_Marker) -> () {
+    pub fn set_next(mut self, m: *mut Lisp_Marker) {
         self.next = m;
+    }
+
+    pub fn equal(
+        self,
+        other: LispMarkerRef,
+        _kind: equal_kind::Type,
+        _depth: i32,
+        _ht: LispObject,
+    ) -> bool {
+        if self.buffer != other.buffer {
+            false
+        } else if self.buffer.is_null() {
+            true
+        } else {
+            self.bytepos == other.bytepos
+        }
+    }
+}
+
+impl From<LispObject> for LispMarkerRef {
+    fn from(o: LispObject) -> Self {
+        o.as_marker_or_error()
+    }
+}
+
+impl From<LispMarkerRef> for LispObject {
+    fn from(m: LispMarkerRef) -> Self {
+        m.as_lisp_obj()
+    }
+}
+
+impl From<LispObject> for Option<LispMarkerRef> {
+    fn from(o: LispObject) -> Self {
+        o.as_marker()
+    }
+}
+
+impl LispObject {
+    pub fn is_marker(self) -> bool {
+        self.as_misc()
+            .map_or(false, |m| m.get_type() == Lisp_Misc_Type::Lisp_Misc_Marker)
+    }
+
+    pub fn as_marker(self) -> Option<LispMarkerRef> {
+        self.as_misc().and_then(|m| m.as_marker())
+    }
+
+    pub fn as_marker_or_error(self) -> LispMarkerRef {
+        self.as_marker()
+            .unwrap_or_else(|| wrong_type!(Qmarkerp, self))
+    }
+}
+
+impl LispMiscRef {
+    pub fn as_marker(self) -> Option<LispMarkerRef> {
+        if self.get_type() == Lisp_Misc_Type::Lisp_Misc_Marker {
+            unsafe { Some(mem::transmute(self)) }
+        } else {
+            None
+        }
     }
 }
 
@@ -161,20 +223,16 @@ pub unsafe extern "C" fn build_marker(
 /// Return value of point, as a marker object.
 #[lisp_fn]
 pub fn point_marker() -> LispObject {
-    unsafe {
-        let cur_buf = ThreadState::current_buffer().as_mut();
-        build_marker(cur_buf, (*cur_buf).pt, (*cur_buf).pt_byte)
-    }
+    let mut cur_buf = ThreadState::current_buffer();
+    unsafe { build_marker(cur_buf.as_mut(), cur_buf.pt, cur_buf.pt_byte) }
 }
 
 /// Return a marker to the minimum permissible value of point in this buffer.
 /// This is the beginning, unless narrowing (a buffer restriction) is in effect.
 #[lisp_fn]
 pub fn point_min_marker() -> LispObject {
-    unsafe {
-        let cur_buf = ThreadState::current_buffer().as_mut();
-        build_marker(cur_buf, (*cur_buf).begv, (*cur_buf).begv_byte)
-    }
+    let mut cur_buf = ThreadState::current_buffer();
+    unsafe { build_marker(cur_buf.as_mut(), cur_buf.begv, cur_buf.begv_byte) }
 }
 
 /// Return a marker to the maximum permissible value of point in this buffer.
@@ -182,10 +240,8 @@ pub fn point_min_marker() -> LispObject {
 /// is in effect, in which case it is less.
 #[lisp_fn]
 pub fn point_max_marker() -> LispObject {
-    unsafe {
-        let cur_buf = ThreadState::current_buffer().as_mut();
-        build_marker(cur_buf, (*cur_buf).zv, (*cur_buf).zv_byte)
-    }
+    let mut cur_buf = ThreadState::current_buffer();
+    unsafe { build_marker(cur_buf.as_mut(), cur_buf.zv, cur_buf.zv_byte) }
 }
 
 /// Set PT from MARKER's clipped position.
@@ -202,7 +258,7 @@ pub extern "C" fn set_point_from_marker(marker: LispObject) {
     // Don't trust the byte position if the marker belongs to a
     // different buffer.
     if marker.buffer().map_or(false, |b| b != cur_buf) {
-        bytepos = buf_charpos_to_bytepos(cur_buf.as_mut(), charpos);
+        bytepos = unsafe { buf_charpos_to_bytepos(cur_buf.as_mut(), charpos) };
     } else {
         bytepos = clip_to_bounds(cur_buf.begv_byte, bytepos as EmacsInt, cur_buf.zv_byte);
     };
@@ -319,14 +375,14 @@ pub fn attach_marker(
 /// collection, so we must be careful to ignore and preserve
 /// mark bits, including those in chain fields of markers.
 #[no_mangle]
-pub extern "C" fn unchain_marker(marker: *mut Lisp_Marker) -> () {
+pub extern "C" fn unchain_marker(marker: *mut Lisp_Marker) {
     unsafe {
         let marker_ref = LispMarkerRef::from_ptr(marker as *mut c_void)
             .unwrap_or_else(|| panic!("Invalid marker reference."));
 
         if let Some(mut buf) = marker_ref.buffer() {
             marker_ref.set_buffer(ptr::null_mut());
-            if let Some(mut last) = buf.markers() {
+            if let Some(last) = buf.markers() {
                 let mut tail: LispMarkerRef = last;
 
                 for cur in last.iter() {
@@ -382,7 +438,10 @@ pub extern "C" fn set_marker_both(
     bytepos: ptrdiff_t,
 ) -> LispObject {
     let mut m = marker.as_marker_or_error();
-    if let Some(mut b) = live_buffer(buffer) {
+    if let Some(mut b) = buffer
+        .as_live_buffer()
+        .or_else(|| current_buffer().as_live_buffer())
+    {
         attach_marker(m.as_mut(), b.as_mut(), charpos, bytepos);
     } else {
         unchain_marker(m.as_mut());
@@ -400,7 +459,10 @@ pub extern "C" fn set_marker_restricted_both(
 ) -> LispObject {
     let mut m = marker.as_marker_or_error();
 
-    if let Some(mut b) = live_buffer(buffer) {
+    if let Some(mut b) = buffer
+        .as_live_buffer()
+        .or_else(|| current_buffer().as_live_buffer())
+    {
         let cur_buf = ThreadState::current_buffer();
         let clipped_charpos = clip_to_bounds(cur_buf.begv, charpos as EmacsInt, cur_buf.zv);
         let clipped_bytepos =
@@ -428,18 +490,6 @@ pub extern "C" fn marker_byte_position(marker: LispObject) -> ptrdiff_t {
     m.bytepos_or_error()
 }
 
-/// If BUFFER is nil, return current buffer pointer.  Next, check
-/// whether BUFFER is a buffer object and return buffer pointer
-/// corresponding to BUFFER if BUFFER is live, or NULL otherwise.
-pub fn live_buffer(buffer: LispObject) -> Option<LispBufferRef> {
-    let b = buffer.as_buffer_or_current_buffer();
-    if b.is_live() {
-        Some(b)
-    } else {
-        None
-    }
-}
-
 impl LispObject {
     pub fn has_buffer(self) -> bool {
         self.as_marker().map_or(false, |m| m.buffer().is_some())
@@ -454,7 +504,9 @@ fn set_marker_internal(
     buffer: LispObject,
     restricted: bool,
 ) -> LispObject {
-    let buf = live_buffer(buffer);
+    let buf = buffer
+        .as_live_buffer()
+        .or_else(|| current_buffer().as_live_buffer());
     let mut m = marker.as_marker_or_error();
 
     // Set MARKER to point nowhere if BUFFER is dead, or
@@ -503,11 +555,12 @@ fn set_marker_internal_else(
     // Don't believe BYTEPOS if it comes from a different buffer,
     // since that buffer might have a very different correspondence
     // between character and byte positions.
-    if bytepos == -1 || !position
-        .as_marker()
-        .map_or(false, |m| m.buffer() == Some(buf))
+    if bytepos == -1
+        || !position
+            .as_marker()
+            .map_or(false, |m| m.buffer() == Some(buf))
     {
-        bytepos = buf_charpos_to_bytepos(buf.as_mut(), charpos);
+        bytepos = unsafe { buf_charpos_to_bytepos(buf.as_mut(), charpos) };
     } else {
         let beg = buf.buffer_beg_byte(restricted);
         let end = buf.buffer_end_byte(restricted);
@@ -559,7 +612,7 @@ impl LispBufferRef {
 
 /// Return the byte position corresponding to CHARPOS in B.
 #[no_mangle]
-pub extern "C" fn buf_charpos_to_bytepos(b: *mut Lisp_Buffer, charpos: isize) -> isize {
+pub unsafe extern "C" fn buf_charpos_to_bytepos(b: *mut Lisp_Buffer, charpos: isize) -> isize {
     let mut buffer_ref = LispBufferRef::from_ptr(b as *mut c_void).unwrap();
 
     assert!(buffer_ref.beg() <= charpos && charpos <= buffer_ref.z());
@@ -640,7 +693,7 @@ pub extern "C" fn buf_charpos_to_bytepos(b: *mut Lisp_Buffer, charpos: isize) ->
             best_below_byte = buffer_ref.inc_pos(best_below_byte);
         }
         if record {
-            unsafe { build_marker(b, best_below, best_below_byte) };
+            build_marker(b, best_below, best_below_byte);
         }
         if MARKER_DEBUG {
             byte_char_debug_check(buffer_ref, best_below, best_below_byte);
@@ -662,7 +715,7 @@ pub extern "C" fn buf_charpos_to_bytepos(b: *mut Lisp_Buffer, charpos: isize) ->
         }
 
         if record {
-            unsafe { build_marker(b, best_above, best_above_byte) };
+            build_marker(b, best_above, best_above_byte);
         }
         if MARKER_DEBUG {
             byte_char_debug_check(buffer_ref, best_below, best_below_byte);
@@ -679,7 +732,7 @@ pub extern "C" fn buf_charpos_to_bytepos(b: *mut Lisp_Buffer, charpos: isize) ->
 }
 
 #[no_mangle]
-pub extern "C" fn buf_bytepos_to_charpos(b: *mut Lisp_Buffer, bytepos: isize) -> isize {
+pub unsafe extern "C" fn buf_bytepos_to_charpos(b: *mut Lisp_Buffer, bytepos: isize) -> isize {
     let mut buffer_ref = LispBufferRef::from_ptr(b as *mut c_void).unwrap();
 
     assert!(buffer_ref.beg_byte() <= bytepos && bytepos <= buffer_ref.z_byte());
@@ -761,7 +814,7 @@ pub extern "C" fn buf_bytepos_to_charpos(b: *mut Lisp_Buffer, bytepos: isize) ->
         // But don't do it if BUF_MARKERS is nil;
         // that is a signal from Fset_buffer_multibyte.
         if record && buffer_ref.markers().is_some() {
-            unsafe { build_marker(b, best_below, best_below_byte) };
+            build_marker(b, best_below, best_below_byte);
         }
         if MARKER_DEBUG {
             byte_char_debug_check(buffer_ref, best_below, best_below_byte);
@@ -788,7 +841,7 @@ pub extern "C" fn buf_bytepos_to_charpos(b: *mut Lisp_Buffer, bytepos: isize) ->
         // But don't do it if BUF_MARKERS is nil;
         // that is a signal from Fset_buffer_multibyte.
         if record && buffer_ref.markers().is_some() {
-            unsafe { build_marker(b, best_below, best_below_byte) };
+            build_marker(b, best_below, best_below_byte);
         }
         if MARKER_DEBUG {
             byte_char_debug_check(buffer_ref, best_below, best_below_byte);
@@ -805,7 +858,7 @@ pub extern "C" fn buf_bytepos_to_charpos(b: *mut Lisp_Buffer, bytepos: isize) ->
 }
 
 #[no_mangle]
-pub extern "C" fn clear_charpos_cache(b: *mut Lisp_Buffer) -> () {
+pub extern "C" fn clear_charpos_cache(b: *mut Lisp_Buffer) {
     let mut buf_ref = LispBufferRef::from_ptr(b as *mut c_void)
         .unwrap_or_else(|| panic!("Invalid buffer reference."));
     buf_ref.is_cached = false;
@@ -813,7 +866,7 @@ pub extern "C" fn clear_charpos_cache(b: *mut Lisp_Buffer) -> () {
 
 // Debugging
 
-fn byte_char_debug_check(b: LispBufferRef, charpos: isize, bytepos: isize) -> () {
+fn byte_char_debug_check(b: LispBufferRef, charpos: isize, bytepos: isize) {
     if !b.multibyte_characters_enabled() {
         return;
     }

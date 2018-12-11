@@ -7,35 +7,98 @@ use std::ptr;
 use libc::ptrdiff_t;
 
 use remacs_macros::lisp_fn;
-use remacs_sys::Qsequencep;
-use remacs_sys::{pvec_type, EmacsInt, Lisp_Bool_Vector, Lisp_Type, Lisp_Vector, Lisp_Vectorlike,
-                 Lisp_Vectorlike_With_Slots, More_Lisp_Bits, BITS_PER_BITS_WORD,
-                 MOST_POSITIVE_FIXNUM, PSEUDOVECTOR_FLAG};
 
-use buffers::LispBufferRef;
-use chartable::{LispCharTableRef, LispSubCharTableAsciiRef, LispSubCharTableRef};
-use data::aref;
-use frames::LispFrameRef;
-use lisp::defsubr;
-use lisp::{ExternalPtr, LispObject, LispSubrRef};
-use lists::{inorder, nth, sort_list};
-use multibyte::MAX_CHAR;
-use process::LispProcessRef;
-use threads::ThreadStateRef;
-use windows::LispWindowRef;
+use crate::{
+    buffers::LispBufferRef,
+    chartable::{LispCharTableRef, LispSubCharTableAsciiRef, LispSubCharTableRef},
+    data::aref,
+    frames::LispFrameRef,
+    lisp::defsubr,
+    lisp::{ExternalPtr, LispObject, LispSubrRef},
+    lists::{inorder, nth, sort_list},
+    multibyte::MAX_CHAR,
+    numbers::MOST_POSITIVE_FIXNUM,
+    process::LispProcessRef,
+    remacs_sys::{
+        pvec_type, EmacsInt, Lisp_Bool_Vector, Lisp_Type, Lisp_Vector, Lisp_Vectorlike,
+        Lisp_Vectorlike_With_Slots, More_Lisp_Bits, BITS_PER_BITS_WORD, PSEUDOVECTOR_FLAG,
+    },
+    remacs_sys::{Qarrayp, Qsequencep, Qvectorp},
+    threads::ThreadStateRef,
+    windows::LispWindowRef,
+};
 
 pub type LispVectorlikeRef = ExternalPtr<Lisp_Vectorlike>;
 pub type LispVectorRef = ExternalPtr<Lisp_Vector>;
 pub type LispBoolVecRef = ExternalPtr<Lisp_Bool_Vector>;
 pub type LispVectorlikeSlotsRef = ExternalPtr<Lisp_Vectorlike_With_Slots>;
 
-impl LispVectorlikeRef {
-    #[inline]
-    pub fn is_vector(self) -> bool {
-        self.header.size & (PSEUDOVECTOR_FLAG as isize) == 0
+// Vectorlike support (LispType == 5)
+
+impl LispObject {
+    pub fn is_vectorlike(self) -> bool {
+        self.get_type() == Lisp_Type::Lisp_Vectorlike
     }
 
-    #[inline]
+    pub fn is_vector(self) -> bool {
+        self.as_vectorlike().map_or(false, |v| v.is_vector())
+    }
+
+    pub fn as_vectorlike(self) -> Option<LispVectorlikeRef> {
+        if self.is_vectorlike() {
+            Some(LispVectorlikeRef::new(
+                self.get_untaggedptr() as *mut Lisp_Vectorlike
+            ))
+        } else {
+            None
+        }
+    }
+
+    /*
+    pub fn as_vectorlike_or_error(self) -> LispVectorlikeRef {
+        if self.is_vectorlike() {
+            LispVectorlikeRef::new(unsafe { mem::transmute(self.get_untaggedptr()) })
+        } else {
+            wrong_type!(Qvectorp, self)
+        }
+    }
+    */
+
+    pub unsafe fn as_vectorlike_unchecked(self) -> LispVectorlikeRef {
+        LispVectorlikeRef::new(self.get_untaggedptr() as *mut Lisp_Vectorlike)
+    }
+
+    pub fn as_vector(self) -> Option<LispVectorRef> {
+        self.as_vectorlike().and_then(|v| v.as_vector())
+    }
+
+    pub fn as_vector_or_error(self) -> LispVectorRef {
+        self.as_vector()
+            .unwrap_or_else(|| wrong_type!(Qvectorp, self))
+    }
+
+    pub unsafe fn as_vector_unchecked(self) -> LispVectorRef {
+        self.as_vectorlike_unchecked().as_vector_unchecked()
+    }
+
+    pub fn as_vector_or_string_length(self) -> isize {
+        if let Some(s) = self.as_string() {
+            return s.len_chars();
+        } else if let Some(vl) = self.as_vectorlike() {
+            if let Some(v) = vl.as_vector() {
+                return v.len() as isize;
+            }
+        };
+
+        wrong_type!(Qarrayp, self);
+    }
+}
+
+impl LispVectorlikeRef {
+    pub fn is_vector(self) -> bool {
+        unsafe { self.header.size & (PSEUDOVECTOR_FLAG as isize) == 0 }
+    }
+
     pub fn as_vector(self) -> Option<LispVectorRef> {
         if self.is_vector() {
             Some(unsafe { mem::transmute::<_, LispVectorRef>(self) })
@@ -44,12 +107,10 @@ impl LispVectorlikeRef {
         }
     }
 
-    #[inline]
     pub unsafe fn as_vector_unchecked(self) -> LispVectorRef {
         mem::transmute::<_, LispVectorRef>(self)
     }
 
-    #[inline]
     pub fn pseudovector_type(self) -> pvec_type {
         unsafe {
             mem::transmute(
@@ -59,19 +120,20 @@ impl LispVectorlikeRef {
         }
     }
 
-    #[inline]
     pub fn is_pseudovector(self, tp: pvec_type) -> bool {
-        self.header.size & (PSEUDOVECTOR_FLAG | More_Lisp_Bits::PVEC_TYPE_MASK as usize) as isize
-            == (PSEUDOVECTOR_FLAG | ((tp as usize) << More_Lisp_Bits::PSEUDOVECTOR_AREA_BITS))
-                as isize
+        unsafe {
+            self.header.size
+                & (PSEUDOVECTOR_FLAG | More_Lisp_Bits::PVEC_TYPE_MASK as usize) as isize
+                == (PSEUDOVECTOR_FLAG | ((tp as usize) << More_Lisp_Bits::PSEUDOVECTOR_AREA_BITS))
+                    as isize
+        }
     }
 
-    #[inline]
     pub fn pseudovector_size(self) -> EmacsInt {
-        (self.header.size & (More_Lisp_Bits::PSEUDOVECTOR_SIZE_MASK as isize)) as EmacsInt
+        (unsafe { self.header.size } & (More_Lisp_Bits::PSEUDOVECTOR_SIZE_MASK as isize))
+            as EmacsInt
     }
 
-    #[inline]
     pub fn as_bool_vector(self) -> Option<LispBoolVecRef> {
         if self.is_pseudovector(pvec_type::PVEC_BOOL_VECTOR) {
             Some(unsafe { mem::transmute::<_, LispBoolVecRef>(self) })
@@ -80,7 +142,6 @@ impl LispVectorlikeRef {
         }
     }
 
-    #[inline]
     pub fn as_buffer(self) -> Option<LispBufferRef> {
         if self.is_pseudovector(pvec_type::PVEC_BUFFER) {
             Some(unsafe { mem::transmute(self) })
@@ -89,7 +150,6 @@ impl LispVectorlikeRef {
         }
     }
 
-    #[inline]
     pub fn as_subr(self) -> Option<LispSubrRef> {
         if self.is_pseudovector(pvec_type::PVEC_SUBR) {
             Some(unsafe { mem::transmute(self) })
@@ -98,7 +158,6 @@ impl LispVectorlikeRef {
         }
     }
 
-    #[inline]
     pub fn as_window(self) -> Option<LispWindowRef> {
         if self.is_pseudovector(pvec_type::PVEC_WINDOW) {
             Some(unsafe { mem::transmute(self) })
@@ -107,7 +166,6 @@ impl LispVectorlikeRef {
         }
     }
 
-    #[inline]
     pub fn as_frame(self) -> Option<LispFrameRef> {
         if self.is_pseudovector(pvec_type::PVEC_FRAME) {
             Some(unsafe { mem::transmute(self) })
@@ -116,7 +174,6 @@ impl LispVectorlikeRef {
         }
     }
 
-    #[inline]
     pub fn as_process(self) -> Option<LispProcessRef> {
         if self.is_pseudovector(pvec_type::PVEC_PROCESS) {
             Some(unsafe { mem::transmute(self) })
@@ -125,7 +182,6 @@ impl LispVectorlikeRef {
         }
     }
 
-    #[inline]
     pub fn as_thread(self) -> Option<ThreadStateRef> {
         if self.is_pseudovector(pvec_type::PVEC_THREAD) {
             Some(unsafe { mem::transmute(self) })
@@ -134,7 +190,6 @@ impl LispVectorlikeRef {
         }
     }
 
-    #[inline]
     pub fn as_char_table(self) -> Option<LispCharTableRef> {
         if self.is_pseudovector(pvec_type::PVEC_CHAR_TABLE) {
             Some(unsafe { mem::transmute(self) })
@@ -159,7 +214,6 @@ impl LispVectorlikeRef {
         }
     }
 
-    #[inline]
     pub fn as_compiled(self) -> Option<LispVectorlikeSlotsRef> {
         if self.is_pseudovector(pvec_type::PVEC_COMPILED) {
             Some(unsafe { mem::transmute(self) })
@@ -180,39 +234,33 @@ impl LispVectorlikeRef {
 macro_rules! impl_vectorlike_ref {
     ($type:ident, $itertype:ident, $size_mask:expr) => {
         impl $type {
-            #[inline]
             pub fn len(self) -> usize {
-                (self.header.size & ($size_mask as isize)) as usize
+                (unsafe { self.header.size } & ($size_mask as isize)) as usize
             }
 
             pub fn as_lisp_obj(self) -> LispObject {
                 LispObject::tag_ptr(self, Lisp_Type::Lisp_Vectorlike)
             }
 
-            #[inline]
             pub fn as_slice(&self) -> &[LispObject] {
                 let l = self.len();
                 unsafe { self.contents.as_slice(l) }
             }
 
-            #[inline]
             pub fn as_mut_slice(&mut self) -> &mut [LispObject] {
                 let l = self.len();
                 unsafe { self.contents.as_mut_slice(l) }
             }
 
-            #[inline]
             pub fn get(self, idx: usize) -> LispObject {
                 assert!(idx < self.len());
                 unsafe { self.get_unchecked(idx) }
             }
 
-            #[inline]
             pub unsafe fn get_unchecked(self, idx: usize) -> LispObject {
                 self.as_slice()[idx]
             }
 
-            #[inline]
             pub fn set(&mut self, idx: usize, item: LispObject) {
                 assert!(idx < self.len());
                 unsafe { self.set_unchecked(idx, item) };
@@ -226,7 +274,6 @@ macro_rules! impl_vectorlike_ref {
                 unsafe { self.set_unchecked(idx, item) };
             }
 
-            #[inline]
             pub unsafe fn set_unchecked(&mut self, idx: usize, item: LispObject) {
                 self.as_mut_slice()[idx] = item
             }
@@ -287,6 +334,10 @@ impl_vectorlike_ref! { LispVectorlikeSlotsRef, LispVecSlotsIterator,
 More_Lisp_Bits::PSEUDOVECTOR_SIZE_MASK as isize }
 
 impl LispBoolVecRef {
+    pub fn len(self) -> usize {
+        self.size as usize
+    }
+
     pub fn as_lisp_obj(self) -> LispObject {
         LispObject::tag_ptr(self, Lisp_Type::Lisp_Vectorlike)
     }
@@ -301,25 +352,13 @@ impl LispBoolVecRef {
         unsafe { self.data.as_mut_slice(l) }
     }
 
-    #[inline]
-    pub fn len(self) -> usize {
-        self.size as usize
-    }
-
-    #[inline]
-    unsafe fn get_bit(self, idx: usize) -> bool {
-        let limb = self.as_slice()[idx / BITS_PER_BITS_WORD as usize];
-        limb & (1 << (idx % BITS_PER_BITS_WORD as usize)) != 0
-    }
-
-    #[inline]
     pub fn get(self, idx: usize) -> LispObject {
         assert!(idx < self.len());
         unsafe { self.get_unchecked(idx) }
     }
 
     pub unsafe fn get_unchecked(self, idx: usize) -> LispObject {
-        LispObject::from_bool(self.get_bit(idx))
+        self.iter().nth(idx).unwrap()
     }
 
     pub fn set(&mut self, idx: usize, b: bool) {
@@ -348,15 +387,28 @@ impl LispBoolVecRef {
 
     pub fn iter(&self) -> LispBoolVecIterator {
         LispBoolVecIterator {
-            bvec: self,
+            real_len: self.len(),
+            bvec_slice: self.as_slice(),
             limb: 0,
             cur: 0,
         }
     }
 }
 
+impl LispObject {
+    pub fn is_bool_vector(self) -> bool {
+        self.as_vectorlike()
+            .map_or(false, |v| v.is_pseudovector(pvec_type::PVEC_BOOL_VECTOR))
+    }
+
+    pub fn as_bool_vector(self) -> Option<LispBoolVecRef> {
+        self.as_vectorlike().and_then(|v| v.as_bool_vector())
+    }
+}
+
 pub struct LispBoolVecIterator<'a> {
-    bvec: &'a LispBoolVecRef,
+    real_len: usize,
+    bvec_slice: &'a [usize],
     limb: usize,
     cur: usize,
 }
@@ -365,22 +417,23 @@ impl<'a> Iterator for LispBoolVecIterator<'a> {
     type Item = LispObject;
 
     fn next(&mut self) -> Option<LispObject> {
-        if self.cur >= self.bvec.len() {
+        if self.cur >= self.real_len {
             None
         } else {
             if self.cur % BITS_PER_BITS_WORD as usize == 0 {
-                self.limb = self.bvec.get(self.cur).as_fixnum_or_error() as usize;
+                self.limb = self.bvec_slice[self.cur / BITS_PER_BITS_WORD as usize];
             }
             let res = LispObject::from_bool(
                 self.limb & (1 << (self.cur % BITS_PER_BITS_WORD as usize)) != 0,
             );
+
             self.cur += 1;
             Some(res)
         }
     }
 
     fn size_hint(&self) -> (usize, Option<usize>) {
-        let remaining = self.bvec.len() - self.cur;
+        let remaining = self.real_len - self.cur;
         (remaining, Some(remaining))
     }
 }
@@ -452,10 +505,10 @@ pub fn sort(seq: LispObject, predicate: LispObject) -> LispObject {
             // instead of one in some cases.
             if !inorder(predicate, a, b) {
                 Ordering::Greater
-            } else if !inorder(predicate, b, a) {
-                Ordering::Less
-            } else {
+            } else if inorder(predicate, b, a) {
                 Ordering::Equal
+            } else {
+                Ordering::Less
             }
         });
         seq
@@ -546,8 +599,8 @@ pub fn recordp(object: LispObject) -> bool {
 
 lazy_static! {
     pub static ref HEADER_SIZE: usize =
-        { unsafe { offset_of!(::remacs_sys::Lisp_Vector, contents) } };
-    pub static ref WORD_SIZE: usize = { ::std::mem::size_of::<::lisp::LispObject>() };
+        { unsafe { offset_of!(crate::remacs_sys::Lisp_Vector, contents) } };
+    pub static ref WORD_SIZE: usize = { ::std::mem::size_of::<crate::lisp::LispObject>() };
 }
 
 include!(concat!(env!("OUT_DIR"), "/vectors_exports.rs"));

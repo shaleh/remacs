@@ -1,6 +1,6 @@
 ;;; dired-aux.el --- less commonly used parts of dired -*- lexical-binding: t -*-
 
-;; Copyright (C) 1985-1986, 1992, 1994, 1998, 2000-2017 Free Software
+;; Copyright (C) 1985-1986, 1992, 1994, 1998, 2000-2018 Free Software
 ;; Foundation, Inc.
 
 ;; Author: Sebastian Kremer <sk@thp.uni-koeln.de>.
@@ -301,7 +301,7 @@ List has a form of (file-name full-file-name (attribute-list))."
   ;; PROGRAM is the program used to change the attribute.
   ;; OP-SYMBOL is the type of operation (for use in `dired-mark-pop-up').
   ;; ARG describes which files to use, as in `dired-get-marked-files'.
-  (let* ((files (dired-get-marked-files t arg))
+  (let* ((files (dired-get-marked-files t arg nil nil t))
 	 ;; The source of default file attributes is the file at point.
 	 (default-file (dired-get-filename t t))
 	 (default (when default-file
@@ -361,7 +361,7 @@ Symbolic modes like `g+w' are allowed.
 Type M-n to pull the file attributes of the file at point
 into the minibuffer."
   (interactive "P")
-  (let* ((files (dired-get-marked-files t arg))
+  (let* ((files (dired-get-marked-files t arg nil nil t))
 	 ;; The source of default file attributes is the file at point.
 	 (default-file (dired-get-filename t t))
 	 (modestr (when default-file
@@ -476,7 +476,7 @@ Uses the shell command coming from variables `lpr-command' and
 `lpr-switches' as default."
   (interactive "P")
   (require 'lpr)
-  (let* ((file-list (dired-get-marked-files t arg))
+  (let* ((file-list (dired-get-marked-files t arg nil nil t))
 	 (lpr-switches
 	  (if (and (stringp printer-name)
 		   (string< "" printer-name))
@@ -666,7 +666,7 @@ In shell syntax this means separating the individual commands with `;'.
 
 The output appears in the buffer `*Async Shell Command*'."
   (interactive
-   (let ((files (dired-get-marked-files t current-prefix-arg)))
+   (let ((files (dired-get-marked-files t current-prefix-arg nil nil t)))
      (list
       ;; Want to give feedback whether this file or marked files are used:
       (dired-read-shell-command "& on %s: " current-prefix-arg files)
@@ -727,7 +727,7 @@ can be produced by `dired-get-marked-files', for example."
 ;;Functions dired-run-shell-command and dired-shell-stuff-it do the
 ;;actual work and can be redefined for customization.
   (interactive
-   (let ((files (dired-get-marked-files t current-prefix-arg)))
+   (let ((files (dired-get-marked-files t current-prefix-arg nil nil t)))
      (list
       ;; Want to give feedback whether this file or marked files are used:
       (dired-read-shell-command "! on %s: " current-prefix-arg files)
@@ -794,15 +794,16 @@ can be produced by `dired-get-marked-files', for example."
           (and in-background (not sequentially) (not (eq system-type 'ms-dos))))
          (w32-shell (and (fboundp 'w32-shell-dos-semantics)
                          (w32-shell-dos-semantics)))
+         (file-remote (file-remote-p default-directory))
          ;; The way to run a command in background in Windows shells
          ;; is to use the START command.  The /B switch means not to
          ;; create a new window for the command.
-         (cmd-prefix (if w32-shell "start /b " ""))
+         (cmd-prefix (if (and w32-shell (not file-remote)) "start /b " ""))
          ;; Windows shells don't support chaining with ";", they use
          ;; "&" instead.
-         (cmd-sep (if (and (not w32-shell) (not parallel-in-background))
-                      ";"
-                    "&"))
+         (cmd-sep (if (and (or (not w32-shell) file-remote)
+			   (not parallel-in-background))
+		      ";" "&"))
 	 (stuff-it
 	  (if (dired--star-or-qmark-p command nil 'keep)
 	      (lambda (x)
@@ -974,8 +975,8 @@ command with a prefix argument (the value does not matter)."
     ;; "tar -zxf" isn't used because it's not available on the
     ;; Solaris10 version of tar. Solaris10 becomes obsolete in 2021.
     ;; Same thing on AIX 7.1.
-    ("\\.tar\\.gz\\'" "" "gzip -dc %i | tar -xv")
-    ("\\.tgz\\'" "" "gzip -dc %i | tar -xv")
+    ("\\.tar\\.gz\\'" "" "gzip -dc %i | tar -xf -")
+    ("\\.tgz\\'" "" "gzip -dc %i | tar -xf -")
     ("\\.gz\\'" "" "gunzip")
     ("\\.Z\\'" "" "uncompress")
     ;; For .z, try gunzip.  It might be an old gzip file,
@@ -990,7 +991,7 @@ command with a prefix argument (the value does not matter)."
     ;; This item controls naming for compression.
     ("\\.tar\\'" ".tgz" nil)
     ;; This item controls the compression of directories
-    (":" ".tar.gz" "tar -c %i | gzip -c9 > %o"))
+    (":" ".tar.gz" "tar -cf - %i | gzip -c9 > %o"))
   "Control changes in file name suffixes for compression and uncompression.
 Each element specifies one transformation rule, and has the form:
   (REGEXP NEW-SUFFIX PROGRAM)
@@ -1007,14 +1008,14 @@ Otherwise, the rule is a compression rule, and compression is done with gzip.
 ARGS are command switches passed to PROGRAM.")
 
 (defvar dired-compress-files-alist
-  '(("\\.tar\\.gz\\'" . "tar -c %i | gzip -c9 > %o")
-    ("\\.tar\\.bz2\\'" . "tar -c %i | bzip2 -c9 > %o")
-    ("\\.tar\\.xz\\'" . "tar -c %i | xz -c9 > %o")
+  '(("\\.tar\\.gz\\'" . "tar -cf - %i | gzip -c9 > %o")
+    ("\\.tar\\.bz2\\'" . "tar -cf - %i | bzip2 -c9 > %o")
+    ("\\.tar\\.xz\\'" . "tar -cf - %i | xz -c9 > %o")
     ("\\.zip\\'" . "zip %o -r --filesync %i"))
   "Control the compression shell command for `dired-do-compress-to'.
 
 Each element is (REGEXP . CMD), where REGEXP is the name of the
-archive to which you want to compress, and CMD the the
+archive to which you want to compress, and CMD is the
 corresponding command.
 
 Within CMD, %i denotes the input file(s), and %o denotes the
@@ -1029,7 +1030,7 @@ Prompt for the archive file name.
 Choose the archiving command based on the archive file-name extension
 and `dired-compress-files-alist'."
   (interactive)
-  (let* ((in-files (dired-get-marked-files))
+  (let* ((in-files (dired-get-marked-files nil nil nil nil t))
          (out-file (expand-file-name (read-file-name "Compress to: ")))
          (rule (cl-find-if
                 (lambda (x)
@@ -1152,7 +1153,7 @@ Return nil if no change in files."
       ;; Pass t for DISTINGUISH-ONE-MARKED so that a single file which
       ;; is marked pops up a window.  That will help the user see
       ;; it isn't the current line file.
-      (let ((files (dired-get-marked-files t arg nil t))
+      (let ((files (dired-get-marked-files t arg nil t t))
 	    (string (if (eq op-symbol 'compress) "Compress or uncompress"
 		      (capitalize (symbol-name op-symbol)))))
 	(dired-mark-pop-up nil op-symbol files #'y-or-n-p
@@ -1844,7 +1845,7 @@ Optional arg HOW-TO determines how to treat the target.
       The rest of into-dir are optional arguments.
    For any other return value, TARGET is treated as a directory."
   (or op1 (setq op1 operation))
-  (let* ((fn-list (dired-get-marked-files nil arg))
+  (let* ((fn-list (dired-get-marked-files nil arg nil nil t))
 	 (rfn-list (mapcar #'dired-make-relative fn-list))
 	 (dired-one-file	; fluid variable inside dired-create-files
 	  (and (consp fn-list) (null (cdr fn-list)) (car fn-list)))
@@ -2765,12 +2766,14 @@ Intended to be added to `isearch-mode-hook'."
   "Clean up the Dired file name search after terminating isearch."
   (define-key isearch-mode-map "\M-sff" nil)
   (dired-isearch-filenames-mode -1)
-  (remove-hook 'isearch-mode-end-hook 'dired-isearch-filenames-end t))
+  (remove-hook 'isearch-mode-end-hook 'dired-isearch-filenames-end t)
+  (unless isearch-suspended
+    (custom-reevaluate-setting 'dired-isearch-filenames)))
 
 (defun dired-isearch-filter-filenames (beg end)
-  "Test whether the current search hit is a file name.
-Return non-nil if the text from BEG to END is part of a file
-name (has the text property `dired-filename')."
+  "Test whether some part of the current search match is inside a file name.
+This function returns non-nil if some part of the text between BEG and END
+is part of a file name (i.e., has the text property `dired-filename')."
   (text-property-not-all (min beg end) (max beg end)
 			 'dired-filename nil))
 
@@ -2778,15 +2781,15 @@ name (has the text property `dired-filename')."
 (defun dired-isearch-filenames ()
   "Search for a string using Isearch only in file names in the Dired buffer."
   (interactive)
-  (let ((dired-isearch-filenames t))
-    (isearch-forward nil t)))
+  (setq dired-isearch-filenames t)
+  (isearch-forward nil t))
 
 ;;;###autoload
 (defun dired-isearch-filenames-regexp ()
   "Search for a regexp using Isearch only in file names in the Dired buffer."
   (interactive)
-  (let ((dired-isearch-filenames t))
-    (isearch-forward-regexp nil t)))
+  (setq dired-isearch-filenames t)
+  (isearch-forward-regexp nil t))
 
 
 ;; Functions for searching in tags style among marked files.
@@ -2796,14 +2799,14 @@ name (has the text property `dired-filename')."
   "Search for a string through all marked files using Isearch."
   (interactive)
   (multi-isearch-files
-   (dired-get-marked-files nil nil 'dired-nondirectory-p)))
+   (dired-get-marked-files nil nil 'dired-nondirectory-p nil t)))
 
 ;;;###autoload
 (defun dired-do-isearch-regexp ()
   "Search for a regexp through all marked files using Isearch."
   (interactive)
   (multi-isearch-files-regexp
-   (dired-get-marked-files nil nil 'dired-nondirectory-p)))
+   (dired-get-marked-files nil nil 'dired-nondirectory-p nil t)))
 
 ;;;###autoload
 (defun dired-do-search (regexp)
@@ -2824,7 +2827,7 @@ with the command \\[tags-loop-continue]."
 	  (query-replace-read-args
 	   "Query replace regexp in marked files" t t)))
      (list (nth 0 common) (nth 1 common) (nth 2 common))))
-  (dolist (file (dired-get-marked-files nil nil 'dired-nondirectory-p))
+  (dolist (file (dired-get-marked-files nil nil 'dired-nondirectory-p nil t))
     (let ((buffer (get-file-buffer file)))
       (if (and buffer (with-current-buffer buffer
 			buffer-read-only))
@@ -2848,7 +2851,7 @@ REGEXP should use constructs supported by your local `grep' command."
   (require 'grep)
   (defvar grep-find-ignored-files)
   (defvar grep-find-ignored-directories)
-  (let* ((files (dired-get-marked-files))
+  (let* ((files (dired-get-marked-files nil nil nil nil t))
          (ignores (nconc (mapcar
                           (lambda (s) (concat s "/"))
                           grep-find-ignored-directories)

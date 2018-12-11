@@ -1,57 +1,85 @@
 //! symbols support
 
 use remacs_macros::lisp_fn;
-use remacs_sys::Fset;
-use remacs_sys::Lisp_Symbol;
-use remacs_sys::{find_symbol_value, get_symbol_declared_special, get_symbol_redirect,
-                 make_lisp_symbol, set_symbol_declared_special, set_symbol_redirect,
-                 swap_in_symval_forwarding, symbol_interned, symbol_redirect, symbol_trapped_write};
-use remacs_sys::{Qcyclic_variable_indirection, Qnil, Qsetting_constant, Qunbound, Qvoid_variable};
 
-use buffers::LispBufferLocalValueRef;
-use data::indirect_function;
-use data::Lisp_Fwd;
-use lisp::defsubr;
-use lisp::{ExternalPtr, LispObject};
+use crate::{
+    buffers::LispBufferLocalValueRef,
+    data::Lisp_Fwd,
+    data::{indirect_function, set},
+    lisp::defsubr,
+    lisp::{ExternalPtr, LispObject},
+    multibyte::LispStringRef,
+    remacs_sys::{
+        find_symbol_value, get_symbol_declared_special, get_symbol_redirect, make_lisp_symbol,
+        set_symbol_declared_special, set_symbol_redirect, swap_in_symval_forwarding,
+        symbol_interned, symbol_redirect, symbol_trapped_write,
+    },
+    remacs_sys::{lispsym, EmacsInt, Lisp_Symbol, Lisp_Type, USE_LSB_TAG},
+    remacs_sys::{
+        Qcyclic_variable_indirection, Qnil, Qsetting_constant, Qsymbolp, Qunbound, Qvoid_variable,
+    },
+};
 
 pub type LispSymbolRef = ExternalPtr<Lisp_Symbol>;
 
 impl LispSymbolRef {
+    pub fn as_lisp_obj(mut self) -> LispObject {
+        unsafe { make_lisp_symbol(self.as_mut()) }
+    }
+
     pub fn symbol_name(self) -> LispObject {
-        self.name
+        let s = unsafe { self.u.s.as_ref() };
+        s.name
     }
 
     pub fn get_function(self) -> LispObject {
-        self.function
+        let s = unsafe { self.u.s.as_ref() };
+        s.function
     }
 
     pub fn get_plist(self) -> LispObject {
-        self.plist
+        let s = unsafe { self.u.s.as_ref() };
+        s.plist
     }
 
     pub fn set_plist(&mut self, plist: LispObject) {
-        self.plist = plist;
+        let s = unsafe { self.u.s.as_mut() };
+        s.plist = plist;
     }
 
     pub fn set_function(&mut self, function: LispObject) {
-        self.function = function;
+        let s = unsafe { self.u.s.as_mut() };
+        s.function = function;
     }
 
     pub fn is_interned_in_initial_obarray(self) -> bool {
-        self.interned() == symbol_interned::SYMBOL_INTERNED_IN_INITIAL_OBARRAY as u32
+        let s = unsafe { self.u.s.as_ref() };
+        s.interned() == symbol_interned::SYMBOL_INTERNED_IN_INITIAL_OBARRAY as u32
     }
 
     pub fn is_alias(self) -> bool {
-        self.redirect() == symbol_redirect::SYMBOL_VARALIAS
+        let s = unsafe { self.u.s.as_ref() };
+        s.redirect() == symbol_redirect::SYMBOL_VARALIAS
+    }
+
+    pub fn get_trapped_write(self) -> symbol_trapped_write::Type {
+        let s = unsafe { self.u.s.as_ref() };
+        s.trapped_write()
+    }
+
+    pub fn set_trapped_write(mut self, trap: symbol_trapped_write::Type) {
+        let s = unsafe { self.u.s.as_mut() };
+        s.set_trapped_write(trap);
     }
 
     pub fn is_constant(self) -> bool {
-        self.trapped_write() == symbol_trapped_write::SYMBOL_NOWRITE
+        self.get_trapped_write() == symbol_trapped_write::SYMBOL_NOWRITE
     }
 
-    pub fn get_alias(self) -> LispSymbolRef {
+    pub unsafe fn get_alias(self) -> Self {
         debug_assert!(self.is_alias());
-        LispSymbolRef::new(unsafe { self.val.alias })
+        let s = self.u.s.as_ref();
+        LispSymbolRef::new(s.val.alias)
     }
 
     pub fn get_declared_special(self) -> bool {
@@ -62,10 +90,6 @@ impl LispSymbolRef {
         unsafe { set_symbol_declared_special(self.as_mut(), value) };
     }
 
-    pub fn as_lisp_obj(mut self) -> LispObject {
-        unsafe { make_lisp_symbol(self.as_mut()) }
-    }
-
     /// Return the symbol holding SYMBOL's value.  Signal
     /// `cyclic-variable-indirection' if SYMBOL's chain of variable
     /// indirections contains a loop.
@@ -74,13 +98,13 @@ impl LispSymbolRef {
         let mut hare = self;
 
         while hare.is_alias() {
-            hare = hare.get_alias();
+            hare = unsafe { hare.get_alias() };
 
             if !hare.is_alias() {
                 break;
             }
-            hare = hare.get_alias();
-            tortoise = tortoise.get_alias();
+            hare = unsafe { hare.get_alias() };
+            tortoise = unsafe { tortoise.get_alias() };
 
             if hare == tortoise {
                 xsignal!(Qcyclic_variable_indirection, hare.as_lisp_obj())
@@ -107,25 +131,93 @@ impl LispSymbolRef {
         unsafe { set_symbol_redirect(self.as_mut(), v) }
     }
 
-    pub fn get_value(self) -> LispObject {
-        unsafe { self.val.value }
+    pub unsafe fn get_value(self) -> LispObject {
+        let s = self.u.s.as_ref();
+        s.val.value
     }
 
-    pub fn get_blv(self) -> LispBufferLocalValueRef {
-        LispBufferLocalValueRef::new(unsafe { self.val.blv })
+    pub unsafe fn get_blv(self) -> LispBufferLocalValueRef {
+        let s = self.u.s.as_ref();
+        LispBufferLocalValueRef::new(s.val.blv)
     }
 
-    pub fn get_fwd(self) -> *mut Lisp_Fwd {
-        unsafe { self.val.fwd }
+    pub unsafe fn get_fwd(self) -> *mut Lisp_Fwd {
+        let s = self.u.s.as_ref();
+        s.val.fwd
     }
 
     pub fn set_fwd(mut self, fwd: *mut Lisp_Fwd) {
         assert!(self.get_redirect() == symbol_redirect::SYMBOL_FORWARDED && !fwd.is_null());
-        self.val.fwd = fwd;
+        let s = unsafe { self.u.s.as_mut() };
+        s.val.fwd = fwd;
     }
 
     pub fn iter(self) -> LispSymbolIter {
         LispSymbolIter { current: self }
+    }
+}
+
+impl From<LispObject> for LispSymbolRef {
+    fn from(o: LispObject) -> Self {
+        o.as_symbol_or_error()
+    }
+}
+
+impl From<LispSymbolRef> for LispObject {
+    fn from(s: LispSymbolRef) -> Self {
+        s.as_lisp_obj()
+    }
+}
+
+impl From<LispObject> for Option<LispSymbolRef> {
+    fn from(o: LispObject) -> Self {
+        o.as_symbol()
+    }
+}
+
+// Symbol support (LispType == Lisp_Symbol == 0)
+impl LispObject {
+    pub fn is_symbol(self) -> bool {
+        self.get_type() == Lisp_Type::Lisp_Symbol
+    }
+
+    pub fn as_symbol(self) -> Option<LispSymbolRef> {
+        if self.is_symbol() {
+            Some(LispSymbolRef::new(
+                self.symbol_ptr_value() as *mut Lisp_Symbol
+            ))
+        } else {
+            None
+        }
+    }
+
+    pub fn as_symbol_or_error(self) -> LispSymbolRef {
+        if let Some(sym) = self.as_symbol() {
+            sym
+        } else {
+            wrong_type!(Qsymbolp, self)
+        }
+    }
+
+    pub fn symbol_or_string_as_string(self) -> LispStringRef {
+        match self.as_symbol() {
+            Some(sym) => sym
+                .symbol_name()
+                .as_string()
+                .expect("Expected a symbol name?"),
+            None => self.as_string_or_error(),
+        }
+    }
+
+    fn symbol_ptr_value(self) -> EmacsInt {
+        let ptr_value = if USE_LSB_TAG {
+            self.to_C()
+        } else {
+            self.get_untaggedptr() as EmacsInt
+        };
+
+        let lispsym_offset = unsafe { &lispsym as *const _ as EmacsInt };
+        ptr_value + lispsym_offset
     }
 }
 
@@ -141,7 +233,8 @@ impl Iterator for LispSymbolIter {
             None
         } else {
             let sym = self.current;
-            self.current = LispSymbolRef::new(sym.next);
+            let s = unsafe { sym.u.s.as_ref() };
+            self.current = LispSymbolRef::new(s.next);
             Some(sym)
         }
     }
@@ -176,9 +269,9 @@ pub fn boundp(mut symbol: LispSymbolRef) -> bool {
     }
 
     let valcontents = match symbol.get_redirect() {
-        symbol_redirect::SYMBOL_PLAINVAL => symbol.get_value(),
+        symbol_redirect::SYMBOL_PLAINVAL => unsafe { symbol.get_value() },
         symbol_redirect::SYMBOL_LOCALIZED => {
-            let mut blv = symbol.get_blv();
+            let mut blv = unsafe { symbol.get_blv() };
             if blv.get_fwd().is_null() {
                 unsafe {
                     swap_in_symval_forwarding(symbol.as_mut(), blv.as_mut());
@@ -198,13 +291,13 @@ pub fn boundp(mut symbol: LispSymbolRef) -> bool {
         _ => unreachable!(),
     };
 
-    !valcontents.eq_raw(Qunbound)
+    !valcontents.eq(Qunbound)
 }
 
 /* It has been previously suggested to make this function an alias for
-   symbol-function, but upon discussion at Bug#23957, there is a risk
-   breaking backward compatibility, as some users of fboundp may
-   expect `t' in particular, rather than any true value.  */
+symbol-function, but upon discussion at Bug#23957, there is a risk
+breaking backward compatibility, as some users of fboundp may
+expect `t' in particular, rather than any true value.  */
 
 /// Return t if SYMBOL's function definition is not void.
 #[lisp_fn]
@@ -279,26 +372,22 @@ pub fn indirect_variable_lisp(object: LispObject) -> LispObject {
 /// Make SYMBOL's value be void.
 /// Return SYMBOL.
 #[lisp_fn]
-pub fn makunbound(symbol: LispObject) -> LispSymbolRef {
-    let sym = symbol.as_symbol_or_error();
-    if sym.is_constant() {
-        xsignal!(Qsetting_constant, symbol);
+pub fn makunbound(symbol: LispSymbolRef) -> LispSymbolRef {
+    if symbol.is_constant() {
+        xsignal!(Qsetting_constant, symbol.into());
     }
-    unsafe {
-        Fset(symbol, Qunbound);
-    }
-    sym
+    set(symbol, Qunbound);
+    symbol
 }
 
 /// Return SYMBOL's value.  Error if that is void.  Note that if
 /// `lexical-binding' is in effect, this returns the global value
 /// outside of any lexical scope.
 #[lisp_fn]
-pub fn symbol_value(symbol: LispObject) -> LispObject {
-    let raw_symbol = symbol;
-    let val = unsafe { find_symbol_value(raw_symbol) };
-    if val == LispObject::constant_unbound() {
-        xsignal!(Qvoid_variable, symbol);
+pub fn symbol_value(symbol: LispSymbolRef) -> LispObject {
+    let val = unsafe { find_symbol_value(symbol.into()) };
+    if val == Qunbound {
+        xsignal!(Qvoid_variable, symbol.into());
     }
     val
 }
