@@ -51,3 +51,6 @@ panic = "abort"
 compile-errors = []
 # Treat warnings as a build error on Travis.
 strict = []
+
+[workspace]
+members = ["remacs-lib", "remacs-macros", "remacs-util", "."]
