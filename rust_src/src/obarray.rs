@@ -19,11 +19,19 @@ use crate::{
 #[repr(transparent)]
 pub struct LispObarrayRef(LispObject);
 
-impl LispObarrayRef {
-    pub fn as_lisp_obj(&self) -> LispObject {
-        self.0
+impl From<LispObarrayRef> for LispObject {
+    fn from(o: LispObarrayRef) -> LispObject {
+        o.0
     }
+}
 
+impl From<&LispObarrayRef> for LispObject {
+    fn from(o: &LispObarrayRef) -> LispObject {
+        o.0
+    }
+}
+
+impl LispObarrayRef {
     pub fn new(obj: LispObject) -> LispObarrayRef {
         LispObarrayRef(obj)
     }
@@ -40,7 +48,7 @@ impl LispObarrayRef {
     /// symbol would be if it were present.
     pub fn lookup(&self, name: LispObject) -> LispObject {
         let string = name.symbol_or_string_as_string();
-        let obj = self.as_lisp_obj();
+        let obj = LispObject::from(self);
         unsafe {
             oblookup(
                 obj,
@@ -57,7 +65,7 @@ impl LispObarrayRef {
     /// name will be transferred to pure storage.
     pub fn intern(&self, string: LispObject) -> LispObject {
         let tem = self.lookup(string);
-        let obj = self.as_lisp_obj();
+        let obj = LispObject::from(self);
         if tem.is_symbol() {
             tem
         } else if LispObject::from_raw(unsafe { globals.Vpurify_flag }).is_not_nil() {
@@ -146,7 +154,7 @@ pub extern "C" fn map_obarray(
     for item in v.iter().rev() {
         if let Some(sym) = item.as_symbol() {
             for s in sym.iter() {
-                func(s.as_lisp_obj(), arg);
+                func(s.into(), arg);
             }
         }
     }
@@ -156,7 +164,7 @@ pub extern "C" fn map_obarray(
 /// current obarray.
 #[no_mangle]
 pub unsafe extern "C" fn intern_1(s: *const libc::c_char, len: libc::ptrdiff_t) -> LispObject {
-    let obarray = LispObarrayRef::global().as_lisp_obj();
+    let obarray = LispObject::from(LispObarrayRef::global());
     let tem = oblookup(obarray, s, len, len);
 
     if tem.is_symbol() {
@@ -175,7 +183,7 @@ pub unsafe extern "C" fn intern_c_string_1(
     s: *const libc::c_char,
     len: libc::ptrdiff_t,
 ) -> LispObject {
-    let obarray = LispObarrayRef::global().as_lisp_obj();
+    let obarray = LispObject::from(LispObarrayRef::global());
     let tem = oblookup(obarray, s, len, len);
 
     if tem.is_symbol() {
@@ -240,7 +248,7 @@ extern "C" fn mapatoms_1(sym: LispObject, function: LispObject) {
 pub fn mapatoms(function: LispObject, obarray: Option<LispObarrayRef>) {
     let obarray = obarray.unwrap_or_else(LispObarrayRef::global);
 
-    map_obarray(obarray.as_lisp_obj(), mapatoms_1, function);
+    map_obarray(obarray.into(), mapatoms_1, function);
 }
 
 include!(concat!(env!("OUT_DIR"), "/obarray_exports.rs"));

@@ -252,15 +252,11 @@ impl From<LispObject> for Option<LispCons> {
 
 impl From<LispCons> for LispObject {
     fn from(c: LispCons) -> Self {
-        c.as_obj()
+        c.0
     }
 }
 
 impl LispCons {
-    pub fn as_obj(self) -> LispObject {
-        self.0
-    }
-
     fn _extract(self) -> *mut Lisp_Cons {
         self.0.get_untaggedptr() as *mut Lisp_Cons
     }
@@ -643,7 +639,7 @@ where
         match tail.cdr().as_cons() {
             None => {
                 // need an extra check here to catch odd-length lists
-                if end_checks == LispConsEndChecks::on && tail.as_obj().is_not_nil() {
+                if end_checks == LispConsEndChecks::on && LispObject::from(tail).is_not_nil() {
                     wrong_type!(Qplistp, plist)
                 }
 
@@ -691,7 +687,7 @@ where
         match tail.cdr().as_cons() {
             None => {
                 // need an extra check here to catch odd-length lists
-                if tail.as_obj().is_not_nil() {
+                if LispObject::from(tail).is_not_nil() {
                     wrong_type!(Qplistp, plist)
                 }
                 break;
@@ -744,8 +740,8 @@ pub fn lax_plist_put(plist: LispObject, prop: LispObject, val: LispObject) -> Li
 /// This is the last value stored with `(put SYMBOL PROPNAME VALUE)'.
 #[lisp_fn]
 pub fn get(symbol: LispSymbolRef, propname: LispObject) -> LispObject {
-    let plist_env = LispObject::from_raw(unsafe { globals.Voverriding_plist_environment });
-    let propval = plist_get(cdr(assq(symbol.as_lisp_obj(), plist_env)), propname);
+    let plist_env = unsafe { globals.Voverriding_plist_environment };
+    let propval = plist_get(cdr(assq(symbol.into(), plist_env)), propname);
     if propval.is_not_nil() {
         propval
     } else {
