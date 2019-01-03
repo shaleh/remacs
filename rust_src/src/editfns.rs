@@ -15,6 +15,7 @@ use crate::{
     buffers::{LispBufferOrCurrent, LispBufferOrName, LispBufferRef, BUF_BYTES_MAX},
     character::{char_head_p, dec_pos},
     eval::{progn, unbind_to},
+    indent::invalidate_current_column,
     lisp::{defsubr, LispObject},
     marker::{
         buf_bytepos_to_charpos, buf_charpos_to_bytepos, marker_position_lisp, point_marker,
@@ -189,7 +190,7 @@ pub fn goto_char(position: LispObject) -> LispObject {
     } else if let Some(num) = position.as_fixnum() {
         let mut cur_buf = ThreadState::current_buffer();
         let pos = clip_to_bounds(cur_buf.begv, num, cur_buf.zv);
-        let bytepos = unsafe { buf_charpos_to_bytepos(cur_buf.as_mut(), pos) };
+        let bytepos = buf_charpos_to_bytepos(cur_buf.as_mut(), pos);
         unsafe { set_point_both(pos, bytepos) };
     } else {
         wrong_type!(Qinteger_or_marker_p, position)
@@ -205,7 +206,7 @@ pub fn position_bytes(position: LispNumber) -> Option<EmacsInt> {
     let mut cur_buf = ThreadState::current_buffer();
 
     if pos >= cur_buf.begv && pos <= cur_buf.zv {
-        let bytepos = unsafe { buf_charpos_to_bytepos(cur_buf.as_mut(), pos) };
+        let bytepos = buf_charpos_to_bytepos(cur_buf.as_mut(), pos);
         Some(bytepos as EmacsInt)
     } else {
         None
@@ -363,7 +364,7 @@ pub fn char_before(pos: LispObject) -> Option<EmacsInt> {
         if p <= buffer_ref.begv || p > buffer_ref.zv {
             return None;
         }
-        pos_byte = unsafe { buf_charpos_to_bytepos(buffer_ref.as_mut(), p) };
+        pos_byte = buf_charpos_to_bytepos(buffer_ref.as_mut(), p);
     }
 
     let pos_before = if buffer_ref.multibyte_characters_enabled() {
@@ -397,7 +398,7 @@ pub fn char_after(mut pos: LispObject) -> Option<EmacsInt> {
         if p < buffer_ref.begv || p >= buffer_ref.zv {
             None
         } else {
-            let pos_byte = unsafe { buf_charpos_to_bytepos(buffer_ref.as_mut(), p) };
+            let pos_byte = buf_charpos_to_bytepos(buffer_ref.as_mut(), p);
             Some(EmacsInt::from(buffer_ref.fetch_char(pos_byte)))
         }
     }
@@ -1436,6 +1437,23 @@ pub fn time_less_p(t1: LispObject, t2: LispObject) -> bool {
     let b = unsafe { lisp_time_struct(t2, &mut t2len) };
 
     a < b
+}
+
+/// Remove restrictions (narrowing) from current buffer.
+/// This allows the buffer's full text to be seen and edited.
+#[lisp_fn(intspec = "")]
+pub fn widen() {
+    let mut buffer_ref = ThreadState::current_buffer();
+
+    if buffer_ref.beg() != buffer_ref.begv || buffer_ref.z() != buffer_ref.zv {
+        buffer_ref.set_clip_changed(true);
+    }
+
+    buffer_ref.set_begv_both(buffer_ref.beg(), buffer_ref.beg_byte());
+    buffer_ref.set_zv_both(buffer_ref.z(), buffer_ref.z_byte());
+
+    // Changing the buffer bounds invalidates any recorded current column.
+    invalidate_current_column();
 }
 
 include!(concat!(env!("OUT_DIR"), "/editfns_exports.rs"));
