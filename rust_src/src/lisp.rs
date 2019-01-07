@@ -108,6 +108,13 @@ impl<T> ExternalPtr<T> {
         ExternalPtr(p)
     }
 
+    pub fn from_ptr(p: *mut T) -> Option<Self> {
+        match p.as_ref() {
+            None => None,
+            Some(r) => Some(Self::new(r as *mut T)),
+        }
+    }
+
     pub fn is_null(self) -> bool {
         self.0.is_null()
     }
@@ -120,7 +127,7 @@ impl<T> ExternalPtr<T> {
         self.0
     }
 
-    pub fn from_ptr(ptr: *mut c_void) -> Option<Self> {
+    pub fn from_void_ptr(ptr: *mut c_void) -> Option<Self> {
         unsafe { ptr.as_ref().map(|p| mem::transmute(p)) }
     }
 }

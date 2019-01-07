@@ -3,7 +3,7 @@
 use std::sync::Mutex;
 use std::{self, mem, ptr};
 
-use libc::{self, c_char, c_int, c_uchar, c_void, ptrdiff_t};
+use libc::{self, c_char, c_int, c_uchar, ptrdiff_t};
 
 use rand::{Rng, StdRng};
 
@@ -133,7 +133,7 @@ impl LispBufferRef {
     }
 
     pub fn markers(self) -> Option<LispMarkerRef> {
-        unsafe { (*self.text).markers.as_ref().map(|m| mem::transmute(m)) }
+        LispMarkerRef::from_ptr(unsafe { (*self.text).markers })
     }
 
     pub fn mark_active(self) -> LispObject {
@@ -166,7 +166,7 @@ impl LispBufferRef {
     }
 
     pub fn base_buffer(self) -> Option<LispBufferRef> {
-        Self::from_ptr(self.base_buffer as *mut c_void)
+        Self::from_ptr(self.base_buffer)
     }
 
     pub fn truename(self) -> LispObject {
@@ -501,7 +501,7 @@ impl Iterator for LispOverlayIter {
         match c {
             None => None,
             Some(o) => {
-                self.current = LispOverlayRef::from_ptr(o.next as *mut c_void);
+                self.current = Self::Item::from_ptr(o.next);
                 c
             }
         }
@@ -855,8 +855,8 @@ pub extern "C" fn get_truename_buffer(filename: LispObject) -> LispObject {
 /// current, update these markers.
 #[no_mangle]
 pub extern "C" fn record_buffer_markers(buffer: *mut Lisp_Buffer) {
-    let buffer_ref = LispBufferRef::from_ptr(buffer as *mut c_void)
-        .unwrap_or_else(|| panic!("Invalid buffer reference."));
+    let buffer_ref =
+        LispBufferRef::from_ptr(buffer).unwrap_or_else(|| panic!("Invalid buffer reference."));
     let pt_marker = buffer_ref.pt_marker();
 
     if pt_marker.is_not_nil() {
@@ -877,8 +877,8 @@ pub extern "C" fn record_buffer_markers(buffer: *mut Lisp_Buffer) {
 /// current, fetch these values into B->begv etc.
 #[no_mangle]
 pub extern "C" fn fetch_buffer_markers(buffer: *mut Lisp_Buffer) {
-    let mut buffer_ref = LispBufferRef::from_ptr(buffer as *mut c_void)
-        .unwrap_or_else(|| panic!("Invalid buffer reference."));
+    let mut buffer_ref =
+        LispBufferRef::from_ptr(buffer).unwrap_or_else(|| panic!("Invalid buffer reference."));
 
     if buffer_ref.pt_marker().is_not_nil() {
         assert!(buffer_ref.begv_marker().is_not_nil());
@@ -1139,7 +1139,7 @@ pub unsafe extern "C" fn copy_overlays(
 
     let mut result = ptr::null_mut();
 
-    let overlays_iter = LispOverlayRef::from_ptr(list as *mut c_void)
+    let overlays_iter = LispOverlayRef::from_ptr(list)
         .unwrap_or_else(|| panic!("Invalid overlay reference."))
         .iter();
 

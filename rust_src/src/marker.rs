@@ -1,6 +1,6 @@
 //! marker support
 
-use libc::{c_void, ptrdiff_t};
+use libc::ptrdiff_t;
 use std::mem;
 use std::ptr;
 
@@ -207,8 +207,8 @@ pub extern "C" fn build_marker(
     m.set_insertion_type(false);
     m.set_need_adjustment(false);
 
-    let mut buffer_ref = LispBufferRef::from_ptr(buf as *mut c_void)
-        .unwrap_or_else(|| panic!("Invalid buffer reference."));
+    let mut buffer_ref =
+        LispBufferRef::from_ptr(buf).unwrap_or_else(|| panic!("Invalid buffer reference."));
 
     unsafe {
         m.set_next((*buffer_ref.text).markers);
@@ -342,8 +342,8 @@ pub fn attach_marker(
     bytepos: ptrdiff_t,
 ) {
     unsafe {
-        let mut buffer_ref = LispBufferRef::from_ptr(buffer as *mut c_void)
-            .unwrap_or_else(|| panic!("Invalid buffer reference."));
+        let mut buffer_ref =
+            LispBufferRef::from_ptr(buffer).unwrap_or_else(|| panic!("Invalid buffer reference."));
 
         // In a single-byte buffer, two positions must be equal.
         // Otherwise, every character is at least one byte.
@@ -353,8 +353,8 @@ pub fn attach_marker(
             assert!(charpos <= bytepos);
         }
 
-        let mut marker_ref = LispMarkerRef::from_ptr(marker as *mut c_void)
-            .unwrap_or_else(|| panic!("Invalid marker reference."));
+        let mut marker_ref =
+            LispMarkerRef::from_ptr(marker).unwrap_or_else(|| panic!("Invalid marker reference."));
 
         marker_ref.charpos = charpos;
         marker_ref.bytepos = bytepos;
@@ -379,8 +379,8 @@ pub fn attach_marker(
 #[no_mangle]
 pub extern "C" fn unchain_marker(marker: *mut Lisp_Marker) {
     unsafe {
-        let marker_ref = LispMarkerRef::from_ptr(marker as *mut c_void)
-            .unwrap_or_else(|| panic!("Invalid marker reference."));
+        let marker_ref =
+            LispMarkerRef::from_ptr(marker).unwrap_or_else(|| panic!("Invalid marker reference."));
 
         if let Some(mut buf) = marker_ref.buffer() {
             marker_ref.set_buffer(ptr::null_mut());
@@ -613,7 +613,7 @@ impl LispBufferRef {
 /// Return the byte position corresponding to CHARPOS in B.
 #[no_mangle]
 pub extern "C" fn buf_charpos_to_bytepos(b: *mut Lisp_Buffer, charpos: isize) -> isize {
-    let mut buffer_ref = LispBufferRef::from_ptr(b as *mut c_void).unwrap();
+    let mut buffer_ref = LispBufferRef::from_ptr(b).unwrap();
 
     assert!(buffer_ref.beg() <= charpos && charpos <= buffer_ref.z());
 
@@ -733,7 +733,7 @@ pub extern "C" fn buf_charpos_to_bytepos(b: *mut Lisp_Buffer, charpos: isize) ->
 
 #[no_mangle]
 pub unsafe extern "C" fn buf_bytepos_to_charpos(b: *mut Lisp_Buffer, bytepos: isize) -> isize {
-    let mut buffer_ref = LispBufferRef::from_ptr(b as *mut c_void).unwrap();
+    let mut buffer_ref = LispBufferRef::from_ptr(b).unwrap();
 
     assert!(buffer_ref.beg_byte() <= bytepos && bytepos <= buffer_ref.z_byte());
 
@@ -859,8 +859,8 @@ pub unsafe extern "C" fn buf_bytepos_to_charpos(b: *mut Lisp_Buffer, bytepos: is
 
 #[no_mangle]
 pub extern "C" fn clear_charpos_cache(b: *mut Lisp_Buffer) {
-    let mut buf_ref = LispBufferRef::from_ptr(b as *mut c_void)
-        .unwrap_or_else(|| panic!("Invalid buffer reference."));
+    let mut buf_ref =
+        LispBufferRef::from_ptr(b).unwrap_or_else(|| panic!("Invalid buffer reference."));
     buf_ref.is_cached = false;
 }
 
