@@ -42,7 +42,7 @@ Support}), but we hope to improve it in the future.
 @node Mac / GNUstep Basics
 @section Basic Emacs usage under macOS and GNUstep
 
-  By default, the @key{alt} and @key{option} keys are the same as
+  By default, the @key{Alt} and @key{Option} keys are the same as
 @key{Meta}.  The Mac @key{Cmd} key is the same as @key{Super}, and
 Emacs provides a set of key bindings using this modifier key that mimic
 other Mac / GNUstep applications (@pxref{Mac / GNUstep Events}).  You

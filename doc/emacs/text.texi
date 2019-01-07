@@ -1518,18 +1518,17 @@ been replaced by the @samp{slides} document class, which comes with
 @LaTeX{}.}
 
 @vindex tex-default-mode
-  @TeX{} mode has four variants: Plain @TeX{} mode, @LaTeX{} mode,
-Doc@TeX{} mode, and Sli@TeX{} mode.  These distinct major modes differ
-only slightly, and are designed for editing the four different
-formats.  Emacs selects the appropriate mode by looking at the
-contents of the buffer.  (This is done by the @code{tex-mode} command,
-which is normally called automatically when you visit a @TeX{}-like
-file.  @xref{Choosing Modes}.)  If the contents are insufficient to
-determine this, Emacs chooses the mode specified by the variable
+  Emacs provides a @TeX{} major mode for each of these variants: Plain
+@TeX{} mode, @LaTeX{} mode, Doc@TeX{} mode, and Sli@TeX{} mode.  Emacs
+selects the appropriate mode by looking at the contents of the buffer.
+(This is done by invoking the @code{tex-mode} command, which is
+normally called automatically when you visit a @TeX{}-like file.
+@xref{Choosing Modes}.)  If the contents are insufficient to determine
+this, Emacs chooses the mode specified by the variable
 @code{tex-default-mode}; its default value is @code{latex-mode}.  If
 Emacs does not guess right, you can select the correct variant of
-@TeX{} mode using the command @kbd{M-x plain-tex-mode}, @kbd{M-x
-latex-mode}, @kbd{M-x slitex-mode}, or @kbd{doctex-mode}.
+@TeX{} mode using the commands @code{plain-tex-mode},
+@code{latex-mode}, @code{slitex-mode}, or @code{doctex-mode}.
 
   The following sections document the features of @TeX{} mode and its
 variants.  There are several other @TeX{}-related Emacs packages,

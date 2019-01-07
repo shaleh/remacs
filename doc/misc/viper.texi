@@ -2669,10 +2669,10 @@ purpose of mouse search and mouse insert.  By default, this is set to
 @code{double-click-time} in Emacs and to
 @code{mouse-track-multi-click-time} milliseconds in XEmacs.
 @end table
-@kindex @kbd{S-mouse-1}
-@kindex @kbd{S-mouse-2}
-@kindex @kbd{meta shift button1up}
-@kindex @kbd{meta shift button2up}
+@kindex S-mouse-1
+@kindex S-mouse-2
+@kindex META SHIFT button1up
+@kindex META SHIFT button2up
 @vindex viper-multiclick-timeout
 @findex viper-mouse-click-insert-word
 @findex viper-mouse-click-search-word
@@ -3383,60 +3383,60 @@ don't want this macro, put
 in your Viper customization file.
 
 @end table
-@kindex @kbd{%}
-@kindex @kbd{C-c /}
-@kindex @kbd{N}
-@kindex @kbd{n}
-@kindex @kbd{?<cr>}
-@kindex @kbd{/<cr>}
-@kindex @kbd{?<string>}
-@kindex @kbd{/<string>}
-@kindex @kbd{''}
-@kindex @kbd{``}
-@kindex @kbd{]<a-z>}
-@kindex @kbd{[<a-z>}
-@kindex @kbd{'<a-z>}
-@kindex @kbd{`<a-z>}
-@kindex @kbd{m<a-z>}
-@kindex @kbd{[]}
-@kindex @kbd{[[}
-@kindex @kbd{]]}
-@kindex @kbd{@{}
-@kindex @kbd{@}}
-@kindex @kbd{(}
-@kindex @kbd{)}
-@kindex @kbd{M}
-@kindex @kbd{L}
-@kindex @kbd{H}
-@kindex @kbd{G}
-@kindex @kbd{E}
-@kindex @kbd{e}
-@kindex @kbd{B}
-@kindex @kbd{b}
-@kindex @kbd{W}
-@kindex @kbd{w}
-@kindex @kbd{,}
-@kindex @kbd{;}
-@kindex @kbd{T<char>}
-@kindex @kbd{F<char>}
-@kindex @kbd{t<char>}
-@kindex @kbd{f<char>}
-@kindex @kbd{|}
-@kindex @kbd{0}
-@kindex @kbd{<cr>}
-@kindex @kbd{+}
-@kindex @kbd{-}
-@kindex @kbd{^}
-@kindex @kbd{$}
-@kindex @kbd{C-p}
-@kindex @kbd{<lf>}
-@kindex @kbd{<sp>}
-@kindex @kbd{C-n}
-@kindex @kbd{C-h}
-@kindex @kbd{h}
-@kindex @kbd{j}
-@kindex @kbd{k}
-@kindex @kbd{l}
+@kindex %
+@kindex C-c /
+@kindex N
+@kindex n
+@kindex ?<cr>
+@kindex /<cr>
+@kindex ?<string>
+@kindex /<string>
+@kindex ''
+@kindex ``
+@kindex ]<a-z>
+@kindex [<a-z>
+@kindex '<a-z>
+@kindex `<a-z>
+@kindex m<a-z>
+@kindex []
+@kindex [[
+@kindex ]]
+@kindex @{
+@kindex @}
+@kindex (
+@kindex )
+@kindex M
+@kindex L
+@kindex H
+@kindex G
+@kindex E
+@kindex e
+@kindex B
+@kindex b
+@kindex W
+@kindex w
+@kindex ,
+@kindex ;
+@kindex T<char>
+@kindex F<char>
+@kindex t<char>
+@kindex f<char>
+@kindex |
+@kindex 0
+@kindex CR
+@kindex +
+@kindex -
+@kindex ^
+@kindex $
+@kindex C-p
+@kindex LF
+@kindex SPC
+@kindex C-n
+@kindex C-h
+@kindex h
+@kindex j
+@kindex k
+@kindex l
 @vindex viper-parse-sexp-ignore-comments
 
 @node Marking

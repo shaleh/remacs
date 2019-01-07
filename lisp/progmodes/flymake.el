@@ -35,7 +35,16 @@
 
 ;;; Code:
 
-(eval-when-compile (require 'cl-lib))
+(require 'cl-lib)
+(require 'thingatpt) ; end-of-thing
+(require 'warnings) ; warning-numeric-level, display-warning
+(require 'compile) ; for some faces
+;; We need the next require to avoid compiler warnings and run-time
+;; errors about mouse-wheel-up/down-event in builds --without-x, where
+;; mwheel is not preloaded.
+(require 'mwheel)
+;; when-let*, if-let*, hash-table-keys, hash-table-values:
+(eval-when-compile (require 'subr-x))
 
 (defgroup flymake nil
   "Universal on-the-fly syntax checker."

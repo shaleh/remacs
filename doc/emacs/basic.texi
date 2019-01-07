@@ -289,6 +289,7 @@ numeric argument @var{n}, move to @var{n}/10 of the way from the top.
 
 @item M->
 @kindex M->
+@kindex C-END
 @findex end-of-buffer
 Move to the end of the buffer (@code{end-of-buffer}).
 

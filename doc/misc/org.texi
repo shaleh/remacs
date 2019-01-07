@@ -1461,10 +1461,10 @@ Demote current heading by one level.
 Promote the current subtree by one level.
 @orgcmd{M-S-@key{RIGHT},org-demote-subtree}
 Demote the current subtree by one level.
-@orgcmd{M-@key{up},org-move-subtree-up}
+@orgcmd{M-@key{UP},org-move-subtree-up}
 Move subtree up (swap with previous subtree of same
 level).
-@orgcmd{M-@key{down},org-move-subtree-down}
+@orgcmd{M-@key{DOWN},org-move-subtree-down}
 Move subtree down (swap with next subtree of same level).
 @orgcmd{M-h,org-mark-element}
 Mark the element at point.  Hitting repeatedly will mark subsequent elements
@@ -4410,7 +4410,7 @@ Then each time you turn an entry from a TODO (not-done) state into any of the
 DONE states, a line @samp{CLOSED: [timestamp]} will be inserted just after
 the headline.  If you turn the entry back into a TODO item through further
 state cycling, that line will be removed again.  If you turn the entry back
-to a non-TODO state (by pressing @kbd{C-c C-t @key{SPC}} for example), that line
+to a non-TODO state (by pressing @key{C-c C-t @key{SPC}} for example), that line
 will also be removed, unless you set @code{org-closed-keep-when-no-todo} to
 non-@code{nil}.  If you want to record a note along with the timestamp,
 use@footnote{The corresponding in-buffer setting is: @code{#+STARTUP:
@@ -8013,7 +8013,7 @@ Remove current file from the list of agenda files.
 @orgcmd{C-',org-cycle-agenda-files}
 @itemx C-,
 Cycle through agenda file list, visiting one file after the other.
-@item M-x org-switchb @key{RET}
+@item M-x org-iswitchb @key{RET}
 Command to use an @code{iswitchb}-like interface to switch to and between Org
 buffers.
 @end table
@@ -10399,14 +10399,14 @@ To disable it, simply use
 
 CD@LaTeX{} mode is a minor mode that is normally used in combination with a
 major @LaTeX{} mode like AUC@TeX{} in order to speed-up insertion of
-environments and math templates.  Inside Org mode, you can make use of
-some of the features of CD@LaTeX{} mode.  You need to install
-@file{cdlatex.el} and @file{texmathp.el} (the latter comes also with
-AUC@TeX{}) from @url{https://staff.fnwi.uva.nl/c.dominik/Tools/cdlatex}.
-Don't use CD@LaTeX{} mode itself under Org mode, but use the light
-version @code{org-cdlatex-mode} that comes as part of Org mode.  Turn it
-on for the current buffer with @kbd{M-x org-cdlatex-mode RET}, or for all
-Org files with
+environments and math templates.  Inside Org mode, you can make use of some
+of the features of CD@LaTeX{} mode.  You need to install @file{cdlatex.el}
+and @file{texmathp.el} (the latter comes also with AUC@TeX{}) from
+@url{https://staff.fnwi.uva.nl/c.dominik/Tools/cdlatex}.  Don't use
+CD@LaTeX{} mode itself under Org mode, but use the light version
+@code{org-cdlatex-mode} that comes as part of Org mode.  Turn it on for the
+current buffer with @kbd{M-x org-cdlatex-mode @key{RET}}, or for all Org
+files with
 
 @lisp
 (add-hook 'org-mode-hook 'turn-on-org-cdlatex)
@@ -10609,8 +10609,8 @@ inserted from the export dispatcher (@pxref{The export dispatcher}) using the
 @code{Insert template} command by pressing @key{#}.  To insert keywords
 individually, a good way to make sure the keyword is correct is to type
 @code{#+} and then to use @kbd{M-@key{TAB}}@footnote{Many desktops intercept
-@kbd{M-TAB} to switch windows.  Use @kbd{C-M-i} or @kbd{@key{ESC} @key{TAB}}
-instead.} for completion.
+@kbd{M-@key{TAB}} to switch windows.  Use @kbd{C-M-i} or @kbd{@key{ESC}
+@key{TAB}} instead.} for completion.
 
 The export keywords available for every back-end, and their equivalent global
 variables, include:
@@ -10671,7 +10671,7 @@ code blocks contained in them.
 Org displays this title.  For long titles, use multiple @code{#+TITLE} lines.
 
 @item EXPORT_FILE_NAME
-@cindex #+EXPORT_FILE_NAME
+@cindex @code{#+EXPORT_FILE_NAME}
 The name of the output file to be generated.  Otherwise, Org generates the
 file name based on the buffer name and the extension based on the back-end
 format.
@@ -13933,10 +13933,10 @@ This paragraph is preceded by...
 
 @node Plain lists in Texinfo export
 @subsection Plain lists in Texinfo export
-@cindex #+ATTR_TEXINFO, in plain lists
+@cindex @code{#+ATTR_TEXINFO}, in plain lists
 @cindex Two-column tables, in Texinfo export
 
-@cindex :table-type attribute, in Texinfo export
+@cindex @code{:table-type} attribute, in Texinfo export
 The Texinfo export back-end by default converts description lists in the Org
 file using the default command @code{@@table}, which results in a table with
 two columns.  To change this behavior, specify @code{:table-type} with
@@ -13944,14 +13944,14 @@ two columns.  To change this behavior, specify @code{:table-type} with
 @inforef{Two-column Tables,,texinfo}.
 
 @vindex org-texinfo-table-default-markup
-@cindex :indic attribute, in Texinfo export
+@cindex @code{:indic} attribute, in Texinfo export
 The Texinfo export back-end by default also applies a text highlight based on
 the defaults stored in @code{org-texinfo-table-default-markup}.  To override
 the default highlight command, specify another one with the @code{:indic}
 attribute.
 
 @cindex Multiple entries in two-column tables, in Texinfo export
-@cindex :sep attribute, in Texinfo export
+@cindex @code{:sep} attribute, in Texinfo export
 Org syntax is limited to one entry per list item.  Nevertheless, the Texinfo
 export back-end can split that entry according to any text provided through
 the @code{:sep} attribute.  Each part then becomes a new entry in the first
@@ -14157,26 +14157,27 @@ and write it to @code{org-icalendar-combined-agenda-file} file name.
 
 @vindex org-use-property-inheritance
 @vindex org-icalendar-include-body
-@cindex property, SUMMARY
-@cindex property, DESCRIPTION
-@cindex property, LOCATION
-@cindex property, TIMEZONE
-The iCalendar export back-end includes SUMMARY, DESCRIPTION, LOCATION and
-TIMEZONE properties from the Org entries when exporting.  To force the
-back-end to inherit the LOCATION and TIMEZONE properties, configure the
-@code{org-use-property-inheritance} variable.
+@cindex property, @code{SUMMARY}
+@cindex property, @code{DESCRIPTION}
+@cindex property, @code{LOCATION}
+@cindex property, @code{TIMEZONE}
+The iCalendar export back-end includes @code{SUMMARY}, @code{DESCRIPTION},
+@code{LOCATION} and @code{TIMEZONE} properties from the Org entries when
+exporting.  To force the back-end to inherit the @code{LOCATION} and
+@code{TIMEZONE} properties, configure the @code{org-use-property-inheritance}
+variable.
 
-When Org entries do not have SUMMARY, DESCRIPTION and LOCATION properties,
-the iCalendar export back-end derives the summary from the headline, and
-derives the description from the body of the Org item.  The
-@code{org-icalendar-include-body} variable limits the maximum number of
+When Org entries do not have @code{SUMMARY}, @code{DESCRIPTION} and
+@code{LOCATION} properties, the iCalendar export back-end derives the summary
+from the headline, and derives the description from the body of the Org item.
+The @code{org-icalendar-include-body} variable limits the maximum number of
 characters of the content are turned into its description.
 
-The TIMEZONE property can be used to specify a per-entry time zone, and will
-be applied to any entry with timestamp information.  Time zones should be
-specified as per the IANA time zone database format, e.g.@: ``Asia/Almaty''.
-Alternately, the property value can be ``UTC'', to force UTC time for this
-entry only.
+The @code{TIMEZONE} property can be used to specify a per-entry time zone,
+and will be applied to any entry with timestamp information.  Time zones
+should be specified as per the IANA time zone database format, e.g.@:
+``Asia/Almaty''.  Alternately, the property value can be ``UTC'', to force
+UTC time for this entry only.
 
 Exporting to iCalendar format depends in large part on the capabilities of
 the destination application.  Some are more lenient than others.  Consult the
@@ -17503,7 +17504,7 @@ have a lower ASCII number than the lowest priority.
 @item #+PROPERTY: Property_Name Value
 This line sets a default inheritance value for entries in the current
 buffer, most useful for specifying the allowed values of a property.
-@cindex #+SETUPFILE
+@cindex @code{#+SETUPFILE}
 @item #+SETUPFILE: file or URL
 The setup file or a URL pointing to such file is for additional in-buffer
 settings.  Org loads this file and parses it for any settings in it only when

@@ -897,36 +897,15 @@ Subclasses to override slot attributes.")
   (should (= (length (eieio-build-class-alist 'opt-test1 nil)) 2))
   (should (= (length (eieio-build-class-alist 'opt-test1 t)) 1)))
 
-(mapatoms (lambda (a)
-            (when (and (fboundp a)
-                       (string-match "\\`cl--?generic"
-                                     (symbol-name a)))
-              (trace-function-background a))))
-
 (defclass eieio--testing () ())
 
 (defmethod constructor :static ((_x eieio--testing) newname &rest _args)
   (list newname 2))
 
-(defun eieio-test-dump-trace ()
-  (message "%s" (with-current-buffer "*trace-output*"
-                  (goto-char (point-min))
-                  (while (re-search-forward "[\0-\010\013-\037]" nil t)
-                    (insert (prog1 (format "\\%03o" (char-before))
-                              (delete-char -1))))
-                  (buffer-string))))
-(eieio-test-dump-trace)
-
 (ert-deftest eieio-test-37-obsolete-name-in-constructor ()
-  ;; Skipping on Remacs as this fails non-deterministically on Travis
-  ;; https://github.com/Wilfred/remacs/issues/159
-  (skip-unless (equal invocation-name "emacs"))
-  ;; FIXME repeated intermittent failures on hydra (bug#24503)
-  (with-current-buffer "*trace-output*"
-    (erase-buffer))
-  (unwind-protect
-      (should (equal (eieio--testing "toto") '("toto" 2)))
-    (eieio-test-dump-trace)))
+  ;; FIXME repeated intermittent failures on hydra and elsewhere (bug#24503).
+  :tags '(:unstable)
+  (should (equal (eieio--testing "toto") '("toto" 2))))
 
 (ert-deftest eieio-autoload ()
   "Tests to see whether reftex-auc has been autoloaded"

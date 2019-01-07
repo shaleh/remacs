@@ -1548,9 +1548,9 @@ characters more prominent on display.  @xref{Glyphless Chars,,
 Glyphless Character Display, elisp, The Emacs Lisp Reference Manual},
 for details.
 
-@cindex curly quotes
-@cindex curved quotes
-@cindex homoglyph face
+@cindex curly quotes, and terminal capabilities
+@cindex curved quotes, and terminal capabilities
+@cindex @code{homoglyph} face
 
 Emacs tries to determine if the curved quotes @samp{‘} and @samp{’}
 can be displayed on the current display.  By default, if this seems to
@@ -1801,7 +1801,7 @@ may wish to customize the variables
 @code{display-line-numbers-width} to a large enough value, to avoid
 occasional miscalculations of space reserved for the line numbers.
 
-@cindex line-number face
+@cindex @code{line-number} face
 The line numbers are displayed in a special face @code{line-number}.
 The current line number is displayed in a different face,
 @code{line-number-current-line}, so you can make the current line's
