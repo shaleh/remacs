@@ -80,15 +80,9 @@ impl LispObarrayRef {
     }
 }
 
-impl LispObject {
-    pub fn as_obarray_or_error(self) -> LispObarrayRef {
-        LispObarrayRef::new(check_obarray(self))
-    }
-}
-
 impl From<LispObject> for LispObarrayRef {
     fn from(o: LispObject) -> LispObarrayRef {
-        o.as_obarray_or_error()
+        LispObarrayRef::new(check_obarray(o))
     }
 }
 
@@ -97,7 +91,7 @@ impl From<LispObject> for Option<LispObarrayRef> {
         if o.is_nil() {
             None
         } else {
-            Some(o.as_obarray_or_error())
+            Some(o.into())
         }
     }
 }
