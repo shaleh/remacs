@@ -2617,7 +2617,7 @@ read_integer (Lisp_Object readcharfun, EMACS_INT radix)
       invalid_syntax (buf);
     }
 
-  return string_to_number (buf, radix, false);
+  return string_to_number (buf, radix, 0);
 }
 
 
@@ -3426,7 +3426,7 @@ read1 (Lisp_Object readcharfun, int *pch, bool first_in_list)
 
 	if (!quoted && !uninterned_symbol)
 	  {
-	    Lisp_Object result = string_to_number (read_buffer, 10, false);
+	    Lisp_Object result = string_to_number (read_buffer, 10, 0);
 	    if (! NILP (result))
 	      return unbind_to (count, result);
 	  }

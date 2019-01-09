@@ -48,8 +48,10 @@ _GL_INLINE_HEADER_BEGIN
   /* Use a function rather than a macro, to avoid gcc warnings
      "warning: statement with no effect".  */
 BINARY_IO_INLINE int
-__gl_setmode (int fd _GL_UNUSED, int mode _GL_UNUSED)
+__gl_setmode (int fd, int mode)
 {
+  (void) fd;
+  (void) mode;
   return O_BINARY;
 }
 #endif
@@ -64,7 +66,7 @@ __gl_setmode (int fd _GL_UNUSED, int mode _GL_UNUSED)
 # define SET_BINARY(fd) ((void) (!isatty (fd) ? (set_binary_mode (fd, O_BINARY), 0) : 0))
 #else
 BINARY_IO_INLINE int
-__gl_setmode_check (int fd _GL_UNUSED) { return 0; }
+__gl_setmode_check (int fd) { return 0; }
 #endif
 
 /* Set FD's mode to MODE, which should be either O_TEXT or O_BINARY.
