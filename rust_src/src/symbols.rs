@@ -1,5 +1,8 @@
 //! symbols support
 
+use std::fmt;
+use std::fmt::{Debug, Formatter};
+
 use remacs_macros::lisp_fn;
 
 use crate::{
@@ -171,6 +174,10 @@ impl LispObject {
         self.get_type() == Lisp_Type::Lisp_Symbol
     }
 
+    pub fn force_symbol(self) -> LispSymbolRef {
+        LispSymbolRef::new(self.symbol_ptr_value() as *mut Lisp_Symbol)
+    }
+
     pub fn as_symbol(self) -> Option<LispSymbolRef> {
         self.into()
     }
@@ -198,6 +205,12 @@ impl LispObject {
 
         let lispsym_offset = unsafe { &lispsym as *const _ as EmacsInt };
         ptr_value + lispsym_offset
+    }
+}
+
+impl Debug for LispSymbolRef {
+    fn fmt(&self, f: &mut Formatter) -> Result<(), fmt::Error> {
+        write!(f, "'{:?}", self.symbol_name())
     }
 }
 
