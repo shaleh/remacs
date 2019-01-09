@@ -49,10 +49,9 @@ impl LispObarrayRef {
     /// symbol would be if it were present.
     pub fn lookup(&self, name: LispObject) -> LispObject {
         let string = name.symbol_or_string_as_string();
-        let obj = LispObject::from(self);
         unsafe {
             oblookup(
-                obj,
+                self.into(),
                 string.const_sdata_ptr(),
                 string.len_chars(),
                 string.len_bytes(),
@@ -67,15 +66,14 @@ impl LispObarrayRef {
     pub fn intern(&self, string: LispStringRef) -> LispObject {
         let string = string.into();
         let tem = self.lookup(string);
-        let obj = LispObject::from(self);
         if tem.is_symbol() {
             tem
         } else if LispObject::from_raw(unsafe { globals.Vpurify_flag }).is_not_nil() {
             // When Emacs is running lisp code to dump to an executable, make
             // use of pure storage.
-            intern_driver(unsafe { Fpurecopy(string) }, obj, tem)
+            intern_driver(unsafe { Fpurecopy(string) }, self.into(), tem)
         } else {
-            intern_driver(string, obj, tem)
+            intern_driver(string, self.into(), tem)
         }
     }
 }
@@ -99,12 +97,13 @@ impl From<LispObject> for Option<LispObarrayRef> {
 /// Intern (e.g. create a symbol from) a string.
 pub fn intern<T: AsRef<str>>(string: T) -> LispSymbolRef {
     let s = string.as_ref();
-    LispSymbolRef::from(unsafe {
+    unsafe {
         intern_1(
             s.as_ptr() as *const libc::c_char,
             s.len() as libc::ptrdiff_t,
         )
-    })
+    }
+    .into()
 }
 
 #[no_mangle]
