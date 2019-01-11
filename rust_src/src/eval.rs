@@ -8,7 +8,7 @@ use crate::{
     data::{defalias, fset, indirect_function, indirect_function_lisp, set, set_default},
     lisp::{defsubr, is_autoload},
     lisp::{LispObject, LispSubrRef},
-    lists::{assq, car, cdr, get, memq, nth, put, Fcar, Fcdr},
+    lists::{assq, car, cdr, get, memq, nth, put},
     lists::{LispCons, LispConsCircularChecks, LispConsEndChecks},
     multibyte::LispStringRef,
     obarray::loadhist_attach,
@@ -403,7 +403,7 @@ pub fn letX(args: LispCons) -> LispObject {
     }
 
     // The symbols are bound. Now evaluate the body
-    let val = Fprogn(body);
+    let val = progn(body);
 
     unbind_to(count, val)
 }
@@ -460,7 +460,7 @@ pub fn lisp_let(args: LispCons) -> LispObject {
     }
 
     // The symbols are bound. Now evaluate the body
-    let val = Fprogn(body);
+    let val = progn(body);
 
     unbind_to(count, val)
 }
@@ -828,7 +828,7 @@ pub fn autoload_do_load(
     };
 
     unsafe {
-        Fload(Fcar(Fcdr(fundef)), ignore_errors, Qt, Qnil, Qt);
+        Fload(car(cdr(fundef)), ignore_errors, Qt, Qnil, Qt);
 
         // Once loading finishes, don't undo it.
         Vautoload_queue = Qt;
