@@ -1328,7 +1328,6 @@ bool
 internal_equal (Lisp_Object o1, Lisp_Object o2, int depth, bool props,
 		Lisp_Object ht)
 {
- tail_recurse:
   if (depth > 10)
     {
       eassert (equal_kind != EQUAL_NO_QUIT);
