@@ -15,7 +15,6 @@ use crate::{
     chartable::{LispCharTableRef, LispSubCharTableAsciiRef, LispSubCharTableRef},
     data::aref,
     frames::LispFrameRef,
-    lisp::defsubr,
     lisp::{ExternalPtr, LispObject, LispSubrRef},
     lists::{inorder, nth, sort_list},
     multibyte::MAX_CHAR,

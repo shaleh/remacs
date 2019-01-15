@@ -9,7 +9,6 @@ use crate::{
     buffers::LispBufferLocalValueRef,
     data::Lisp_Fwd,
     data::{indirect_function, set},
-    lisp::defsubr,
     lisp::{ExternalPtr, LispObject},
     multibyte::LispStringRef,
     remacs_sys::{

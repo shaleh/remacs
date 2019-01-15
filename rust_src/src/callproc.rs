@@ -4,7 +4,7 @@ use crate::{
     coding::encode_file_name,
     eval::unbind_to,
     fileio::expand_file_name,
-    lisp::{defsubr, LispObject},
+    lisp::LispObject,
     remacs_macros::lisp_fn,
     remacs_sys::NULL_DEVICE,
     remacs_sys::{

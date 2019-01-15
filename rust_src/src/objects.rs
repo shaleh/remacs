@@ -3,7 +3,7 @@
 use remacs_macros::lisp_fn;
 
 use crate::{
-    lisp::{defsubr, LispObject},
+    lisp::LispObject,
     remacs_sys::{equal_kind, internal_equal, Qnil},
 };
 

@@ -6,7 +6,6 @@ use crate::{
     buffers::current_buffer,
     eval::unbind_to,
     frames::{selected_frame, window_frame_live_or_selected_with_action},
-    lisp::defsubr,
     lisp::LispObject,
     lists::{LispCons, LispConsCircularChecks, LispConsEndChecks},
     numbers::IsLispNatnum,

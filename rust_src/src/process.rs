@@ -5,7 +5,6 @@ use remacs_macros::lisp_fn;
 
 use crate::{
     buffers::{current_buffer, get_buffer, LispBufferOrName, LispBufferRef},
-    lisp::defsubr,
     lisp::{ExternalPtr, LispObject, ProcessIter},
     lists::{assoc, car, cdr, plist_put},
     multibyte::LispStringRef,

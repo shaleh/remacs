@@ -6,7 +6,6 @@ use std::sync::Mutex;
 use remacs_macros::lisp_fn;
 
 use crate::{
-    lisp::defsubr,
     lisp::LispObject,
     remacs_sys::{
         EmacsDouble, EmacsInt, EmacsUint, Lisp_Bits, Lisp_Type, EMACS_INT_MAX, INTMASK, USE_LSB_TAG,

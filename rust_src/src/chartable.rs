@@ -5,7 +5,6 @@ use libc;
 use remacs_macros::lisp_fn;
 
 use crate::{
-    lisp::defsubr,
     lisp::{ExternalPtr, LispObject},
     remacs_sys::{
         char_table_specials, equal_kind, pvec_type, Lisp_Char_Table, Lisp_Sub_Char_Table,

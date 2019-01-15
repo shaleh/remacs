@@ -12,7 +12,7 @@ use crate::{
     data::{aref, fset, indirect_function, set},
     eval::{autoload_do_load, unbind_to},
     keyboard::lucid_event_type_list_p,
-    lisp::{defsubr, LispObject},
+    lisp::LispObject,
     lists::{nth, setcdr},
     lists::{LispCons, LispConsCircularChecks, LispConsEndChecks},
     obarray::intern,

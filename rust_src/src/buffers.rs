@@ -17,7 +17,6 @@ use crate::{
     eval::unbind_to,
     fileio::{expand_file_name, find_file_name_handler},
     frames::LispFrameRef,
-    lisp::defsubr,
     lisp::{ExternalPtr, LispMiscRef, LispObject, LiveBufferIter},
     lists::{car, cdr, list, member},
     lists::{LispConsCircularChecks, LispConsEndChecks},

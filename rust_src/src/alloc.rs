@@ -3,7 +3,7 @@
 use remacs_macros::lisp_fn;
 
 use crate::{
-    lisp::{defsubr, LispObject},
+    lisp::LispObject,
     remacs_sys::globals,
     remacs_sys::EmacsInt,
     remacs_sys::{bool_vector_fill, bool_vector_set, bounded_number, make_uninit_bool_vector},
