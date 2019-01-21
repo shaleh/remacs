@@ -90,6 +90,10 @@ impl LispStringRef {
         unsafe { lisp_string_width(self.into(), -1, ptr::null_mut(), ptr::null_mut()) as usize }
     }
 
+    pub fn is_empty(self) -> bool {
+        self.len_chars() == 0
+    }
+
     pub fn is_multibyte(self) -> bool {
         self.size_byte >= 0
     }
