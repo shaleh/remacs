@@ -335,6 +335,20 @@ struct textprop_rec
   ptrdiff_t to;			/* refer to VAL (the target string) */
 };
 
+void refactored_section(Lisp_Object ch, EMACS_INT *len_bytes, bool* multibyte)
+{
+  CHECK_CHARACTER (ch);
+  char c = XFASTINT (ch);
+  EMACS_INT len = CHAR_BYTES (c);
+  if (STRING_BYTES_BOUND - *len_bytes < len)
+    {
+      string_overflow ();
+    }
+  *len_bytes += len;
+  if (! ASCII_CHAR_P (c) && ! CHAR_BYTE8_P (c))
+    *multibyte = 1;
+}
+
 extern Lisp_Object
 concat (ptrdiff_t nargs, Lisp_Object *args,
 	enum Lisp_Type target_type, bool last_special)
@@ -371,15 +385,6 @@ concat (ptrdiff_t nargs, Lisp_Object *args,
   else
     last_tail = Qnil;
 
-  /* Check each argument.  */
-  for (argnum = 0; argnum < nargs; argnum++)
-    {
-      this = args[argnum];
-      if (!(CONSP (this) || NILP (this) || VECTORP (this) || STRINGP (this)
-	    || COMPILEDP (this) || BOOL_VECTOR_P (this)))
-	wrong_type_argument (Qsequencep, this);
-    }
-
   /* Compute total length in chars of arguments in RESULT_LEN.
      If desired output is a string, also compute length in bytes
      in RESULT_LEN_BYTE, and determine in SOME_MULTIBYTE
@@ -390,7 +395,14 @@ concat (ptrdiff_t nargs, Lisp_Object *args,
   for (argnum = 0; argnum < nargs; argnum++)
     {
       EMACS_INT len;
+
       this = args[argnum];
+
+      /* Check each argument. */
+      if (!(CONSP (this) || NILP (this) || VECTORP (this) || STRINGP (this)
+	    || COMPILEDP (this) || BOOL_VECTOR_P (this)))
+	wrong_type_argument (Qsequencep, this);
+
       len = XFASTINT (Flength (this));
       if (target_type == Lisp_String)
 	{
@@ -401,34 +413,24 @@ concat (ptrdiff_t nargs, Lisp_Object *args,
 	  int c;
 	  ptrdiff_t this_len_byte;
 
-	  if (VECTORP (this) || COMPILEDP (this))
-	    for (i = 0; i < len; i++)
-	      {
-		ch = AREF (this, i);
-		CHECK_CHARACTER (ch);
-		c = XFASTINT (ch);
-		this_len_byte = CHAR_BYTES (c);
-		if (STRING_BYTES_BOUND - result_len_byte < this_len_byte)
-		  string_overflow ();
-		result_len_byte += this_len_byte;
-		if (! ASCII_CHAR_P (c) && ! CHAR_BYTE8_P (c))
-		  some_multibyte = 1;
-	      }
-	  else if (BOOL_VECTOR_P (this) && bool_vector_size (this) > 0)
-	    wrong_type_argument (Qintegerp, Faref (this, make_number (0)));
+	  if (BOOL_VECTOR_P (this) && bool_vector_size (this) > 0)
+            {
+              wrong_type_argument (Qintegerp, Faref (this, make_number (0)));
+            }
+          else if (VECTORP (this) || COMPILEDP (this))
+            {
+              for (i = 0; i < len; i++)
+                {
+                  refactored_section(AREF (this, i), &result_len_byte, &some_multibyte);
+                }
+            }
 	  else if (CONSP (this))
-	    for (; CONSP (this); this = XCDR (this))
-	      {
-		ch = XCAR (this);
-		CHECK_CHARACTER (ch);
-		c = XFASTINT (ch);
-		this_len_byte = CHAR_BYTES (c);
-		if (STRING_BYTES_BOUND - result_len_byte < this_len_byte)
-		  string_overflow ();
-		result_len_byte += this_len_byte;
-		if (! ASCII_CHAR_P (c) && ! CHAR_BYTE8_P (c))
-		  some_multibyte = 1;
-	      }
+            {
+              for (; CONSP (this); this = XCDR (this))
+                {
+                  refactored_section(XCAR (this), &result_len_byte, &some_multibyte);
+                }
+            }
 	  else if (STRINGP (this))
 	    {
 	      if (STRING_MULTIBYTE (this))
@@ -437,8 +439,10 @@ concat (ptrdiff_t nargs, Lisp_Object *args,
 		  this_len_byte = SBYTES (this);
 		}
 	      else
-		this_len_byte = count_size_as_multibyte (SDATA (this),
-							 SCHARS (this));
+                {
+                  this_len_byte = count_size_as_multibyte (SDATA (this),
+                                                           SCHARS (this));
+                }
 	      if (STRING_BYTES_BOUND - result_len_byte < this_len_byte)
 		string_overflow ();
 	      result_len_byte += this_len_byte;
@@ -453,25 +457,32 @@ concat (ptrdiff_t nargs, Lisp_Object *args,
   if (! some_multibyte)
     result_len_byte = result_len;
 
+  toindex = 0, toindex_byte = 0;
+
   /* Create the output object.  */
   if (target_type == Lisp_Cons)
-    val = Fmake_list (make_number (result_len), Qnil);
+    {
+      val = Fmake_list (make_number (result_len), Qnil);
+
+      /* In `append', if all but last arg are nil, return last arg.  */
+      if (EQ (val, Qnil))
+        return last_tail;
+
+      /* Copy the contents of the args into the result.  */
+      tail = val, toindex = -1; /* -1 in toindex is flag we are making a list */
+    }
   else if (target_type == Lisp_Vectorlike)
-    val = Fmake_vector (make_number (result_len), Qnil);
+    {
+      val = Fmake_vector (make_number (result_len), Qnil);
+    }
   else if (some_multibyte)
-    val = make_uninit_multibyte_string (result_len, result_len_byte);
+    {
+      val = make_uninit_multibyte_string (result_len, result_len_byte);
+    }
   else
-    val = make_uninit_string (result_len);
-
-  /* In `append', if all but last arg are nil, return last arg.  */
-  if (target_type == Lisp_Cons && EQ (val, Qnil))
-    return last_tail;
-
-  /* Copy the contents of the args into the result.  */
-  if (CONSP (val))
-    tail = val, toindex = -1; /* -1 in toindex is flag we are making a list */
-  else
-    toindex = 0, toindex_byte = 0;
+    {
+      val = make_uninit_string (result_len);
+    }
 
   prev = Qnil;
   if (STRINGP (val))
@@ -479,45 +490,44 @@ concat (ptrdiff_t nargs, Lisp_Object *args,
 
   for (argnum = 0; argnum < nargs; argnum++)
     {
-      Lisp_Object thislen;
       ptrdiff_t thisleni = 0;
       register ptrdiff_t thisindex = 0;
       register ptrdiff_t thisindex_byte = 0;
 
       this = args[argnum];
       if (!CONSP (this))
-	thislen = Flength (this), thisleni = XINT (thislen);
+        {
+          Lisp_Object thislen = Flength (this);
+          thisleni = XINT (thislen);
+        }
 
-      /* Between strings of the same kind, copy fast.  */
-      if (STRINGP (this) && STRINGP (val)
-	  && STRING_MULTIBYTE (this) == some_multibyte)
-	{
-	  ptrdiff_t thislen_byte = SBYTES (this);
+      if (STRINGP (this) && STRINGP (val))
+        {
+          if (string_intervals (this))
+            {
+              textprops[num_textprops].argnum = argnum;
+              textprops[num_textprops].from = 0;
+              textprops[num_textprops++].to = toindex;
+            }
 
-	  memcpy (SDATA (val) + toindex_byte, SDATA (this), SBYTES (this));
-	  if (string_intervals (this))
-	    {
-	      textprops[num_textprops].argnum = argnum;
-	      textprops[num_textprops].from = 0;
-	      textprops[num_textprops++].to = toindex;
-	    }
-	  toindex_byte += thislen_byte;
-	  toindex += thisleni;
-	}
-      /* Copy a single-byte string to a multibyte string.  */
-      else if (STRINGP (this) && STRINGP (val))
-	{
-	  if (string_intervals (this))
-	    {
-	      textprops[num_textprops].argnum = argnum;
-	      textprops[num_textprops].from = 0;
-	      textprops[num_textprops++].to = toindex;
-	    }
-	  toindex_byte += copy_text (SDATA (this),
-				     SDATA (val) + toindex_byte,
-				     SCHARS (this), 0, 1);
-	  toindex += thisleni;
-	}
+          /* Between strings of the same kind, copy fast.  */
+	  if (STRING_MULTIBYTE (this) == some_multibyte)
+            {
+              ptrdiff_t thislen_byte = SBYTES (this);
+
+              memcpy (SDATA (val) + toindex_byte, SDATA (this), SBYTES (this));
+              toindex_byte += thislen_byte;
+            }
+          else
+            {
+              /* Copy a single-byte string to a multibyte string.  */
+              toindex_byte += copy_text (SDATA (this),
+                                         SDATA (val) + toindex_byte,
+                                         SCHARS (this), 0, 1);
+            }
+
+          toindex += thisleni;
+        }
       else
 	/* Copy element by element.  */
 	while (1)
