@@ -349,6 +349,85 @@ void refactored_section(Lisp_Object ch, EMACS_INT *len_bytes, bool* multibyte)
     *multibyte = 1;
 }
 
+/* Compute total length in chars of arguments in RESULT_LEN.
+   If desired output is a string, also compute length in bytes
+   in RESULT_LEN_BYTE, and determine in SOME_MULTIBYTE
+   whether the result should be a multibyte string.  */
+void refactored_concat_compute_length(ptrdiff_t nargs, Lisp_Object *args,
+                                      EMACS_INT *result_len,
+                                      EMACS_INT *result_len_byte,
+                                      bool* multibyte)
+{
+  Lisp_Object this;
+  EMACS_INT argnum;
+
+  for (argnum = 0; argnum < nargs; argnum++)
+    {
+      EMACS_INT len;
+
+      this = args[argnum];
+
+      /* Check each argument. */
+      if (!(CONSP (this) || NILP (this) || VECTORP (this) || STRINGP (this)
+	    || COMPILEDP (this) || BOOL_VECTOR_P (this)))
+	wrong_type_argument (Qsequencep, this);
+
+      len = XFASTINT (Flength (this));
+      if (target_type == Lisp_String)
+	{
+	  /* We must count the number of bytes needed in the string
+	     as well as the number of characters.  */
+	  ptrdiff_t i;
+	  Lisp_Object ch;
+	  int c;
+	  ptrdiff_t this_len_byte;
+
+	  if (BOOL_VECTOR_P (this) && bool_vector_size (this) > 0)
+            {
+              wrong_type_argument (Qintegerp, Faref (this, make_number (0)));
+            }
+          else if (VECTORP (this) || COMPILEDP (this))
+            {
+              for (i = 0; i < len; i++)
+                {
+                  refactored_section(AREF (this, i), result_len_byte, &multibyte);
+                }
+            }
+	  else if (CONSP (this))
+            {
+              for (; CONSP (this); this = XCDR (this))
+                {
+                  refactored_section(XCAR (this), result_len_byte, &multibyte);
+                }
+            }
+	  else if (STRINGP (this))
+	    {
+	      if (STRING_MULTIBYTE (this))
+		{
+		  *multibyte = 1;
+		  this_len_byte = SBYTES (this);
+		}
+	      else
+                {
+                  this_len_byte = count_size_as_multibyte (SDATA (this),
+                                                           SCHARS (this));
+                }
+	      if (STRING_BYTES_BOUND - *result_len_byte < this_len_byte)
+		string_overflow ();
+	      *result_len_byte += this_len_byte;
+	    }
+	}
+
+      *result_len += len;
+      if (MOST_POSITIVE_FIXNUM < *result_len)
+	memory_full (SIZE_MAX);
+    }
+
+  if (! *multibyte)
+    *result_len_byte = *result_len;
+
+}
+
 extern Lisp_Object
 concat (ptrdiff_t nargs, Lisp_Object *args,
 	enum Lisp_Type target_type, bool last_special)
@@ -385,77 +464,10 @@ concat (ptrdiff_t nargs, Lisp_Object *args,
   else
     last_tail = Qnil;
 
-  /* Compute total length in chars of arguments in RESULT_LEN.
-     If desired output is a string, also compute length in bytes
-     in RESULT_LEN_BYTE, and determine in SOME_MULTIBYTE
-     whether the result should be a multibyte string.  */
   result_len_byte = 0;
   result_len = 0;
   some_multibyte = 0;
-  for (argnum = 0; argnum < nargs; argnum++)
-    {
-      EMACS_INT len;
-
-      this = args[argnum];
-
-      /* Check each argument. */
-      if (!(CONSP (this) || NILP (this) || VECTORP (this) || STRINGP (this)
-	    || COMPILEDP (this) || BOOL_VECTOR_P (this)))
-	wrong_type_argument (Qsequencep, this);
-
-      len = XFASTINT (Flength (this));
-      if (target_type == Lisp_String)
-	{
-	  /* We must count the number of bytes needed in the string
-	     as well as the number of characters.  */
-	  ptrdiff_t i;
-	  Lisp_Object ch;
-	  int c;
-	  ptrdiff_t this_len_byte;
-
-	  if (BOOL_VECTOR_P (this) && bool_vector_size (this) > 0)
-            {
-              wrong_type_argument (Qintegerp, Faref (this, make_number (0)));
-            }
-          else if (VECTORP (this) || COMPILEDP (this))
-            {
-              for (i = 0; i < len; i++)
-                {
-                  refactored_section(AREF (this, i), &result_len_byte, &some_multibyte);
-                }
-            }
-	  else if (CONSP (this))
-            {
-              for (; CONSP (this); this = XCDR (this))
-                {
-                  refactored_section(XCAR (this), &result_len_byte, &some_multibyte);
-                }
-            }
-	  else if (STRINGP (this))
-	    {
-	      if (STRING_MULTIBYTE (this))
-		{
-		  some_multibyte = 1;
-		  this_len_byte = SBYTES (this);
-		}
-	      else
-                {
-                  this_len_byte = count_size_as_multibyte (SDATA (this),
-                                                           SCHARS (this));
-                }
-	      if (STRING_BYTES_BOUND - result_len_byte < this_len_byte)
-		string_overflow ();
-	      result_len_byte += this_len_byte;
-	    }
-	}
-
-      result_len += len;
-      if (MOST_POSITIVE_FIXNUM < result_len)
-	memory_full (SIZE_MAX);
-    }
-
-  if (! some_multibyte)
-    result_len_byte = result_len;
+  refactored_concat_compute_length(nargs, args, &result_len, &result_len_byte, &some_multibyte);
 
   toindex = 0, toindex_byte = 0;
 
