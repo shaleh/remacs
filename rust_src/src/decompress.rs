@@ -8,7 +8,6 @@ use remacs_macros::lisp_fn;
 
 use crate::{
     buffers::validate_region,
-    lisp::defsubr,
     lisp::LispObject,
     remacs_sys::{
         buf_charpos_to_bytepos, del_range, insert_from_gap, make_gap, maybe_quit, move_gap_both,
