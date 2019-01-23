@@ -40,44 +40,43 @@ impl StringExt for String {
         let c_str = CString::new(self.as_str()).unwrap();
         unsafe { build_string(c_str.as_ptr() as *const i8) }
     }
+
     fn to_cstring(&self) -> *const c_char {
         let c_str = CString::new(self.as_str()).unwrap();
         (c_str.as_ptr() as *const c_char)
     }
+
     // Split-up absolute path to directory and file
     fn to_dir_f(&self) -> (String, String) {
         let path = Path::new(self.as_str());
-        let parent: &Path;
-        match path.parent() {
-            None => parent = Path::new(""),
-            Some(p) => parent = p,
-        }
-        let stem: &OsStr;
-        match path.file_stem() {
-            None => stem = OsStr::new(""),
-            Some(s) => stem = s,
-        }
-        let ext: &OsStr;
-        match path.extension() {
-            None => ext = OsStr::new(""),
-            Some(s) => ext = s,
-        }
 
-        let dir_s: String;
-        let stem_s: String;
-        let ext_s: String;
-        match parent.to_str() {
+        let parent = match path.parent() {
+            None => Path::new(""),
+            Some(p) => p,
+        };
+
+        let stem = match path.file_stem() {
+            None => OsStr::new(""),
+            Some(s) => s,
+        };
+
+        let ext = match path.extension() {
+            None => OsStr::new(""),
+            Some(s) => s,
+        };
+
+        let dir_s = match parent.to_str() {
+            Some(s) => s.to_string(),
             None => error!("new parent path is not a valid UTF-8 sequence"),
-            Some(s) => dir_s = s.to_string(),
-        }
-        match stem.to_str() {
+        };
+        let stem_s = match stem.to_str() {
+            Some(s) => s.to_string(),
             None => error!("new stem of path is not a valid UTF-8 sequence"),
-            Some(s) => stem_s = s.to_string(),
-        }
-        match ext.to_str() {
+        };
+        let ext_s = match ext.to_str() {
+            Some(s) => s.to_string(),
             None => error!("new extension of path is not a valid UTF-8 sequence"),
-            Some(s) => ext_s = s.to_string(),
-        }
+        };
 
         if ext_s.is_empty() {
             (dir_s, stem_s)
@@ -85,8 +84,9 @@ impl StringExt for String {
             (dir_s, stem_s + "." + &ext_s)
         }
     }
+
     fn to_full(&self, dir: String) -> String {
-        // Assumes expand_file_name haz already run on
+        // Assumes expand_file_name has already run on
         // dir and it will drop >1 trailing '/'.
         // So here make sure just one '/' between dir&file.
         let last_char = dir.as_str().chars().last().unwrap();
@@ -124,7 +124,7 @@ impl LispObjectExt for LispObject {
 struct DirReq {
     dname: String, // directory name
     full: FullPath,
-    match_re: Option<LispObject>, // filter regexp
+    match_re: LispObject, // filter regexp
     sortmemaybe: SortFNames,
     id_format: LispObject, // integer uid (default) or string username
 }
@@ -133,7 +133,7 @@ impl DirReq {
     fn new(
         dname: String,
         full: FullPath,
-        match_re: Option<LispObject>,
+        match_re: LispObject,
         sortmemaybe: SortFNames,
         id_format: LispObject,
     ) -> Self {
@@ -152,9 +152,27 @@ enum SortFNames {
     Yes,
 }
 
+impl From<bool> for SortFNames {
+    fn from(value: bool) -> Self {
+        match value {
+            false => SortFNames::No,
+            true => SortFNames::Yes,
+        }
+    }
+}
+
 enum FullPath {
     No,
     Yes,
+}
+
+impl From<bool> for FullPath {
+    fn from(value: bool) -> Self {
+        match value {
+            false => FullPath::No,
+            true => FullPath::Yes,
+        }
+    }
 }
 
 // Directory files/attrs output data
@@ -214,42 +232,53 @@ fn fattrs_from_os(
     }
 }
 
-fn fnames_from_os(fnames: &mut Vec<String>, dname: &str, match_re: Option<LispObject>) {
-    let res = read_dir(dname, fnames, match_re);
-    if res.is_err() {
-        xsignal!(
-            Qfile_missing,
-            format!("Opening directory: {}", res.unwrap_err()).to_bstring(),
-            dname
-        );
+fn fnames_from_os(fnames: &mut Vec<String>, dname: &str, match_re: LispObject) {
+    match read_dir(dname, fnames, match_re) {
+        Err(err) => {
+            xsignal!(
+                Qfile_missing,
+                format!("Opening directory: {}", err).to_bstring(),
+                dname
+            );
+        }
+        Ok(_) => {}
     }
 }
 
-fn read_dir(dname: &str, fnames: &mut Vec<String>, match_re: Option<LispObject>) -> io::Result<()> {
+fn read_dir(dname: &str, fnames: &mut Vec<String>, match_re: LispObject) -> io::Result<()> {
     let dir_p = Path::new(dname);
 
-    let mut re = RegEx::new(String::from("").to_bstring());
-    if let Some(x) = match_re {
-        re = RegEx::new(x);
-    }
+    let re = if match_re.is_not_nil() {
+        Some(RegEx::new(match_re))
+    } else {
+        None
+    };
 
     let dot = String::from(".");
-    if match_re_maybe(dot.to_owned(), match_re, &re).is_some() {
+    if match_re_maybe(dot.to_owned(), &re).is_some() {
         fnames.push(dot);
     }
     let dotdot = String::from("..");
-    if match_re_maybe(dotdot.to_owned(), match_re, &re).is_some() {
+    if match_re_maybe(dotdot.to_owned(), &re).is_some() {
         fnames.push(dotdot);
     }
 
     for fname in fs::read_dir(dir_p)? {
         let fname = fname?;
-        let f_enc = fname.file_name().into_string().unwrap();
+        let f_enc = match fname.file_name().into_string() {
+            Ok(file_name) => file_name,
+            Err(err) => {
+                return Err(io::Error::new(
+                    io::ErrorKind::InvalidInput,
+                    format!("Could not decode {:?}", err),
+                ));
+            }
+        };
         let f_enc_lo = LispObject::from(f_enc.as_str()); // encoded
         let f_dec_lo = unsafe { decode_file_name(f_enc_lo) }; // decoded
         let f = f_dec_lo.to_stdstring();
 
-        if match_re_maybe(f.to_owned(), match_re, &re).is_some() {
+        if match_re_maybe(f.to_owned(), &re).is_some() {
             fnames.push(f);
         }
     }
@@ -257,10 +286,10 @@ fn read_dir(dname: &str, fnames: &mut Vec<String>, match_re: Option<LispObject>)
     Ok(())
 }
 
-fn match_re_maybe(f: String, match_re: Option<LispObject>, re: &RegEx) -> Option<String> {
-    match match_re {
-        Some(_) => {
-            if re.is_match(f.as_str()) {
+fn match_re_maybe(f: String, re: &Option<RegEx>) -> Option<String> {
+    match re {
+        Some(re_value) => {
+            if re_value.is_match(f.as_str()) {
                 Some(f)
             } else {
                 None
@@ -295,7 +324,7 @@ fn fattrs_to_list(
                 .iter()
                 .map(|x| x.to_bstring())
                 .zip(fattrs.to_owned())
-                .map(|x| LispObject::cons(x.0, x.1))
+                .map(|x| (x.0, x.1).into())
                 .collect::<Vec<_>>(),
         ),
         FullPath::Yes => list(
@@ -304,7 +333,7 @@ fn fattrs_to_list(
                 .map(|x| x.to_full(dname.to_owned()))
                 .map(|x| x.to_bstring())
                 .zip(fattrs.to_owned())
-                .map(|x| LispObject::cons(x.0, x.1))
+                .map(|x| (x.0, x.1).into())
                 .collect::<Vec<_>>(),
         ),
     }
@@ -312,7 +341,6 @@ fn fattrs_to_list(
 
 fn directory_files_core(dr: &DirReq, dd: &mut DirData) -> LispObject {
     dd.from_os(dr);
-
     dd.to_list(dr)
 }
 
@@ -338,21 +366,9 @@ pub fn directory_files_intro(
 
     let dr = DirReq::new(
         LispObject::from(dnexp).to_stdstring(),
-        if full.is_nil() {
-            FullPath::No
-        } else {
-            FullPath::Yes
-        },
-        if match_re.is_nil() {
-            None
-        } else {
-            Some(match_re)
-        },
-        if nosort.is_nil() {
-            SortFNames::Yes
-        } else {
-            SortFNames::No
-        },
+        FullPath::from(full.is_not_nil()),
+        match_re,
+        SortFNames::from(nosort.is_nil()),
         Qnil,
     );
     let mut dd = DirData::Files { fnames: Vec::new() };
@@ -384,21 +400,9 @@ pub fn directory_files_and_attributes_intro(
 
     let dr = DirReq::new(
         LispObject::from(dnexp).to_stdstring(),
-        if full.is_nil() {
-            FullPath::No
-        } else {
-            FullPath::Yes
-        },
-        if match_re.is_nil() {
-            None
-        } else {
-            Some(match_re)
-        },
-        if nosort.is_nil() {
-            SortFNames::Yes
-        } else {
-            SortFNames::No
-        },
+        FullPath::from(full.is_not_nil()),
+        match_re,
+        SortFNames::from(nosort.is_nil()),
         id_format,
     );
     let mut dd = DirData::FilesAttrs {
@@ -421,21 +425,9 @@ pub extern "C" fn directory_files_internal(
 ) -> LispObject {
     let dr = DirReq::new(
         directory.to_stdstring(),
-        if full.is_nil() {
-            FullPath::No
-        } else {
-            FullPath::Yes
-        },
-        if match_re.is_nil() {
-            None
-        } else {
-            Some(match_re)
-        },
-        if nosort.is_nil() {
-            SortFNames::Yes
-        } else {
-            SortFNames::No
-        },
+        FullPath::from(full.is_not_nil()),
+        match_re,
+        SortFNames::from(nosort.is_nil()),
         id_format,
     );
 
@@ -724,11 +716,9 @@ pub extern "C" fn file_attributes_rust_internal(
 
 fn file_attributes_core(fpath: LispObject, id_format: LispObject) -> LispObject {
     let mut attrs = FileAttrs::new(fpath.to_stdstring(), id_format.to_idfstring());
-    let res = attrs.get();
-    if res.is_err() {
-        Qnil
-    } else {
-        attrs.to_list()
+    match attrs.get() {
+        Ok(_) => attrs.to_list(),
+        Err(_) => Qnil,
     }
 }
 
