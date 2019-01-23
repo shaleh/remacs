@@ -39,7 +39,7 @@ def_lisp_sym!(Qsyntax_table_p, "syntax-table-p");
 /// Scan forward if COUNT is positive, backward if COUNT is negative.
 /// Return the character number of the position thus found.
 ///
-/// A "list", in this context, refers to a balanced parenthetical
+/// A \"list", in this context, refers to a balanced parenthetical
 /// grouping, as determined by the syntax table.
 ///
 /// If DEPTH is nonzero, treat that as the nesting depth of the starting
@@ -52,10 +52,7 @@ def_lisp_sym!(Qsyntax_table_p, "syntax-table-p");
 ///
 /// If we reach the beginning or end of the accessible part of the buffer
 /// before we have scanned over COUNT lists, return nil if the depth at
-/// that point is zero, and signal a error if the depth is nonzero.
-
-// We don't name it scan_lists because there is an internal function
-// with the same name
+/// that point is zero, and signal an error if the depth is nonzero.
 #[lisp_fn(name = "scan-lists", c_name = "scan_lists")]
 pub fn scan_lists_lisp(from: EmacsInt, count: EmacsInt, depth: EmacsInt) -> LispObject {
     unsafe { scan_lists(from, count, depth, false) }
@@ -128,10 +125,11 @@ pub fn copy_syntax_table(mut table: LispObject) -> LispCharTableRef {
 /// noticed if `inhibit-field-text-motion' is non-nil.
 ///
 /// The word boundaries are normally determined by the buffer's syntax
-/// table, but `find-word-boundary-function-table', such as set up
-/// by `subword-mode', can change that.  If a Lisp program needs to
-/// move by words determined strictly by the syntax table, it should
-/// use `forward-word-strictly' instead.
+/// table and character script (according to `char-script-table'), but
+/// `find-word-boundary-function-table', such as set up by `subword-mode',
+/// can change that.  If a Lisp program needs to move by words determined
+/// strictly by the syntax table, it should use `forward-word-strictly'
+/// instead.  See Info node `(elisp) Word Motion' for details.
 #[lisp_fn(min = "0", intspec = "^p")]
 pub fn forward_word(arg: Option<EmacsInt>) -> bool {
     let arg = arg.unwrap_or(1);
