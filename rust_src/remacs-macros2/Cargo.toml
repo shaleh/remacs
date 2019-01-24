@@ -1,0 +1,25 @@
+[package]
+name = "remacs-macros"
+version = "0.1.0"
+description = "Procedural macro used to generate definitions for lisp native functions."
+edition = "2018"
+
+[lib]
+path = "lib.rs"
+proc-macro = true
+
+[dependencies]
+quote = "0.5"
+syn = { version = "0.15.25", features = ["full", "extra-traits] }
+remacs-util = { version = "0.1.0", path = "../remacs-util" }
+regex = "0.2"
+lazy_static = "1.0"
+
+[dev-dependencies]
+syn = { version = "0.13.1", features = ["full"] }
+
+[profile.release]
+panic = "abort"
+
+[profile.dev]
+panic = "abort"

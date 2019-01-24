@@ -1,0 +1,31 @@
+[package]
+name = "remacs-lib"
+version = "0.1.0"
+edition = "2018"
+
+[dependencies]
+remacs-util = { version = "0.1.0", path = "../remacs-util" }
+darling = "0.2"
+errno = "0.2"
+lazy_static = "1.2"
+libc = "0.2"
+rand = "0.4"
+regex = "1.1"
+syn = { version = "0.15.25", features = ["full", "extra-traits"] }
+time = "0.1"
+
+[lib]
+path = "lib.rs"
+crate-type = ["staticlib", "rlib"]
+
+[features]
+# Treat warnings as a build error on Travis.
+strict = []
+
+[profile.release]
+panic = "abort"
+lto = true
+
+[profile.dev]
+panic = "abort"
+lto = true
