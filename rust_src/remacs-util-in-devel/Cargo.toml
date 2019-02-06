@@ -5,10 +5,11 @@ description = "Common utility code linked by other remacs crates."
 edition = "2018"
 
 [dependencies]
-libc = "0.2"
+devise = "0.2"
 errno = "0.2"
-darling = "*"
-syn = { version = "0.15.25", features = ["full", "extra-traits"] }
+libc = "0.2"
+proc-macro2 = "*"
+quote = "0.6"
 
 [lib]
 path = "lib.rs"
@@ -16,11 +17,3 @@ path = "lib.rs"
 [features]
 # Treat warnings as a build error on Travis.
 strict = []
-
-[profile.release]
-panic = "abort"
-lto = true
-
-[profile.dev]
-panic = "abort"
-lto = true

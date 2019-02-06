@@ -1,9 +1,12 @@
 #![cfg_attr(feature = "strict", deny(warnings))]
+#![feature(proc_macro_diagnostic)]
 
-extern crate darling;
+extern crate devise;
 extern crate errno;
 extern crate libc;
-extern crate syn;
+extern crate proc_macro2;
+#[macro_use]
+extern crate quote;
 
 mod attributes;
 

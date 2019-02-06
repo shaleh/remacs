@@ -19,7 +19,7 @@ pub fn lisp_fn(attr_ts: TokenStream, fn_ts: TokenStream) -> TokenStream {
     let fn_item = syn::parse(fn_ts.clone()).unwrap();
     let function = function::parse(&fn_item).unwrap();
     let lisp_fn_args = match remacs_util::parse_lisp_fn(
-        &attr_ts.to_string(),
+        &attr_ts,
         &function.name,
         function.fntype.def_min_args(),
     ) {

@@ -9,11 +9,12 @@ path = "lib.rs"
 proc-macro = true
 
 [dependencies]
+proc-macro2 = "*"
 quote = "0.5"
-syn = { version = "0.13.1", features = ["full"] }
-remacs-util = { version = "0.1.0", path = "../remacs-util" }
+syn = { version = "0.15", features = ["full", "extra-traits"] }
 regex = "0.2"
 lazy_static = "1.0"
 
 [dev-dependencies]
-syn = { version = "0.13.1", features = ["full"] }
+proc-macro2 = "*"
+syn = { version = "0.15", features = ["full", "extra-traits"] }
