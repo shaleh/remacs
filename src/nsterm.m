@@ -3043,7 +3043,7 @@ ns_draw_fringe_bitmap (struct window *w, struct glyph_row *row,
   /* Work out the rectangle we will need to clear.  Because we're
      compositing rather than blitting, we need to clear the area under
      the image regardless of anything else.  */
-  if (p->bx >= 0 && !p->overlay_p)
+  if (!p->overlay_p)
     {
       clearRect = NSMakeRect (p->bx, p->by, p->nx, p->ny);
       clearRect = NSUnionRect (clearRect, imageRect);
@@ -3102,18 +3102,25 @@ ns_draw_fringe_bitmap (struct window *w, struct glyph_row *row,
             [img setXBMColor: bm_color];
           }
 
-      [img drawInRect: r
-              fromRect: fromRect
-             operation: NSCompositingOperationSourceOver
-              fraction: 1.0
-           respectFlipped: YES
-                hints: nil];
+#ifdef NS_IMPL_COCOA
+          // Note: For periodic images, the full image height is "h + hd".
+          // By using the height h, a suitable part of the image is used.
+          NSRect fromRect = NSMakeRect(0, 0, p->wd, p->h);
+
+          NSTRACE_RECT ("fromRect", fromRect);
+
+          [img drawInRect: imageRect
+                 fromRect: fromRect
+                operation: NSCompositingOperationSourceOver
+                 fraction: 1.0
+               respectFlipped: YES
+                    hints: nil];
 #else
-      {
-        NSPoint pt = r.origin;
-        pt.y += p->h;
-        [img compositeToPoint: pt operation: NSCompositingOperationSourceOver];
-      }
+          {
+            NSPoint pt = imageRect.origin;
+            pt.y += p->h;
+            [img compositeToPoint: pt operation: NSCompositingOperationSourceOver];
+          }
 #endif
         }
       ns_reset_clipping (f);
