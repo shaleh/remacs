@@ -7,7 +7,7 @@ use flate2::read::{DeflateDecoder, GzDecoder, ZlibDecoder};
 use remacs_macros::lisp_fn;
 
 use crate::{
-    buffers::validate_region,
+    buffers::validate_region_rust,
     lisp::LispObject,
     remacs_sys::{
         buf_charpos_to_bytepos, del_range, insert_from_gap, make_gap, maybe_quit, move_gap_both,
@@ -39,8 +39,8 @@ fn create_buffer_decoder<'a>(buffer: &'a [u8]) -> Box<Read + 'a> {
 /// On failure, return nil and leave the data in place.
 /// This function can be called only in unibyte buffers.
 #[lisp_fn]
-pub fn zlib_decompress_region(mut start: LispObject, mut end: LispObject) -> bool {
-    unsafe { validate_region(&mut start, &mut end) };
+pub fn zlib_decompress_region(start: LispObject, end: LispObject) -> bool {
+    let (start, end) = validate_region_rust(start, end);
 
     let mut current_buffer = ThreadState::current_buffer_unchecked();
 
@@ -48,27 +48,26 @@ pub fn zlib_decompress_region(mut start: LispObject, mut end: LispObject) -> boo
         error!("This function can be called only in unibyte buffers");
     };
 
-    let istart = start.as_fixnum_or_error() as isize;
-    let iend = end.as_fixnum_or_error() as isize;
-
     // Empty region, decompress failed.
-    if istart == iend {
+    if start == end {
         return false;
     }
 
-    unsafe { move_gap_both(iend, iend) };
+    unsafe {
+        // Do the following before manipulating the gap.
+        modify_text(start, end);
+
+        move_gap_both(end, end);
+    }
 
     // Insert the decompressed data at the end of the compressed data.
-    let charpos = iend;
-    let bytepos = unsafe { buf_charpos_to_bytepos(current_buffer.as_mut(), iend as isize) };
+    let charpos = end;
+    let bytepos = unsafe { buf_charpos_to_bytepos(current_buffer.as_mut(), end) };
     let old_pt = current_buffer.pt;
     current_buffer.set_pt_both(charpos, bytepos);
 
     let compressed_buffer = unsafe {
-        slice::from_raw_parts(
-            current_buffer.byte_pos_addr(istart),
-            (iend - istart) as usize,
-        )
+        slice::from_raw_parts(current_buffer.byte_pos_addr(start), (end - start) as usize)
     };
 
     // The decompressor
@@ -95,7 +94,15 @@ pub fn zlib_decompress_region(mut start: LispObject, mut end: LispObject) -> boo
             // Decompress all data finished.
             Ok(0) => {
                 // Delete the compressed data.
-                unsafe { del_range(istart, iend) };
+                unsafe {
+                    del_range_2(
+                        start, start, // byte, char offsets the same
+                        end, end, false,
+                    );
+                    signal_after_change(start, end - start, decompressed_bytes);
+
+                    update_compositions(start, start, CHECK_HEAD as i32);
+                };
                 return true;
             }
 
@@ -112,8 +119,23 @@ pub fn zlib_decompress_region(mut start: LispObject, mut end: LispObject) -> boo
 
             // Decompress failed.
             _ => {
-                // Delete any uncompressed data already inserted on error.
-                unsafe { del_range(iend, iend + decompressed_bytes) };
+                // Delete any uncompressed data already inserted on error, but
+                // without calling the change hooks.
+
+                let data_orig = start;
+                let data_start = end;
+                let data_end = end + decompressed_bytes;
+
+                unsafe {
+                    del_range_2(
+                        data_start, data_start, // byte, char offsets the same
+                        data_end, data_end, false,
+                    );
+                    update_compositions(data_start, data_start, CHECK_HEAD as i32);
+                    // "Balance" the before-change-functions call, which would
+                    // otherwise be left "hanging".
+                    signal_after_change(data_orig, data_start - data_orig, data_start - data_orig);
+                };
 
                 // Put point where it was, or if the buffer has shrunk because the
                 // compressed data is bigger than the uncompressed, at
