@@ -9,8 +9,8 @@ use crate::{
     lisp::{ExternalPtr, LispObject, LispStructuralEqual},
     remacs_sys::uniprop_table_uncompress,
     remacs_sys::{
-        char_table_specials, equal_kind, pvec_type, Lisp_Char_Table, Lisp_Sub_Char_Table,
-        Lisp_Type, More_Lisp_Bits, CHARTAB_SIZE_BITS,
+        char_table_set, char_table_specials, equal_kind, pvec_type, Lisp_Char_Table,
+        Lisp_Sub_Char_Table, Lisp_Type, More_Lisp_Bits, CHARTAB_SIZE_BITS,
     },
     remacs_sys::{Qchar_code_property_table, Qchar_table_p},
 };
@@ -145,6 +145,17 @@ impl LispCharTableRef {
 
         val
     }
+
+    pub fn set_unchecked(self, idx: usize, value: LispObject) {
+        if is_ascii(idx as isize) {
+            if let Some(mut ascii) = self.ascii.as_sub_char_table() {
+                ascii.set_contents(idx, value);
+                return;
+            }
+        }
+
+        unsafe { char_table_set(LispObject::from(self), idx as i32, value) };
+    }
 }
 
 impl LispStructuralEqual for LispCharTableRef {
@@ -277,6 +288,14 @@ impl LispSubCharTableRef {
         }
 
         val
+    }
+
+    pub fn set_contents(&mut self, idx: usize, value: LispObject) {
+        unsafe {
+            let depth = self.depth;
+            let contents = self.contents.as_mut_slice(chartab_size(depth));
+            contents[idx] = value;
+        }
     }
 }
 
