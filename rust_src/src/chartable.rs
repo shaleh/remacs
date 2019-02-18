@@ -9,7 +9,7 @@ use crate::{
     lisp::{ExternalPtr, LispObject, LispStructuralEqual},
     remacs_sys::uniprop_table_uncompress,
     remacs_sys::{
-        char_table_set, char_table_specials, equal_kind, pvec_type, Lisp_Char_Table,
+        char_table_specials, equal_kind, make_sub_char_table, pvec_type, Lisp_Char_Table,
         Lisp_Sub_Char_Table, Lisp_Type, More_Lisp_Bits, CHARTAB_SIZE_BITS,
     },
     remacs_sys::{Qchar_code_property_table, Qchar_table_p},
@@ -64,7 +64,7 @@ impl LispObject {
     }
 }
 
-fn chartab_size(depth: i32) -> usize {
+const fn chartab_size(depth: i32) -> usize {
     match depth {
         0 => 1 << CHARTAB_SIZE_BITS::CHARTAB_SIZE_BITS_0 as isize,
         1 => 1 << CHARTAB_SIZE_BITS::CHARTAB_SIZE_BITS_1 as isize,
@@ -74,7 +74,21 @@ fn chartab_size(depth: i32) -> usize {
     }
 }
 
-fn chartab_idx(c: isize, depth: i32, min_char: i32) -> usize {
+const fn chartab_chars(idx: usize) -> usize {
+    match idx {
+        0 => {
+            1 << (CHARTAB_SIZE_BITS::CHARTAB_SIZE_BITS_1
+                + CHARTAB_SIZE_BITS::CHARTAB_SIZE_BITS_2
+                + CHARTAB_SIZE_BITS::CHARTAB_SIZE_BITS_3)
+        }
+        1 => 1 << (CHARTAB_SIZE_BITS::CHARTAB_SIZE_BITS_2 + CHARTAB_SIZE_BITS::CHARTAB_SIZE_BITS_3),
+        2 => 1 << CHARTAB_SIZE_BITS::CHARTAB_SIZE_BITS_3,
+        3 => 1,
+        _ => panic!("Invalid char table depth."),
+    }
+}
+
+fn chartab_idx(c: usize, depth: i32, min_char: usize) -> usize {
     // Number of characters (in bits) each element of Nth level char-table covers.
     let bits = match depth {
         0 => {
@@ -90,14 +104,14 @@ fn chartab_idx(c: isize, depth: i32, min_char: i32) -> usize {
         }
     };
 
-    ((c - min_char as isize) >> bits) as usize
+    ((c - min_char) >> bits) as usize
 }
 
 /// Nonzero iff OBJ is a string representing uniprop values of 128
 /// succeeding characters (the bottom level of a char-table) by a
 /// compressed format.  We are sure that no property value has a string
 /// starting with '\001' nor '\002'.
-fn uniprop_compressed_form_p(obj: LispObject) -> bool {
+fn is_uniprop_compressed_form(obj: LispObject) -> bool {
     match obj.as_string() {
         Some(s) => !s.is_empty() && (s.byte_at(0) == 1 || s.byte_at(0) == 2),
         None => false,
@@ -114,7 +128,7 @@ impl LispCharTableRef {
             - (1 << CHARTAB_SIZE_BITS::CHARTAB_SIZE_BITS_0 as isize)
     }
 
-    pub fn get(self, c: isize) -> LispObject {
+    pub fn get(self, c: usize) -> LispObject {
         let mut val = if is_ascii(c) {
             let tmp = self.ascii;
             if let Some(sub) = tmp.as_sub_char_table_ascii() {
@@ -146,15 +160,56 @@ impl LispCharTableRef {
         val
     }
 
+    pub fn get_contents(self, idx: usize) -> LispObject {
+        self.contents[idx]
+    }
+
     pub fn set_unchecked(self, idx: usize, value: LispObject) {
-        if is_ascii(idx as isize) {
+        if is_ascii(idx) {
             if let Some(mut ascii) = self.ascii.as_sub_char_table() {
                 ascii.set_contents(idx, value);
                 return;
             }
         }
 
-        unsafe { char_table_set(LispObject::from(self), idx as i32, value) };
+        let i = chartab_idx(idx, 0, 0);
+        let mut sub = self.get_contents(i);
+        match sub.as_sub_char_table() {
+            Some(_) => {}
+            None => {
+                sub = make_sub_char_table(1, (i * chartab_chars(0)) as i32, sub);
+                self.set_contents(i, sub);
+            }
+        }
+        let sub_table: LispSubCharTableRef = sub.into();
+        sub_table.set(idx, value, self.is_uniprop());
+        if is_ascii(idx) {
+            self.ascii = char_table_ascii(self);
+        }
+    }
+
+    pub fn set_contents(&mut self, idx: usize, value: LispObject) {
+        unsafe {
+            let depth = self.depth;
+            let contents = self.contents.as_mut_slice(chartab_size(depth));
+            contents[idx] = value;
+        }
+    }
+}
+
+fn char_table_ascii(table: LispCharTableRef) -> LispObject {
+    let tem = table.get_contents(0);
+    let sub = match tem.as_sub_char_table() {
+        Some(sct) => sct,
+        None => {
+            return tem;
+        }
+    };
+    let val = sub.get_contents(0);
+    if table.is_uniprop && is_uniprop_compressed_form(val) {
+        uniprop_table_uncompress(tem, 0)
+    } else {
+        val
     }
 }
 
@@ -235,10 +290,35 @@ impl LispSubCharTableAsciiRef {
         self.0._get(idx)
     }
 
-    pub fn get(self, c: isize) -> LispObject {
+    pub fn get(self, c: usize) -> LispObject {
         let d = self.0.depth;
         let m = self.0.min_char;
         self._get(chartab_idx(c, d, m))
+    }
+
+    pub fn set(self, idx: usize, value: LispObject) {
+        let depth = self.depth;
+        let min_char = self.min_char;
+        let i = chartab_idx(idx, depth, min_char);
+
+        if depth == 3 {
+            return self.set_contents(i, value);
+        }
+
+        let sub = self.get_contents(i);
+        let sub_table: LispSubCharTableRef = match sub.as_sub_char_table() {
+            Some(sct) => sct,
+            None => {
+                if is_uniprop && is_uniprop_compressed_form(sub) {
+                    uniprop_table_uncompress(self, i).into()
+                } else {
+                    sub = make_sub_char_table(depth + 1, min_char + i * chartab_chars(depth), sub);
+                    self.set_sub_table_contents(i, sub);
+                    sub.into()
+                }
+            }
+        };
+        sub_table.set(idx, value, is_uniprop)
     }
 }
 
@@ -274,12 +354,12 @@ impl LispSubCharTableRef {
         }
     }
 
-    pub fn get(self, c: isize, is_uniprop: bool) -> LispObject {
+    pub fn get(self, c: usize, is_uniprop: bool) -> LispObject {
         let idx = chartab_idx(c, self.depth, self.min_char);
 
         let mut val = self._get(idx);
 
-        if is_uniprop && uniprop_compressed_form_p(val) {
+        if is_uniprop && is_uniprop_compressed_form(val) {
             val = unsafe { uniprop_table_uncompress(self.into(), idx as libc::c_int) };
         }
 
@@ -333,7 +413,7 @@ impl LispStructuralEqual for LispSubCharTableRef {
     }
 }
 
-fn is_ascii(c: isize) -> bool {
+fn is_ascii(c: usize) -> bool {
     c < 128
 }
 

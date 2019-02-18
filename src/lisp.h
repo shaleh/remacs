@@ -3435,6 +3435,9 @@ set_sub_char_table_contents (Lisp_Object table, ptrdiff_t idx, Lisp_Object val)
   XSUB_CHAR_TABLE (table)->contents[idx] = val;
 }
 
+extern Lisp_Object
+make_sub_char_table (int depth, int min_char, Lisp_Object defalt);
+
 /* Defined in data.c.  */
 extern _Noreturn void wrong_choice (Lisp_Object, Lisp_Object);
 extern void notify_variable_watchers (Lisp_Object, Lisp_Object,

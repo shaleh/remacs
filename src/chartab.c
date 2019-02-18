@@ -132,7 +132,7 @@ the char-table has no extra slot.  */)
   return vector;
 }
 
-static Lisp_Object
+Lisp_Object
 make_sub_char_table (int depth, int min_char, Lisp_Object defalt)
 {
   int i;
