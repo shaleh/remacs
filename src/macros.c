@@ -257,85 +257,6 @@ each iteration of the macro.  Iteration stops if LOOPFUNC returns nil.  */)
 
   return Qnil;
 }
-
-/* Restore Vexecuting_kbd_macro and executing_kbd_macro_index.
-   Called when the unwind-protect in Fexecute_kbd_macro gets invoked.  */
-
-static void
-pop_kbd_macro (Lisp_Object info)
-{
-  Lisp_Object tem;
-  Vexecuting_kbd_macro = XCAR (info);
-  tem = XCDR (info);
-  executing_kbd_macro_index = XINT (XCAR (tem));
-  Vreal_this_command = XCDR (tem);
-  run_hook (Qkbd_macro_termination_hook);
-}
-
-DEFUN ("execute-kbd-macro", Fexecute_kbd_macro, Sexecute_kbd_macro, 1, 3, 0,
-       doc: /* Execute MACRO as string of editor command characters.
-MACRO can also be a vector of keyboard events.  If MACRO is a symbol,
-its function definition is used.
-COUNT is a repeat count, or nil for once, or 0 for infinite loop.
-
-Optional third arg LOOPFUNC may be a function that is called prior to
-each iteration of the macro.  Iteration stops if LOOPFUNC returns nil.  */)
-  (Lisp_Object macro, Lisp_Object count, Lisp_Object loopfunc)
-{
-  Lisp_Object final;
-  Lisp_Object tem;
-  ptrdiff_t pdlcount = SPECPDL_INDEX ();
-  EMACS_INT repeat = 1;
-  EMACS_INT success_count = 0;
-
-  executing_kbd_macro_iterations = 0;
-
-  if (!NILP (count))
-    {
-      count = Fprefix_numeric_value (count);
-      repeat = XINT (count);
-    }
-
-  final = indirect_function (macro);
-  if (!STRINGP (final) && !VECTORP (final))
-    error ("Keyboard macros must be strings or vectors");
-
-  tem = Fcons (Vexecuting_kbd_macro,
-	       Fcons (make_number (executing_kbd_macro_index),
-		      Vreal_this_command));
-  record_unwind_protect (pop_kbd_macro, tem);
-
-  do
-    {
-      Vexecuting_kbd_macro = final;
-      executing_kbd_macro = final;
-      executing_kbd_macro_index = 0;
-
-      kset_prefix_arg (current_kboard, Qnil);
-
-      if (!NILP (loopfunc))
-	{
-	  Lisp_Object cont;
-	  cont = call0 (loopfunc);
-	  if (NILP (cont))
-	    break;
-	}
-
-      command_loop_1 ();
-
-      executing_kbd_macro_iterations = ++success_count;
-
-      maybe_quit ();
-    }
-  while (--repeat
-	 && (STRINGP (Vexecuting_kbd_macro) || VECTORP (Vexecuting_kbd_macro)));
-
-  executing_kbd_macro = Qnil;
-
-  Vreal_this_command = Vexecuting_kbd_macro;
-
-  return unbind_to (pdlcount, Qnil);
-}
 
 void
 init_macros (void)
@@ -356,7 +277,6 @@ This is run whether the macro ends normally or prematurely due to an error.  */)
   defsubr (&Sstart_kbd_macro);
   defsubr (&Send_kbd_macro);
   defsubr (&Scall_last_kbd_macro);
-  defsubr (&Sexecute_kbd_macro);
   defsubr (&Scancel_kbd_macro_events);
   defsubr (&Sstore_kbd_macro_event);
 
