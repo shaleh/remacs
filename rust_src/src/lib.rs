@@ -23,6 +23,9 @@
 extern crate errno;
 #[macro_use]
 extern crate lazy_static;
+#[allow(unused)] // this makes `inspect!` available to the developer.
+#[macro_use]
+extern crate mac;
 
 extern crate base64 as base64_crate;
 extern crate libc;
@@ -92,6 +95,7 @@ mod fonts;
 mod hashtable;
 mod indent;
 mod interactive;
+mod kbd_macros;
 mod keyboard;
 mod keymap;
 mod libm;
