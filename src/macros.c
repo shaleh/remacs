@@ -224,40 +224,6 @@ DEFUN ("store-kbd-macro-event", Fstore_kbd_macro_event,
   return Qnil;
 }
 
-DEFUN ("call-last-kbd-macro", Fcall_last_kbd_macro, Scall_last_kbd_macro,
-       0, 2, "p",
-       doc: /* Call the last keyboard macro that you defined with \\[start-kbd-macro].
-
-A prefix argument serves as a repeat count.  Zero means repeat until error.
-
-To make a macro permanent so you can call it even after
-defining others, use \\[name-last-kbd-macro].
-
-In Lisp, optional second arg LOOPFUNC may be a function that is called prior to
-each iteration of the macro.  Iteration stops if LOOPFUNC returns nil.  */)
-  (Lisp_Object prefix, Lisp_Object loopfunc)
-{
-  /* Don't interfere with recognition of the previous command
-     from before this macro started.  */
-  Vthis_command = KVAR (current_kboard, Vlast_command);
-  /* C-x z after the macro should repeat the macro.  */
-  Vreal_this_command = KVAR (current_kboard, Vlast_kbd_macro);
-
-  if (! NILP (KVAR (current_kboard, defining_kbd_macro)))
-    error ("Can't execute anonymous macro while defining one");
-  else if (NILP (KVAR (current_kboard, Vlast_kbd_macro)))
-    error ("No kbd macro has been defined");
-  else
-    Fexecute_kbd_macro (KVAR (current_kboard, Vlast_kbd_macro), prefix, loopfunc);
-
-  /* command_loop_1 sets this to nil before it returns;
-     get back the last command within the macro
-     so that it can be last, again, after we return.  */
-  Vthis_command = KVAR (current_kboard, Vlast_command);
-
-  return Qnil;
-}
-
 void
 init_macros (void)
 {
@@ -276,7 +242,6 @@ This is run whether the macro ends normally or prematurely due to an error.  */)
 
   defsubr (&Sstart_kbd_macro);
   defsubr (&Send_kbd_macro);
-  defsubr (&Scall_last_kbd_macro);
   defsubr (&Scancel_kbd_macro_events);
   defsubr (&Sstore_kbd_macro_event);
 

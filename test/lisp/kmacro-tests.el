@@ -298,7 +298,7 @@ cause the current test to fail."
   (condition-case err
       (kmacro-tests-simulate-command '(kmacro-end-and-call-macro 2) 2)
     (error (should (string= (cadr err)
-                            "No kbd macro has been defined"))))
+                            "No kbd macro has been defined."))))
 
   ;; Check that it stopped defining and that no macro was recorded.
   (should-not defining-kbd-macro)
@@ -319,7 +319,7 @@ This is a regression test for Bug#24992."
     (condition-case err
         (kmacro-tests-simulate-command '(kmacro-end-call-mouse 2) 2)
       (error (should (string= (cadr err)
-                              "No kbd macro has been defined"))))
+                              "No kbd macro has been defined."))))
 
     ;; Check that it stopped defining and that no macro was recorded.
     (should-not defining-kbd-macro)
@@ -369,7 +369,7 @@ This is a regression test for: Bug#3412, Bug#11817."
   ;; Check that execute and display do nothing with no 2nd macro.
   (kmacro-tests-should-insert ""
     (kmacro-tests-simulate-command '(kmacro-call-ring-2nd nil)))
-  (kmacro-tests-should-match-message "Only one keyboard macro defined"
+  (kmacro-tests-should-match-message "Only one keyboard macro defined."
     (kmacro-tests-simulate-command '(kmacro-view-ring-2nd)))
   ;; Record another one, with format.
   (kmacro-set-format "=%d=")
@@ -411,7 +411,7 @@ This is a regression test for: Bug#3412, Bug#11817."
                  (kmacro-view-ring-2nd)
                  (kmacro-call-ring-2nd nil)
                  (kmacro-view-macro)))
-    (kmacro-tests-should-match-message "No keyboard macro defined"
+    (kmacro-tests-should-match-message "No keyboard macro defined."
       (kmacro-tests-simulate-command cmd))))
 
 (kmacro-tests-deftest kmacro-tests-repeat-on-last-key ()
