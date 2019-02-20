@@ -23,9 +23,9 @@
 extern crate errno;
 #[macro_use]
 extern crate lazy_static;
-#[allow(unused)] // this makes `inspect!` available to the developer.
+#[allow(unused_imports)]
 #[macro_use]
-extern crate mac;
+extern crate mac; // this makes `inspect!` available to the developer.
 
 extern crate base64 as base64_crate;
 extern crate libc;
