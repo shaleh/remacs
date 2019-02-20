@@ -14,6 +14,40 @@ use crate::{
     threads::c_specpdl_index,
 };
 
+/// Call the last keyboard macro that you defined with \\[start-kbd-macro].
+///
+/// A prefix argument serves as a repeat count. Nil means run once.
+/// Zero means repeat until error.
+///
+/// To make a macro permanent so you can call it even after
+/// defining others, use \\[name-last-kbd-macro].
+///
+/// In Lisp, optional second arg LOOPFUNC may be a function that is called
+/// prior to each iteration of the macro.  Iteration stops if LOOPFUNC
+/// returns nil.
+#[lisp_fn(min = "0", intspec = "p")]
+pub fn call_last_kbd_macro(prefix: LispObject, loopfunc: LispObject) {
+    unsafe {
+        // Don't interfere with recognition of the previous command
+        // from before this macro started.
+        globals.Vthis_command = (*current_kboard).Vlast_command_;
+        // C-x z after the macro should repeat the macro.
+        globals.Vreal_this_command = (*current_kboard).Vlast_kbd_macro_;
+
+        if (*current_kboard).defining_kbd_macro_.is_not_nil() {
+            error!("Can't execute anonymous macro while defining one.");
+        } else if (*current_kboard).Vlast_kbd_macro_.is_nil() {
+            error!("No kbd macro has been defined.");
+        } else {
+            execute_kbd_macro((*current_kboard).Vlast_kbd_macro_, prefix, loopfunc);
+        }
+
+        // command_loop_1 sets this to nil before it returns.
+        // Get back the last command within the macro so that it can be last, again, after we return.
+        globals.Vthis_command = (*current_kboard).Vlast_command_;
+    }
+}
+
 // Restore Vexecuting_kbd_macro and executing_kbd_macro_index.
 // Called when the unwind-protect in execute-kbd-macro gets invoked.
 extern "C" fn pop_kbd_macro(info: LispObject) {
