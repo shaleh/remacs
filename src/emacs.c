@@ -2056,10 +2056,6 @@ shut_down_emacs (int sig, Lisp_Object stuff)
   ns_term_shutdown (sig);
 #endif
 
-#ifdef HAVE_LIBXML2
-  xml_cleanup_parser ();
-#endif
-
 #ifdef WINDOWSNT
   term_ntproc (0);
 #endif

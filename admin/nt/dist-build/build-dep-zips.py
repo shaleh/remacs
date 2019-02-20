@@ -56,7 +56,6 @@ mingw-w64-x86_64-libjpeg-turbo
 mingw-w64-x86_64-libpng
 mingw-w64-x86_64-librsvg
 mingw-w64-x86_64-libtiff
-mingw-w64-x86_64-libxml2
 mingw-w64-x86_64-xpm-nox
 mingw-w64-x86_64-lcms2'''.split()
 

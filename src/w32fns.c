@@ -10150,7 +10150,6 @@ syms_of_w32fns (void)
 
   /* Symbols used elsewhere, but only in MS-Windows-specific code.  */
   DEFSYM (Qgnutls, "gnutls");
-  DEFSYM (Qlibxml2, "libxml2");
   DEFSYM (Qserif, "serif");
   DEFSYM (Qzlib, "zlib");
   DEFSYM (Qlcms2, "lcms2");

@@ -348,7 +348,6 @@ OPTION_DEFAULT_ON([rsvg],[don't compile with SVG image support])
 OPTION_DEFAULT_ON([lcms2],[don't compile with Little CMS support])
 OPTION_DEFAULT_ON([libsystemd],[don't compile with libsystemd support])
 OPTION_DEFAULT_OFF([cairo],[compile with Cairo drawing (experimental)])
-OPTION_DEFAULT_ON([xml2],[don't compile with XML parsing support])
 OPTION_DEFAULT_ON([imagemagick],[don't compile with ImageMagick image support])
 OPTION_DEFAULT_ON([json], [don't compile with native JSON support])
 
@@ -3753,51 +3752,6 @@ fi
 AC_SUBST(XDBE_CFLAGS)
 AC_SUBST(XDBE_LIBS)
 
-### Use libxml (-lxml2) if available
-### mingw32 doesn't use -lxml2, since it loads the library dynamically.
-HAVE_LIBXML2=no
-if test "${with_xml2}" != "no"; then
-  ### I'm not sure what the version number should be, so I just guessed.
-  EMACS_CHECK_MODULES([LIBXML2], [libxml-2.0 > 2.6.17])
-  # Built-in libxml2 on OS X 10.8 lacks libxml-2.0.pc.
-  if test "${HAVE_LIBXML2}" != "yes" && test "$opsys" = "darwin"; then
-    SAVE_CPPFLAGS="$CPPFLAGS"
-    if test -z "$xcsdkdir" -a -n "$XCRUN" -a ! -d /usr/include; then
-      dnl /usr/include is not found.  Try Xcode SDK dir if it is sane.
-      xcsdkdir=`$XCRUN --show-sdk-path 2>/dev/null`
-      case $xcsdkdir in
-	*[[\\\"\#\$\&\'\`$am_lf\ \	]]*)
-	xcsdkdir="" ;;
-      esac
-    fi
-    CPPFLAGS="$CPPFLAGS -isystem${xcsdkdir}/usr/include/libxml2"
-    AC_CHECK_HEADER(libxml/HTMLparser.h,
-      [AC_CHECK_DECL(HTML_PARSE_RECOVER, HAVE_LIBXML2=yes, ,
-		     [#include <libxml/HTMLparser.h>])])
-    CPPFLAGS="$SAVE_CPPFLAGS"
-    if test "${HAVE_LIBXML2}" = "yes"; then
-      LIBXML2_CFLAGS="-isystem${xcsdkdir}/usr/include/libxml2"
-      LIBXML2_LIBS="-lxml2"
-    fi
-  fi
-  if test "${HAVE_LIBXML2}" = "yes"; then
-    if test "${opsys}" != "mingw32"; then
-      AC_CHECK_LIB(xml2, htmlReadMemory, HAVE_LIBXML2=yes, HAVE_LIBXML2=no,
-        [$LIBXML2_LIBS])
-    else
-      LIBXML2_LIBS=""
-    fi
-    if test "${HAVE_LIBXML2}" = "yes"; then
-      AC_DEFINE(HAVE_LIBXML2, 1, [Define to 1 if you have the libxml library (-lxml2).])
-    else
-      LIBXML2_LIBS=""
-      LIBXML2_CFLAGS=""
-    fi
-  fi
-fi
-AC_SUBST(LIBXML2_LIBS)
-AC_SUBST(LIBXML2_CFLAGS)
-
 BLESSMAIL_TARGET=
 LIBS_MAIL=
 if test ! "$with_mailutils"; then
@@ -5301,7 +5255,7 @@ Configured for '${canonical}'.
 optsep=
 emacs_config_features=
 for opt in XPM JPEG TIFF GIF PNG RSVG CAIRO IMAGEMAGICK SOUND GPM DBUS \
-  GCONF GSETTINGS NOTIFY ACL LIBSELINUX GNUTLS LIBXML2 FREETYPE M17N_FLT \
+  GCONF GSETTINGS NOTIFY ACL LIBSELINUX GNUTLS FREETYPE M17N_FLT \
   LIBOTF XFT ZLIB X_TOOLKIT X11 NS MODULES \
   THREADS XWIDGETS LIBSYSTEMD JSON CANNOT_DUMP LCMS2; do
 
@@ -5347,7 +5301,6 @@ AS_ECHO(["  Does Emacs use -lXpm?                                   ${HAVE_XPM}
   Does Emacs use access control lists?                    ${ACL_SUMMARY}
   Does Emacs use -lselinux?                               ${HAVE_LIBSELINUX}
   Does Emacs use -lgnutls?                                ${HAVE_GNUTLS}
-  Does Emacs use -lxml2?                                  ${HAVE_LIBXML2}
   Does Emacs use -lfreetype?                              ${HAVE_FREETYPE}
   Does Emacs use -lm17n-flt?                              ${HAVE_M17N_FLT}
   Does Emacs use -lotf?                                   ${HAVE_LIBOTF}
@@ -5463,9 +5416,6 @@ fi || AC_MSG_ERROR(['src/epaths.h' could not be made.])
 
 
 CARGO_DEFAULT_FEATURES=""
-if test "$HAVE_LIBXML2" = "yes"; then
-    CARGO_DEFAULT_FEATURES="${CARGO_DEFAULT_FEATURES}\"use-xml2\", "
-fi
 if test "$CANNOT_DUMP" != "yes"; then
     if test "$opsys" = "darwin"; then
         CARGO_DEFAULT_FEATURES="${CARGO_DEFAULT_FEATURES}\"unexecmacosx\", "

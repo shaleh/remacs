@@ -22,6 +22,7 @@ cfg-if = "0.1"
 errno = "0.2"
 field-offset = "0.1"
 flate2 = { version = "1.0", features = ["rust_backend"], default-features = false }
+html5ever = { version = "0.22", optional = true }
 lazy_static = "1.2"
 libc = "0.2"
 line-wrap = "0.1.1"
@@ -29,6 +30,7 @@ md5 = "0.6"
 rand = "0.6.5"
 sha1 = "0.6"
 sha2 = "0.8"
+xml5ever = { version = "0.12", optional = true }
 
 # Only want this local crate as dependency on Mac OS X
 [target.'cfg(target_os = "macos")'.dependencies]
@@ -57,8 +59,8 @@ default = [@CARGO_DEFAULT_FEATURES@]
 unexecmacosx = ["alloc_unexecmacosx"]
 # unexec everywhere else
 unexec = []
-# Compile with C xml2 library support.
-use-xml2 = []
+# Compile with xml support.
+use-xml = ["html5ever", "xml5ever"]
 # Use a window system
 window-system = []
 # Use the x11 window system

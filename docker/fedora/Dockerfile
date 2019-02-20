@@ -11,7 +11,6 @@ RUN dnf install -y \
     libjpeg-turbo-devel \
     libtiff-devel \
     gtk3-devel \
-    libxml2-devel \
     libXpm-devel \
     gnutls-devel \
     clang-devel \

@@ -12,7 +12,6 @@ RUN apt-get update && apt-get install -y \
     libjpeg-dev \
     libncurses5-dev \
     libtiff-dev \
-    libxml2-dev \
     libxpm-dev \
     libxt-dev \
     texinfo
