@@ -10,13 +10,92 @@ use crate::{
     interactive::InteractiveNumericPrefix,
     lisp::LispObject,
     remacs_macros::lisp_fn,
+    remacs_sys::update_mode_lines,
     remacs_sys::{
         command_loop_1, current_kboard, executing_kbd_macro, executing_kbd_macro_iterations,
-        globals, kset_prefix_arg, maybe_quit, run_hook, xpalloc,
+        globals, kset_defining_kbd_macro, kset_last_kbd_macro, kset_prefix_arg, make_event_array,
+        maybe_quit, message1, run_hook, xpalloc,
     },
     remacs_sys::{Qkbd_macro_termination_hook, Qnil},
     threads::c_specpdl_index,
 };
+
+/// Finish defining a keyboard macro.
+/// The definition was started by \\[start-kbd-macro].
+/// The macro is now available for use via \\[call-last-kbd-macro],
+/// or it can be given a name with \\[name-last-kbd-macro] and then invoked
+/// under that name.
+///
+/// With numeric arg, repeat macro now that many times,
+/// counting the definition just completed as the first repetition.
+/// An argument of zero means repeat until error.
+///
+/// In Lisp, optional second arg LOOPFUNC may be a function that is called prior to
+/// each iteration of the macro.  Iteration stops if LOOPFUNC returns nil.
+#[lisp_fn(
+    name = "end-kbd-macro",
+    c_name = "end_kbd_macro",
+    min = "0",
+    intspec = "p"
+)]
+pub fn end_kbd_macro_lisp(count: InteractiveNumericPrefix, loopfunc: LispObject) {
+    if unsafe { (*current_kboard).defining_kbd_macro_.is_nil() } {
+        error!("Not defining kbd macro");
+    }
+
+    let repeat = count.unwrap();
+
+    end_kbd_macro();
+    unsafe {
+        message1("Keyboard macro defined".as_ptr() as *const ::libc::c_char);
+    }
+
+    let repeat = match repeat {
+        0 => count,
+        1 => {
+            // do nothing, the definition counts as the sole repetition.
+            return;
+        }
+        x if x > 1 => InteractiveNumericPrefix::from_number(repeat - 1),
+        _ => {
+            // also ignore negative values...
+            return;
+        }
+    };
+
+    execute_kbd_macro(
+        unsafe { (*current_kboard).Vlast_kbd_macro_ },
+        repeat,
+        loopfunc,
+    );
+}
+
+// Finish defining the current keyboard macro.
+#[no_mangle]
+pub extern "C" fn end_kbd_macro() {
+    unsafe {
+        kset_defining_kbd_macro(current_kboard, Qnil);
+        update_mode_lines = 20;
+        kset_last_kbd_macro(
+            current_kboard,
+            make_event_array(
+                (*current_kboard)
+                    .kbd_macro_end
+                    .offset_from((*current_kboard).kbd_macro_buffer),
+                (*current_kboard).kbd_macro_buffer,
+            ),
+        );
+    }
+}
+
+// Declare that all chars stored so far in the kbd macro being defined
+// really belong to it.  This is done in between editor commands.
+#[no_mangle]
+pub extern "C" fn finalize_kbd_macro_chars() {
+    unsafe {
+        (*current_kboard).kbd_macro_end = (*current_kboard).kbd_macro_ptr;
+    }
+}
 
 // Store character c into kbd macro being defined.
 #[no_mangle]
