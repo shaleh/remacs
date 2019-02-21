@@ -1,6 +1,6 @@
 //! Support for kbd macros
 
-use std::mem;
+use std::{mem, slice};
 
 use libc::c_void;
 
@@ -10,15 +10,109 @@ use crate::{
     interactive::InteractiveNumericPrefix,
     lisp::LispObject,
     remacs_macros::lisp_fn,
+    remacs_sys::char_bits,
     remacs_sys::update_mode_lines,
     remacs_sys::{
         command_loop_1, current_kboard, executing_kbd_macro, executing_kbd_macro_iterations,
         globals, kset_defining_kbd_macro, kset_last_kbd_macro, kset_prefix_arg, make_event_array,
-        maybe_quit, message1, run_hook, xpalloc,
+        maybe_quit, message1, run_hook, xmalloc, xpalloc, xrealloc,
     },
-    remacs_sys::{Qkbd_macro_termination_hook, Qnil},
+    remacs_sys::{Qkbd_macro_termination_hook, Qnil, Qt},
     threads::c_specpdl_index,
 };
+
+/// Record subsequent keyboard input, defining a keyboard macro.
+/// The commands are recorded even as they are executed.
+/// Use \\[end-kbd-macro] to finish recording and make the macro available.
+/// Use \\[name-last-kbd-macro] to give it a permanent name.
+/// Non-nil arg (prefix arg) means append to last macro defined;
+/// this begins by re-executing that macro as if you typed it again.
+/// If optional second arg, NO-EXEC, is non-nil, do not re-execute last
+/// macro before appending to it.
+#[lisp_fn(min = "1", intspec = "P")]
+pub fn start_kbd_macro(append: LispObject, no_exec: bool) {
+    let incr = 30;
+    let limit_existing = 200;
+
+    unsafe {
+        if (*current_kboard).defining_kbd_macro_.is_not_nil() {
+            error!("Already defining kbd macro");
+        }
+
+        if (*current_kboard).kbd_macro_buffer.is_null() {
+            (*current_kboard).kbd_macro_buffer =
+                xmalloc(incr * mem::size_of::<LispObject>()) as *mut LispObject;
+            (*current_kboard).kbd_macro_bufsize = incr as isize;
+            (*current_kboard).kbd_macro_ptr = (*current_kboard).kbd_macro_buffer;
+            (*current_kboard).kbd_macro_end = (*current_kboard).kbd_macro_buffer;
+        }
+
+        update_mode_lines = 19;
+
+        if append.is_nil() {
+            if (*current_kboard).kbd_macro_bufsize > limit_existing {
+                (*current_kboard).kbd_macro_buffer = xrealloc(
+                    (*current_kboard).kbd_macro_buffer as *mut c_void,
+                    incr * mem::size_of::<LispObject>(),
+                ) as *mut LispObject;
+                (*current_kboard).kbd_macro_bufsize = incr as isize;
+            }
+            (*current_kboard).kbd_macro_ptr = (*current_kboard).kbd_macro_buffer;
+            (*current_kboard).kbd_macro_end = (*current_kboard).kbd_macro_buffer;
+            message!("Defining kbd macro...");
+        } else {
+            // Check the type of last-kbd-macro in case Lisp code changed it.
+            let len = (*current_kboard)
+                .Vlast_kbd_macro_
+                .as_vector_or_string_length();
+
+            // Copy last-kbd-macro into the buffer, in case the Lisp code
+            // has put another macro there.
+            if ((*current_kboard).kbd_macro_bufsize as usize) - incr < len {
+                (*current_kboard).kbd_macro_buffer = xpalloc(
+                    (*current_kboard).kbd_macro_buffer as *mut c_void,
+                    &mut (*current_kboard).kbd_macro_bufsize as *mut isize,
+                    (len - ((*current_kboard).kbd_macro_bufsize as usize) + incr) as isize,
+                    -1,
+                    mem::size_of::<LispObject>() as isize,
+                ) as *mut LispObject;
+            }
+
+            let kbd_macro_buffer =
+                slice::from_raw_parts_mut((*current_kboard).kbd_macro_buffer, len);
+            if let Some(s) = (*current_kboard).Vlast_kbd_macro_.as_string() {
+                for (i, c) in s.char_indices() {
+                    let value = if (c & 0x80) != 0 {
+                        // Must convert meta modifier when copying string to vector.
+                        char_bits::CHAR_META | (c & !0x80)
+                    } else {
+                        c
+                    };
+
+                    kbd_macro_buffer[i] = LispObject::from(value);
+                }
+            } else if let Some(v) = (*current_kboard).Vlast_kbd_macro_.as_vector() {
+                for (i, value) in v.iter().enumerate() {
+                    kbd_macro_buffer[i] = value;
+                }
+            } else {
+                unreachable!();
+            }
+
+            (*current_kboard).kbd_macro_ptr = (*current_kboard).kbd_macro_buffer.add(len);
+            (*current_kboard).kbd_macro_end = (*current_kboard).kbd_macro_ptr;
+
+            // Re-execute the macro we are appending to, for consistency of behavior.
+            if !no_exec {
+                execute_kbd_macro((*current_kboard).Vlast_kbd_macro_, 1.into(), Qnil);
+            }
+
+            message!("Appending to kbd macro...");
+        }
+
+        kset_defining_kbd_macro(current_kboard, Qt);
+    }
+}
 
 /// Finish defining a keyboard macro.
 /// The definition was started by \\[start-kbd-macro].
