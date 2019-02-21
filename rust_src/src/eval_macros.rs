@@ -62,6 +62,15 @@ macro_rules! message_with_string {
     };
 }
 
+macro_rules! message {
+    ($str:expr) => {
+        #[allow(unused_unsafe)]
+        unsafe {
+            crate::remacs_sys::message1($str.as_ptr() as *const ::libc::c_char);
+        }
+    };
+}
+
 /// Macro to format an error message.
 /// Replaces error() in the C layer.
 macro_rules! error {
