@@ -10,7 +10,7 @@ use crate::{
     buffers::LispBufferRef,
     editfns::{goto_char, point},
     frames::{LispFrameLiveOrSelected, LispFrameOrSelected, LispFrameRef},
-    interactive::prefix_numeric_value,
+    interactive::InteractiveNumericPrefix,
     lisp::{ExternalPtr, LispObject},
     lists::{assq, setcdr},
     marker::{marker_position_lisp, set_marker_restricted},
@@ -1361,19 +1361,27 @@ pub fn window_top_child(window: LispWindowValidOrSelected) -> Option<LispWindowR
     }
 }
 
-pub fn scroll_horizontally(arg: LispObject, set_minimum: LispObject, left: bool) -> LispObject {
+fn scroll_horizontally(
+    arg: Option<InteractiveNumericPrefix>,
+    set_minimum: bool,
+    left: bool,
+) -> LispObject {
     let mut w: LispWindowRef = selected_window().into();
-    let requested_arg = if arg.is_nil() {
-        EmacsInt::from(w.body_width(false)) - 2
-    } else if left {
-        prefix_numeric_value(arg)
-    } else {
-        -prefix_numeric_value(arg)
+    let requested_arg = match arg {
+        None => EmacsInt::from(w.body_width(false)) - 2,
+        Some(value) => {
+            let tem = value.unwrap();
+            if left {
+                tem
+            } else {
+                -tem
+            }
+        }
     };
 
     let result = unsafe { set_window_hscroll(w.as_mut(), w.hscroll as EmacsInt + requested_arg) };
 
-    if set_minimum.is_not_nil() {
+    if set_minimum {
         w.min_hscroll = w.hscroll;
     }
 
@@ -1390,7 +1398,7 @@ pub fn scroll_horizontally(arg: LispObject, set_minimum: LispObject, left: bool)
 /// will not scroll a window to a column less than the value returned
 /// by this function.  This happens in an interactive call.
 #[lisp_fn(min = "0", intspec = "^P\np")]
-pub fn scroll_left(arg: LispObject, set_minimum: LispObject) -> LispObject {
+pub fn scroll_left(arg: Option<InteractiveNumericPrefix>, set_minimum: bool) -> LispObject {
     scroll_horizontally(arg, set_minimum, true)
 }
 
@@ -1403,7 +1411,7 @@ pub fn scroll_left(arg: LispObject, set_minimum: LispObject) -> LispObject {
 /// will not scroll a window to a column less than the value returned
 /// by this function.  This happens in an interactive call.
 #[lisp_fn(min = "0", intspec = "^P\np")]
-pub fn scroll_right(arg: LispObject, set_minimum: LispObject) -> LispObject {
+pub fn scroll_right(arg: Option<InteractiveNumericPrefix>, set_minimum: bool) -> LispObject {
     scroll_horizontally(arg, set_minimum, false)
 }
 
