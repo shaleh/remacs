@@ -98,12 +98,12 @@ impl LispObject {
         unsafe { self.as_bool_vector_unchecked() }
     }
 
-    pub fn as_vector_or_string_length(self) -> isize {
+    pub fn as_vector_or_string_length(self) -> usize {
         if let Some(s) = self.as_string() {
             return s.len_chars();
         } else if let Some(vl) = self.as_vectorlike() {
             if let Some(v) = vl.as_vector() {
-                return v.len() as isize;
+                return v.len();
             }
         };
 

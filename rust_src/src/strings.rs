@@ -71,7 +71,7 @@ pub fn string_as_multibyte(string: LispStringRef) -> LispObject {
     unsafe {
         multibyte::parse_str_as_multibyte(
             string.const_data_ptr(),
-            string.len_bytes(),
+            string.len_bytes() as isize,
             &mut nchars,
             &mut nbytes,
         )
@@ -87,12 +87,12 @@ pub fn string_as_multibyte(string: LispStringRef) -> LispObject {
             string.len_bytes() as usize,
         );
     }
-    if nbytes != string.len_bytes() {
+    if (nbytes as usize) != string.len_bytes() {
         unsafe {
             multibyte::str_as_multibyte(
                 new_s.data_ptr(),
                 nbytes,
-                string.len_bytes(),
+                string.len_bytes() as isize,
                 ptr::null_mut(),
             )
         };
@@ -124,7 +124,7 @@ pub fn string_to_multibyte(string: LispStringRef) -> LispObject {
 #[lisp_fn]
 pub fn string_to_unibyte(string: LispStringRef) -> LispObject {
     if string.is_multibyte() {
-        let size = string.len_bytes();
+        let size = string.len_bytes() as isize;
         let mut buffer: Vec<libc::c_uchar> = Vec::with_capacity(size as usize);
         let converted_size = unsafe {
             multibyte::str_to_unibyte(string.const_data_ptr(), buffer.as_mut_ptr(), size)

@@ -1607,7 +1607,14 @@ fn general_insert_function<IF, IFSF>(
             };
             insert_func(&s[..len]);
         } else if let Some(string) = val.as_string() {
-            insert_from_string_func(val, 0, 0, string.len_chars(), string.len_bytes(), inherit);
+            insert_from_string_func(
+                val,
+                0,
+                0,
+                string.len_chars() as isize,
+                string.len_bytes() as isize,
+                inherit,
+            );
         } else {
             wrong_type!(Qchar_or_string_p, val);
         }

@@ -311,7 +311,7 @@ pub fn reverse(seq: LispObject) -> LispObject {
             let mut new = unsafe { make_uninit_string(size as i64) }.force_string();
 
             for (i, c) in string.as_slice().iter().enumerate() {
-                new.set_byte(size - i as isize - 1, *c);
+                new.set_byte(size - i - 1, *c);
             }
             new.into()
         } else {
