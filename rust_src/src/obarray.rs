@@ -50,8 +50,8 @@ impl LispObarrayRef {
             oblookup(
                 self.into(),
                 string.const_sdata_ptr(),
-                string.len_chars(),
-                string.len_bytes(),
+                string.len_chars() as isize,
+                string.len_bytes() as isize,
             )
         }
     }

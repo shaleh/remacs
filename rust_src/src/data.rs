@@ -189,12 +189,7 @@ pub fn aref(array: LispObject, idx: EmacsInt) -> LispObject {
     let idx_u = idx as usize;
 
     if let Some(s) = array.as_string() {
-        match s.char_indices().nth(idx_u) {
-            None => {
-                args_out_of_range!(array, idx);
-            }
-            Some((_, cp)) => EmacsInt::from(cp).into(),
-        }
+        s.get_char(idx_u).into()
     } else if let Some(bv) = array.as_bool_vector() {
         if idx_u >= bv.len() {
             args_out_of_range!(array, idx);
@@ -250,7 +245,7 @@ pub fn aset(array: LispObject, idx: EmacsInt, newelt: LispObject) -> LispObject 
         if s.is_multibyte() {
             unsafe { aset_multibyte_string(array, idx, c as c_int) };
         } else if is_single_byte_char(c) {
-            s.set_byte(idx as isize, c as u8);
+            s.set_byte(idx as usize, c as u8);
         } else {
             if s.chars().any(|i| !is_ascii(i)) {
                 args_out_of_range!(array, newelt);

@@ -70,20 +70,20 @@ pub const MAX_MULTIBYTE_LENGTH: usize = 5;
 
 impl LispStringRef {
     /// Return the string's len in bytes.
-    pub fn len_bytes(self) -> ptrdiff_t {
+    pub fn len_bytes(self) -> usize {
         let s = unsafe { self.u.s };
         if s.size_byte < 0 {
-            s.size
+            s.size as usize
         } else {
-            s.size_byte
+            s.size_byte as usize
         }
     }
 
     /// Return the string's length in characters.  Differs from
     /// `len_bytes` for multibyte strings.
-    pub fn len_chars(self) -> ptrdiff_t {
+    pub fn len_chars(self) -> usize {
         let s = unsafe { self.u.s };
-        s.size
+        s.size as usize
     }
 
     /// Return width of STRING when displayed in the current buffer. Width is
@@ -132,21 +132,21 @@ impl LispStringRef {
         unsafe { slice::from_raw_parts_mut(self.u.s.data as *mut u8, self.len_bytes() as usize) }
     }
 
-    pub fn byte_at(self, index: ptrdiff_t) -> u8 {
-        unsafe { *self.const_data_ptr().offset(index) }
+    pub fn byte_at(self, index: usize) -> u8 {
+        unsafe { *self.const_data_ptr().add(index) }
     }
 
     /// This function does not allocate. It will not change the size of the data allocation.
     /// It will only set the 'size' variable of the string, if it is safe to do so.
     /// Replaces STRING_SET_CHARS from C.
-    pub unsafe fn set_num_chars(mut self, newsize: isize) {
+    pub unsafe fn set_num_chars(mut self, newsize: usize) {
         debug_assert!(if self.is_multibyte() {
-            0 <= newsize && newsize == self.len_bytes()
+            newsize == self.len_bytes()
         } else {
             newsize == self.len_chars()
         });
 
-        self.u.s.size = newsize;
+        self.u.s.size = newsize as isize;
     }
 
     pub fn clear_data(self) {
@@ -175,8 +175,8 @@ impl LispStringRef {
         }
     }
 
-    pub fn set_byte(&mut self, idx: ptrdiff_t, elt: c_uchar) {
-        unsafe { ptr::write(self.data_ptr().offset(idx), elt) };
+    pub fn set_byte(&mut self, idx: usize, elt: c_uchar) {
+        unsafe { ptr::write(self.data_ptr().add(idx), elt) };
     }
 }
 
@@ -261,6 +261,19 @@ impl LispStringRef {
     #[allow(dead_code)]
     pub fn chars(&self) -> LispStringRefCharIterator {
         LispStringRefCharIterator(self.char_indices())
+    }
+
+    pub fn get_char(self, idx: usize) -> Codepoint {
+        self.char_indices()
+            .nth(idx as usize)
+            .unwrap_or_else(|| {
+                args_out_of_range!(LispObject::from(self), idx);
+            })
+            .1
+    }
+
+    pub fn get_char_unchecked(self, idx: usize) -> Codepoint {
+        self.char_indices().nth(idx as usize).unwrap().1
     }
 }
 
