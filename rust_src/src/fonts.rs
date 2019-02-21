@@ -237,18 +237,16 @@ pub fn font_at_lisp(
     let pos = match string.as_string() {
         Some(s) => {
             let pos = EmacsInt::from(position) as isize;
-            if !(0 <= pos && pos < s.len_bytes()) {
+            if pos < 0 || pos >= (s.len_bytes() as isize) {
                 args_out_of_range!(string, position);
             }
             pos
         }
-
         _ => {
             if w.contents != cur_buf.into() {
                 error!("Specified window is not displaying the current buffer");
             }
-            position.as_number_coerce_marker_or_error();
-            let pos = EmacsInt::from(position) as isize;
+            let pos = position.as_number_coerce_marker_or_error().to_fixnum() as isize;
 
             let begv = cur_buf.begv;
             let zv = cur_buf.zv;
