@@ -888,7 +888,7 @@ restore_kboard_configuration (int was_locked)
 static Lisp_Object
 cmd_error (Lisp_Object data)
 {
-  Lisp_Object old_level, old_length;
+  Lisp_Object old_level, old_length, kbd_macro;
   char macroerror[sizeof "After..kbd macro iterations: "
 		  + INT_STRLEN_BOUND (EMACS_INT)];
 
@@ -897,13 +897,15 @@ cmd_error (Lisp_Object data)
     cancel_hourglass ();
 #endif
 
-  if (!NILP (executing_kbd_macro))
+  kbd_macro = get_executing_kbd_macro ();
+  if (!NILP (kbd_macro))
     {
-      if (executing_kbd_macro_iterations == 1)
+      EMACS_INT iterations = get_executing_kbd_macro_iterations ();
+      if (iterations == 1)
 	sprintf (macroerror, "After 1 kbd macro iteration: ");
       else
 	sprintf (macroerror, "After %"pI"d kbd macro iterations: ",
-		 executing_kbd_macro_iterations);
+		 iterations);
     }
   else
     *macroerror = 0;
@@ -911,7 +913,7 @@ cmd_error (Lisp_Object data)
   Vstandard_output = Qt;
   Vstandard_input = Qt;
   Vexecuting_kbd_macro = Qnil;
-  executing_kbd_macro = Qnil;
+  set_executing_kbd_macro(Qnil);
   kset_prefix_arg (current_kboard, Qnil);
   kset_last_prefix_arg (current_kboard, Qnil);
   cancel_echoing ();
@@ -988,7 +990,7 @@ command_loop (void)
     {
       Lisp_Object val;
       val = internal_catch (Qexit, command_loop_2, Qnil);
-      executing_kbd_macro = Qnil;
+      set_executing_kbd_macro(Qnil);
       return val;
     }
   else
@@ -996,7 +998,7 @@ command_loop (void)
       {
 	internal_catch (Qtop_level, top_level_1, Qnil);
 	internal_catch (Qtop_level, command_loop_2, Qnil);
-	executing_kbd_macro = Qnil;
+	set_executing_kbd_macro(Qnil);
 
 	/* End of file in -batch run causes exit here.  */
 	if (noninteractive)

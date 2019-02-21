@@ -47,4 +47,8 @@ extern void finalize_kbd_macro_chars (void);
 
 extern void store_kbd_macro_char (Lisp_Object);
 
+extern EMACS_INT get_executing_kbd_macro_iterations (void);
+extern Lisp_Object get_executing_kbd_macro (void);
+extern void set_executing_kbd_macro (Lisp_Object);
+
 #endif /* EMACS_MACROS_H */

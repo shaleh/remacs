@@ -10,12 +10,12 @@ use crate::{
     interactive::InteractiveNumericPrefix,
     lisp::LispObject,
     remacs_macros::lisp_fn,
-    remacs_sys::char_bits,
     remacs_sys::update_mode_lines,
+    remacs_sys::{char_bits, EmacsInt},
     remacs_sys::{
-        command_loop_1, current_kboard, executing_kbd_macro, executing_kbd_macro_iterations,
-        globals, kset_defining_kbd_macro, kset_last_kbd_macro, kset_prefix_arg, make_event_array,
-        maybe_quit, message1, run_hook, xmalloc, xpalloc, xrealloc,
+        command_loop_1, current_kboard, globals, kset_defining_kbd_macro, kset_last_kbd_macro,
+        kset_prefix_arg, make_event_array, maybe_quit, message1, run_hook, xmalloc, xpalloc,
+        xrealloc,
     },
     remacs_sys::{Qkbd_macro_termination_hook, Qnil, Qt},
     threads::c_specpdl_index,
@@ -359,6 +359,65 @@ pub fn execute_kbd_macro(
     }
 
     unbind_to(pdlcount, Qnil)
+}
+
+#[no_mangle]
+pub extern "C" fn get_executing_kbd_macro_iterations() -> EmacsInt {
+    unsafe { executing_kbd_macro_iterations }
+}
+
+#[no_mangle]
+pub extern "C" fn get_executing_kbd_macro() -> LispObject {
+    unsafe { executing_kbd_macro }
+}
+
+#[no_mangle]
+pub extern "C" fn set_executing_kbd_macro(value: LispObject) {
+    unsafe {
+        executing_kbd_macro = value;
+    }
+}
+
+// Number of successful iterations so far for innermost keyboard macro.
+// This is not bound at each level, so after an error,
+// it describes the innermost interrupted macro.
+static mut executing_kbd_macro_iterations: EmacsInt = 0;
+
+// This is the macro that was executing.
+// This is not bound at each level, so after an error,
+// it describes the innermost interrupted macro.
+// We use it only as a kind of flag, so no need to protect it.
+static mut executing_kbd_macro: LispObject = Qnil;
+
+#[no_mangle]
+pub extern "C" fn init_macros() {
+    unsafe {
+        globals.Vexecuting_kbd_macro = Qnil;
+    }
+}
+
+#[no_mangle]
+pub extern "C" fn syms_of_macros() {
+    /// Normal hook run whenever a keyboard macro terminates.
+    /// This is run whether the macro ends normally or prematurely due to an error.
+    #[rustfmt::skip]
+    defvar_lisp!(Vkbd_macro_termination_hook, "kbd-macro-termination-hook", Qnil);
+    def_lisp_sym!(Qkbd_macro_termination_hook, "kbd-macro-termination-hook");
+
+    /// Non-nil while a keyboard macro is being defined.  Don't set this!
+    /// The value is the symbol `append' while appending to the definition of
+    /// an existing macro.
+    defvar_kboard!(defining_kbd_macro_, "defining-kbd-macro");
+
+    /// Currently executing keyboard macro (string or vector).
+    /// This is nil when not executing a keyboard macro.
+    defvar_lisp!(Vexecuting_kbd_macro, "executing-kbd-macro", Qnil);
+
+    /// Index in currently executing keyboard macro; undefined if none executing.
+    defvar_int!(executing_kbd_macro_index, "executing-kbd-macro-index", 0);
+
+    /// Last kbd macro defined, as a string or vector; nil if none defined.
+    defvar_kboard!(Vlast_kbd_macro_, "last-kbd-macro");
 }
 
 include!(concat!(env!("OUT_DIR"), "/kbd_macros_exports.rs"));
