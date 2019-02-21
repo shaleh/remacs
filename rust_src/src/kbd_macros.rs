@@ -1,5 +1,9 @@
 //! Support for kbd macros
 
+use std::mem;
+
+use libc::c_void;
+
 use crate::{
     data::indirect_function,
     eval::{record_unwind_protect, unbind_to},
@@ -8,11 +12,58 @@ use crate::{
     remacs_macros::lisp_fn,
     remacs_sys::{
         command_loop_1, current_kboard, executing_kbd_macro, executing_kbd_macro_iterations,
-        globals, kset_prefix_arg, maybe_quit, run_hook,
+        globals, kset_prefix_arg, maybe_quit, run_hook, xpalloc,
     },
     remacs_sys::{Qkbd_macro_termination_hook, Qnil},
     threads::c_specpdl_index,
 };
+
+// Store character c into kbd macro being defined.
+#[no_mangle]
+pub extern "C" fn store_kbd_macro_char(c: LispObject) {
+    unsafe {
+        if (*current_kboard).defining_kbd_macro_.is_nil() {
+            return;
+        }
+
+        let ptr_offset = (*current_kboard)
+            .kbd_macro_ptr
+            .offset_from((*current_kboard).kbd_macro_buffer);
+        if ptr_offset == (*current_kboard).kbd_macro_bufsize {
+            let end_offset = (*current_kboard)
+                .kbd_macro_end
+                .offset_from((*current_kboard).kbd_macro_buffer);
+            (*current_kboard).kbd_macro_buffer = xpalloc(
+                (*current_kboard).kbd_macro_buffer as *mut c_void,
+                &mut (*current_kboard).kbd_macro_bufsize as *mut isize,
+                1,
+                -1,
+                mem::size_of::<LispObject>() as isize,
+            ) as *mut LispObject;
+            (*current_kboard).kbd_macro_ptr =
+                (*current_kboard).kbd_macro_buffer.add(ptr_offset as usize);
+            (*current_kboard).kbd_macro_end =
+                (*current_kboard).kbd_macro_buffer.add(end_offset as usize);
+        }
+
+        *(*current_kboard).kbd_macro_ptr = c;
+        (*current_kboard).kbd_macro_ptr = (*current_kboard).kbd_macro_ptr.add(1);
+    }
+}
+
+/// Cancel the events added to a keyboard macro for this command.
+#[lisp_fn]
+pub fn cancel_kbd_macro_events() {
+    unsafe {
+        (*current_kboard).kbd_macro_ptr = (*current_kboard).kbd_macro_end;
+    }
+}
+
+/// Store EVENT into the keyboard macro being defined.
+#[lisp_fn]
+pub fn store_kbd_macro_event(event: LispObject) {
+    store_kbd_macro_char(event);
+}
 
 /// Call the last keyboard macro that you defined with \\[start-kbd-macro].
 ///

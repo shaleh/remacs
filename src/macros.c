@@ -173,30 +173,6 @@ each iteration of the macro.  Iteration stops if LOOPFUNC returns nil.  */)
   return Qnil;
 }
 
-/* Store character c into kbd macro being defined.  */
-
-void
-store_kbd_macro_char (Lisp_Object c)
-{
-  struct kboard *kb = current_kboard;
-
-  if (!NILP (KVAR (kb, defining_kbd_macro)))
-    {
-      if (kb->kbd_macro_ptr - kb->kbd_macro_buffer == kb->kbd_macro_bufsize)
-	{
-	  ptrdiff_t ptr_offset = kb->kbd_macro_ptr - kb->kbd_macro_buffer;
-	  ptrdiff_t end_offset = kb->kbd_macro_end - kb->kbd_macro_buffer;
-	  kb->kbd_macro_buffer = xpalloc (kb->kbd_macro_buffer,
-					  &kb->kbd_macro_bufsize,
-					  1, -1, sizeof *kb->kbd_macro_buffer);
-	  kb->kbd_macro_ptr = kb->kbd_macro_buffer + ptr_offset;
-	  kb->kbd_macro_end = kb->kbd_macro_buffer + end_offset;
-	}
-
-      *kb->kbd_macro_ptr++ = c;
-    }
-}
-
 /* Declare that all chars stored so far in the kbd macro being defined
  really belong to it.  This is done in between editor commands.  */
 
@@ -204,24 +180,6 @@ void
 finalize_kbd_macro_chars (void)
 {
   current_kboard->kbd_macro_end = current_kboard->kbd_macro_ptr;
-}
-
-DEFUN ("cancel-kbd-macro-events", Fcancel_kbd_macro_events,
-       Scancel_kbd_macro_events, 0, 0, 0,
-       doc: /* Cancel the events added to a keyboard macro for this command.  */)
-  (void)
-{
-  current_kboard->kbd_macro_ptr = current_kboard->kbd_macro_end;
-  return Qnil;
-}
-
-DEFUN ("store-kbd-macro-event", Fstore_kbd_macro_event,
-       Sstore_kbd_macro_event, 1, 1, 0,
-       doc: /* Store EVENT into the keyboard macro being defined.  */)
-  (Lisp_Object event)
-{
-  store_kbd_macro_char (event);
-  return Qnil;
 }
 
 void
@@ -242,8 +200,6 @@ This is run whether the macro ends normally or prematurely due to an error.  */)
 
   defsubr (&Sstart_kbd_macro);
   defsubr (&Send_kbd_macro);
-  defsubr (&Scancel_kbd_macro_events);
-  defsubr (&Sstore_kbd_macro_event);
 
   DEFVAR_KBOARD ("defining-kbd-macro", defining_kbd_macro,
 		 doc: /* Non-nil while a keyboard macro is being defined.  Don't set this!
