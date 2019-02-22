@@ -107,6 +107,79 @@ pub extern "C" fn record_insert(beg: isize, length: isize) {
     current_buffer.undo_list_ = ((beg, beg + length), current_buffer.undo_list_).into();
 }
 
+// Record the fact that markers in the region of FROM, TO are about to
+// be adjusted.  This is done only when a marker points within text
+// being deleted, because that's the only case where an automatic
+// marker adjustment won't be inverted automatically by undoing the
+// buffer modification.
+fn record_marker_adjustments(from: isize, to: isize) {
+    let mut current_buffer = ThreadState::current_buffer_unchecked();
+
+    unsafe {
+        prepare_record();
+    }
+
+    if let Some(markers) = current_buffer.markers() {
+        for marker in markers.iter() {
+            let charpos = marker.charpos;
+            assert!(charpos <= current_buffer.z());
+
+            if from <= charpos && charpos <= to {
+                // insertion_type nil markers will end up at the beginning of
+                // the re-inserted text after undoing a deletion, and must be
+                // adjusted to move them to the correct place.
+                //
+                // insertion_type t markers will automatically move forward
+                // upon re-inserting the deleted text, so we have to arrange
+                // for them to move backward to the correct position.
+                let adjustment = if marker.insertion_type() { to } else { from } - charpos;
+
+                if adjustment != 0 {
+                    current_buffer.undo_list_ = LispObject::from((
+                        (LispObject::from(marker), LispObject::from(adjustment)),
+                        current_buffer.undo_list_,
+                    ));
+                }
+            }
+        }
+    }
+}
+
+// Record that a deletion is about to take place, of the characters in
+// STRING, at location BEG.  Optionally record adjustments for markers
+// in the region STRING occupies in the current buffer.
+#[no_mangle]
+pub extern "C" fn record_delete(beg: isize, string: LispObject, record_markers: bool) {
+    let mut current_buffer = ThreadState::current_buffer_unchecked();
+
+    if current_buffer.undo_list_.eq(Qt) {
+        return;
+    }
+
+    unsafe {
+        prepare_record();
+
+        record_point(beg);
+    }
+
+    let s = string.force_string();
+    let sbeg = if current_buffer.pt == beg + s.len_chars() {
+        -beg
+    } else {
+        beg
+    };
+
+    // primitive-undo assumes marker adjustments are recorded
+    // immediately before the deletion is recorded.  See bug 16818
+    // discussion.
+    if record_markers {
+        record_marker_adjustments(beg, beg + s.len_chars());
+    }
+
+    current_buffer.undo_list_ =
+        ((string, LispObject::from(sbeg)), current_buffer.undo_list_).into();
+}
+
 /// Mark a boundary between units of undo.
 /// An undo command will stop at this point,
 /// but another undo command will undo to the previous boundary.

@@ -25,86 +25,9 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 #include "keyboard.h"
 
 extern void prepare_record(void);
+extern void record_delete(ptrdiff_t beg, Lisp_Object string, bool record_markers);
 extern void record_point(ptrdiff_t beg);
 extern void syms_of_undo_rust(void);
-
-/* Record the fact that markers in the region of FROM, TO are about to
-   be adjusted.  This is done only when a marker points within text
-   being deleted, because that's the only case where an automatic
-   marker adjustment won't be inverted automatically by undoing the
-   buffer modification.  */
-
-static void
-record_marker_adjustments (ptrdiff_t from, ptrdiff_t to)
-{
-  Lisp_Object marker;
-  register struct Lisp_Marker *m;
-  register ptrdiff_t charpos, adjustment;
-
-  prepare_record();
-
-  for (m = BUF_MARKERS (current_buffer); m; m = m->next)
-    {
-      charpos = m->charpos;
-      eassert (charpos <= Z);
-
-      if (from <= charpos && charpos <= to)
-        {
-          /* insertion_type nil markers will end up at the beginning of
-             the re-inserted text after undoing a deletion, and must be
-             adjusted to move them to the correct place.
-
-             insertion_type t markers will automatically move forward
-             upon re-inserting the deleted text, so we have to arrange
-             for them to move backward to the correct position.  */
-          adjustment = (m->insertion_type ? to : from) - charpos;
-
-          if (adjustment)
-            {
-              XSETMISC (marker, m);
-              bset_undo_list
-                (current_buffer,
-                 Fcons (Fcons (marker, make_number (adjustment)),
-                        BVAR (current_buffer, undo_list)));
-            }
-        }
-    }
-}
-
-/* Record that a deletion is about to take place, of the characters in
-   STRING, at location BEG.  Optionally record adjustments for markers
-   in the region STRING occupies in the current buffer.  */
-void
-record_delete (ptrdiff_t beg, Lisp_Object string, bool record_markers)
-{
-  Lisp_Object sbeg;
-
-  if (EQ (BVAR (current_buffer, undo_list), Qt))
-    return;
-
-  prepare_record ();
-
-  record_point (beg);
-
-  if (PT == beg + SCHARS (string))
-    {
-      XSETINT (sbeg, -beg);
-    }
-  else
-    {
-      XSETFASTINT (sbeg, beg);
-    }
-
-  /* primitive-undo assumes marker adjustments are recorded
-     immediately before the deletion is recorded.  See bug 16818
-     discussion.  */
-  if (record_markers)
-    record_marker_adjustments (beg, beg + SCHARS (string));
-
-  bset_undo_list
-    (current_buffer,
-     Fcons (Fcons (string, sbeg), BVAR (current_buffer, undo_list)));
-}
 
 /* Record that a replacement is about to take place,
    for LENGTH characters at location BEG.
