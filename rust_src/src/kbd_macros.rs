@@ -36,7 +36,7 @@ pub fn start_kbd_macro(append: LispObject, no_exec: bool) {
 
     unsafe {
         if (*current_kboard).defining_kbd_macro_.is_not_nil() {
-            error!("Already defining kbd macro");
+            error!("Already defining kbd macro.");
         }
 
         if (*current_kboard).kbd_macro_buffer.is_null() {
@@ -72,7 +72,7 @@ pub fn start_kbd_macro(append: LispObject, no_exec: bool) {
                 (*current_kboard).kbd_macro_buffer = xpalloc(
                     (*current_kboard).kbd_macro_buffer as *mut c_void,
                     &mut (*current_kboard).kbd_macro_bufsize as *mut isize,
-                    (len - ((*current_kboard).kbd_macro_bufsize as usize) + incr) as isize,
+                    (len as isize) - (*current_kboard).kbd_macro_bufsize + (incr as isize),
                     -1,
                     mem::size_of::<LispObject>() as isize,
                 ) as *mut LispObject;
