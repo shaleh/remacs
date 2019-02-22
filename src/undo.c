@@ -25,84 +25,8 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 #include "keyboard.h"
 
 extern void prepare_record(void);
+extern void record_point(ptrdiff_t beg);
 extern void syms_of_undo_rust(void);
-
-/* Record point, if necessary, as it was at beginning of this command.
-   BEG is the position of point that will naturally occur as a result
-   of the undo record that will be added just after this command
-   terminates.  */
-static void
-record_point (ptrdiff_t beg)
-{
-  /* Don't record position of pt when undo_inhibit_record_point holds.  */
-  if (undo_inhibit_record_point)
-    return;
-
-  bool at_boundary;
-
-  /* Check whether we are at a boundary now, in case we record the
-  first change. FIXME: This check is currently dependent on being
-  called before record_first_change, but could be made not to by
-  ignoring timestamp undo entries */
-  at_boundary = ! CONSP (BVAR (current_buffer, undo_list))
-                || NILP (XCAR (BVAR (current_buffer, undo_list)));
-
-  /* If this is the first change since save, then record this.*/
-  if (MODIFF <= SAVE_MODIFF)
-    record_first_change ();
-
-  /* We may need to record point if we are immediately after a
-     boundary, so that this will be restored correctly after undo. We
-     do not need to do this if point is at the start of a change
-     region since it will be restored there anyway, and we must not do
-     this if the buffer has changed since the last command, since the
-     value of point that we have will be for that buffer, not this.*/
-  if (at_boundary
-      && point_before_last_command_or_undo != beg
-      && buffer_before_last_command_or_undo == current_buffer )
-    bset_undo_list (current_buffer,
-		    Fcons (make_number (point_before_last_command_or_undo),
-			   BVAR (current_buffer, undo_list)));
-}
-
-/* Record an insertion that just happened or is about to happen,
-   for LENGTH characters at position BEG.
-   (It is possible to record an insertion before or after the fact
-   because we don't need to record the contents.)  */
-
-void
-record_insert (ptrdiff_t beg, ptrdiff_t length)
-{
-  Lisp_Object lbeg, lend;
-
-  if (EQ (BVAR (current_buffer, undo_list), Qt))
-    return;
-
-  prepare_record ();
-
-  record_point (beg);
-
-  /* If this is following another insertion and consecutive with it
-     in the buffer, combine the two.  */
-  if (CONSP (BVAR (current_buffer, undo_list)))
-    {
-      Lisp_Object elt;
-      elt = XCAR (BVAR (current_buffer, undo_list));
-      if (CONSP (elt)
-	  && INTEGERP (XCAR (elt))
-	  && INTEGERP (XCDR (elt))
-	  && XINT (XCDR (elt)) == beg)
-	{
-	  XSETCDR (elt, make_number (beg + length));
-	  return;
-	}
-    }
-
-  XSETFASTINT (lbeg, beg);
-  XSETINT (lend, beg + length);
-  bset_undo_list (current_buffer,
-		  Fcons (Fcons (lbeg, lend), BVAR (current_buffer, undo_list)));
-}
 
 /* Record the fact that markers in the region of FROM, TO are about to
    be adjusted.  This is done only when a marker points within text
@@ -435,8 +359,4 @@ If it returns nil, the other forms of truncation are done.
 Garbage collection is inhibited around the call to this function,
 so it must make sure not to do a lot of consing.  */);
   Vundo_outer_limit_function = Qnil;
-
-  DEFVAR_BOOL ("undo-inhibit-record-point", undo_inhibit_record_point,
-	       doc: /* Non-nil means do not record `point' in `buffer-undo-list'.  */);
-  undo_inhibit_record_point = false;
 }

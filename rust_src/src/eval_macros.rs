@@ -203,14 +203,14 @@ macro_rules! defvar_bool {
         #[allow(unused_unsafe)]
         unsafe {
             #[allow(const_err)]
-            static mut o_fwd: ::hacks::Hack<::data::Lisp_Boolfwd> =
-                unsafe { ::hacks::Hack::uninitialized() };
-            ::remacs_sys::defvar_bool(
+            static mut o_fwd: crate::hacks::Hack<crate::data::Lisp_Boolfwd> =
+                unsafe { crate::hacks::Hack::uninitialized() };
+            crate::remacs_sys::defvar_bool(
                 o_fwd.get_mut(),
                 concat!($lisp_name, "\0").as_ptr() as *const i8,
-                &mut ::remacs_sys::globals.$field_name,
+                &mut crate::remacs_sys::globals.$field_name,
             );
-            ::remacs_sys::globals.$field_name = $value;
+            crate::remacs_sys::globals.$field_name = $value;
         }
     }};
 }
