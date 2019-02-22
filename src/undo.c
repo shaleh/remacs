@@ -24,21 +24,8 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 #include "buffer.h"
 #include "keyboard.h"
 
-/* The first time a command records something for undo.
-   it also allocates the undo-boundary object
-   which will be added to the list at the end of the command.
-   This ensures we can't run out of space while trying to make
-   an undo-boundary.  */
-static Lisp_Object pending_boundary;
-
-/* Prepare the undo info for recording a change. */
-static void
-prepare_record (void)
-{
-  /* Allocate a cons cell to be the undo boundary after this command.  */
-  if (NILP (pending_boundary))
-    pending_boundary = Fcons (Qnil, Qnil);
-}
+extern void prepare_record(void);
+extern void syms_of_undo_rust(void);
 
 /* Record point, if necessary, as it was at beginning of this command.
    BEG is the position of point that will naturally occur as a result
@@ -252,39 +239,6 @@ record_property_change (ptrdiff_t beg, ptrdiff_t length,
 		  Fcons (entry, BVAR (current_buffer, undo_list)));
 }
 
-DEFUN ("undo-boundary", Fundo_boundary, Sundo_boundary, 0, 0, 0,
-       doc: /* Mark a boundary between units of undo.
-An undo command will stop at this point,
-but another undo command will undo to the previous boundary.  */)
-  (void)
-{
-  Lisp_Object tem;
-  if (EQ (BVAR (current_buffer, undo_list), Qt))
-    return Qnil;
-  tem = Fcar (BVAR (current_buffer, undo_list));
-  if (!NILP (tem))
-    {
-      /* One way or another, cons nil onto the front of the undo list.  */
-      if (!NILP (pending_boundary))
-	{
-	  /* If we have preallocated the cons cell to use here,
-	     use that one.  */
-	  XSETCDR (pending_boundary, BVAR (current_buffer, undo_list));
-	  bset_undo_list (current_buffer, pending_boundary);
-	  pending_boundary = Qnil;
-	}
-      else
-	bset_undo_list (current_buffer,
-			Fcons (Qnil, BVAR (current_buffer, undo_list)));
-    }
-
-  Fset (Qundo_auto__last_boundary_cause, Qexplicit);
-  point_before_last_command_or_undo = PT;
-  buffer_before_last_command_or_undo = current_buffer;
-
-  return Qnil;
-}
-
 /* At garbage collection time, make an undo list shorter at the end,
    returning the truncated list.  How this is done depends on the
    variables undo-limit, undo-strong-limit and undo-outer-limit.
@@ -423,17 +377,14 @@ truncate_undo_list (struct buffer *b)
 void
 syms_of_undo (void)
 {
+  syms_of_undo_rust ();
+
   DEFSYM (Qinhibit_read_only, "inhibit-read-only");
   DEFSYM (Qundo_auto__last_boundary_cause, "undo-auto--last-boundary-cause");
   DEFSYM (Qexplicit, "explicit");
 
   /* Marker for function call undo list elements.  */
   DEFSYM (Qapply, "apply");
-
-  pending_boundary = Qnil;
-  staticpro (&pending_boundary);
-
-  defsubr (&Sundo_boundary);
 
   DEFVAR_INT ("undo-limit", undo_limit,
 	      doc: /* Keep no more undo information once it exceeds this size.

@@ -116,6 +116,7 @@ mod terminal;
 mod textprop;
 mod threads;
 mod time;
+mod undo;
 mod util;
 mod vectors;
 mod window_configuration;
