@@ -3,12 +3,13 @@
 use remacs_macros::lisp_fn;
 
 use crate::{
+    buffers::LispBufferRef,
     data::set,
     lisp::LispObject,
     lists::car,
     remacs_sys::EmacsInt,
     remacs_sys::{buffer_before_last_command_or_undo, globals, point_before_last_command_or_undo},
-    remacs_sys::{record_first_change, staticpro},
+    remacs_sys::{make_buffer_string, staticpro},
     remacs_sys::{Qexplicit, Qnil, Qt, Qundo_auto__last_boundary_cause},
     threads::ThreadState,
 };
@@ -52,9 +53,7 @@ pub extern "C" fn record_point(beg: isize) {
 
     // If this is the first change since save, then record this.
     if unsafe { (*current_buffer.text).modiff <= (*current_buffer.text).save_modiff } {
-        unsafe {
-            record_first_change();
-        }
+        record_first_change();
     }
 
     // We may need to record point if we are immediately after a
@@ -178,6 +177,33 @@ pub extern "C" fn record_delete(beg: isize, string: LispObject, record_markers: 
 
     current_buffer.undo_list_ =
         ((string, LispObject::from(sbeg)), current_buffer.undo_list_).into();
+}
+
+// Record that a replacement is about to take place,
+// for LENGTH characters at location BEG.
+// The replacement must not change the number of characters.
+#[no_mangle]
+pub extern "C" fn record_change(beg: isize, length: isize) {
+    record_delete(
+        beg,
+        unsafe { make_buffer_string(beg, beg + length, true) },
+        false,
+    );
+    record_insert(beg, length);
+}
+
+// Record that an unmodified buffer is about to be changed.
+// Record the file modification date so that when undoing this entry
+// we can tell whether it is obsolete because the file was saved again.
+#[no_mangle]
+pub extern "C" fn record_first_change() {
+    let mut current_buffer = ThreadState::current_buffer_unchecked();
+
+    if current_buffer.undo_list_.eq(Qt) {
+        return;
+    }
+
+    current_buffer.undo_list_ = ((Qt, current_buffer.modtime()), current_buffer.undo_list_).into();
 }
 
 /// Mark a boundary between units of undo.

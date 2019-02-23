@@ -29,37 +29,6 @@ extern void record_delete(ptrdiff_t beg, Lisp_Object string, bool record_markers
 extern void record_point(ptrdiff_t beg);
 extern void syms_of_undo_rust(void);
 
-/* Record that a replacement is about to take place,
-   for LENGTH characters at location BEG.
-   The replacement must not change the number of characters.  */
-
-void
-record_change (ptrdiff_t beg, ptrdiff_t length)
-{
-  record_delete (beg, make_buffer_string (beg, beg + length, true), false);
-  record_insert (beg, length);
-}
-
-/* Record that an unmodified buffer is about to be changed.
-   Record the file modification date so that when undoing this entry
-   we can tell whether it is obsolete because the file was saved again.  */
-
-void
-record_first_change (void)
-{
-  struct buffer *base_buffer = current_buffer;
-
-  if (EQ (BVAR (current_buffer, undo_list), Qt))
-    return;
-
-  if (base_buffer->base_buffer)
-    base_buffer = base_buffer->base_buffer;
-
-  bset_undo_list (current_buffer,
-		  Fcons (Fcons (Qt, Fvisited_file_modtime ()),
-			 BVAR (current_buffer, undo_list)));
-}
-
 /* Record a change in property PROP (whose old value was VAL)
    for LENGTH characters starting at position BEG in BUFFER.  */
 
