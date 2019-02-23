@@ -206,6 +206,46 @@ pub extern "C" fn record_first_change() {
     current_buffer.undo_list_ = ((Qt, current_buffer.modtime()), current_buffer.undo_list_).into();
 }
 
+// Record a change in property PROP (whose old value was VAL)
+// for LENGTH characters starting at position BEG in BUFFER.
+#[no_mangle]
+pub extern "C" fn record_property_change(
+    beg: isize,
+    length: isize,
+    prop: LispObject,
+    value: LispObject,
+    buffer: LispObject,
+) {
+    let buf_ref: LispBufferRef = buffer.into();
+    let mut current_buffer = ThreadState::current_buffer_unchecked();
+
+    if buf_ref.undo_list_.eq(Qt) {
+        return;
+    }
+
+    unsafe {
+        prepare_record();
+    }
+
+    // If this is the first change since save, then record this.
+    if unsafe { (*current_buffer.text).modiff <= (*current_buffer.text).save_modiff } {
+        record_first_change();
+    }
+
+    let entry: LispObject = (
+        Qnil,
+        (
+            prop,
+            (
+                value,
+                (LispObject::from(beg), LispObject::from(beg + length)),
+            ),
+        ),
+    )
+        .into();
+    current_buffer.undo_list_ = (entry, current_buffer.undo_list_).into();
+}
+
 /// Mark a boundary between units of undo.
 /// An undo command will stop at this point,
 /// but another undo command will undo to the previous boundary.

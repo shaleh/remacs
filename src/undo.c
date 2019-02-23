@@ -29,32 +29,6 @@ extern void record_delete(ptrdiff_t beg, Lisp_Object string, bool record_markers
 extern void record_point(ptrdiff_t beg);
 extern void syms_of_undo_rust(void);
 
-/* Record a change in property PROP (whose old value was VAL)
-   for LENGTH characters starting at position BEG in BUFFER.  */
-
-void
-record_property_change (ptrdiff_t beg, ptrdiff_t length,
-			Lisp_Object prop, Lisp_Object value,
-			Lisp_Object buffer)
-{
-  Lisp_Object lbeg, lend, entry;
-  struct buffer *buf = XBUFFER (buffer);
-
-  if (EQ (BVAR (buf, undo_list), Qt))
-    return;
-
-  prepare_record();
-
-  if (MODIFF <= SAVE_MODIFF)
-    record_first_change ();
-
-  XSETINT (lbeg, beg);
-  XSETINT (lend, beg + length);
-  entry = Fcons (Qnil, Fcons (prop, Fcons (value, Fcons (lbeg, lend))));
-  bset_undo_list (current_buffer,
-		  Fcons (entry, BVAR (current_buffer, undo_list)));
-}
-
 /* At garbage collection time, make an undo list shorter at the end,
    returning the truncated list.  How this is done depends on the
    variables undo-limit, undo-strong-limit and undo-outer-limit.
