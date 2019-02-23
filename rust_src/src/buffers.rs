@@ -35,16 +35,16 @@ use crate::{
     },
     remacs_sys::{
         buffer_defaults, equal_kind, pvec_type, EmacsInt, Lisp_Buffer, Lisp_Buffer_Local_Value,
-        Lisp_Misc_Type, Lisp_Overlay, Lisp_Type, Vbuffer_alist, Vrun_hooks,
+        Lisp_Misc_Type, Lisp_Overlay, Lisp_Type, Vbuffer_alist, Vrun_hooks, UNKNOWN_MODTIME_NSECS,
     },
     remacs_sys::{Fcopy_sequence, Fget_text_property, Fnconc, Fnreverse},
     remacs_sys::{
         Qafter_string, Qbefore_string, Qbuffer_list_update_hook, Qbuffer_read_only, Qbufferp,
         Qget_file_buffer, Qinhibit_quit, Qinhibit_read_only, Qnil, Qoverlayp, Qt, Qunbound,
-        UNKNOWN_MODTIME_NSECS,
     },
     strings::string_equal,
     threads::{c_specpdl_index, ThreadState},
+    time::make_lisp_time,
 };
 
 pub const BEG: ptrdiff_t = 1;
@@ -364,6 +364,15 @@ impl LispBufferRef {
 
     pub fn z(self) -> ptrdiff_t {
         unsafe { (*self.text).z }
+    }
+
+    pub fn modtime(self) -> LispObject {
+        let ns = self.modtime.tv_nsec;
+        if ns < 0 {
+            ((UNKNOWN_MODTIME_NSECS as i64) - ns).into()
+        } else {
+            make_lisp_time(self.modtime)
+        }
     }
 
     pub fn local_vars_iter(self) -> CarIter {

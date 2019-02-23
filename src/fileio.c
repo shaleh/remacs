@@ -5223,22 +5223,6 @@ See Info node `(elisp)Modification Time' for more details.  */)
   return Qnil;
 }
 
-DEFUN ("visited-file-modtime", Fvisited_file_modtime,
-       Svisited_file_modtime, 0, 0, 0,
-       doc: /* Return the current buffer's recorded visited file modification time.
-The value is a list of the form (HIGH LOW USEC PSEC), like the time values that
-`file-attributes' returns.  If the current buffer has no recorded file
-modification time, this function returns 0.  If the visited file
-doesn't exist, return -1.
-See Info node `(elisp)Modification Time' for more details.  */)
-  (void)
-{
-  int ns = current_buffer->modtime.tv_nsec;
-  if (ns < 0)
-    return make_number (UNKNOWN_MODTIME_NSECS - ns);
-  return make_lisp_time (current_buffer->modtime);
-}
-
 DEFUN ("set-visited-file-modtime", Fset_visited_file_modtime,
        Sset_visited_file_modtime, 0, 1, 0,
        doc: /* Update buffer's recorded modification time from the visited file's time.
@@ -6022,7 +6006,6 @@ This includes interactive calls to `delete-file' and
   defsubr (&Sinsert_file_contents);
   defsubr (&Swrite_region);
   defsubr (&Sverify_visited_file_modtime);
-  defsubr (&Svisited_file_modtime);
   defsubr (&Sset_visited_file_modtime);
   defsubr (&Sdo_auto_save);
   defsubr (&Sset_buffer_auto_saved);

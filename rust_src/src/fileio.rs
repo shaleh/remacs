@@ -167,4 +167,16 @@ pub fn find_file_name_handler(filename: LispStringRef, operation: LispObject) ->
     unsafe { Ffind_file_name_handler(filename.into(), operation) }
 }
 
+/// Return the current buffer's recorded visited file modification time.
+/// The value is a list of the form (HIGH LOW USEC PSEC), like the time values that
+/// `file-attributes' returns.  If the current buffer has no recorded file
+/// modification time, this function returns 0.  If the visited file
+/// doesn't exist, return -1.
+/// See Info node `(elisp)Modification Time' for more details.
+#[lisp_fn]
+pub fn visited_file_modtime() -> LispObject {
+    let current_buffer = ThreadState::current_buffer_unchecked();
+    current_buffer.modtime()
+}
+
 include!(concat!(env!("OUT_DIR"), "/fileio_exports.rs"));
