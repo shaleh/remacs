@@ -13,6 +13,7 @@ use crate::{
     remacs_sys::{Fmake_symbol, Fpurecopy},
     remacs_sys::{Qnil, Qvectorp},
     symbols::LispSymbolRef,
+    vectors::LispVectorRef,
 };
 
 /// A lisp object containing an `obarray`.
@@ -130,7 +131,7 @@ pub extern "C" fn check_obarray(obarray: LispObject) -> LispObject {
 
     // A valid obarray is a non-empty vector.
     let v = obarray.as_vector();
-    if v.map_or(0, |v_1| v_1.len()) == 0 {
+    if v.map_or(0, LispVectorRef::len) == 0 {
         // If Vobarray is now invalid, force it to be valid.
         if LispObject::from_raw(unsafe { globals.Vobarray }).eq(obarray) {
             unsafe { globals.Vobarray = initial_obarray };
