@@ -924,9 +924,20 @@ impl From<LispBufferOrCurrent> for LispBufferRef {
     }
 }
 
-/// Return a list of all existing live buffers.
-/// If the optional arg FRAME is a frame, we return the buffer list in the
-/// proper order for that frame: the buffers show in FRAME come first,
+/// Return false.
+/// If the optional arg BUFFER is provided and not nil, enable undoes in that
+/// buffer, otherwise run on the current buffer.
+#[lisp_fn(min = "0", intspec = "")]
+pub fn buffer_enable_undo(buffer: LispBufferOrCurrent) {
+    let mut buf: LispBufferRef = buffer.into();
+    if buf.undo_list_.eq(Qt) {
+        buf.undo_list_ = Qnil;
+    }
+}
+
+/// Return a list of all live buffers.
+/// If the optional arg FRAME is a frame, return the buffer list in the
+/// proper order for that frame: the buffers shown in FRAME come first,
 /// followed by the rest of the buffers.
 #[lisp_fn(min = "0")]
 pub fn buffer_list(frame: Option<LispFrameRef>) -> LispObject {
