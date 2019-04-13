@@ -611,7 +611,7 @@ pub fn macroexpand(mut form: LispObject, environment: LispObject) -> LispObject 
 #[lisp_fn(min = "1")]
 pub fn eval(form: LispObject, lexical: LispObject) -> LispObject {
     let count = c_specpdl_index();
-    let value = if lexical.is_cons() || lexical.is_nil() {
+    let value = if lexical.is_list() {
         lexical
     } else {
         list!(Qt)
