@@ -3737,22 +3737,6 @@ mark_window_cursors_off (struct window *w)
     }
 }
 
-/* Return number of lines of text (not counting mode lines) in W.  */
-
-int
-window_internal_height (struct window *w)
-{
-  int ht = w->total_lines;
-
-  if (window_wants_mode_line (w))
-    --ht;
-
-  if (window_wants_header_line (w))
-    --ht;
-
-  return ht;
-}
-
 
 /************************************************************************
 			   Window Scrolling
