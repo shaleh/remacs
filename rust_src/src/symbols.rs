@@ -172,7 +172,7 @@ impl LispSymbolRef {
         self.val.fwd = fwd;
     }
 
-    pub fn iter(self) -> LispSymbolIter {
+    pub const fn iter(self) -> LispSymbolIter {
         LispSymbolIter { current: self }
     }
 
