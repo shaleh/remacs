@@ -181,7 +181,7 @@ impl LispStringRef {
 impl LispStructuralEqual for LispStringRef {
     fn equal(
         &self,
-        other: LispStringRef,
+        other: Self,
         kind: equal_kind::Type,
         _depth: i32,
         _ht: &mut LispHashTableRef,
@@ -264,7 +264,7 @@ impl LispStringRef {
 
 impl From<EmacsDouble> for LispObject {
     fn from(v: EmacsDouble) -> Self {
-        LispObject::from_float(v)
+        Self::from_float(v)
     }
 }
 
@@ -286,7 +286,7 @@ impl From<LispObject> for Option<LispStringRef> {
 
 impl From<LispStringRef> for LispObject {
     fn from(s: LispStringRef) -> Self {
-        LispObject::tag_ptr(s, Lisp_Type::Lisp_String)
+        Self::tag_ptr(s, Lisp_Type::Lisp_String)
     }
 }
 
