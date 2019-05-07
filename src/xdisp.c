@@ -670,17 +670,6 @@ bset_update_mode_line (struct buffer *b)
   b->text->redisplay = true;
 }
 
-DEFUN ("set-buffer-redisplay", Fset_buffer_redisplay,
-       Sset_buffer_redisplay, 4, 4, 0,
-       doc: /* Mark the current buffer for redisplay.
-This function may be passed to `add-variable-watcher'.  */)
-  (Lisp_Object symbol, Lisp_Object newval, Lisp_Object op, Lisp_Object where)
-{
-  bset_update_mode_line (current_buffer);
-  current_buffer->prevent_redisplay_optimizations_p = true;
-  return Qnil;
-}
-
 #ifdef GLYPH_DEBUG
 
 /* True means print traces of redisplay if compiled with
@@ -32404,7 +32393,6 @@ be let-bound around code that needs to disable messages temporarily. */);
   message_dolog_marker3 = Fmake_marker ();
   staticpro (&message_dolog_marker3);
 
-  defsubr (&Sset_buffer_redisplay);
 #ifdef GLYPH_DEBUG
   defsubr (&Sdump_frame_glyph_matrix);
   defsubr (&Sdump_glyph_matrix);
