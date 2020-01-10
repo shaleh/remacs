@@ -346,6 +346,7 @@ impl LispStringRef {
         }
     }
 
+    // Same as the SCHARS function
     /// Return the string's length in characters.  Differs from
     /// `len_bytes` for multibyte strings.
     pub fn len_chars(self) -> ptrdiff_t {
