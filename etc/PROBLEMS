@@ -596,7 +596,7 @@ to the variable 'locate-dominating-stop-dir-regexp'.  For example, if
 the problem relates to "/smb/.dir-locals.el", set that variable
 to a new value where you replace "net\\|afs" with "net\\|afs\\|smb".
 (The default value already matches common auto-mount prefixes.)
-See https://lists.gnu.org/archive/html/help-gnu-emacs/2015-02/msg00461.html .
+See https://lists.gnu.org/r/help-gnu-emacs/2015-02/msg00461.html .
 
 *** Attempting to visit remote files via ange-ftp fails.
 
@@ -613,7 +613,7 @@ and then choose /usr/bin/netkit-ftp.
 
 *** Dired is very slow.
 
-This could happen if getting a file system's status takes a long
+This could happen if invocation of the 'df' program takes a long
 time.  Possible reasons for this include:
 
   - ClearCase mounted filesystems (VOBs) that sometimes make 'df'
@@ -621,8 +621,12 @@ time.  Possible reasons for this include:
 
   - slow automounters on some old versions of Unix;
 
-To work around the problem, you could use Git or some other
-free-software program, instead of ClearCase.
+  - slow operation of some versions of 'df'.
+
+To work around the problem, you could either (a) set the variable
+'directory-free-space-program' to nil, and thus prevent Emacs from
+invoking 'df'; (b) use 'df' from the GNU Coreutils package; or
+(c) use CVS, which is Free Software, instead of ClearCase.
 
 *** ps-print commands fail to find prologue files ps-prin*.ps.
 
@@ -741,7 +745,7 @@ On some systems, there exists a font that is actually named Monospace,
 which takes over the virtual font.  This is considered an operating
 system bug; see
 
-https://lists.gnu.org/archive/html/emacs-devel/2008-10/msg00696.html
+https://lists.gnu.org/r/emacs-devel/2008-10/msg00696.html
 
 If you encounter this problem, set the default font to a specific font
 in your .Xresources or initialization file.  For instance, you can put
@@ -803,8 +807,10 @@ frame's parameter list, like this:
 ** Underlines appear at the wrong position.
 
 This is caused by fonts having a wrong UNDERLINE_POSITION property.
-To avoid this problem (seen in some very old X releases and font packages),
-set x-use-underline-position-properties to nil.
+Examples are the 7x13 font on XFree86 prior to version 4.1, or the jmk
+neep font from the Debian xfonts-jmk package prior to version 3.0.17.
+To circumvent this problem, set x-use-underline-position-properties
+to nil in your '.emacs'.
 
 To see what is the value of UNDERLINE_POSITION defined by the font,
 type 'xlsfonts -lll FONT' and look at the font's UNDERLINE_POSITION property.
@@ -1160,7 +1166,7 @@ during such resizing attempts (i3, IceWM).
 See also https://debbugs.gnu.org/cgi/bugreport.cgi?bug=15700,
 https://debbugs.gnu.org/cgi/bugreport.cgi?bug=22000,
 https://debbugs.gnu.org/cgi/bugreport.cgi?bug=22898 and
-https://lists.gnu.org/archive/html/emacs-devel/2016-07/msg00154.html.
+https://lists.gnu.org/r/emacs-devel/2016-07/msg00154.html.
 
 *** Metacity: Resizing Emacs or ALT-Tab causes X to be unresponsive.
 
@@ -2708,7 +2714,7 @@ This is a consequence of a change to src/dired.c on 2010-07-27.  The
 issue is that Cygwin 1.5.19 did not have d_ino in 'struct dirent'.
 See
 
-  https://lists.gnu.org/archive/html/emacs-devel/2010-07/msg01266.html
+  https://lists.gnu.org/r/emacs-devel/2010-07/msg01266.html
 
 *** Building the native MS-Windows port fails due to unresolved externals
 
@@ -2809,7 +2815,7 @@ Errors and warnings can look like this:
 This happens when paths using backslashes are passed to the compiler or
 linker (via -I and possibly other compiler flags); when these paths are
 included in source code, the backslashes are interpreted as escape sequences.
-See https://lists.gnu.org/archive/html/emacs-devel/2010-07/msg00995.html
+See https://lists.gnu.org/r/emacs-devel/2010-07/msg00995.html
 
 The fix is to use forward slashes in all paths passed to the compiler.
 
@@ -3142,6 +3148,129 @@ When a program you are trying to run is not found on the PATH,
 Windows might respond by crashing or locking up your system.  In
 particular, this has been reported when trying to compile a Java
 program in JDEE when javac.exe is installed, but not on the system PATH.
+
+** MS-DOS
+
+*** When compiling with DJGPP on MS-Windows NT or later, "config msdos" fails.
+
+If the error message is "VDM has been already loaded", this is because
+Windows has a program called 'redir.exe' that is incompatible with a
+program by the same name supplied with DJGPP, which is used by
+config.bat.  To resolve this, move the DJGPP's 'bin' subdirectory to
+the front of your PATH environment variable.
+
+*** When Emacs compiled with DJGPP runs on Windows 2000 and later, it cannot
+find your HOME directory.
+
+This was reported to happen when you click on "Save for future
+sessions" button in a Customize buffer.  You might see an error
+message like this one:
+
+  basic-save-buffer-2: c:/FOO/BAR/~dosuser/: no such directory
+
+(The telltale sign is the "~USER" part at the end of the directory
+Emacs complains about, where USER is your username or the literal
+string "dosuser", which is the default username set up by the DJGPP
+startup file DJGPP.ENV.)
+
+This happens when the functions 'user-login-name' and
+'user-real-login-name' return different strings for your username as
+Emacs sees it.  To correct this, make sure both USER and USERNAME
+environment variables are set to the same value.  Windows 2000 and
+later sets USERNAME, so if you want to keep that, make sure USER is
+set to the same value.  If you don't want to set USER globally, you
+can do it in the [emacs] section of your DJGPP.ENV file.
+
+*** When Emacs compiled with DJGPP runs on Vista, it runs out of memory.
+
+If Emacs running on Vista displays "!MEM FULL!" in the mode line, you
+are hitting the memory allocation bugs in the Vista DPMI server.  See
+msdos/INSTALL for how to work around these bugs (search for "Vista").
+
+*** When compiling with DJGPP on MS-Windows 95, Make fails for some targets
+like make-docfile.
+
+This can happen if long file name support (the setting of environment
+variable LFN) when Emacs distribution was unpacked and during
+compilation are not the same.  See msdos/INSTALL for the explanation
+of how to avoid this problem.
+
+*** Emacs compiled with DJGPP complains at startup:
+
+  "Wrong type of argument: internal-facep, msdos-menu-active-face"
+
+This can happen if you define an environment variable 'TERM'.  Emacs
+on MSDOS uses an internal terminal emulator which is disabled if the
+value of 'TERM' is anything but the string "internal".  Emacs then
+works as if its terminal were a dumb glass teletype that doesn't
+support faces.  To work around this, arrange for 'TERM' to be
+undefined when Emacs runs.  The best way to do that is to add an
+[emacs] section to the DJGPP.ENV file which defines an empty value for
+'TERM'; this way, only Emacs gets the empty value, while the rest of
+your system works as before.
+
+*** MS-DOS: Emacs crashes at startup.
+
+Some users report that Emacs 19.29 requires dpmi memory management,
+and crashes on startup if the system does not have it.  We don't
+know why this happens--perhaps these machines don't have enough real
+memory, or perhaps something is wrong in Emacs or the compiler.
+However, arranging to use dpmi support is a workaround.
+
+You can find out if you have a dpmi host by running go32 without
+arguments; it will tell you if it uses dpmi memory.  For more
+information about dpmi memory, consult the djgpp FAQ.  (djgpp
+is the GNU C compiler as packaged for MSDOS.)
+
+Compiling Emacs under MSDOS is extremely sensitive for proper memory
+configuration.  If you experience problems during compilation, consider
+removing some or all memory resident programs (notably disk caches)
+and make sure that your memory managers are properly configured.  See
+the djgpp faq for configuration hints.
+
+*** Emacs compiled with DJGPP for MS-DOS/MS-Windows cannot access files
+in the directory with the special name 'dev' under the root of any
+drive, e.g. 'c:/dev'.
+
+This is an unfortunate side-effect of the support for Unix-style
+device names such as /dev/null in the DJGPP runtime library.  A
+work-around is to rename the problem directory to another name.
+
+*** MS-DOS: Emacs compiled for MSDOS cannot find some Lisp files, or other
+run-time support files, when long filename support is enabled.
+
+Usually, this problem will manifest itself when Emacs exits
+immediately after flashing the startup screen, because it cannot find
+the Lisp files it needs to load at startup.  Redirect Emacs stdout
+and stderr to a file to see the error message printed by Emacs.
+
+Another manifestation of this problem is that Emacs is unable to load
+the support for editing program sources in languages such as C and Lisp.
+
+This can happen if the Emacs distribution was unzipped without LFN
+support, thus causing long filenames to be truncated to the first 6
+characters and a numeric tail that Windows 95 normally attaches to it.
+You should unzip the files again with a utility that supports long
+filenames (such as djtar from DJGPP or InfoZip's UnZip program
+compiled with DJGPP v2).  The file msdos/INSTALL explains this issue
+in more detail.
+
+Another possible reason for such failures is that Emacs compiled for
+MSDOS is used on Windows NT, where long file names are not supported
+by this version of Emacs, but the distribution was unpacked by an
+unzip program that preserved the long file names instead of truncating
+them to DOS 8+3 limits.  To be useful on NT, the MSDOS port of Emacs
+must be unzipped by a DOS utility, so that long file names are
+properly truncated.
+
+** Apple Macintosh operating systems
+
+*** OS X 10.9 and earlier: symlinks autocomplete as directories
+
+Autocompleting the name of a symbolic link incorrectly appends "/".
+Building and running Emacs on OS X 10.10 (or later) fixes the problem.
+Older operating systems are no longer supported by Apple.
+https://bugs.gnu.org/31305
 
 ** Archaic window managers and toolkits
 

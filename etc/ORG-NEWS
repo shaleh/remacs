@@ -211,8 +211,8 @@ this ~:prologue "fpprintprec: 2; linel: 50;"~ for presenting Maxima
 results in a beamer presentation.
 **** PlantUML: add support for header arguments
 
-[[http://plantuml.com/][Plantuml]] source blocks now support the [[http://orgmode.org/manual/prologue.html#prologue][~:prologue~]], [[http://orgmode.org/manual/epilogue.html#epilogue][~:epilogue~]] and
-[[http://orgmode.org/manual/var.html#var][~:var~]] header arguments.
+[[http://plantuml.com/][Plantuml]] source blocks now support the [[https://orgmode.org/manual/prologue.html#prologue][~:prologue~]], [[https://orgmode.org/manual/epilogue.html#epilogue][~:epilogue~]] and
+[[https://orgmode.org/manual/var.html#var][~:var~]] header arguments.
 
 **** SQL: new engine added ~sqsh~
 
@@ -266,7 +266,7 @@ using ~:namespaces~:
 - ~:flags~ passes arguments to the compiler
 - ~:cmdline~ passes commandline arguments to the generated executable
 
-Support for [[http://orgmode.org/manual/var.html#var][~:var~]] does not exist yet, also there is no [[http://orgmode.org/manual/session.html#session][~:session~]]
+Support for [[https://orgmode.org/manual/var.html#var][~:var~]] does not exist yet, also there is no [[https://orgmode.org/manual/session.html#session][~:session~]]
 support because Vala is a compiled language.
 
 The Vala compiler binary can be changed via the ~defcustom~
@@ -436,9 +436,9 @@ Call ~org-agenda-set-restriction-lock~ from the agenda.
 
 The library-of-babel.org used to be accessible from the =doc/=
 directory, distributed with Org’s core.  It is now accessible
-from the Worg community-driven documentation [[http://orgmode.org/worg/library-of-babel.html][here]].
+from the Worg community-driven documentation [[https://orgmode.org/worg/library-of-babel.html][here]].
 
-If you want to contribute to it, please see [[http://orgmode.org/worg/org-contribute.html][how to contribute]].
+If you want to contribute to it, please see [[https://orgmode.org/worg/org-contribute.html][how to contribute]].
 
 *** Allow multiple columns view
 
@@ -1989,7 +1989,7 @@ This enables SVG generation from latex code blocks.
 
 *** New option: [[doc:org-habit-show-done-always-green][org-habit-show-done-always-green]]
 
-See [[https://lists.gnu.org/archive/html/emacs-orgmode/2013-05/msg00214.html][this message]] from Max Mikhanosha.
+See [[https://lists.gnu.org/r/emacs-orgmode/2013-05/msg00214.html][this message]] from Max Mikhanosha.
 
 *** New option: [[doc:org-babel-inline-result-wrap][org-babel-inline-result-wrap]]
 
