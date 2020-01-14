@@ -1124,16 +1124,7 @@ comment at the start of cc-engine.el for more info."
 			   (not (c-looking-at-inexpr-block lim nil t))
 			   (save-excursion
 			     (c-backward-token-2 1 t nil)
-			     (not (looking-at "=\\([^=]\\|$\\)")))
-			   (or
-			    (not c-opt-block-decls-with-vars-key)
-			    (save-excursion
-			      (c-backward-token-2 1 t nil)
-			      (if (and (looking-at c-symbol-start)
-				       (not (looking-at c-keywords-regexp)))
-				  (c-backward-token-2 1 t nil))
-			      (not (looking-at
-				    c-opt-block-decls-with-vars-key)))))
+			     (not (looking-at "=\\([^=]\\|$\\)"))))
 			  (save-excursion
 			    (c-forward-sexp) (point)))
 			 ;; Just gone back over some paren block?
@@ -8618,7 +8609,6 @@ comment at the start of cc-engine.el for more info."
 		 ;; construct here in C, since we want to recognize this as a
 		 ;; typeless function declaration.
 		 (not (and (c-major-mode-is 'c-mode)
-			   (not got-prefix)
 			   (or (eq context 'top) make-top)
 			   (eq (char-after) ?\)))))
 	    (if (eq (char-after) ?\))
@@ -8648,39 +8638,31 @@ comment at the start of cc-engine.el for more info."
 	    ;; (con|de)structors in C++ and `c-typeless-decl-kwds'
 	    ;; style declarations.  That isn't applicable in an
 	    ;; arglist context, though.
-	    (when (and (> paren-depth 0)
-		       (not got-prefix-before-parens)
-		       (not (eq at-type t))
-		       (or backup-at-type
-			   maybe-typeless
-			   backup-maybe-typeless
-			   (when c-recognize-typeless-decls
-			     (and (memq context '(nil top))
-				  ;; Deal with C++11's "copy-initialization"
-				  ;; where we have <type>(<constant>), by
-				  ;; contrasting with a typeless
-				  ;; <name>(<type><parameter>, ...).
-				  (save-excursion
-				    (goto-char after-paren-pos)
-				    (c-forward-syntactic-ws)
-				    (or (c-forward-type)
-					;; Recognize a top-level typeless
-					;; function declaration in C.
-					(and (c-major-mode-is 'c-mode)
-					     (or (eq context 'top) make-top)
-					     (eq (char-after) ?\))))))))
-		       (let ((pd paren-depth))
-			 (setq pos (point))
-			 (catch 'pd
-			   (while (> pd 0)
-			     (setq pos (c-up-list-forward pos))
-			     (when (or (null pos)
-				       (not (eq (char-before pos) ?\))))
-			       (throw 'pd nil))
-			     (goto-char pos)
-			     (setq pd (1- pd)))
-			   t)))
+	    (when (and (= paren-depth 1)
+			  (not got-prefix-before-parens)
+			  (not (eq at-type t))
+			  (or backup-at-type
+			      maybe-typeless
+			      backup-maybe-typeless
+			      (when c-recognize-typeless-decls
+				(and (memq context '(nil top))
+				     ;; Deal with C++11's "copy-initialization"
+				     ;; where we have <type>(<constant>), by
+				     ;; contrasting with a typeless
+				     ;; <name>(<type><parameter>, ...).
+				     (save-excursion
+				       (goto-char after-paren-pos)
+				       (c-forward-syntactic-ws)
+				       (or (c-forward-type)
+					   ;; Recognize a top-level typeless
+					   ;; function declaration in C.
+					   (and (c-major-mode-is 'c-mode)
+						(or (eq context 'top) make-top)
+						(eq (char-after) ?\))))))))
+			  (setq pos (c-up-list-forward (point)))
+			  (eq (char-before pos) ?\)))
 		 (c-fdoc-shift-type-backward)
+		 (goto-char pos)
 		 t)))
 
 	(c-forward-syntactic-ws))
@@ -10538,10 +10520,6 @@ comment at the start of cc-engine.el for more info."
 		((and class-key
 		      (looking-at class-key))
 		 (setq braceassignp nil))
-		((and c-has-compound-literals
-		      (looking-at c-return-key))
-		 (setq braceassignp t)
-		 nil)
 		((eq (char-after) ?=)
 		 ;; We've seen a =, but must check earlier tokens so
 		 ;; that it isn't something that should be ignored.
@@ -10580,14 +10558,9 @@ comment at the start of cc-engine.el for more info."
 				     ))))
 			   nil)
 			  (t t))))))
-	  (when (and (eq braceassignp 'dontknow)
-		     (/= (c-backward-token-2 1 t lim) 0))
-	    (if (save-excursion
-		  (and c-has-compound-literals
-		       (eq (c-backward-token-2 1 nil lim) 0)
-		       (eq (char-after) ?\()))
-		(setq braceassignp t)
-	      (setq braceassignp nil))))
+	  (if (and (eq braceassignp 'dontknow)
+		   (/= (c-backward-token-2 1 t lim) 0))
+	      (setq braceassignp nil)))
 
 	(cond
 	 (braceassignp
@@ -10662,8 +10635,7 @@ comment at the start of cc-engine.el for more info."
    ;; This will pick up brace list declarations.
    (save-excursion
      (goto-char containing-sexp)
-     (and (c-backward-over-enum-header)
-	  (point)))
+     (c-backward-over-enum-header))
    ;; this will pick up array/aggregate init lists, even if they are nested.
    (save-excursion
      (let ((bufpos t)
@@ -10953,7 +10925,7 @@ comment at the start of cc-engine.el for more info."
 			   (c-on-identifier)))
 		    (and c-special-brace-lists
 			 (c-looking-at-special-brace-list))
-		    (and c-has-compound-literals
+		    (and (c-major-mode-is 'c++-mode)
 			 (save-excursion
 			   (goto-char block-follows)
 			   (not (c-looking-at-statement-block)))))
@@ -11288,7 +11260,9 @@ comment at the start of cc-engine.el for more info."
 		     (cdr (assoc (match-string 1)
 				 c-other-decl-block-key-in-symbols-alist))
 		     (max (c-point 'boi paren-pos) (point))))
-		   ((c-inside-bracelist-p paren-pos paren-state nil)
+		   ((save-excursion
+		      (goto-char paren-pos)
+		      (c-looking-at-or-maybe-in-bracelist containing-sexp))
 		    (if (save-excursion
 			  (goto-char paren-pos)
 			  (c-looking-at-statement-block))
@@ -11380,9 +11354,10 @@ comment at the start of cc-engine.el for more info."
 
        ;; CASE B.2: brace-list-open
        ((or (consp special-brace-list)
-	    (c-inside-bracelist-p (point)
-				  (cons containing-sexp paren-state)
-				  nil))
+	    (consp
+	     (c-looking-at-or-maybe-in-bracelist
+	      containing-sexp beg-of-same-or-containing-stmt))
+	    )
 	;; The most semantically accurate symbol here is
 	;; brace-list-open, but we normally report it simply as a
 	;; statement-cont.  The reason is that one normally adjusts
@@ -12457,11 +12432,6 @@ comment at the start of cc-engine.el for more info."
 	 ;; in-expression block or brace list.  C.f. cases 4, 16A
 	 ;; and 17E.
 	 ((and (eq char-after-ip ?{)
-	       (or (not (eq (char-after containing-sexp) ?\())
-		   (save-excursion
-		     (and c-opt-inexpr-brace-list-key
-			  (eq (c-beginning-of-statement-1 lim t nil t) 'same)
-			  (looking-at c-opt-inexpr-brace-list-key))))
 	       (progn
 		 (setq placeholder (c-inside-bracelist-p (point)
 							 paren-state

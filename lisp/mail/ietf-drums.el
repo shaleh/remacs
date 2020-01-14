@@ -1,4 +1,4 @@
-;;; ietf-drums.el --- Functions for parsing RFC822bis headers  -*- lexical-binding:t -*-
+;;; ietf-drums.el --- Functions for parsing RFC 2822 headers
 
 ;; Copyright (C) 1998-2019 Free Software Foundation, Inc.
 
@@ -37,7 +37,7 @@
 
 ;;; Code:
 
-(eval-when-compile (require 'cl-lib))
+(eval-when-compile (require 'cl))
 
 (defvar ietf-drums-no-ws-ctl-token "\001-\010\013\014\016-\037\177"
   "US-ASCII control characters excluding CR, LF and white space.")
@@ -78,10 +78,10 @@ backslash and doublequote.")
 (defun ietf-drums-token-to-list (token)
   "Translate TOKEN into a list of characters."
   (let ((i 0)
-	b c out range)
+	b e c out range)
     (while (< i (length token))
       (setq c (aref token i))
-      (cl-incf i)
+      (incf i)
       (cond
        ((eq c ?-)
 	(if b
@@ -90,7 +90,7 @@ backslash and doublequote.")
        (range
 	(while (<= b c)
 	  (push (make-char 'ascii b) out)
-	  (cl-incf b))
+	  (incf b))
 	(setq range nil))
        ((= i (length token))
 	(push (make-char 'ascii c) out))
@@ -115,7 +115,7 @@ backslash and doublequote.")
 	(setq c (char-after))
 	(cond
 	 ((eq c ?\")
-	  (condition-case nil
+	  (condition-case err
 	      (forward-sexp 1)
 	    (error (goto-char (point-max)))))
 	 ((eq c ?\()

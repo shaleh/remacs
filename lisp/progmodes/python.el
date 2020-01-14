@@ -4,7 +4,7 @@
 
 ;; Author: Fabián E. Gallina <fgallina@gnu.org>
 ;; URL: https://github.com/fgallina/python.el
-;; Version: 0.26.1
+;; Version: 0.25.2
 ;; Package-Requires: ((emacs "24.1") (cl-lib "1.0"))
 ;; Maintainer: emacs-devel@gnu.org
 ;; Created: Jul 2010
@@ -91,9 +91,9 @@
 ;; is as follows (of course you need to modify the paths according to
 ;; your system):
 
-;; (setq python-shell-interpreter "C:\\Python27\\python.exe"
+;; (setq python-shell-interpreter "C:/Python27/python.exe"
 ;;       python-shell-interpreter-args
-;;       "-i C:\\Python27\\Scripts\\ipython-script.py")
+;;       "-i C:/Python27/Scripts/ipython-script.py")
 
 ;; Missing or delayed output used to happen due to differences between
 ;; Operating Systems' pipe buffering (e.g. CPython 3.3.4 in Windows 7.
@@ -287,20 +287,9 @@
 ;;; 24.x Compat
 
 
-(eval-and-compile
-  (unless (fboundp 'prog-first-column)
-    (defun prog-first-column ()
-      0))
-  (unless (fboundp 'file-local-name)
-    (defun file-local-name (file)
-      "Return the local name component of FILE.
-It returns a file name which can be used directly as argument of
-`process-file', `start-file-process', or `shell-command'."
-      (or (file-remote-p file 'localname) file))))
-
-;; In Emacs 24.3 and earlier, `define-derived-mode' does not define
-;; the hook variable, it only puts documentation on the symbol.
-(defvar inferior-python-mode-hook)
+(unless (fboundp 'prog-first-column)
+  (defun prog-first-column ()
+    0))
 
 
 ;;; Bindings
@@ -647,14 +636,14 @@ The type returned can be `comment', `string' or `paren'."
    ((python-rx string-delimiter)
     (0 (ignore (python-syntax-stringify))))))
 
-(define-obsolete-variable-alias 'python--prettify-symbols-alist
-  'python-prettify-symbols-alist "26.1")
-
 (defvar python-prettify-symbols-alist
   '(("lambda"  . ?λ)
     ("and" . ?∧)
     ("or" . ?∨))
   "Value for `prettify-symbols-alist' in `python-mode'.")
+
+(define-obsolete-variable-alias 'python--prettify-symbols-alist
+  'python-prettify-symbols-alist "26.1")
 
 (defsubst python-syntax-count-quotes (quote-char &optional point limit)
   "Count number of quotes around point (max is 3).
@@ -1485,7 +1474,7 @@ nested definitions."
 (defun python-nav-beginning-of-statement ()
   "Move to start of current statement."
   (interactive "^")
-  (forward-line 0)
+  (back-to-indentation)
   (let* ((ppss (syntax-ppss))
          (context-point
           (or
@@ -1500,7 +1489,6 @@ nested definitions."
              (python-info-line-ends-backslash-p))
            (forward-line -1)
            (python-nav-beginning-of-statement))))
-  (back-to-indentation)
   (point-marker))
 
 (defun python-nav-end-of-statement (&optional noend)
@@ -1520,8 +1508,7 @@ of the statement."
                        ;; narrowing.
                        (cl-assert (> string-start last-string-end)
                                   :show-args
-                                  "\
-Overlapping strings detected (start=%d, last-end=%d)")
+                                  "Overlapping strings detected")
                        (goto-char string-start)
                        (if (python-syntax-context 'paren)
                            ;; Ended up inside a paren, roll again.
@@ -2160,7 +2147,7 @@ of `exec-path'."
 (defun python-shell-tramp-refresh-process-environment (vec env)
   "Update VEC's process environment with ENV."
   ;; Stolen from `tramp-open-connection-setup-interactive-shell'.
-  (let ((env (append (when (fboundp 'tramp-get-remote-locale)
+  (let ((env (append (when (fboundp #'tramp-get-remote-locale)
                        ;; Emacs<24.4 compat.
                        (list (tramp-get-remote-locale vec)))
 		     (copy-sequence env)))
@@ -3197,10 +3184,10 @@ t when called interactively."
                      (insert-file-contents
                       (or temp-file-name file-name))
                      (python-info-encoding)))
-         (file-name (file-local-name (expand-file-name file-name)))
+         (file-name (expand-file-name (file-local-name file-name)))
          (temp-file-name (when temp-file-name
-                           (file-local-name (expand-file-name
-                                             temp-file-name)))))
+                           (expand-file-name
+                            (file-local-name temp-file-name)))))
     (python-shell-send-string
      (format
       (concat
@@ -5300,7 +5287,6 @@ REPORT-FN is Flymake's callback function."
     (save-excursion (insert (make-string 2 last-command-event)))))
 
 (defvar electric-indent-inhibit)
-(defvar prettify-symbols-alist)
 
 ;;;###autoload
 (define-derived-mode python-mode prog-mode "Python"
@@ -5396,7 +5382,7 @@ REPORT-FN is Flymake's callback function."
            (1+ (/ (current-indentation) python-indent-offset))))
 
   (set (make-local-variable 'prettify-symbols-alist)
-       python-prettify-symbols-alist)
+       python--prettify-symbols-alist)
 
   (python-skeleton-add-menu-items)
 

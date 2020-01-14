@@ -814,7 +814,7 @@ This variable is set by `nnmaildir-request-article'.")
 	(when (or isnew nattr)
 	  (dolist (file  (funcall ls ndir nil "\\`[^.]" 'nosort))
 	    (setq x (concat ndir file))
-	    (and (time-less-p (nth 5 (file-attributes x)) nil)
+	    (and (time-less-p (nth 5 (file-attributes x)) (current-time))
 		 (rename-file x (concat cdir (nnmaildir--ensure-suffix file)))))
 	  (setf (nnmaildir--grp-new group) nattr))
 	(setq cattr (nth 5 (file-attributes cdir)))
@@ -915,7 +915,7 @@ This variable is set by `nnmaildir-request-article'.")
 	    (setq dirs (funcall srv-ls srv-dir nil "\\`[^.]" 'nosort)
 		  dirs (if (zerop (length target-prefix))
 			   dirs
-			 (seq-remove
+			 (gnus-remove-if
 			  (lambda (dir)
 			    (and (>= (length dir) (length target-prefix))
 				 (string= (substring dir 0
@@ -1779,11 +1779,14 @@ This variable is set by `nnmaildir-request-article'.")
       t)))
 
 (defun nnmaildir-close-server (&optional server)
-  (nnmaildir--prepare server nil)
-  (when nnmaildir--cur-server
-    (setq server nnmaildir--cur-server
-	  nnmaildir--cur-server nil)
-    (unintern (nnmaildir--srv-address server) nnmaildir--servers))
+  (defvar flist) (defvar ls) (defvar dirs) (defvar dir)
+  (defvar files) (defvar file) (defvar x)
+  (let (flist ls dirs dir files file x)
+    (nnmaildir--prepare server nil)
+    (when nnmaildir--cur-server
+      (setq server nnmaildir--cur-server
+	    nnmaildir--cur-server nil)
+      (unintern (nnmaildir--srv-address server) nnmaildir--servers)))
   t)
 
 (defun nnmaildir-request-close ()

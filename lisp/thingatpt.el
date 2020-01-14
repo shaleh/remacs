@@ -42,9 +42,6 @@
 ;;   beginning-op	Function to call to skip to the beginning of a "thing".
 ;;   end-op		Function to call to skip to the end of a "thing".
 ;;
-;; For simple things, defined as sequences of specific kinds of characters,
-;; use macro define-thing-chars.
-;;
 ;; Reliance on existing operators means that many `things' can be accessed
 ;; without further code:  eg.
 ;;     (thing-at-point 'line)
@@ -238,28 +235,21 @@ Prefer the enclosing list with fallback on sexp at point.
 (put 'defun 'end-op       'end-of-defun)
 (put 'defun 'forward-op   'end-of-defun)
 
-;; Things defined by sets of characters
-
-(defmacro define-thing-chars (thing chars)
-  "Define THING as a sequence of CHARS.
-E.g.:
-\(define-thing-chars twitter-screen-name \"[:alnum:]_\")"
-  `(progn
-     (put ',thing 'end-op
-          (lambda ()
-            (re-search-forward (concat "\\=[" ,chars "]*") nil t)))
-     (put ',thing 'beginning-op
-          (lambda ()
-            (if (re-search-backward (concat "[^" ,chars "]") nil t)
-	        (forward-char)
-	      (goto-char (point-min)))))))
-
 ;;  Filenames
 
 (defvar thing-at-point-file-name-chars "-~/[:alnum:]_.${}#%,:"
   "Characters allowable in filenames.")
 
-(define-thing-chars filename thing-at-point-file-name-chars)
+(put 'filename 'end-op
+     (lambda ()
+       (re-search-forward (concat "\\=[" thing-at-point-file-name-chars "]*")
+			  nil t)))
+(put 'filename 'beginning-op
+     (lambda ()
+       (if (re-search-backward (concat "[^" thing-at-point-file-name-chars "]")
+			       nil t)
+	   (forward-char)
+	 (goto-char (point-min)))))
 
 ;;  URIs
 

@@ -104,6 +104,7 @@ Used in `smerge-diff-base-upper' and related functions."
     (((class color))
      :foreground "yellow"))
   "Face for the base code.")
+(define-obsolete-face-alias 'smerge-base-face 'smerge-base "22.1")
 (defvar smerge-base-face 'smerge-base)
 
 (defface smerge-markers
@@ -112,6 +113,7 @@ Used in `smerge-diff-base-upper' and related functions."
     (((background dark))
      (:background "grey30")))
   "Face for the conflict markers.")
+(define-obsolete-face-alias 'smerge-markers-face 'smerge-markers "22.1")
 (defvar smerge-markers-face 'smerge-markers)
 
 (defface smerge-refined-changed
@@ -1094,7 +1096,7 @@ used to replace chars to try and eliminate some spurious differences."
                               ;; also and more importantly because otherwise it
                               ;; may happen that diff doesn't behave like
                               ;; smerge-refine-weight-hack expects it to.
-                              ;; See https://lists.gnu.org/archive/html/emacs-devel/2007-11/msg00401.html
+                              ;; See https://lists.gnu.org/r/emacs-devel/2007-11/msg00401.html
                               "-awd" "-ad")
                           file1 file2))
           ;; Process diff's output.

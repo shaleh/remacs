@@ -34,6 +34,7 @@
 
 (defvar ede-archive-linker
   (ede-linker
+   "ede-archive-linker"
    :name "ar"
    :variables  '(("AR" . "ar")
 		 ("AR_CMD" . "$(AR) cr"))

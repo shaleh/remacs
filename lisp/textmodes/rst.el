@@ -112,6 +112,27 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Support for `testcover'
 
+(when (and (boundp 'testcover-1value-functions)
+	   (boundp 'testcover-compose-functions))
+  ;; Below `lambda' is used in a loop with varying parameters and is thus not
+  ;; 1valued.
+  (setq testcover-1value-functions
+	(delq 'lambda testcover-1value-functions))
+  (add-to-list 'testcover-compose-functions 'lambda))
+
+(defun rst-testcover-defcustom ()
+  "Remove all customized variables from `testcover-module-constants'.
+This seems to be a bug in `testcover': `defcustom' variables are
+considered constants.  Revert it with this function after each `defcustom'."
+  (when (boundp 'testcover-module-constants)
+    (setq testcover-module-constants
+	  (delq nil
+		(mapcar
+		 #'(lambda (sym)
+		     (if (not (plist-member (symbol-plist sym) 'standard-value))
+			 sym))
+		 testcover-module-constants)))))
+
 (defun rst-testcover-add-compose (fun)
   "Add FUN to `testcover-compose-functions'."
   (when (boundp 'testcover-compose-functions)
@@ -1323,6 +1344,7 @@ This inherits from Text mode.")
 The hook for `text-mode' is run before this one."
   :group 'rst
   :type '(hook))
+(rst-testcover-defcustom)
 
 ;; Pull in variable definitions silencing byte-compiler.
 (require 'newcomment)
@@ -1519,6 +1541,7 @@ file."
 			(const :tag "Underline only" simple))
 		 (integer :tag "Indentation for overline and underline type"
 			  :value 0))))
+(rst-testcover-defcustom)
 
 ;; FIXME: Rename this to `rst-over-and-under-default-indent' and set default to
 ;;        0 because the effect of 1 is probably surprising in the few cases
@@ -1535,6 +1558,7 @@ found in the buffer are to be used but the indentation for
 over-and-under adornments is inconsistent across the buffer."
   :group 'rst-adjust
   :type '(integer))
+(rst-testcover-defcustom)
 
 (defun rst-new-preferred-hdr (seen prev)
   ;; testcover: ok.
@@ -1973,6 +1997,7 @@ b. a negative numerical argument, which generally inverts the
   :group 'rst-adjust
   :type '(hook)
   :package-version '(rst . "1.1.0"))
+(rst-testcover-defcustom)
 
 (defcustom rst-new-adornment-down nil
   "Controls level of new adornment for section headers."
@@ -1981,6 +2006,7 @@ b. a negative numerical argument, which generally inverts the
 	  (const :tag "Same level as previous one" nil)
 	  (const :tag "One level down relative to the previous one" t))
   :package-version '(rst . "1.1.0"))
+(rst-testcover-defcustom)
 
 (defun rst-adjust-adornment (pfxarg)
   "Call `rst-adjust-section' interactively.
@@ -2403,6 +2429,7 @@ also arranged by `rst-insert-list-new-tag'."
 				      :tag (char-to-string char) char))
 			    rst-bullets)))
   :package-version '(rst . "1.1.0"))
+(rst-testcover-defcustom)
 
 (defun rst-insert-list-continue (ind tag tab prefer-roman)
   ;; testcover: ok.
@@ -2639,6 +2666,7 @@ section headers at all."
 Also used for formatting insertion, when numbering is disabled."
   :type 'integer
   :group 'rst-toc)
+(rst-testcover-defcustom)
 
 (defcustom rst-toc-insert-style 'fixed
   "Insertion style for table-of-contents.
@@ -2653,16 +2681,19 @@ indentation style:
                  (const aligned)
                  (const listed))
   :group 'rst-toc)
+(rst-testcover-defcustom)
 
 (defcustom rst-toc-insert-number-separator "  "
   "Separator that goes between the TOC number and the title."
   :type 'string
   :group 'rst-toc)
+(rst-testcover-defcustom)
 
 (defcustom rst-toc-insert-max-level nil
   "If non-nil, maximum depth of the inserted TOC."
   :type '(choice (const nil) integer)
   :group 'rst-toc)
+(rst-testcover-defcustom)
 
 (defconst rst-toc-link-keymap
   (let ((map (make-sparse-keymap)))
@@ -3127,30 +3158,35 @@ These indentation widths can be customized here."
   "Indentation when there is no more indentation point given."
   :group 'rst-indent
   :type '(integer))
+(rst-testcover-defcustom)
 
 (defcustom rst-indent-field 3
   "Indentation for first line after a field or 0 to always indent for content."
   :group 'rst-indent
   :package-version '(rst . "1.1.0")
   :type '(integer))
+(rst-testcover-defcustom)
 
 (defcustom rst-indent-literal-normal 3
   "Default indentation for literal block after a markup on an own line."
   :group 'rst-indent
   :package-version '(rst . "1.1.0")
   :type '(integer))
+(rst-testcover-defcustom)
 
 (defcustom rst-indent-literal-minimized 2
   "Default indentation for literal block after a minimized markup."
   :group 'rst-indent
   :package-version '(rst . "1.1.0")
   :type '(integer))
+(rst-testcover-defcustom)
 
 (defcustom rst-indent-comment 3
   "Default indentation for first line of a comment."
   :group 'rst-indent
   :package-version '(rst . "1.1.0")
   :type '(integer))
+(rst-testcover-defcustom)
 
 ;; FIXME: Must consider other tabs:
 ;;        * Line blocks
@@ -3600,6 +3636,7 @@ Region is from BEG to END.  With WITH-EMPTY prefix empty lines too."
   :version "24.1"
   :group 'rst-faces
   :type '(face))
+(rst-testcover-defcustom)
 (make-obsolete-variable 'rst-block-face
                         "customize the face `rst-block' instead."
                         "24.1")
@@ -3614,6 +3651,7 @@ Region is from BEG to END.  With WITH-EMPTY prefix empty lines too."
   :version "24.1"
   :group 'rst-faces
   :type '(face))
+(rst-testcover-defcustom)
 (make-obsolete-variable 'rst-external-face
                         "customize the face `rst-external' instead."
                         "24.1")
@@ -3628,6 +3666,7 @@ Region is from BEG to END.  With WITH-EMPTY prefix empty lines too."
   :version "24.1"
   :group 'rst-faces
   :type '(face))
+(rst-testcover-defcustom)
 (make-obsolete-variable 'rst-definition-face
                         "customize the face `rst-definition' instead."
                         "24.1")
@@ -3644,6 +3683,7 @@ Region is from BEG to END.  With WITH-EMPTY prefix empty lines too."
   "Directives and roles."
   :group 'rst-faces
   :type '(face))
+(rst-testcover-defcustom)
 (make-obsolete-variable 'rst-directive-face
                         "customize the face `rst-directive' instead."
                         "24.1")
@@ -3658,6 +3698,7 @@ Region is from BEG to END.  With WITH-EMPTY prefix empty lines too."
   :version "24.1"
   :group 'rst-faces
   :type '(face))
+(rst-testcover-defcustom)
 (make-obsolete-variable 'rst-comment-face
                         "customize the face `rst-comment' instead."
                         "24.1")
@@ -3672,6 +3713,7 @@ Region is from BEG to END.  With WITH-EMPTY prefix empty lines too."
   :version "24.1"
   :group 'rst-faces
   :type '(face))
+(rst-testcover-defcustom)
 (make-obsolete-variable 'rst-emphasis1-face
                         "customize the face `rst-emphasis1' instead."
                         "24.1")
@@ -3685,6 +3727,7 @@ Region is from BEG to END.  With WITH-EMPTY prefix empty lines too."
   "Double emphasis."
   :group 'rst-faces
   :type '(face))
+(rst-testcover-defcustom)
 (make-obsolete-variable 'rst-emphasis2-face
                         "customize the face `rst-emphasis2' instead."
                         "24.1")
@@ -3699,6 +3742,7 @@ Region is from BEG to END.  With WITH-EMPTY prefix empty lines too."
   :version "24.1"
   :group 'rst-faces
   :type '(face))
+(rst-testcover-defcustom)
 (make-obsolete-variable 'rst-literal-face
                         "customize the face `rst-literal' instead."
                         "24.1")
@@ -3713,6 +3757,7 @@ Region is from BEG to END.  With WITH-EMPTY prefix empty lines too."
   :version "24.1"
   :group 'rst-faces
   :type '(face))
+(rst-testcover-defcustom)
 (make-obsolete-variable 'rst-reference-face
                         "customize the face `rst-reference' instead."
                         "24.1")
@@ -3795,6 +3840,7 @@ of your own."
 	   (const :tag "transitions" t)
 	   (const :tag "section title adornment" nil))
 	  :value-type (face)))
+(rst-testcover-defcustom)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -4291,6 +4337,7 @@ string)) to be used for converting the document."
                                      (string :tag "Options"))))
   :group 'rst-compile
   :package-version "1.2.0")
+(rst-testcover-defcustom)
 
 ;; FIXME: Must be defcustom.
 (defvar rst-compile-primary-toolset 'html

@@ -2,8 +2,8 @@
 
 ;; Copyright (C) 2001-2019 Free Software Foundation, Inc.
 
-;; Author: Vinicius Jose Latorre <viniciusjl.gnu@gmail.com>
-;; Maintainer: Vinicius Jose Latorre <viniciusjl.gnu@gmail.com>
+;; Author: Vinicius Jose Latorre <viniciusjl@ig.com.br>
+;; Maintainer: Vinicius Jose Latorre <viniciusjl@ig.com.br>
 ;; Keywords: wp, ebnf, PostScript
 ;; Old-Version: 1.2
 ;; Package: ebnf2ps

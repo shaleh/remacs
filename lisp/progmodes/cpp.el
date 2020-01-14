@@ -568,14 +568,6 @@ You can also use the keyboard accelerators indicated like this: [K]ey."
     (set-window-start nil start)
     (goto-char pos)))
 
-(defun cpp-locate-user-emacs-file (file)
-  (locate-user-emacs-file
-   ;; Remove initial '.' from file.
-   (if (eq (aref file 0) ?.)
-       (substring file 1)
-     file)
-   file))
-
 (defun cpp-edit-load ()
   "Load cpp configuration."
   (interactive)
@@ -584,8 +576,8 @@ You can also use the keyboard accelerators indicated like this: [K]ey."
 	 nil)
 	((file-readable-p cpp-config-file)
 	 (load-file cpp-config-file))
-	((file-readable-p (cpp-locate-user-emacs-file cpp-config-file))
-	 (load-file (cpp-locate-user-emacs-file cpp-config-file))))
+	((file-readable-p (concat "~/" cpp-config-file))
+	 (load-file cpp-config-file)))
   (if (derived-mode-p 'cpp-edit-mode)
       (cpp-edit-reset)))
 
@@ -594,10 +586,7 @@ You can also use the keyboard accelerators indicated like this: [K]ey."
   (interactive)
   (require 'pp)
   (with-current-buffer cpp-edit-buffer
-    (let* ((config-file (if (file-writable-p cpp-config-file)
-                            cpp-config-file
-                          (cpp-locate-user-emacs-file cpp-config-file)))
-           (buffer (find-file-noselect config-file)))
+    (let ((buffer (find-file-noselect cpp-config-file)))
       (set-buffer buffer)
       (erase-buffer)
       (pp (list 'setq 'cpp-known-face
@@ -612,7 +601,7 @@ You can also use the keyboard accelerators indicated like this: [K]ey."
 		(list 'quote cpp-unknown-writable)) buffer)
       (pp (list 'setq 'cpp-edit-list
 		(list 'quote cpp-edit-list)) buffer)
-      (write-file config-file))))
+      (write-file cpp-config-file))))
 
 (defun cpp-edit-home ()
   "Switch back to original buffer."

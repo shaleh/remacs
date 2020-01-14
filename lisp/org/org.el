@@ -6,7 +6,8 @@
 ;; Author: Carsten Dominik <carsten at orgmode dot org>
 ;; Maintainer: Carsten Dominik <carsten at orgmode dot org>
 ;; Keywords: outlines, hypermedia, calendar, wp
-;; Homepage: http://orgmode.org
+;; Homepage: https://orgmode.org
+;; Version: 9.1.9
 ;;
 ;; This file is part of GNU Emacs.
 ;;
@@ -9695,7 +9696,8 @@ active region."
 			 (cdr (assoc-string
 			       (completing-read
 				"Which function for creating the link? "
-				(mapcar #'car results-alist) nil t name)
+				(mapcar #'car results-alist)
+				nil t (symbol-name name))
 			       results-alist)))
 		  t))))
 	(setq link (plist-get org-store-link-plist :link))
@@ -9971,6 +9973,12 @@ according to FMT (default from `org-email-link-description-format')."
 		   (reverse (nthcdr (- (length slines) lines)
 				    (reverse slines))) "\n")))))
     (mapconcat #'identity (split-string s) " ")))
+
+(defconst org-link-escape-chars
+  ;;%20 %5B %5D %25
+  '(?\s ?\[ ?\] ?%)
+  "List of characters that should be escaped in a link when stored to Org.
+This is the list that is used for internal purposes.")
 
 (defun org-make-link-string (link &optional description)
   "Make a link with brackets, consisting of LINK and DESCRIPTION."
@@ -19316,9 +19324,6 @@ INCLUDE-LINKED is passed to `org-display-inline-images'."
     (org-toggle-inline-images)
     (org-toggle-inline-images)))
 
-;; For without-x builds.
-(declare-function image-refresh "image" (spec &optional frame))
-
 (defun org-display-inline-images (&optional include-linked refresh beg end)
   "Display inline images.
 
@@ -19512,7 +19517,6 @@ COMMANDS is a list of alternating OLDDEF NEWDEF command names."
 
 (org-defkey org-mode-map [(shift return)]   'org-table-copy-down)
 (org-defkey org-mode-map [(meta shift return)] 'org-insert-todo-heading)
-(org-defkey org-mode-map [(meta return)]       'org-meta-return)
 (org-defkey org-mode-map (kbd "M-RET") #'org-meta-return)
 
 ;; Cursor keys with modifiers
@@ -22918,7 +22922,7 @@ matches in paragraphs or comments, use it."
 		      (match-string 0)
 		    "")))))))))))
 
-(declare-function message-goto-body "message" (&optional interactive))
+(declare-function message-goto-body "message" ())
 (defvar message-cite-prefix-regexp)	; From message.el
 
 (defun org-fill-element (&optional justify)

@@ -43,13 +43,15 @@ All other sources should be included independently."))
   "Target for a single info file.")
 
 (defvar ede-makeinfo-source
-  (ede-sourcecode :name "Texinfo"
+  (ede-sourcecode "ede-makeinfo-source"
+		  :name "Texinfo"
 		  :sourcepattern "\\.texi?$"
 		  :garbagepattern '("*.info*" "*.html"))
   "Texinfo source code definition.")
 
 (defvar ede-makeinfo-compiler
   (ede-compiler
+   "ede-makeinfo-compiler"
    :name "makeinfo"
    :variables '(("MAKEINFO" . "makeinfo"))
    :commands '("$(MAKEINFO) $<")
@@ -60,6 +62,7 @@ All other sources should be included independently."))
 
 (defvar ede-texi2html-compiler
   (ede-compiler
+   "ede-texi2html-compiler"
    :name "texi2html"
    :variables '(("TEXI2HTML" . "makeinfo -html"))
    :commands '("makeinfo -o $@ $<")

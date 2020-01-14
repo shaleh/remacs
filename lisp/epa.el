@@ -565,7 +565,7 @@ If SECRET is non-nil, list secret keys instead of public keys."
 				      (epg-sub-key-creation-time (car pointer)))
 		(error "????-??-??"))
 	      (if (epg-sub-key-expiration-time (car pointer))
-		  (format (if (time-less-p nil
+		  (format (if (time-less-p (current-time)
 					   (epg-sub-key-expiration-time
 					    (car pointer)))
 			      "\n\tExpires: %s"

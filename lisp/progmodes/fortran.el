@@ -1040,9 +1040,13 @@ With non-nil ARG, uncomments the region."
 Any other key combination is executed normally."
   (interactive "*")
   (insert last-command-event)
-  (let ((event (read-event)))
+  (let* ((event (if (fboundp 'next-command-event) ; XEmacs
+                    (next-command-event)
+                  (read-event)))
+         (char (if (fboundp 'event-to-character)
+                   (event-to-character event) event)))
     ;; Insert char if not equal to `?', or if abbrev-mode is off.
-    (if (and abbrev-mode (or (eq event ??) (eq event help-char)
+    (if (and abbrev-mode (or (eq char ??) (eq char help-char)
                              (memq event help-event-list)))
         (fortran-abbrev-help)
       (push event unread-command-events))))

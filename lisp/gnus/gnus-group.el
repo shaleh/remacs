@@ -24,7 +24,10 @@
 
 ;;; Code:
 
-(require 'cl-lib)
+(eval-when-compile
+  (require 'cl))
+(defvar tool-bar-mode)
+
 (require 'gnus)
 (require 'gnus-start)
 (require 'nnmail)
@@ -42,8 +45,6 @@
     (require 'gnus-sum))
   (unless (boundp 'gnus-cache-active-hashtb)
     (defvar gnus-cache-active-hashtb nil)))
-
-(defvar tool-bar-mode)
 
 (autoload 'gnus-agent-total-fetched-for "gnus-agent")
 (autoload 'gnus-cache-total-fetched-for "gnus-cache")
@@ -627,7 +628,7 @@ simple manner."
   "\M-e" gnus-group-edit-group-method
   "^" gnus-group-enter-server-mode
   [mouse-2] gnus-mouse-pick-group
-  [follow-link] 'mouse-face
+  [follow-link] mouse-face
   "<" beginning-of-buffer
   ">" end-of-buffer
   "\C-c\C-b" gnus-bug
@@ -1085,8 +1086,6 @@ See `gmm-tool-bar-from-list' for the format of the list."
 
 (defvar image-load-path)
 (defvar tool-bar-map)
-(declare-function image-load-path-for-library "image"
-		  (library image &optional path no-error))
 
 (defun gnus-group-make-tool-bar (&optional force)
   "Make a group mode tool bar from `gnus-group-tool-bar'.
@@ -1360,8 +1359,6 @@ if it is a string, only list groups matching REGEXP."
 		       (and gnus-permanently-visible-groups
 			    (string-match gnus-permanently-visible-groups
 					  group))
-		       ;; Marked groups are always visible.
-		       (member group gnus-group-marked)
 		       (memq 'visible params)
 		       (cdr (assq 'visible params)))))))
 	  (gnus-group-insert-group-line
@@ -3001,7 +2998,7 @@ and NEW-NAME will be prompted for."
     ;; Set the info.
     (if (not (and info new-group))
 	(gnus-group-set-info form (or new-group group) part)
-      (setq info (copy-tree info))
+      (setq info (gnus-copy-sequence info))
       (setcar info new-group)
       (unless (gnus-server-equal method "native")
 	(unless (nthcdr 3 info)
@@ -3024,7 +3021,7 @@ and NEW-NAME will be prompted for."
 	   ;; Don't use `caddr' here since macros within the `interactive'
 	   ;; form won't be expanded.
 	   (car (cddr entry)))))
-  (setq method (copy-tree method))
+  (setq method (gnus-copy-sequence method))
   (let (entry)
     (while (setq entry (memq (assq 'eval method) method))
       (setcar entry (eval (cadar entry)))))
@@ -4568,7 +4565,7 @@ or `gnus-group-catchup-group-hook'."
   "Return the offset in seconds from the timestamp for GROUP to the current time, as a floating point number."
   (let* ((time (or (gnus-group-timestamp group)
 		   (list 0 0)))
-	 (delta (time-subtract nil time)))
+	 (delta (time-subtract (current-time) time)))
     (+ (* (nth 0 delta) 65536.0)
        (nth 1 delta))))
 

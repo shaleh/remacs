@@ -29,7 +29,6 @@
   "Image support."
   :group 'multimedia)
 
-(declare-function image-flush "image.c" (spec &optional frame))
 (defalias 'image-refresh 'image-flush)
 
 (defconst image-type-header-regexps
@@ -981,19 +980,17 @@ default is 20%."
                         0.8)))
 
 (defun image--get-image ()
-  "Return the image at point."
-  (let ((image (get-char-property (point) 'display)))
+  (let ((image (get-text-property (point) 'display)))
     (unless (eq (car-safe image) 'image)
       (error "No image under point"))
     image))
 
 (defun image--get-imagemagick-and-warn ()
-  (unless (or (fboundp 'imagemagick-types) (featurep 'ns))
-    (error "Can't rescale images without ImageMagick support"))
+  (unless (fboundp 'imagemagick-types)
+    (error "Cannot rescale images without ImageMagick support"))
   (let ((image (image--get-image)))
     (image-flush image)
-    (when (fboundp 'imagemagick-types)
-      (plist-put (cdr image) :type 'imagemagick))
+    (plist-put (cdr image) :type 'imagemagick)
     image))
 
 (defun image--change-size (factor)
@@ -1012,8 +1009,6 @@ default is 20%."
               (unless (memq key '(:scale :width :height :max-width :max-height))
               (setq new (nconc new (list key val))))))
           new)))
-
-(declare-function image-size "image.c" (spec &optional pixels frame))
 
 (defun image--current-scaling (image new-image)
   ;; The image may be scaled due to many reasons (:scale, :max-width,
@@ -1037,7 +1032,10 @@ default is 20%."
 (defun image-save ()
   "Save the image under point."
   (interactive)
-  (let ((image (image--get-image)))
+  (let ((image (get-text-property (point) 'display)))
+    (when (or (not (consp image))
+              (not (eq (car image) 'image)))
+      (error "No image under point"))
     (with-temp-buffer
       (let ((file (plist-get (cdr image) :file)))
         (if file

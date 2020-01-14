@@ -34,7 +34,8 @@
   "This target consists of aux files such as READMEs and COPYING.")
 
 (defvar ede-aux-source
-  (ede-sourcecode :name "Auxiliary Text"
+  (ede-sourcecode "ede-aux-source-txt"
+		  :name "Auxiliary Text"
 		  :sourcepattern "^[A-Z]+$\\|\\.txt$")
   "Miscellaneous fields definition.")
 

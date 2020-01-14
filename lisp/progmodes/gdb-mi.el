@@ -792,7 +792,7 @@ detailed description of this mode.
   (gud-def gud-tbreak "tbreak %f:%l" "\C-t"
 	   "Set temporary breakpoint at current line.")
   (gud-def gud-jump
-	   (progn (gud-call "tbreak %f:%l" arg) (gud-call "jump %f:%l"))
+	   (progn (gud-call "tbreak %f:%l") (gud-call "jump %f:%l"))
 	   "\C-j" "Set execution address to current line.")
 
   (gud-def gud-up     "up %p"     "<" "Up N stack frames (numeric arg).")
@@ -2720,10 +2720,10 @@ If `default-directory' is remote, full file names are adapted accordingly."
               (insert "]"))))))
     (goto-char (point-min))
     (insert "{")
-    (let ((re (concat "\\([[:alnum:]-_]+\\)=")))
+    (let ((re (concat "\\([[:alnum:]-_]+\\)=\\({\\|\\[\\|\"\"\\|"
+                      gdb--string-regexp "\\)")))
       (while (re-search-forward re nil t)
-        (replace-match "\"\\1\":" nil nil)
-        (if (eq (char-after) ?\") (forward-sexp) (forward-char))))
+        (replace-match "\"\\1\":\\2" nil nil)))
     (goto-char (point-max))
     (insert "}")))
 

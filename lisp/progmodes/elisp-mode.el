@@ -307,6 +307,8 @@ Blank lines separate paragraphs.  Semicolons start comments.
           (setq sexp (ignore-errors (butlast sexp)))))
     res))
 
+(defvar warning-minimum-log-level)
+
 (defun elisp--local-variables ()
   "Return a list of locally let-bound variables at point."
   (save-excursion
@@ -328,7 +330,7 @@ Blank lines separate paragraphs.  Semicolons start comments.
                                      (error form))))
              (sexp
               (unwind-protect
-                  (progn
+                  (let ((warning-minimum-log-level :emergency))
                     (advice-add 'macroexpand :around macroexpand-advice)
                     (macroexpand-all sexp))
                 (advice-remove 'macroexpand macroexpand-advice)))
@@ -899,11 +901,10 @@ Semicolons start comments.
 ;;; Emacs Lisp Byte-Code mode
 
 (eval-and-compile
-  (defconst emacs-lisp-byte-code-comment-re
+  (defconst emacs-list-byte-code-comment-re
     (concat "\\(#\\)@\\([0-9]+\\) "
             ;; Make sure it's a docstring and not a lazy-loaded byte-code.
-            "\\(?:[^(]\\|([^\"]\\)")
-    "Regular expression matching a dynamic doc string comment."))
+            "\\(?:[^(]\\|([^\"]\\)")))
 
 (defun elisp--byte-code-comment (end &optional _point)
   "Try to syntactically mark the #@NNN ....^_ docstrings in byte-code files."
@@ -912,7 +913,7 @@ Semicolons start comments.
                (eq (char-after (nth 8 ppss)) ?#))
       (let* ((n (save-excursion
                   (goto-char (nth 8 ppss))
-                  (when (looking-at emacs-lisp-byte-code-comment-re)
+                  (when (looking-at emacs-list-byte-code-comment-re)
                     (string-to-number (match-string 2)))))
              ;; `maxdiff' tries to make sure the loop below terminates.
              (maxdiff n))
@@ -938,7 +939,7 @@ Semicolons start comments.
   (elisp--byte-code-comment end (point))
   (funcall
    (syntax-propertize-rules
-    (emacs-lisp-byte-code-comment-re
+    (emacs-list-byte-code-comment-re
      (1 (prog1 "< b" (elisp--byte-code-comment end (point))))))
    start end))
 
@@ -1130,9 +1131,7 @@ character)."
         (eval-expression-get-print-arguments eval-last-sexp-arg-internal)))
     ;; Setup the lexical environment if lexical-binding is enabled.
     (elisp--eval-last-sexp-print-value
-     (eval (macroexpand-all
-            (eval-sexp-add-defvars (elisp--preceding-sexp)))
-           lexical-binding)
+     (eval (eval-sexp-add-defvars (elisp--preceding-sexp)) lexical-binding)
      (if insert-value (current-buffer) t) no-truncate char-print-limit)))
 
 (defun elisp--eval-last-sexp-print-value
@@ -1165,6 +1164,7 @@ character)."
 (defun eval-sexp-add-defvars (exp &optional pos)
   "Prepend EXP with all the `defvar's that precede it in the buffer.
 POS specifies the starting position where EXP was found and defaults to point."
+  (setq exp (macroexpand-all exp))      ;Eager macro-expansion.
   (if (not lexical-binding)
       exp
     (save-excursion

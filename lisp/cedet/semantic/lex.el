@@ -658,9 +658,10 @@ If universal argument ARG, then try the whole buffer."
   (let* ((start (current-time))
 	 (result (semantic-lex
 		  (if arg (point-min) (point))
-		  (point-max))))
+		  (point-max)))
+	 (end (current-time)))
     (message "Elapsed Time: %.2f seconds."
-	     (semantic-elapsed-time start nil))
+	     (semantic-elapsed-time start end))
     (pop-to-buffer "*Lexer Output*")
     (require 'pp)
     (erase-buffer)
@@ -810,7 +811,7 @@ analyzer which might mistake a number for as a symbol."
                     tmp-start (car semantic-lex-token-stream)))
 	   (setq tmp-start semantic-lex-end-point)
            (goto-char semantic-lex-end-point)
-	   ;;(when (> (semantic-elapsed-time starttime nil)
+	   ;;(when (> (semantic-elapsed-time starttime (current-time))
 	   ;;	    semantic-lex-timeout)
 	   ;;  (error "Timeout during lex at char %d" (point)))
 	   (semantic-throw-on-input 'lex)

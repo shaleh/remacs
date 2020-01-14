@@ -142,7 +142,7 @@ If nil, a faster, but more primitive, buffer is used instead."
        ["Offline" gnus-server-offline-server t]
        ["Deny" gnus-server-deny-server t]
        ["Toggle Cloud Sync for this server" gnus-server-toggle-cloud-server t]
-       ["Toggle Cloud Sync Host" gnus-server-set-cloud-method-server t]
+       ["Toggle Cloud Sync Host" gnus-server-toggle-cloud-method-server t]
        "---"
        ["Open All" gnus-server-open-all-servers t]
        ["Close All" gnus-server-close-all-servers t]
@@ -189,7 +189,7 @@ If nil, a faster, but more primitive, buffer is used instead."
     "z" gnus-server-compact-server
 
     "i" gnus-server-toggle-cloud-server
-    "I" gnus-server-set-cloud-method-server
+    "I" gnus-server-toggle-cloud-method-server
 
     "\C-c\C-i" gnus-info-find-node
     "\C-c\C-b" gnus-bug))
@@ -200,6 +200,9 @@ If nil, a faster, but more primitive, buffer is used instead."
     (t (:bold t)))
   "Face used for displaying AGENTIZED servers"
   :group 'gnus-server-visual)
+;; backward-compatibility alias
+(put 'gnus-server-agent-face 'face-alias 'gnus-server-agent)
+(put 'gnus-server-agent-face 'obsolete-face "22.1")
 
 (defface gnus-server-cloud
   '((((class color) (background light)) (:foreground "ForestGreen" :bold t))
@@ -221,6 +224,9 @@ If nil, a faster, but more primitive, buffer is used instead."
     (t (:bold t)))
   "Face used for displaying OPENED servers"
   :group 'gnus-server-visual)
+;; backward-compatibility alias
+(put 'gnus-server-opened-face 'face-alias 'gnus-server-opened)
+(put 'gnus-server-opened-face 'obsolete-face "22.1")
 
 (defface gnus-server-closed
   '((((class color) (background light)) (:foreground "Steel Blue" :italic t))
@@ -229,6 +235,9 @@ If nil, a faster, but more primitive, buffer is used instead."
     (t (:italic t)))
   "Face used for displaying CLOSED servers"
   :group 'gnus-server-visual)
+;; backward-compatibility alias
+(put 'gnus-server-closed-face 'face-alias 'gnus-server-closed)
+(put 'gnus-server-closed-face 'obsolete-face "22.1")
 
 (defface gnus-server-denied
   '((((class color) (background light)) (:foreground "Red" :bold t))
@@ -236,6 +245,9 @@ If nil, a faster, but more primitive, buffer is used instead."
     (t (:inverse-video t :bold t)))
   "Face used for displaying DENIED servers"
   :group 'gnus-server-visual)
+;; backward-compatibility alias
+(put 'gnus-server-denied-face 'face-alias 'gnus-server-denied)
+(put 'gnus-server-denied-face 'obsolete-face "22.1")
 
 (defface gnus-server-offline
   '((((class color) (background light)) (:foreground "Orange" :bold t))
@@ -243,6 +255,9 @@ If nil, a faster, but more primitive, buffer is used instead."
     (t (:inverse-video t :bold t)))
   "Face used for displaying OFFLINE servers"
   :group 'gnus-server-visual)
+;; backward-compatibility alias
+(put 'gnus-server-offline-face 'face-alias 'gnus-server-offline)
+(put 'gnus-server-offline-face 'obsolete-face "22.1")
 
 (defvar gnus-server-font-lock-keywords
   '(("(\\(agent\\))" 1 'gnus-server-agent)
@@ -437,8 +452,7 @@ The following commands are available:
     (if server (error "No such server: %s" server)
       (error "No server on the current line")))
   (unless (assoc server gnus-server-alist)
-    (error "Server %s must be deleted from your configuration files"
-	   server))
+    (error "Read-only server %s" server))
   (gnus-dribble-touch)
   (let ((buffer-read-only nil))
     (gnus-delete-line))
@@ -594,7 +608,7 @@ The following commands are available:
     (error "%s already exists" to))
   (unless (gnus-server-to-method from)
     (error "%s: no such server" from))
-  (let ((to-entry (cons from (copy-tree
+  (let ((to-entry (cons from (gnus-copy-sequence
 			      (gnus-server-to-method from)))))
     (setcar to-entry to)
     (setcar (nthcdr 2 to-entry) to)
@@ -628,8 +642,7 @@ The following commands are available:
   (unless server
     (error "No server on current line"))
   (unless (assoc server gnus-server-alist)
-    (error "Server %s must be edited in your configuration files"
-	   server))
+    (error "This server can't be edited"))
   (let ((info (cdr (assoc server gnus-server-alist))))
     (gnus-close-server info)
     (gnus-edit-form
@@ -1114,7 +1127,7 @@ Requesting compaction of %s... (this may take a long time)"
 	(and original (gnus-kill-buffer original))))))
 
 (defun gnus-server-toggle-cloud-server ()
-  "Toggle whether the server under point is replicated in the Emacs Cloud."
+  "Make the server under point be replicated in the Emacs Cloud."
   (interactive)
   (let ((server (gnus-server-server-name)))
     (unless server
@@ -1134,7 +1147,7 @@ Requesting compaction of %s... (this may take a long time)"
 		      "Replication of %s in the cloud will stop")
 		  server)))
 
-(defun gnus-server-set-cloud-method-server ()
+(defun gnus-server-toggle-cloud-method-server ()
   "Set the server under point to host the Emacs Cloud."
   (interactive)
   (let ((server (gnus-server-server-name)))
@@ -1144,7 +1157,7 @@ Requesting compaction of %s... (this may take a long time)"
       (error "The server under point can't host the Emacs Cloud"))
 
     (when (not (string-equal gnus-cloud-method server))
-      (customize-set-variable 'gnus-cloud-method server)
+      (custom-set-variables '(gnus-cloud-method server))
       ;; Note we can't use `Custom-save' here.
       (when (gnus-yes-or-no-p
              (format "The new cloud host server is %S now. Save it? " server))

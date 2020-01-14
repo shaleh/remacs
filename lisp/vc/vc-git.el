@@ -102,7 +102,8 @@
 (eval-when-compile
   (require 'cl-lib)
   (require 'vc)
-  (require 'vc-dir))
+  (require 'vc-dir)
+  (require 'grep))
 
 (defgroup vc-git nil
   "VC Git backend."
@@ -181,10 +182,6 @@ Should be consistent with the Git config value i18n.logOutputEncoding."
 
 ;; History of Git commands.
 (defvar vc-git-history nil)
-
-;; Clear up the cache to force vc-call to check again and discover
-;; new functions when we reload this file.
-(put 'Git 'vc-functions nil)
 
 ;;; BACKEND PROPERTIES
 
@@ -866,8 +863,6 @@ It is based on `log-edit-mode', and has Git-specific extensions.")
 
 ;; To be called via vc-pull from vc.el, which requires vc-dispatcher.
 (declare-function vc-compilation-mode "vc-dispatcher" (backend))
-(defvar compilation-directory)
-(defvar compilation-arguments)
 
 (defun vc-git--pushpull (command prompt extra-args)
   "Run COMMAND (a string; either push or pull) on the current Git branch.
@@ -979,11 +974,7 @@ This prompts for a branch to merge from."
 (defun vc-git-find-file-hook ()
   "Activate `smerge-mode' if there is a conflict."
   (when (and buffer-file-name
-             ;; FIXME
-             ;; 1) the net result is to call git twice per file.
-             ;; 2) v-g-c-f is documented to take a directory.
-             ;; https://lists.gnu.org/archive/html/emacs-devel/2014-01/msg01126.html
-             (vc-git-conflicted-files buffer-file-name)
+             (eq (vc-state buffer-file-name 'Git) 'conflict)
              (save-excursion
                (goto-char (point-min))
                (re-search-forward "^<<<<<<< " nil 'noerror)))
@@ -997,7 +988,7 @@ This prompts for a branch to merge from."
 (autoload 'vc-setup-buffer "vc-dispatcher")
 
 (defcustom vc-git-print-log-follow nil
-  "If true, follow renames in Git logs for files."
+  "If true, follow renames in Git logs for a single file."
   :type 'boolean
   :version "26.1")
 
@@ -1022,8 +1013,10 @@ If LIMIT is non-nil, show no more than this many entries."
 	       (append
 		'("log" "--no-color")
                 (when (and vc-git-print-log-follow
-                           (not (cl-some #'file-directory-p files)))
-                  ;; "--follow" on directories is broken
+                           (null (cdr files))
+                           (car files)
+                           (not (file-directory-p (car files))))
+                  ;; "--follow" on directories or multiple files is broken
                   ;; https://debbugs.gnu.org/cgi/bugreport.cgi?bug=8756
                   ;; https://debbugs.gnu.org/cgi/bugreport.cgi?bug=16422
                   (list "--follow"))
@@ -1380,9 +1373,6 @@ This requires git 1.8.4 or later, for the \"-L\" option of \"git log\"."
     (define-key map [git-grep]
       '(menu-item "Git grep..." vc-git-grep
 		  :help "Run the `git grep' command"))
-    (define-key map [git-ds]
-      '(menu-item "Delete Stash..." vc-git-stash-delete
-                  :help "Delete a stash"))
     (define-key map [git-sn]
       '(menu-item "Stash a Snapshot" vc-git-stash-snapshot
 		  :help "Stash the current state of the tree and keep the current state"))
@@ -1407,7 +1397,6 @@ This requires git 1.8.4 or later, for the \"-L\" option of \"git log\"."
 (declare-function grep-read-files "grep" (regexp))
 (declare-function grep-expand-template "grep"
                  (template &optional regexp files dir excl))
-(defvar compilation-environment)
 
 ;; Derived from `lgrep'.
 (defun vc-git-grep (regexp &optional files dir)
@@ -1476,24 +1465,9 @@ This command shares argument histories with \\[rgrep] and \\[grep]."
       (vc-git--call nil "stash" "save" name)
       (vc-resynch-buffer root t t))))
 
-(defvar vc-git-stash-read-history nil
-  "History for `vc-git-stash-read'.")
-
-(defun vc-git-stash-read (prompt)
-  "Read a Git stash.  PROMPT is a string to prompt with."
-  (let ((stash (completing-read
-                 prompt
-                 (split-string
-                  (or (vc-git--run-command-string nil "stash" "list") "") "\n")
-                 nil :require-match nil 'vc-git-stash-read-history)))
-    (if (string-equal stash "")
-        (user-error "Not a stash")
-      (string-match "^stash@{[[:digit:]]+}" stash)
-      (match-string 0 stash))))
-
 (defun vc-git-stash-show (name)
   "Show the contents of stash NAME."
-  (interactive (list (vc-git-stash-read "Show stash: ")))
+  (interactive "sStash name: ")
   (vc-setup-buffer "*vc-git-stash*")
   (vc-git-command "*vc-git-stash*" 'async nil "stash" "show" "-p" name)
   (set-buffer "*vc-git-stash*")
@@ -1503,20 +1477,14 @@ This command shares argument histories with \\[rgrep] and \\[grep]."
 
 (defun vc-git-stash-apply (name)
   "Apply stash NAME."
-  (interactive (list (vc-git-stash-read "Apply stash: ")))
+  (interactive "sApply stash: ")
   (vc-git-command "*vc-git-stash*" 0 nil "stash" "apply" "-q" name)
   (vc-resynch-buffer (vc-git-root default-directory) t t))
 
 (defun vc-git-stash-pop (name)
   "Pop stash NAME."
-  (interactive (list (vc-git-stash-read "Pop stash: ")))
+  (interactive "sPop stash: ")
   (vc-git-command "*vc-git-stash*" 0 nil "stash" "pop" "-q" name)
-  (vc-resynch-buffer (vc-git-root default-directory) t t))
-
-(defun vc-git-stash-delete (name)
-  "Delete stash NAME."
-  (interactive (list (vc-git-stash-read "Delete stash: ")))
-  (vc-git-command "*vc-git-stash*" 0 nil "stash" "drop" "-q" name)
   (vc-resynch-buffer (vc-git-root default-directory) t t))
 
 (defun vc-git-stash-snapshot ()
@@ -1587,14 +1555,7 @@ The difference to vc-do-command is that this function always invokes
          (or coding-system-for-read vc-git-log-output-coding-system))
 	(coding-system-for-write
          (or coding-system-for-write vc-git-commits-coding-system))
-        (process-environment
-         (append
-          `("GIT_DIR"
-            ;; Avoid repository locking during background operations
-            ;; (bug#21559).
-            ,@(when revert-buffer-in-progress-p
-                '("GIT_OPTIONAL_LOCKS=0")))
-          process-environment)))
+        (process-environment (cons "GIT_DIR" process-environment)))
     (apply 'vc-do-command (or buffer "*vc*") okstatus vc-git-program
 	   ;; https://debbugs.gnu.org/16897
 	   (unless (and (not (cdr-safe file-or-list))

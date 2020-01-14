@@ -98,7 +98,3 @@ This will replace the last notification sent with this function."
 (provide 'erc-desktop-notifications)
 
 ;;; erc-desktop-notifications.el ends here
-
-;; Local Variables:
-;; generated-autoload-file: "erc-loaddefs.el"
-;; End:

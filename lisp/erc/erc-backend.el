@@ -644,24 +644,22 @@ Make sure you are in an ERC buffer when running this."
             (erc-log-irc-protocol line nil)
             (erc-parse-server-response process line)))))))
 
-(define-inline erc-server-reconnect-p (event)
+(defsubst erc-server-reconnect-p (event)
   "Return non-nil if ERC should attempt to reconnect automatically.
 EVENT is the message received from the closed connection process."
-  (inline-letevals (event)
-    (inline-quote
-     (or erc-server-reconnecting
-         (and erc-server-auto-reconnect
-              (not erc-server-banned)
-              ;; make sure we don't infinitely try to reconnect, unless the
-              ;; user wants that
-              (or (eq erc-server-reconnect-attempts t)
-                  (and (integerp erc-server-reconnect-attempts)
-                       (< erc-server-reconnect-count
-                          erc-server-reconnect-attempts)))
-              (or erc-server-timed-out
-                  (not (string-match "^deleted" ,event)))
-              ;; open-network-stream-nowait error for connection refused
-              (if (string-match "^failed with code 111" ,event) 'nonblocking t))))))
+  (or erc-server-reconnecting
+      (and erc-server-auto-reconnect
+           (not erc-server-banned)
+           ;; make sure we don't infinitely try to reconnect, unless the
+           ;; user wants that
+           (or (eq erc-server-reconnect-attempts t)
+               (and (integerp erc-server-reconnect-attempts)
+                    (< erc-server-reconnect-count
+                       erc-server-reconnect-attempts)))
+           (or erc-server-timed-out
+               (not (string-match "^deleted" event)))
+           ;; open-network-stream-nowait error for connection refused
+           (if (string-match "^failed with code 111" event) 'nonblocking t))))
 
 (defun erc-process-sentinel-2 (event buffer)
   "Called when `erc-process-sentinel-1' has detected an unexpected disconnect."

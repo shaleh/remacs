@@ -461,6 +461,11 @@ This will generate compile-time constants from BINDINGS."
                        (throw 'found t)))))))
            (1 'font-lock-regexp-grouping-backslash prepend)
            (3 'font-lock-regexp-grouping-construct prepend))
+         ;; This is too general -- rms.
+         ;; A user complained that he has functions whose names start with `do'
+         ;; and that they get the wrong color.
+         ;; ;; CL `with-' and `do-' constructs
+         ;;("(\\(\\(do-\\|with-\\)\\(\\s_\\|\\w\\)*\\)" 1 font-lock-keyword-face)
          (lisp--match-hidden-arg
           (0 '(face font-lock-warning-face
                help-echo "Hidden behind deeper element; move to another line?")))
@@ -486,11 +491,6 @@ This will generate compile-time constants from BINDINGS."
          (,(concat "[`‘]\\(\\(?:\\sw\\|\\s_\\|\\\\.\\)"
                    lisp-mode-symbol-regexp "\\)['’]")
           (1 font-lock-constant-face prepend))
-         ;; Uninterned symbols, e.g., (defpackage #:my-package ...)
-         ;; must come before keywords below to have effect
-         (,(concat "\\(#:\\)\\(" lisp-mode-symbol-regexp "\\)")
-           (1 font-lock-comment-delimiter-face)
-           (2 font-lock-doc-face))
          ;; Constant values.
          (,(concat "\\_<:" lisp-mode-symbol-regexp "\\_>")
           (0 font-lock-builtin-face))
@@ -500,10 +500,8 @@ This will generate compile-time constants from BINDINGS."
          ;; This is too general -- rms.
          ;; A user complained that he has functions whose names start with `do'
          ;; and that they get the wrong color.
-         ;; That user has violated the http://www.cliki.net/Naming+conventions:
-         ;; CL (but not EL!) `with-' (context) and `do-' (iteration)
-         (,(concat "(\\(\\(do-\\|with-\\)" lisp-mode-symbol-regexp "\\)")
-           (1 font-lock-keyword-face))
+         ;; ;; CL `with-' and `do-' constructs
+         ;;("(\\(\\(do-\\|with-\\)\\(\\s_\\|\\w\\)*\\)" 1 font-lock-keyword-face)
          (lisp--match-hidden-arg
           (0 '(face font-lock-warning-face
                help-echo "Hidden behind deeper element; move to another line?")))

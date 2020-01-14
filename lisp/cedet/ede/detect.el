@@ -195,10 +195,11 @@ Return a cons cell:
   "Run a quick test for autodetecting on BUFFER."
   (interactive)
   (let ((start (current-time))
-	(ans (ede-detect-directory-for-project default-directory)))
+	(ans (ede-detect-directory-for-project default-directory))
+	(end (current-time)))
     (if ans
 	(message "Project found in %d sec @ %s of type %s"
-		 (float-time (time-subtract nil start))
+		 (float-time (time-subtract end start))
 		 (car ans)
 		 (eieio-object-name-string (cdr ans)))
       (message "No Project found.") )))

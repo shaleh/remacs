@@ -201,10 +201,8 @@ The target is used in the prompt for file copy, rename etc."
 
 ; These variables were deleted and the replacements are on files.el.
 ; We leave aliases behind for back-compatibility.
-(define-obsolete-variable-alias 'dired-free-space-program
-  'directory-free-space-program "27.1")
-(define-obsolete-variable-alias 'dired-free-space-args
-  'directory-free-space-args "27.1")
+(defvaralias 'dired-free-space-program 'directory-free-space-program)
+(defvaralias 'dired-free-space-args 'directory-free-space-args)
 
 ;;; Hook variables
 
@@ -648,7 +646,7 @@ marked file, return (t FILENAME) instead of (FILENAME)."
      ;; save-excursion loses, again
      (dired-move-to-filename)))
 
-(defun dired-get-marked-files (&optional localp arg filter distinguish-one-marked error)
+(defun dired-get-marked-files (&optional localp arg filter distinguish-one-marked)
   "Return the marked files' names as list of strings.
 The list is in the same order as the buffer, that is, the car is the
   first marked file.
@@ -665,10 +663,7 @@ Optional third argument FILTER, if non-nil, is a function to select
 
 If DISTINGUISH-ONE-MARKED is non-nil, then if we find just one marked file,
 return (t FILENAME) instead of (FILENAME).
-Don't use that together with FILTER.
-
-If ERROR is non-nil, signal an error when the list of found files is empty.
-ERROR can be a string with the error message."
+Don't use that together with FILTER."
   (let ((all-of-them
 	 (save-excursion
 	   (delq nil (dired-map-over-marks
@@ -678,17 +673,13 @@ ERROR can be a string with the error message."
     (when (equal all-of-them '(t))
       (setq all-of-them nil))
     (if (not filter)
-	(setq result
-              (if (and distinguish-one-marked (eq (car all-of-them) t))
-	          all-of-them
-	        (nreverse all-of-them)))
+	(if (and distinguish-one-marked (eq (car all-of-them) t))
+	    all-of-them
+	  (nreverse all-of-them))
       (dolist (file all-of-them)
 	(if (funcall filter file)
-	    (push file result))))
-    (when (and (null result) error)
-      (user-error (if (stringp error) error "No files specified")))
-    result))
-
+	    (push file result)))
+      result)))
 
 ;; The dired command
 
@@ -2355,7 +2346,12 @@ Otherwise, an error occurs in these cases."
 		  (setq start (match-end 0))))))
 
           ;; Hence we don't need to worry about converting `\\' back to `\'.
-          (setq file (read (concat "\"" file "\"")))))
+          (setq file (read (concat "\"" file "\"")))
+	  ;; The above `read' will return a unibyte string if FILE
+	  ;; contains eight-bit-control/graphic characters.
+	  (if (and enable-multibyte-characters
+		   (not (multibyte-string-p file)))
+	      (setq file (string-to-multibyte file)))))
     (and file (files--name-absolute-system-p file)
 	 (setq already-absolute t))
     (cond
@@ -3099,7 +3095,7 @@ non-empty directories is allowed."
 	 (dired-recursive-deletes dired-recursive-deletes)
 	 (trashing (and trash delete-by-moving-to-trash)))
     ;; canonicalize file list for pop up
-    (setq files (mapcar #'dired-make-relative files))
+    (setq files (nreverse (mapcar #'dired-make-relative files)))
     (if (dired-mark-pop-up
 	 " *Deletions*" 'delete files dired-deletion-confirmer
 	 (format "%s %s "

@@ -971,11 +971,11 @@ Show wall-clock time elapsed during execution of COMMAND.")
      ;; after setting
      (throw 'eshell-replace-command
 	    (eshell-parse-command (car time-args)
-;;; https://lists.gnu.org/archive/html/bug-gnu-emacs/2007-08/msg00205.html
+;;; https://lists.gnu.org/r/bug-gnu-emacs/2007-08/msg00205.html
 				  (eshell-stringify-list
 				   (eshell-flatten-list (cdr time-args))))))))
 
-(defun eshell/whoami (&rest _args)
+(defun eshell/whoami (&rest args)
   "Make \"whoami\" Tramp aware."
   (or (file-remote-p default-directory 'user) (user-login-name)))
 

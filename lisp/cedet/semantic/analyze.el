@@ -440,11 +440,12 @@ to provide a large number of non-cached analysis for filtering symbols."
 (defun semantic-analyze-current-symbol-default (analyzehookfcn position)
   "Call ANALYZEHOOKFCN on the analyzed symbol at POSITION."
   (let* ((semantic-analyze-error-stack nil)
-	 ;; (LLstart (current-time))
+	 (LLstart (current-time))
 	 (prefixandbounds (semantic-ctxt-current-symbol-and-bounds (or position (point))))
 	 (prefix (car prefixandbounds))
 	 (bounds (nth 2 prefixandbounds))
 	 (scope (semantic-calculate-scope position))
+	 (end nil)
 	 )
         ;; Only do work if we have bounds (meaning a prefix to complete)
     (when bounds
@@ -463,13 +464,15 @@ to provide a large number of non-cached analysis for filtering symbols."
 			  prefix scope 'prefixtypes))
 	  (error (semantic-analyze-push-error err))))
 
-      ;;(message "Analysis took %.2f sec" (semantic-elapsed-time LLstart nil))
+      (setq end (current-time))
+      ;;(message "Analysis took %.2f sec" (semantic-elapsed-time LLstart end))
 
       )
     (when prefix
       (prog1
 	  (funcall analyzehookfcn (car bounds) (cdr bounds) prefix)
-	;;(message "hookfcn took %.5f sec" (semantic-elapsed-time LLstart nil))
+	;;(setq end (current-time))
+	;;(message "hookfcn took %.5f sec" (semantic-elapsed-time LLstart end))
 	)
 
 	)))
@@ -642,6 +645,7 @@ Returns an object based on symbol `semantic-analyze-context'."
       ;; for the argument.
       (setq context-return
 	    (semantic-analyze-context-functionarg
+	     "functionargument"
 	     :buffer (current-buffer)
 	     :function fntag
 	     :index arg
@@ -664,6 +668,7 @@ Returns an object based on symbol `semantic-analyze-context'."
 
       (setq context-return
 	    (semantic-analyze-context-assignment
+	     "assignment"
 	     :buffer (current-buffer)
 	     :assignee asstag
 	     :scope scope
@@ -681,6 +686,7 @@ Returns an object based on symbol `semantic-analyze-context'."
       ;; Nothing in particular
       (setq context-return
 	    (semantic-analyze-context
+	     "context"
 	     :buffer (current-buffer)
 	     :scope scope
 	     :bounds bounds
@@ -717,11 +723,12 @@ Optional argument CTXT is the context to show."
   (interactive)
   (require 'data-debug)
   (let ((start (current-time))
-	(ctxt (or ctxt (semantic-analyze-current-context))))
+	(ctxt (or ctxt (semantic-analyze-current-context)))
+	(end (current-time)))
     (if (not ctxt)
 	(message "No Analyzer Results")
       (message "Analysis  took %.2f seconds."
-	       (semantic-elapsed-time start nil))
+	       (semantic-elapsed-time start end))
       (semantic-analyze-pulse ctxt)
       (if ctxt
 	  (progn

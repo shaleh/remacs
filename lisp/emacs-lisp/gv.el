@@ -303,14 +303,11 @@ The return value is the last VAL in the list.
      (lambda (do before index place)
        (gv-letplace (getter setter) place
          (funcall do `(edebug-after ,before ,index ,getter)
-                  (lambda (store)
-                    `(progn (edebug-after ,before ,index ,getter)
-                            ,(funcall setter store)))))))
+                  setter))))
 
 ;;; The common generalized variables.
 
 (gv-define-simple-setter aref aset)
-(gv-define-simple-setter char-table-range set-char-table-range)
 (gv-define-simple-setter car setcar)
 (gv-define-simple-setter cdr setcdr)
 ;; FIXME: add compiler-macros for `cXXr' instead!

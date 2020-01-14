@@ -39,8 +39,6 @@
 
 ;;; Code:
 
-(eval-when-compile (require 'cl-lib))
-
 (defgroup ruby nil
   "Major mode for editing Ruby code."
   :prefix "ruby-"

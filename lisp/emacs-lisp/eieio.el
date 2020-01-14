@@ -377,21 +377,9 @@ contents of field NAME is matched against PAT, or they can be of
 (define-obsolete-function-alias
   'object-class-fast #'eieio-object-class "24.4")
 
-;; In the past, every EIEIO object had a `name' field, so we had the
-;; two methods `eieio-object-name-string' and
-;; `eieio-object-set-name-string' "for free".  Since this field is
-;; very rarely used, we got rid of it and instead we keep it in a weak
-;; hash-tables, for those very rare objects that use it.
-;; Really, those rare objects should inherit from `eieio-named' instead!
-(defconst eieio--object-names (make-hash-table :test #'eq :weakness 'key))
-
 (cl-defgeneric eieio-object-name-string (obj)
   "Return a string which is OBJ's name."
-  (or (gethash obj eieio--object-names)
-      (format "%s-%x" (eieio-object-class obj) (sxhash-eq obj))))
-
-(define-obsolete-function-alias
-  'object-name-string #'eieio-object-name-string "24.4")
+  (declare (obsolete eieio-named "25.1")))
 
 (defun eieio-object-name (obj &optional extra)
   "Return a printed representation for object OBJ.
@@ -401,9 +389,21 @@ If EXTRA, include that in the string returned to represent the symbol."
 	  (eieio-object-name-string obj) (or extra "")))
 (define-obsolete-function-alias 'object-name #'eieio-object-name "24.4")
 
-(cl-defgeneric eieio-object-set-name-string (obj name)
+(defconst eieio--object-names (make-hash-table :test #'eq :weakness 'key))
+
+;; In the past, every EIEIO object had a `name' field, so we had the two method
+;; below "for free".  Since this field is very rarely used, we got rid of it
+;; and instead we keep it in a weak hash-tables, for those very rare objects
+;; that use it.
+(cl-defmethod eieio-object-name-string (obj)
+  (or (gethash obj eieio--object-names)
+      (symbol-name (eieio-object-class obj))))
+(define-obsolete-function-alias
+  'object-name-string #'eieio-object-name-string "24.4")
+
+(cl-defmethod eieio-object-set-name-string (obj name)
   "Set the string which is OBJ's NAME."
-  (declare (obsolete "inherit from `eieio-named' and use (setf (slot-value OBJ \\='object-name) NAME) instead" "25.1"))
+  (declare (obsolete eieio-named "25.1"))
   (cl-check-type name string)
   (setf (gethash obj eieio--object-names) name))
 (define-obsolete-function-alias
@@ -850,16 +850,7 @@ to prepend a space."
   (princ (object-print object) stream))
 
 (defvar eieio-print-depth 0
-  "The current indentation depth while printing.
-Ignored if `eieio-print-indentation' is nil.")
-
-(defvar eieio-print-indentation t
-  "When non-nil, indent contents of printed objects.")
-
-(defvar eieio-print-object-name t
-  "When non-nil write the object name in `object-write'.
-Does not affect objects subclassing `eieio-named'.  Note that
-Emacs<26 requires that object names be present.")
+  "When printing, keep track of the current indentation depth.")
 
 (cl-defgeneric object-write (this &optional comment)
   "Write out object THIS to the current stream.
@@ -871,11 +862,10 @@ This writes out the vector version of this object.  Complex and recursive
 object are discouraged from being written.
   If optional COMMENT is non-nil, include comments when outputting
 this object."
-  (when (and comment eieio-print-object-name)
+  (when comment
     (princ ";; Object ")
     (princ (eieio-object-name-string this))
-    (princ "\n"))
-  (when comment
+    (princ "\n")
     (princ comment)
     (princ "\n"))
   (let* ((cl (eieio-object-class this))
@@ -884,14 +874,12 @@ this object."
     ;; It should look like this:
     ;; (<constructor> <name> <slot> <slot> ... )
     ;; Each slot's slot is writen using its :writer.
-    (when eieio-print-indentation
-      (princ (make-string (* eieio-print-depth 2) ? )))
+    (princ (make-string (* eieio-print-depth 2) ? ))
     (princ "(")
     (princ (symbol-name (eieio--class-constructor (eieio-object-class this))))
-    (when eieio-print-object-name
-      (princ " ")
-      (prin1 (eieio-object-name-string this))
-      (princ "\n"))
+    (princ " ")
+    (prin1 (eieio-object-name-string this))
+    (princ "\n")
     ;; Loop over all the public slots
     (let ((slots (eieio--class-slots cv))
 	  (eieio-print-depth (1+ eieio-print-depth)))
@@ -904,8 +892,7 @@ this object."
               (unless (or (not i) (equal v (cl--slot-descriptor-initform slot)))
                 (unless (bolp)
                   (princ "\n"))
-                (when eieio-print-indentation
-                  (princ (make-string (* eieio-print-depth 2) ? )))
+                (princ (make-string (* eieio-print-depth 2) ? ))
                 (princ (symbol-name i))
                 (if (alist-get :printer (cl--slot-descriptor-props slot))
                     ;; Use our public printer
@@ -920,7 +907,7 @@ this object."
                              "\n" " "))
                   (eieio-override-prin1 v))))))))
     (princ ")")
-    (when (zerop eieio-print-depth)
+    (when (= eieio-print-depth 0)
       (princ "\n"))))
 
 (defun eieio-override-prin1 (thing)
@@ -929,6 +916,25 @@ this object."
 	 (object-write thing))
 	((consp thing)
 	 (eieio-list-prin1 thing))
+	((hash-table-p thing)
+         (let ((copy (copy-hash-table thing)))
+	   (maphash
+	    (lambda (key val)
+	      (setf (gethash key copy)
+		    (read
+		     (with-output-to-string
+		       (eieio-override-prin1 val)))))
+	    copy)
+	   (prin1 copy)))
+	((vectorp thing)
+         (let ((copy (copy-sequence thing)))
+	  (dotimes (i (length copy))
+	    (aset copy i
+		  (read
+		   (with-output-to-string
+		     (eieio-override-prin1
+		      (aref copy i))))))
+	  (prin1 copy)))
 	((eieio--class-p thing)
 	 (princ (eieio--class-print-name thing)))
 	(t (prin1 thing))))
@@ -939,16 +945,14 @@ this object."
       (progn
 	(princ "'")
 	(prin1 list))
-    (when eieio-print-indentation
-      (princ (make-string (* eieio-print-depth 2) ? )))
+    (princ (make-string (* eieio-print-depth 2) ? ))
     (princ "(list")
     (let ((eieio-print-depth (1+ eieio-print-depth)))
       (while list
 	(princ "\n")
 	(if (eieio-object-p (car list))
 	    (object-write (car list))
-          (when eieio-print-indentation
-	   (princ (make-string (* eieio-print-depth) ? )))
+	  (princ (make-string (* eieio-print-depth 2) ? ))
 	  (eieio-override-prin1 (car list)))
 	(setq list (cdr list))))
     (princ ")")))

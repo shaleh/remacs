@@ -106,6 +106,7 @@ Security'."
     "/etc/ssl/ca-bundle.pem"                 ; Suse
     "/usr/ssl/certs/ca-bundle.crt"           ; Cygwin
     "/usr/local/share/certs/ca-root-nss.crt" ; FreeBSD
+    "/etc/ssl/cert.pem"                      ; macOS
     )
   "List of CA bundle location filenames or a function returning said list.
 The files may be in PEM or DER format, as per the GnuTLS documentation.
@@ -144,7 +145,7 @@ Args are NAME BUFFER HOST SERVICE.
 NAME is name for process.  It is modified if necessary to make it unique.
 BUFFER is the buffer (or `buffer-name') to associate with the process.
  Process output goes at end of that buffer, unless you specify
- an output stream or filter function to handle the output.
+ a filter function to handle the output.
  BUFFER may be also nil, meaning that this process is not associated
  with any buffer
 Third arg is name of the host to connect to, or its IP address.

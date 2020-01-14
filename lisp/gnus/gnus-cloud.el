@@ -80,7 +80,7 @@ against the basename of files in said directory."
 
 (defcustom gnus-cloud-method nil
   "The IMAP select method used to store the cloud data.
-See also `gnus-server-set-cloud-method-server' for an
+See also `gnus-server-toggle-cloud-method-server' for an
 easy interactive way to set this from the Server buffer."
   :group 'gnus-cloud
   :type '(radio (const :tag "Not set" nil)
@@ -229,7 +229,7 @@ easy interactive way to set this from the Server buffer."
 Use old data if FORCE-OLDER is not nil."
   (let* ((contents (plist-get elem :contents))
          (date (or (plist-get elem :timestamp) "0"))
-         (now (gnus-cloud-timestamp nil))
+         (now (gnus-cloud-timestamp (current-time)))
          (newer (string-lessp date now))
          (group-info (gnus-get-info group)))
     (if (and contents
@@ -368,8 +368,6 @@ Use old data if FORCE-OLDER is not nil."
   (interactive)
   (gnus-cloud-upload-data t))
 
-(autoload 'gnus-group-refresh-group "gnus-group")
-
 (defun gnus-cloud-upload-data (&optional full)
   "Upload data (newsrc and files) to the Gnus Cloud.
 When FULL is t, upload everything, not just a difference from the last full."
@@ -500,7 +498,7 @@ Otherwise, returns the Gnus Cloud data chunks."
              (gnus-method-to-server
               (gnus-find-method-for-group (gnus-info-group info))))
 
-        (push `(:type :newsrc-data :name ,(gnus-info-group info) :contents ,info :timestamp ,(gnus-cloud-timestamp nil))
+        (push `(:type :newsrc-data :name ,(gnus-info-group info) :contents ,info :timestamp ,(gnus-cloud-timestamp (current-time)))
               infos)))
     infos))
 

@@ -49,12 +49,14 @@ A user-written makefile is used to build this target.
 All listed sources are included in the distribution.")
 
 (defvar ede-misc-source
-  (ede-sourcecode :name "Miscellaneous"
+  (ede-sourcecode "ede-misc-source"
+		  :name "Miscellaneous"
 		  :sourcepattern ".*")
   "Miscellaneous field definition.")
 
 (defvar ede-misc-compile
-  (ede-compiler :name "Sub Makefile"
+  (ede-compiler "ede-misc-compile"
+		:name "Sub Makefile"
 		:commands
 		'(
 		  )

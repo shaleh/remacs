@@ -186,10 +186,9 @@ skips to the end of all the years."
 		   (substring copyright-current-year -2))
     (if (or noquery
 	    (save-window-excursion
-              ;; switch-to-buffer might move point when
-              ;; switch-to-buffer-preserve-window-point is non-nil.
+	      (switch-to-buffer (current-buffer))
+	      ;; Fixes some point-moving oddness (bug#2209).
 	      (save-excursion
-                (switch-to-buffer (current-buffer))
 		(y-or-n-p (if replace
 			      (concat "Replace copyright year(s) by "
 				      copyright-current-year "? ")

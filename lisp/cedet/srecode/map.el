@@ -224,9 +224,10 @@ Optional argument RESET forces a reset of the current map."
   (require 'data-debug)
   (let ((start (current-time))
 	(p (srecode-get-maps t)) ;; Time the reset.
+	(end (current-time))
 	)
     (message "Updating the map took %.2f seconds."
-	     (semantic-elapsed-time start nil))
+	     (semantic-elapsed-time start end))
     (data-debug-new-buffer "*SRECODE ADEBUG*")
     (data-debug-insert-stuff-list p "*")))
 
@@ -270,7 +271,7 @@ if that file is NEW, otherwise assume the mode has not changed."
   (if (not srecode-map-save-file)
       ;; 0) Create a MAP when in no save file mode.
       (when (not srecode-current-map)
-	(setq srecode-current-map (srecode-map))
+	(setq srecode-current-map (srecode-map "SRecode Map"))
 	(message "SRecode map created in non-save mode.")
 	)
 
@@ -290,7 +291,8 @@ if that file is NEW, otherwise assume the mode has not changed."
 	    (error "Change your SRecode map file"))))
       ;; Have a dir.  Make the object.
       (setq srecode-current-map
-	    (srecode-map :file srecode-map-save-file)))
+	    (srecode-map "SRecode Map"
+			 :file srecode-map-save-file)))
 
     ;; 2) Do we not have a current map?  If so load.
     (when (not srecode-current-map)
@@ -300,7 +302,8 @@ if that file is NEW, otherwise assume the mode has not changed."
 	(error
 	 ;; There was an error loading the old map.  Create a new one.
 	 (setq srecode-current-map
-	       (srecode-map :file srecode-map-save-file))))
+	       (srecode-map "SRecode Map"
+			    :file srecode-map-save-file))))
       )
 
     )

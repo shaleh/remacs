@@ -259,7 +259,8 @@ how long to wait for a response before giving up."
 	;; process output.
 	(while (and (not retrieval-done)
                     (or (not timeout)
-                        (< (float-time (time-subtract nil start-time))
+                        (< (float-time (time-subtract
+                                        (current-time) start-time))
                            timeout)))
 	  (url-debug 'retrieval
 		     "Spinning in url-retrieve-synchronously: %S (%S)"

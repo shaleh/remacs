@@ -136,6 +136,9 @@ the envelope From line."
 (defface gnus-cite-attribution '((t (:italic t)))
   "Face used for attribution lines."
   :group 'gnus-cite)
+;; backward-compatibility alias
+(put 'gnus-cite-attribution-face 'face-alias 'gnus-cite-attribution)
+(put 'gnus-cite-attribution-face 'obsolete-face "22.1")
 
 (defcustom gnus-cite-attribution-face 'gnus-cite-attribution
   "Face used for attribution lines.
@@ -154,6 +157,9 @@ It is merged with the face for the cited text belonging to the attribution."
 			(:italic t)))
   "Citation face."
   :group 'gnus-cite)
+;; backward-compatibility alias
+(put 'gnus-cite-face-1 'face-alias 'gnus-cite-1)
+(put 'gnus-cite-face-1 'obsolete-face "22.1")
 
 (defface gnus-cite-2 '((((class color)
 			 (background dark))
@@ -165,6 +171,9 @@ It is merged with the face for the cited text belonging to the attribution."
 			(:italic t)))
   "Citation face."
   :group 'gnus-cite)
+;; backward-compatibility alias
+(put 'gnus-cite-face-2 'face-alias 'gnus-cite-2)
+(put 'gnus-cite-face-2 'obsolete-face "22.1")
 
 (defface gnus-cite-3 '((((class color)
 			 (background dark))
@@ -176,6 +185,9 @@ It is merged with the face for the cited text belonging to the attribution."
 			(:italic t)))
   "Citation face."
   :group 'gnus-cite)
+;; backward-compatibility alias
+(put 'gnus-cite-face-3 'face-alias 'gnus-cite-3)
+(put 'gnus-cite-face-3 'obsolete-face "22.1")
 
 (defface gnus-cite-4 '((((class color)
 			 (background dark))
@@ -187,6 +199,9 @@ It is merged with the face for the cited text belonging to the attribution."
 			(:italic t)))
   "Citation face."
   :group 'gnus-cite)
+;; backward-compatibility alias
+(put 'gnus-cite-face-4 'face-alias 'gnus-cite-4)
+(put 'gnus-cite-face-4 'obsolete-face "22.1")
 
 (defface gnus-cite-5 '((((class color)
 			 (background dark))
@@ -198,6 +213,9 @@ It is merged with the face for the cited text belonging to the attribution."
 			(:italic t)))
   "Citation face."
   :group 'gnus-cite)
+;; backward-compatibility alias
+(put 'gnus-cite-face-5 'face-alias 'gnus-cite-5)
+(put 'gnus-cite-face-5 'obsolete-face "22.1")
 
 (defface gnus-cite-6 '((((class color)
 			 (background dark))
@@ -209,6 +227,9 @@ It is merged with the face for the cited text belonging to the attribution."
 			(:italic t)))
   "Citation face."
   :group 'gnus-cite)
+;; backward-compatibility alias
+(put 'gnus-cite-face-6 'face-alias 'gnus-cite-6)
+(put 'gnus-cite-face-6 'obsolete-face "22.1")
 
 (defface gnus-cite-7 '((((class color)
 			 (background dark))
@@ -220,6 +241,9 @@ It is merged with the face for the cited text belonging to the attribution."
 			(:italic t)))
   "Citation face."
   :group 'gnus-cite)
+;; backward-compatibility alias
+(put 'gnus-cite-face-7 'face-alias 'gnus-cite-7)
+(put 'gnus-cite-face-7 'obsolete-face "22.1")
 
 (defface gnus-cite-8 '((((class color)
 			 (background dark))
@@ -231,6 +255,9 @@ It is merged with the face for the cited text belonging to the attribution."
 			(:italic t)))
   "Citation face."
   :group 'gnus-cite)
+;; backward-compatibility alias
+(put 'gnus-cite-face-8 'face-alias 'gnus-cite-8)
+(put 'gnus-cite-face-8 'obsolete-face "22.1")
 
 (defface gnus-cite-9 '((((class color)
 			 (background dark))
@@ -242,6 +269,9 @@ It is merged with the face for the cited text belonging to the attribution."
 			(:italic t)))
   "Citation face."
   :group 'gnus-cite)
+;; backward-compatibility alias
+(put 'gnus-cite-face-9 'face-alias 'gnus-cite-9)
+(put 'gnus-cite-face-9 'obsolete-face "22.1")
 
 (defface gnus-cite-10 '((((class color)
 			  (background dark))
@@ -253,6 +283,9 @@ It is merged with the face for the cited text belonging to the attribution."
 			 (:italic t)))
   "Citation face."
   :group 'gnus-cite)
+;; backward-compatibility alias
+(put 'gnus-cite-face-10 'face-alias 'gnus-cite-10)
+(put 'gnus-cite-face-10 'obsolete-face "22.1")
 
 (defface gnus-cite-11 '((((class color)
 			  (background dark))
@@ -264,6 +297,9 @@ It is merged with the face for the cited text belonging to the attribution."
 			 (:italic t)))
   "Citation face."
   :group 'gnus-cite)
+;; backward-compatibility alias
+(put 'gnus-cite-face-11 'face-alias 'gnus-cite-11)
+(put 'gnus-cite-face-11 'obsolete-face "22.1")
 
 (defcustom gnus-cite-face-list
   '(gnus-cite-1 gnus-cite-2 gnus-cite-3 gnus-cite-4 gnus-cite-5 gnus-cite-6

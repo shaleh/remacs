@@ -996,7 +996,7 @@ Within directories, only files already under version control are noticed."
 	((derived-mode-p 'diff-mode)     diff-vc-backend)
         ;; Maybe we could even use comint-mode rather than shell-mode?
 	((derived-mode-p 'dired-mode 'shell-mode 'compilation-mode)
-	 (vc-responsible-backend default-directory))
+	 (ignore-errors (vc-responsible-backend default-directory)))
 	(vc-mode (vc-backend buffer-file-name))))
 
 (declare-function vc-dir-current-file "vc-dir" ())
@@ -1648,6 +1648,11 @@ to override the value of `vc-diff-switches' and `diff-switches'."
       ;; This is so we can set vc-diff-switches to t to override
       ;; any switches in diff-switches.
       (when (listp switches) switches))))
+
+;; Old def for compatibility with Emacs-21.[123].
+(defmacro vc-diff-switches-list (backend)
+  (declare (obsolete vc-switches "22.1"))
+  `(vc-switches ',backend 'diff))
 
 (defun vc-diff-finish (buffer messages)
   ;; The empty sync output case has already been handled, so the only
@@ -2430,13 +2435,11 @@ When called interactively with a prefix argument, prompt for REMOTE-LOCATION."
 If called interactively, show the history between point and
 mark."
   (interactive "r")
-  (let* ((lfrom (line-number-at-pos from t))
-         (lto   (line-number-at-pos (1- to) t))
+  (let* ((lfrom (line-number-at-pos from))
+         (lto   (line-number-at-pos (1- to)))
          (file buffer-file-name)
          (backend (vc-backend file))
          (buf (get-buffer-create "*VC-history*")))
-    (unless backend
-      (error "Buffer is not version controlled"))
     (with-current-buffer buf
       (setq-local vc-log-view-type 'long))
     (vc-call region-history file buf lfrom lto)

@@ -196,11 +196,11 @@ Optional argument FACE specifies the face to do the highlighting."
       (pulse-reset-face face)
       (setq pulse-momentary-timer
             (run-with-timer 0 pulse-delay #'pulse-tick
-                            (time-add nil
+                            (time-add (current-time)
                                       (* pulse-delay pulse-iterations)))))))
 
 (defun pulse-tick (stop-time)
-  (if (time-less-p nil stop-time)
+  (if (time-less-p (current-time) stop-time)
       (pulse-lighten-highlight)
     (pulse-momentary-unhighlight)))
 

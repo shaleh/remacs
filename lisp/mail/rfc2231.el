@@ -1,4 +1,4 @@
-;;; rfc2231.el --- Functions for decoding rfc2231 headers  -*- lexical-binding:t -*-
+;;; rfc2231.el --- Functions for decoding rfc2231 headers
 
 ;; Copyright (C) 1998-2019 Free Software Foundation, Inc.
 
@@ -22,7 +22,7 @@
 
 ;;; Code:
 
-(eval-when-compile (require 'cl-lib))
+(eval-when-compile (require 'cl))
 (require 'ietf-drums)
 (require 'rfc2047)
 (autoload 'mm-encode-body "mm-bodies")
@@ -181,7 +181,7 @@ must never cause a Lisp error."
 	;; Now collect and concatenate continuation parameters.
 	(let ((cparams nil)
 	      elem)
-	  (cl-loop for (attribute value part encoded)
+	  (loop for (attribute value part encoded)
 		in (sort parameters (lambda (e1 e2)
 				      (< (or (caddr e1) 0)
 					 (or (caddr e2) 0))))
@@ -291,7 +291,7 @@ the result of this function."
 	    (insert param "*=")
 	  (while (not (eobp))
 	    (insert (if (>= num 0) " " "")
-		    param "*" (format "%d" (cl-incf num)) "*=")
+		    param "*" (format "%d" (incf num)) "*=")
 	    (forward-line 1))))
        (spacep
 	(goto-char (point-min))

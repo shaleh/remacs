@@ -358,12 +358,11 @@ return LIMIT such candidates.  If SORTFUNC is provided, sort
 entries first and return candidates from beginning of list."
   (let* ((precious (oref db precious))
 	 (precious-p (lambda (entry-key)
-		       (cdr (memq (car-safe entry-key) precious))))
+		       (memq (car entry-key) precious)))
 	 (data (oref db data))
 	 (candidates (cl-loop for k being the hash-keys of data
 			      using (hash-values v)
-			      when (and (listp v)
-                                        (cl-notany precious-p v))
+			      when (cl-notany precious-p v)
 			      collect (cons k v))))
     ;; We want the full entries for sorting, but should only return a
     ;; list of entry keys.

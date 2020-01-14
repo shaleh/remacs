@@ -4,10 +4,10 @@
 
 ;; Author: Jim Thompson (was <thompson@wg2.waii.com>)
 ;;	Jacques Duthen (was <duthen@cegelec-red.fr>)
-;;	Vinicius Jose Latorre <viniciusjl.gnu@gmail.com>
+;;	Vinicius Jose Latorre <viniciusjl@ig.com.br>
 ;;	Kenichi Handa <handa@m17n.org> (multi-byte characters)
 ;; Maintainer: Kenichi Handa <handa@m17n.org> (multi-byte characters)
-;;	Vinicius Jose Latorre <viniciusjl.gnu@gmail.com>
+;;	Vinicius Jose Latorre <viniciusjl@ig.com.br>
 ;; Keywords: wp, print, PostScript
 ;; Version: 7.3.5
 ;; X-URL: http://www.emacswiki.org/cgi-bin/wiki/ViniciusJoseLatorre
@@ -20,7 +20,7 @@ Emacs without changes to the version number.  When reporting bugs, please also
 report the version of Emacs, if any, that ps-print was distributed with.
 
 Please send all bug fixes and enhancements to
-	bug-gnu-emacs@gnu.org and Vinicius Jose Latorre <viniciusjl.gnu@gmail.com>.")
+	bug-gnu-emacs@gnu.org and Vinicius Jose Latorre <viniciusjl@ig.com.br>.")
 
 ;; This file is part of GNU Emacs.
 
@@ -1216,7 +1216,7 @@ Please send all bug fixes and enhancements to
 ;; New since version 2.8
 ;; ---------------------
 ;;
-;; [vinicius] Vinicius Jose Latorre <viniciusjl.gnu@gmail.com>
+;; [vinicius] Vinicius Jose Latorre <viniciusjl@ig.com.br>
 ;;
 ;;    2007-10-27
 ;;	 `ps-fg-validate-p', `ps-fg-list'
@@ -1274,7 +1274,7 @@ Please send all bug fixes and enhancements to
 ;;
 ;;    `ps-print-region-function'
 ;;
-;; [vinicius] Vinicius Jose Latorre <viniciusjl.gnu@gmail.com>
+;; [vinicius] Vinicius Jose Latorre <viniciusjl@ig.com.br>
 ;;
 ;;    1999-03-01
 ;;	 PostScript tumble and setpagedevice.
@@ -1287,7 +1287,7 @@ Please send all bug fixes and enhancements to
 ;;
 ;;    Multi-byte buffer handling.
 ;;
-;; [vinicius] Vinicius Jose Latorre <viniciusjl.gnu@gmail.com>
+;; [vinicius] Vinicius Jose Latorre <viniciusjl@ig.com.br>
 ;;
 ;;    1998-03-06
 ;;	 Skip invisible text.
@@ -1773,7 +1773,7 @@ See `ps-lpr-command'."
 
 (defcustom ps-print-region-function
   (if (memq system-type '(ms-dos windows-nt))
-      'w32-direct-ps-print-region-function
+      #'w32-direct-ps-print-region-function
     #'call-process-region)
   "Specify a function to print the region on a PostScript printer.
 See definition of `call-process-region' for calling conventions.  The fourth
@@ -4140,6 +4140,48 @@ If EXTENSION is any other symbol, it is ignored."
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Adapted from font-lock: (obsolete stuff)
+;; Originally face attributes were specified via `font-lock-face-attributes'.
+;; Users then changed the default face attributes by setting that variable.
+;; However, we try and be back-compatible and respect its value if set except
+;; for faces where M-x customize has been used to save changes for the face.
+
+
+(defun ps-font-lock-face-attributes ()
+  (and (boundp 'font-lock-mode) (symbol-value 'font-lock-mode)
+       (boundp 'font-lock-face-attributes)
+       (let ((face-attributes (symbol-value 'font-lock-face-attributes)))
+	 (while face-attributes
+	   (let* ((face-attribute
+		   (car (prog1 face-attributes
+			  (setq face-attributes (cdr face-attributes)))))
+		  (face (car face-attribute)))
+	     ;; Rustle up a `defface' SPEC from a
+	     ;; `font-lock-face-attributes' entry.
+	     (unless (get face 'saved-face)
+	       (let ((foreground (nth 1 face-attribute))
+		     (background (nth 2 face-attribute))
+		     (bold-p (nth 3 face-attribute))
+		     (italic-p (nth 4 face-attribute))
+		     (underline-p (nth 5 face-attribute))
+		     face-spec)
+		 (when foreground
+		   (setq face-spec (cons ':foreground
+					 (cons foreground face-spec))))
+		 (when background
+		   (setq face-spec (cons ':background
+					 (cons background face-spec))))
+		 (when bold-p
+		   (setq face-spec (append '(:weight bold) face-spec)))
+		 (when italic-p
+		   (setq face-spec (append '(:slant italic) face-spec)))
+		 (when underline-p
+		   (setq face-spec (append '(:underline t) face-spec)))
+		 (custom-declare-face face (list (list t face-spec)) nil)
+		 )))))))
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Internal functions and variables
 
 
@@ -6308,6 +6350,10 @@ If FACE is not a valid face name, use default face."
 
 
 (defun ps-build-reference-face-lists ()
+  ;; Ensure that face database is updated with faces on
+  ;; `font-lock-face-attributes' (obsolete stuff)
+  (ps-font-lock-face-attributes)
+  ;; Now, rebuild reference face lists
   (setq ps-print-face-alist nil)
   (if ps-auto-font-detect
       (mapc 'ps-map-face (face-list))

@@ -554,15 +554,11 @@ If a prefix argument is given, move by that many lines."
 
 (defun vc-dir-mark-unmark (mark-unmark-function)
   (if (use-region-p)
-      (let ((processed-line nil)
+      (let (;; (firstl (line-number-at-pos (region-beginning)))
 	    (lastl (line-number-at-pos (region-end))))
 	(save-excursion
 	  (goto-char (region-beginning))
-	  (while (and (<= (line-number-at-pos) lastl)
-                      ;; We make sure to not get stuck processing the
-                      ;; same line in an infinite loop.
-		      (not (eq processed-line (line-number-at-pos))))
-	    (setq processed-line (line-number-at-pos))
+	  (while (<= (line-number-at-pos) lastl)
 	    (condition-case nil
 		(funcall mark-unmark-function)
 	      ;; `vc-dir-mark-file' signals an error if we try marking

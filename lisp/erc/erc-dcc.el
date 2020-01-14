@@ -54,11 +54,9 @@
 ;;; Code:
 
 (require 'erc)
-;; Strictly speaking, should only be needed at compile time.
-;; Require at run-time too to silence compiler.
-(require 'pcomplete)
+(eval-when-compile (require 'pcomplete))
 
-;;;###autoload(autoload 'erc-dcc-mode "erc-dcc")
+;;;###autoload (autoload 'erc-dcc-mode "erc-dcc")
 (define-erc-module dcc nil
   "Provide Direct Client-to-Client support for ERC."
   ((add-hook 'erc-server-401-functions 'erc-dcc-no-such-nick))
@@ -651,10 +649,9 @@ that subcommand."
           "\"\\(\\(.*?\\(\\\\\"\\)?\\)+?\\)\"\\|\\([^ ]+\\)"
           "\\) \\([0-9]+\\) \\([0-9]+\\) *\\([0-9]*\\)"))
 
-(define-inline erc-dcc-unquote-filename (filename)
-  (inline-quote
-   (erc-replace-regexp-in-string "\\\\\\\\" "\\"
-                                 (erc-replace-regexp-in-string "\\\\\"" "\"" ,filename t t) t t)))
+(defsubst erc-dcc-unquote-filename (filename)
+  (erc-replace-regexp-in-string "\\\\\\\\" "\\"
+                                (erc-replace-regexp-in-string "\\\\\"" "\"" filename t t) t t))
 
 (defun erc-dcc-handle-ctcp-send (proc query nick login host to)
   "This is called if a CTCP DCC SEND subcommand is sent to the client.
@@ -783,8 +780,8 @@ unconfirmed."
   :group 'erc-dcc
   :type '(choice (const nil) integer))
 
-(define-inline erc-dcc-get-parent (proc)
-  (inline-quote (plist-get (erc-dcc-member :peer ,proc) :parent)))
+(defsubst erc-dcc-get-parent (proc)
+  (plist-get (erc-dcc-member :peer proc) :parent))
 
 (defun erc-dcc-send-block (proc)
   "Send one block of data.
@@ -1263,6 +1260,5 @@ other client."
 ;;; erc-dcc.el ends here
 ;;
 ;; Local Variables:
-;; generated-autoload-file: "erc-loaddefs.el"
 ;; indent-tabs-mode: nil
 ;; End:

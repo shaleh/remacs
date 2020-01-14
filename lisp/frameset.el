@@ -446,28 +446,34 @@ DO NOT MODIFY.  See `frameset-filter-alist' for a full description.")
 ;;;###autoload
 (defvar frameset-persistent-filter-alist
   (nconc
-   '((background-color   . frameset-filter-sanitize-color)
-     (buffer-list        . :never)
-     (buffer-predicate   . :never)
-     (buried-buffer-list . :never)
-     (delete-before      . :never)
-     (font               . frameset-filter-font-param)
-     (foreground-color   . frameset-filter-sanitize-color)
-     (fullscreen         . frameset-filter-shelve-param)
-     (GUI:font           . frameset-filter-unshelve-param)
-     (GUI:fullscreen     . frameset-filter-unshelve-param)
-     (GUI:height         . frameset-filter-unshelve-param)
-     (GUI:width          . frameset-filter-unshelve-param)
-     (height             . frameset-filter-shelve-param)
-     (outer-window-id    . :never)
-     (parent-frame       . :never)
-     (parent-id          . :never)
-     (mouse-wheel-frame  . :never)
-     (tty                . frameset-filter-tty-to-GUI)
-     (tty-type           . frameset-filter-tty-to-GUI)
-     (width              . frameset-filter-shelve-param)
-     (window-id          . :never)
-     (window-system      . :never))
+   '((background-color            . frameset-filter-sanitize-color)
+     (buffer-list                 . :never)
+     (buffer-predicate            . :never)
+     (buried-buffer-list          . :never)
+     ;; Don't save the 'client' parameter to avoid that a subsequent
+     ;; `save-buffers-kill-terminal' in a non-client session barks at
+     ;; the user (Bug#29067).
+     (client                      . :never)
+     (delete-before               . :never)
+     (font                        . frameset-filter-font-param)
+     (foreground-color            . frameset-filter-sanitize-color)
+     (frameset--text-pixel-height . :save)
+     (frameset--text-pixel-width  . :save)
+     (fullscreen                  . frameset-filter-shelve-param)
+     (GUI:font                    . frameset-filter-unshelve-param)
+     (GUI:fullscreen              . frameset-filter-unshelve-param)
+     (GUI:height                  . frameset-filter-unshelve-param)
+     (GUI:width                   . frameset-filter-unshelve-param)
+     (height                      . frameset-filter-shelve-param)
+     (outer-window-id             . :never)
+     (parent-frame                . :never)
+     (parent-id                   . :never)
+     (mouse-wheel-frame           . :never)
+     (tty                         . frameset-filter-tty-to-GUI)
+     (tty-type                    . frameset-filter-tty-to-GUI)
+     (width                       . frameset-filter-shelve-param)
+     (window-id                   . :never)
+     (window-system               . :never))
    frameset-session-filter-alist)
   "Parameters to filter for persistent framesets.
 DO NOT MODIFY.  See `frameset-filter-alist' for a full description.")
@@ -642,7 +648,7 @@ see `frameset-filter-alist'."
 When switching from a GUI frame to a tty frame, behave
 as `frameset-filter-shelve-param' does."
   (or saving
-      (if (frameset-switch-to-gui-p parameters)
+      (if (frameset-switch-to-tty-p parameters)
           (frameset-filter-shelve-param current filtered parameters saving
                                         prefix))))
 
@@ -794,17 +800,22 @@ Internal use only."
              (cons nil
                    (and mb-frame
                         (frameset-frame-id mb-frame)))))))))
-  ;; Now store text-pixel width and height if `frame-resize-pixelwise'
-  ;; is set.  (Bug#30141)
+  ;; Now store text-pixel width and height if it differs from the calculated
+  ;; width and height and the frame is not fullscreen.
   (dolist (frame frame-list)
-    (when (and frame-resize-pixelwise
-               (not (frame-parameter frame 'fullscreen)))
-      (set-frame-parameter
-       frame 'frameset--text-pixel-width
-       (frame-text-width frame))
-      (set-frame-parameter
-       frame 'frameset--text-pixel-height
-       (frame-text-height frame)))))
+    (unless (frame-parameter frame 'fullscreen)
+      (unless (eq (* (frame-parameter frame 'width)
+                     (frame-char-width frame))
+                  (frame-text-width frame))
+        (set-frame-parameter
+         frame 'frameset--text-pixel-width
+         (frame-text-width frame)))
+      (unless (eq (* (frame-parameter frame 'height)
+                     (frame-char-height frame))
+                  (frame-text-height frame))
+        (set-frame-parameter
+         frame 'frameset--text-pixel-height
+         (frame-text-height frame))))))
 
 ;;;###autoload
 (cl-defun frameset-save (frame-list

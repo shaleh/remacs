@@ -106,8 +106,6 @@
 
 ;;; Code:
 
-(require 'cl-lib)
-
 ;; FIXME: support macros.
 
 (defvar rx-constituents              ;Not `const' because some modes extend it.

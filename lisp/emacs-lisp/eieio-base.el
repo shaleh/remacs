@@ -361,11 +361,38 @@ Second, any text properties will be stripped from strings."
                        (seq-some
                         (lambda (elt)
                           (child-of-class-p (car proposed-value) elt))
-                        classtype))
+                        (if (listp classtype) classtype (list classtype))))
 		  (eieio-persistent-convert-list-to-object
 		   proposed-value))
 		 (t
 		  proposed-value))))
+        ;; For hash-tables and vectors, the top-level `read' will not
+        ;; "look inside" member values, so we need to do that
+        ;; explicitly.  Because `eieio-override-prin1' is recursive in
+        ;; the case of hash-tables and vectors, we recurse
+        ;; `eieio-persistent-validate/fix-slot-value' here as well.
+        ((hash-table-p proposed-value)
+         (maphash
+          (lambda (key value)
+            (setf (gethash key proposed-value)
+                  (if (class-p (car-safe value))
+                      (eieio-persistent-convert-list-to-object
+                       value)
+                    (eieio-persistent-validate/fix-slot-value
+                     class slot value))))
+          proposed-value)
+         proposed-value)
+
+        ((vectorp proposed-value)
+         (dotimes (i (length proposed-value))
+           (let ((val (aref proposed-value i)))
+             (aset proposed-value i
+                   (if (class-p (car-safe val))
+                       (eieio-persistent-convert-list-to-object
+                        val)
+                     (eieio-persistent-validate/fix-slot-value
+                      class slot val)))))
+         proposed-value)
 
 	 ((stringp proposed-value)
 	  ;; Else, check for strings, remove properties.
@@ -479,7 +506,7 @@ instance."
 (cl-defmethod eieio-object-name-string ((obj eieio-named))
   "Return a string which is OBJ's name."
   (or (slot-value obj 'object-name)
-      (cl-call-next-method)))
+      (symbol-name (eieio-object-class obj))))
 
 (cl-defmethod eieio-object-set-name-string ((obj eieio-named) name)
   "Set the string which is OBJ's NAME."

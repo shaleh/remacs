@@ -3961,17 +3961,15 @@ Key bindings specific to `verilog-mode-map' are:
   (when (boundp 'hs-special-modes-alist)
     (unless (assq 'verilog-mode hs-special-modes-alist)
       (setq hs-special-modes-alist
-	    (cons '(verilog-mode-mode  "\\<begin\\>" "\\<end\\>" nil
-				       verilog-forward-sexp-function)
+            (cons '(verilog-mode "\\<begin\\>" "\\<end\\>" nil
+                                 verilog-forward-sexp-function)
 		  hs-special-modes-alist))))
 
   (add-hook 'completion-at-point-functions
             #'verilog-completion-at-point nil 'local)
 
   ;; Stuff for autos
-  (add-hook (if (boundp 'write-contents-hooks) 'write-contents-hooks
-	      'write-contents-functions) ; Emacs >= 22.1
-	    'verilog-auto-save-check nil 'local)
+  (add-hook 'write-contents-hooks 'verilog-auto-save-check nil 'local)
   ;; verilog-mode-hook call added by define-derived-mode
   )
 

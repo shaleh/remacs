@@ -37,6 +37,28 @@
 (defvar compilation-current-error)
 (defvar compilation-context-lines)
 
+(defcustom shell-command-dont-erase-buffer nil
+  "If non-nil, output buffer is not erased between shell commands.
+Also, a non-nil value sets the point in the output buffer
+once the command completes.
+The value `beg-last-out' sets point at the beginning of the output,
+`end-last-out' sets point at the end of the buffer, `save-point'
+restores the buffer position before the command."
+  :type '(choice
+          (const :tag "Erase buffer" nil)
+          (const :tag "Set point to beginning of last output" beg-last-out)
+          (const :tag "Set point to end of last output" end-last-out)
+          (const :tag "Save point" save-point))
+  :group 'shell
+  :version "26.1")
+
+(defvar shell-command-saved-pos nil
+  "Record of point positions in output buffers after command completion.
+The value is an alist whose elements are of the form (BUFFER . POS),
+where BUFFER is the output buffer, and POS is the point position
+in BUFFER once the command finishes.
+This variable is used when `shell-command-dont-erase-buffer' is non-nil.")
+
 (defcustom idle-update-delay 0.5
   "Idle time delay before updating various things on the screen.
 Various Emacs features that update auxiliary information when point moves
@@ -122,18 +144,6 @@ A buffer becomes most recent when its compilation, grep, or
 similar mode is started, or when it is used with \\[next-error]
 or \\[compile-goto-error].")
 
-;; next-error-last-buffer is made buffer-local to keep the reference
-;; to the parent buffer used to navigate to the current buffer, so the
-;; next call of next-buffer will use the same parent buffer to
-;; continue navigation from it.
-(make-variable-buffer-local 'next-error-last-buffer)
-
-;; next-error-last-buffer is made buffer-local to keep the reference
-;; to the parent buffer used to navigate to the current buffer, so the
-;; next call of next-buffer will use the same parent buffer to
-;; continue navigation from it.
-(make-variable-buffer-local 'next-error-last-buffer)
-
 (defvar next-error-function nil
   "Function to use to find the next error in the current buffer.
 The function is called with 2 parameters:
@@ -181,31 +191,6 @@ rejected, and the function returns nil."
 	   (and extra-test-inclusive
 		(funcall extra-test-inclusive))))))
 
-(defcustom next-error-find-buffer-function #'ignore
-  "Function called to find a `next-error' capable buffer."
-  :type '(choice (const :tag "Single next-error capable buffer on selected frame"
-                        next-error-buffer-on-selected-frame)
-                 (const :tag "No default" ignore)
-                 (function :tag "Other function"))
-  :group 'next-error
-  :version "27.1")
-
-(defun next-error-buffer-on-selected-frame (&optional avoid-current
-                                                      extra-test-inclusive
-                                                      extra-test-exclusive)
-  "Return a single visible next-error buffer on the selected frame."
-  (let ((window-buffers
-         (delete-dups
-          (delq nil (mapcar (lambda (w)
-                              (if (next-error-buffer-p
-				   (window-buffer w)
-                                   avoid-current
-                                   extra-test-inclusive extra-test-exclusive)
-                                  (window-buffer w)))
-                            (window-list))))))
-    (if (eq (length window-buffers) 1)
-        (car window-buffers))))
-
 (defun next-error-find-buffer (&optional avoid-current
 					 extra-test-inclusive
 					 extra-test-exclusive)
@@ -222,10 +207,18 @@ The function EXTRA-TEST-EXCLUSIVE, if non-nil, is called in each buffer
 that would normally be considered usable.  If it returns nil,
 that buffer is rejected."
   (or
-   ;; 1. If a customizable function returns a buffer, use it.
-   (funcall next-error-find-buffer-function avoid-current
-                                            extra-test-inclusive
-                                            extra-test-exclusive)
+   ;; 1. If one window on the selected frame displays such buffer, return it.
+   (let ((window-buffers
+          (delete-dups
+           (delq nil (mapcar (lambda (w)
+                               (if (next-error-buffer-p
+				    (window-buffer w)
+                                    avoid-current
+                                    extra-test-inclusive extra-test-exclusive)
+                                   (window-buffer w)))
+                             (window-list))))))
+     (if (eq (length window-buffers) 1)
+         (car window-buffers)))
    ;; 2. If next-error-last-buffer is an acceptable buffer, use that.
    (if (and next-error-last-buffer
             (next-error-buffer-p next-error-last-buffer avoid-current
@@ -286,50 +279,23 @@ To control which errors are matched, customize the variable
 `compilation-error-regexp-alist'."
   (interactive "P")
   (if (consp arg) (setq reset t arg nil))
-  (let ((buffer (next-error-find-buffer)))
-    (when buffer
-      ;; We know here that next-error-function is a valid symbol we can funcall
-      (with-current-buffer buffer
-        ;; Allow next-error to be used from the next-error capable buffer.
-        (setq next-error-last-buffer buffer)
-        (funcall next-error-function (prefix-numeric-value arg) reset)
-        ;; Override possible change of next-error-last-buffer in next-error-function
-        (setq next-error-last-buffer buffer)
-        (setq-default next-error-last-buffer buffer)
-        (when next-error-recenter
-          (recenter next-error-recenter))
-        (message "%s error from %s"
-                 (cond (reset                             "First")
-                       ((eq (prefix-numeric-value arg) 0) "Current")
-                       ((< (prefix-numeric-value arg) 0)  "Previous")
-                       (t                                 "Next"))
-                 next-error-last-buffer)
-        (run-hooks 'next-error-hook)))))
+  (when (setq next-error-last-buffer (next-error-find-buffer))
+    ;; we know here that next-error-function is a valid symbol we can funcall
+    (with-current-buffer next-error-last-buffer
+      (funcall next-error-function (prefix-numeric-value arg) reset)
+      (when next-error-recenter
+        (recenter next-error-recenter))
+      (run-hooks 'next-error-hook))))
 
 (defun next-error-internal ()
   "Visit the source code corresponding to the `next-error' message at point."
-  (let ((buffer (current-buffer)))
-    ;; We know here that next-error-function is a valid symbol we can funcall
-    (with-current-buffer buffer
-      ;; Allow next-error to be used from the next-error capable buffer.
-      (setq next-error-last-buffer buffer)
-      (funcall next-error-function 0 nil)
-      ;; Override possible change of next-error-last-buffer in next-error-function
-      (setq next-error-last-buffer buffer)
-      (setq-default next-error-last-buffer buffer)
-      (when next-error-recenter
-        (recenter next-error-recenter))
-      (message "Current error from %s" next-error-last-buffer)
-      (run-hooks 'next-error-hook))))
-
-(defun next-error-select-buffer (buffer)
-  "Select a `next-error' capable buffer and set it as the last used."
-  (interactive
-   (list (get-buffer
-          (read-buffer "Select next-error buffer: " nil nil
-                       (lambda (b) (next-error-buffer-p (cdr b)))))))
-  (setq next-error-last-buffer buffer)
-  (setq-default next-error-last-buffer buffer))
+  (setq next-error-last-buffer (current-buffer))
+  ;; we know here that next-error-function is a valid symbol we can funcall
+  (with-current-buffer next-error-last-buffer
+    (funcall next-error-function 0 nil)
+    (when next-error-recenter
+      (recenter next-error-recenter))
+    (run-hooks 'next-error-hook)))
 
 (defalias 'goto-next-locus 'next-error)
 (defalias 'next-match 'next-error)
@@ -1044,14 +1010,17 @@ instead of deleted."
        (t
         (filter-buffer-substring (region-beginning) (region-end) method)))))
   "Function to get the region's content.
-Called with one argument METHOD.
-If METHOD is `delete-only', then delete the region; the return value
-is undefined.  If METHOD is nil, then return the content as a string.
-If METHOD is `bounds', then return the boundaries of the region
-as a list of pairs of (START . END) positions.
-If METHOD is anything else, delete the region and return its content
-as a string, after filtering it with `filter-buffer-substring', which
-is called with METHOD as its 3rd argument.")
+Called with one argument METHOD which can be:
+- nil: return the content as a string (list of strings for
+  non-contiguous regions).
+- `delete-only': delete the region; the return value is undefined.
+- `bounds': return the boundaries of the region as a list of one
+  or more cons cells of the form (START . END).
+- anything else: delete the region and return its content
+  as a string (or list of strings for non-contiguous regions),
+  after filtering it with `filter-buffer-substring', which
+  is called, for each contiguous sub-region, with METHOD as its
+  3rd argument.")
 
 (defvar region-insert-function
   (lambda (lines)
@@ -1137,7 +1106,6 @@ the actual saved text might be different from what was killed."
 
 (defun mark-whole-buffer ()
   "Put point at beginning and mark at end of buffer.
-Also push mark at point before pushing mark at end of buffer.
 If narrowing is in effect, only uses the accessible part of the buffer.
 You probably should not use this function in Lisp programs;
 it is usually a mistake for a Lisp function to use any subroutine
@@ -2145,6 +2113,8 @@ next element of the minibuffer history in the minibuffer."
   (interactive "^p")
   (or arg (setq arg 1))
   (let* ((old-point (point))
+         ;; Don't add newlines if they have the mode enabled globally.
+         (next-line-add-newlines nil)
 	 ;; Remember the original goal column of possibly multi-line input
 	 ;; excluding the length of the prompt on the first line.
 	 (prompt-end (minibuffer-prompt-end))
@@ -3343,28 +3313,6 @@ is output."
   :group 'shell
   :version "26.1")
 
-(defcustom shell-command-dont-erase-buffer nil
-  "If non-nil, output buffer is not erased between shell commands.
-Also, a non-nil value sets the point in the output buffer
-once the command completes.
-The value `beg-last-out' sets point at the beginning of the output,
-`end-last-out' sets point at the end of the buffer, `save-point'
-restores the buffer position before the command."
-  :type '(choice
-          (const :tag "Erase buffer" nil)
-          (const :tag "Set point to beginning of last output" beg-last-out)
-          (const :tag "Set point to end of last output" end-last-out)
-          (const :tag "Save point" save-point))
-  :group 'shell
-  :version "26.1")
-
-(defvar shell-command-saved-pos nil
-  "Record of point positions in output buffers after command completion.
-The value is an alist whose elements are of the form (BUFFER . POS),
-where BUFFER is the output buffer, and POS is the point position
-in BUFFER once the command finishes.
-This variable is used when `shell-command-dont-erase-buffer' is non-nil.")
-
 (defun shell-command--save-pos-or-erase ()
   "Store a buffer position or erase the buffer.
 See `shell-command-dont-erase-buffer'."
@@ -3421,15 +3369,15 @@ to execute it asynchronously.
 The output appears in the buffer `*Async Shell Command*'.
 That buffer is in shell mode.
 
-You can configure `async-shell-command-buffer' to specify what to do in
-case when `*Async Shell Command*' buffer is already taken by another
+You can configure `async-shell-command-buffer' to specify what to do
+when the `*Async Shell Command*' buffer is already taken by another
 running shell command.  To run COMMAND without displaying the output
 in a window you can configure `display-buffer-alist' to use the action
 `display-buffer-no-window' for the buffer `*Async Shell Command*'.
 
 In Elisp, you will often be better served by calling `start-process'
-directly, since it offers more control and does not impose the use of a
-shell (with its need to quote arguments)."
+directly, since it offers more control and does not impose the use of
+a shell (with its need to quote arguments)."
   (interactive
    (list
     (read-shell-command "Async shell command: " nil nil
@@ -3498,8 +3446,8 @@ In an interactive call, the variable `shell-command-default-error-buffer'
 specifies the value of ERROR-BUFFER.
 
 In Elisp, you will often be better served by calling `call-process' or
-`start-process' directly, since it offers more control and does not impose
-the use of a shell (with its need to quote arguments)."
+`start-process' directly, since they offer more control and do not
+impose the use of a shell (with its need to quote arguments)."
 
   (interactive
    (list
@@ -3617,14 +3565,20 @@ the use of a shell (with its need to quote arguments)."
 		  ;; carriage motion (see comint-inhibit-carriage-motion).
 		  (set-process-filter proc 'comint-output-filter)
                   (if async-shell-command-display-buffer
+                      ;; Display buffer immediately.
                       (display-buffer buffer '(nil (allow-no-window . t)))
-                    (add-function :before (process-filter proc)
-                                  (lambda (process _string)
-                                    (let ((buf (process-buffer process)))
-                                      (when (and (zerop (buffer-size buf))
-                                                 (string= (buffer-name buf)
-                                                          bname))
-                                        (display-buffer buf))))))))
+                    ;; Defer displaying buffer until first process output.
+                    ;; Use disposable named advice so that the buffer is
+                    ;; displayed at most once per process lifetime.
+                    (let ((nonce (make-symbol "nonce")))
+                      (add-function :before (process-filter proc)
+                                    (lambda (proc _string)
+                                      (let ((buf (process-buffer proc)))
+                                        (when (buffer-live-p buf)
+                                          (remove-function (process-filter proc)
+                                                           nonce)
+                                          (display-buffer buf))))
+                                    `((name . ,nonce)))))))
 	    ;; Otherwise, command is executed synchronously.
 	    (shell-command-on-region (point) (point) command
 				     output-buffer nil error-buffer)))))))
@@ -3909,7 +3863,7 @@ interactively, this is t."
   (with-output-to-string
     (with-current-buffer
       standard-output
-      (shell-command command t))))
+      (process-file shell-file-name nil t nil shell-command-switch command))))
 
 (defun process-file (program &optional infile buffer display &rest args)
   "Process files synchronously in a separate process that runs PROGRAM.
@@ -3998,9 +3952,7 @@ File handlers might not support pty association, if PROGRAM is nil."
   (setq tabulated-list-format [("Process" 15 t)
 			       ("PID"      7 t)
 			       ("Status"   7 t)
-                               ;; 25 is the length of the long standard buffer
-                               ;; name "*Async Shell Command*<10>" (bug#30016)
-			       ("Buffer"  25 t)
+			       ("Buffer"  15 t)
 			       ("TTY"     12 t)
 			       ("Command"  0 t)])
   (make-local-variable 'process-menu-query-only)
@@ -5566,7 +5518,10 @@ also checks the value of `use-empty-active-region'."
        (progn (cl-assert (mark)) t)))
 
 (defun region-bounds ()
-  "Return the boundaries of the region as a list of pairs of (START . END) positions."
+  "Return the boundaries of the region.
+Value is a list of one or more cons cells of the form (START . END).
+It will have more than one cons cell when the region is non-contiguous,
+see `region-noncontiguous-p' and `extract-rectangle-bounds'."
   (funcall region-extract-function 'bounds))
 
 (defun region-noncontiguous-p ()
@@ -7935,7 +7890,7 @@ buffer buried."
        (eq mail-user-agent 'message-user-agent)
        (let (warn-vars)
 	 (dolist (var '(mail-mode-hook mail-send-hook mail-setup-hook
-			mail-citation-hook mail-archive-file-name
+			mail-yank-hooks mail-archive-file-name
 			mail-default-reply-to mail-mailing-lists
 			mail-self-blind))
 	   (and (boundp var)
@@ -8599,15 +8554,12 @@ after it has been set up properly in other respects."
 
       ;; Set up other local variables.
       (mapc (lambda (v)
-	      (condition-case ()
+	      (condition-case ()	;in case var is read-only
 		  (if (symbolp v)
 		      (makunbound v)
 		    (set (make-local-variable (car v)) (cdr v)))
-		(setting-constant nil))) ;E.g. for enable-multibyte-characters.
+		(error nil)))
 	    lvars)
-
-      (setq mark-ring (mapcar (lambda (mk) (copy-marker (marker-position mk)))
-                              mark-ring))
 
       ;; Run any hooks (typically set up by the major mode
       ;; for cloning to work properly).
@@ -8899,7 +8851,7 @@ If it does not exist, create and it switch it to `messages-buffer-mode'."
 ;; rms says this should be done by specifying symbols that define
 ;; versions together with bad values.  This is therefore not as
 ;; flexible as it could be.  See the thread:
-;; https://lists.gnu.org/archive/html/emacs-devel/2007-08/msg00300.html
+;; https://lists.gnu.org/r/emacs-devel/2007-08/msg00300.html
 (defconst bad-packages-alist
   ;; Not sure exactly which semantic versions have problems.
   ;; Definitely 2.0pre3, probably all 2.0pre's before this.
@@ -9033,7 +8985,7 @@ Otherwise, it calls `upcase-word', with prefix argument passed to it
 to upcase ARG words."
   (interactive "*p")
   (if (use-region-p)
-      (upcase-region (region-beginning) (region-end) (region-noncontiguous-p))
+      (upcase-region (region-beginning) (region-end))
     (upcase-word arg)))
 
 (defun downcase-dwim (arg)
@@ -9043,7 +8995,7 @@ Otherwise, it calls `downcase-word', with prefix argument passed to it
 to downcase ARG words."
   (interactive "*p")
   (if (use-region-p)
-      (downcase-region (region-beginning) (region-end) (region-noncontiguous-p))
+      (downcase-region (region-beginning) (region-end))
     (downcase-word arg)))
 
 (defun capitalize-dwim (arg)

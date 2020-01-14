@@ -27,7 +27,6 @@
 
 ;;; Code:
 
-(eval-when-compile (require 'cl-lib))
 (require 'seq)
 
 (defun puny-encode-domain (domain)

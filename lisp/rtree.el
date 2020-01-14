@@ -1,4 +1,4 @@
-;;; rtree.el --- functions for manipulating range trees  -*- lexical-binding:t -*-
+;;; rtree.el --- functions for manipulating range trees
 
 ;; Copyright (C) 2010-2019 Free Software Foundation, Inc.
 
@@ -43,6 +43,9 @@
 
 ;;; Code:
 
+(eval-when-compile
+  (require 'cl))
+
 (defmacro rtree-make-node ()
   `(list (list nil) nil))
 
@@ -82,7 +85,7 @@
   range)
 
 (define-obsolete-function-alias 'rtree-normalise-range
-  #'rtree-normalize-range "25.1")
+  'rtree-normalize-range "25.1")
 
 (defun rtree-make (range)
   "Make an rtree from RANGE."

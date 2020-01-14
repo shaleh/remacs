@@ -634,7 +634,12 @@ the list should be unique."
 		(deallocate-event event))
 	    (setq quit-flag nil)
 	    (signal 'quit '())))
-      (let ((char event)
+      (let ((char
+	     (if (featurep 'xemacs)
+		 (let* ((key (and (key-press-event-p event) (event-key event)))
+			(char (and key (event-to-character event))))
+		   char)
+	       event))
 	    elt)
 	(if char (setq char (downcase char)))
 	(cond
@@ -646,7 +651,9 @@ the list should be unique."
 	  nil)
 	 (t
 	  (message "%s%s" p (single-key-description event))
-	  (ding)
+	  (if (featurep 'xemacs)
+	      (ding nil 'y-or-n-p)
+	    (ding))
 	  (discard-input)
 	  (if (eq p prompt)
 	      (setq p (concat "Try again.  " prompt)))))))
@@ -706,7 +713,7 @@ the list should be unique."
 
 ;; regi functions
 
-;; https://lists.gnu.org/archive/html/emacs-devel/2009-02/msg00691.html
+;; https://lists.gnu.org/r/emacs-devel/2009-02/msg00691.html
 ;; When rmail replies to a message with full headers visible, the "From "
 ;; line can be included.
 (defun sc-mail-check-from ()
@@ -1880,7 +1887,8 @@ and `sc-post-hook' is run after the guts of this function."
   ;; grab point and mark since the region is probably not active when
   ;; this function gets automatically called. we want point to be a
   ;; mark so any deleting before point works properly
-  (let* ((mark-active t)
+  (let* ((zmacs-regions nil)		; for XEemacs
+	 (mark-active t)		; for Emacs
 	 (point (point-marker))
 	 (mark  (copy-marker (mark-marker))))
 

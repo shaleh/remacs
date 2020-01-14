@@ -274,9 +274,12 @@ buffer-local and set them to nil."
   (run-hook-with-args-until-success 'tags-table-format-functions))
 
 ;;;###autoload
-(define-derived-mode tags-table-mode special-mode "Tags Table"
+(defun tags-table-mode ()
   "Major mode for tags table file buffers."
-  (setq buffer-undo-list t)
+  (interactive)
+  (setq major-mode 'tags-table-mode     ;FIXME: Use define-derived-mode.
+        mode-name "Tags Table"
+        buffer-undo-list t)
   (initialize-new-tags-table))
 
 ;;;###autoload
@@ -436,25 +439,25 @@ Returns non-nil if it is a valid table."
       (progn
 	(set-buffer (get-file-buffer file))
         (or verify-tags-table-function (tags-table-mode))
-	(unless (or (verify-visited-file-modtime (current-buffer))
-		    ;; Decide whether to revert the file.
-		    ;; revert-without-query can say to revert
-		    ;; or the user can say to revert.
-		    (not (or (let ((tail revert-without-query)
-			           (found nil))
-			       (while tail
-			         (if (string-match (car tail) buffer-file-name)
-				     (setq found t))
-			         (setq tail (cdr tail)))
-			       found)
-			     tags-revert-without-query
-			     (yes-or-no-p
-			      (format "Tags file %s has changed, read new contents? "
-				      file)))))
+	(if (or (verify-visited-file-modtime (current-buffer))
+		;; Decide whether to revert the file.
+		;; revert-without-query can say to revert
+		;; or the user can say to revert.
+		(not (or (let ((tail revert-without-query)
+			       (found nil))
+			   (while tail
+			     (if (string-match (car tail) buffer-file-name)
+				 (setq found t))
+			     (setq tail (cdr tail)))
+			   found)
+			 tags-revert-without-query
+			 (yes-or-no-p
+			  (format "Tags file %s has changed, read new contents? "
+				  file)))))
+	    (and verify-tags-table-function
+		 (funcall verify-tags-table-function))
 	  (revert-buffer t t)
-	  (tags-table-mode))
-        (and verify-tags-table-function
-	     (funcall verify-tags-table-function)))
+	  (tags-table-mode)))
     (when (file-exists-p file)
       (let* ((buf (find-file-noselect file))
              (newfile (buffer-file-name buf)))
@@ -467,9 +470,7 @@ Returns non-nil if it is a valid table."
         ;; Only change buffer now that we're done using potentially
         ;; buffer-local variables.
         (set-buffer buf)
-        (tags-table-mode)
-        (and verify-tags-table-function
-	     (funcall verify-tags-table-function))))))
+        (tags-table-mode)))))
 
 ;; Subroutine of visit-tags-table-buffer.  Search the current tags tables
 ;; for one that has tags for THIS-FILE (or that includes a table that
@@ -2059,7 +2060,7 @@ see the doc of that variable if you want to add names to the list."
 
 (define-derived-mode select-tags-table-mode special-mode "Select Tags Table"
   "Major mode for choosing a current tags table among those already loaded."
-  )
+  (setq buffer-read-only t))
 
 (defun select-tags-table-select (button)
   "Select the tags table named on this line."

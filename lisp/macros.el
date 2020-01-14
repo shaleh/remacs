@@ -1,4 +1,4 @@
-;;; macros.el --- non-primitive commands for keyboard macros -*- lexical-binding:t -*-
+;;; macros.el --- non-primitive commands for keyboard macros
 
 ;; Copyright (C) 1985-1987, 1992, 1994-1995, 2001-2019 Free Software
 ;; Foundation, Inc.
@@ -31,10 +31,23 @@
 
 ;;; Code:
 
-(require 'kmacro)
-
 ;;;###autoload
-(defalias 'name-last-kbd-macro #'kmacro-name-last-macro)
+(defun name-last-kbd-macro (symbol)
+  "Assign a name to the last keyboard macro defined.
+Argument SYMBOL is the name to define.
+The symbol's function definition becomes the keyboard macro string.
+Such a \"function\" cannot be called from Lisp, but it is a valid editor command."
+  (interactive "SName for last kbd macro: ")
+  (or last-kbd-macro
+      (user-error "No keyboard macro defined"))
+  (and (fboundp symbol)
+       (not (stringp (symbol-function symbol)))
+       (not (vectorp (symbol-function symbol)))
+       (user-error "Function %s is already defined and not a keyboard macro"
+	      symbol))
+  (if (string-equal symbol "")
+      (user-error "No command name given"))
+  (fset symbol last-kbd-macro))
 
 ;;;###autoload
 (defun insert-kbd-macro (macroname &optional keys)
@@ -53,7 +66,11 @@ To save a kbd macro, visit a file of Lisp code such as your `~/.emacs',
 use this command, and then save the file."
   (interactive (list (intern (completing-read "Insert kbd macro (name): "
 					      obarray
-                                              #'kmacro-keyboard-macro-p
+					      (lambda (elt)
+						(and (fboundp elt)
+						     (or (stringp (symbol-function elt))
+							 (vectorp (symbol-function elt))
+							 (get elt 'kmacro))))
 					      t))
 		     current-prefix-arg))
   (let (definition)
@@ -120,9 +137,6 @@ use this command, and then save the file."
                   (prin1 char (current-buffer))
                 (princ (prin1-char char) (current-buffer))))
 	    (insert ?\]))
-        ;; FIXME: For kmacros, we shouldn't write the (lambda ...)
-        ;; gunk but instead we should write something more abstract like
-        ;; (kmacro-create [<keys>] 0 "%d").
 	(prin1 definition (current-buffer))))
     (insert ")\n")
     (if keys

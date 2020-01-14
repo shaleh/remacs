@@ -46,7 +46,7 @@
 ;;; Code:
 
 (add-to-list 'ede-project-class-files
-	     (ede-project-autoload
+	     (ede-project-autoload "simple-overlay"
 	      :name "Simple" :file 'ede/simple
 	      :proj-file 'ede-simple-projectfile-for-dir
 	      :load-type 'ede-simple-load

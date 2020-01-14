@@ -203,18 +203,12 @@ The format is (FUNCTION ARGS...).")
                              (help-C-file-name (indirect-function fun) 'fun)))
                      ;; Don't use find-function-noselect because it follows
                      ;; aliases (which fails for built-in functions).
-                     (let* ((location
-                             (find-function-search-for-symbol fun type file))
-                            (position (cdr location)))
+                     (let ((location
+                            (find-function-search-for-symbol fun type file)))
                        (pop-to-buffer (car location))
                        (run-hooks 'find-function-after-hook)
-                       (if position
-                           (progn
-                             ;; Widen the buffer if necessary to go to this position.
-                             (when (or (< position (point-min))
-                                       (> position (point-max)))
-                               (widen))
-                             (goto-char position))
+                       (if (cdr location)
+                           (goto-char (cdr location))
                          (message "Unable to find location in file")))))
   'help-echo (purecopy "mouse-2, RET: find function's definition"))
 
@@ -225,7 +219,6 @@ The format is (FUNCTION ARGS...).")
 		   (if (and file (file-readable-p file))
 		       (progn
 			 (pop-to-buffer (find-file-noselect file))
-                         (widen)
 			 (goto-char (point-min))
 			 (if (re-search-forward
 			      (format "^[ \t]*(\\(cl-\\)?define-compiler-macro[ \t]+%s"
@@ -241,18 +234,12 @@ The format is (FUNCTION ARGS...).")
   'help-function (lambda (var &optional file)
 		   (when (eq file 'C-source)
 		     (setq file (help-C-file-name var 'var)))
-		   (let* ((location (find-variable-noselect var file))
-                          (position (cdr location)))
+		   (let ((location (find-variable-noselect var file)))
 		     (pop-to-buffer (car location))
 		     (run-hooks 'find-function-after-hook)
-                     (if position
-                           (progn
-                             ;; Widen the buffer if necessary to go to this position.
-                             (when (or (< position (point-min))
-                                       (> position (point-max)))
-                               (widen))
-                             (goto-char position))
-                       (message "Unable to find location in file"))))
+		     (if (cdr location)
+		       (goto-char (cdr location))
+		       (message "Unable to find location in file"))))
   'help-echo (purecopy "mouse-2, RET: find variable's definition"))
 
 (define-button-type 'help-face-def
@@ -261,18 +248,12 @@ The format is (FUNCTION ARGS...).")
 		   (require 'find-func)
 		   ;; Don't use find-function-noselect because it follows
 		   ;; aliases (which fails for built-in functions).
-		   (let* ((location
-			  (find-function-search-for-symbol fun 'defface file))
-                         (position (cdr location)))
+		   (let ((location
+			  (find-function-search-for-symbol fun 'defface file)))
 		     (pop-to-buffer (car location))
-                     (if position
-                           (progn
-                             ;; Widen the buffer if necessary to go to this position.
-                             (when (or (< position (point-min))
-                                       (> position (point-max)))
-                               (widen))
-                             (goto-char position))
-                       (message "Unable to find location in file"))))
+		     (if (cdr location)
+			 (goto-char (cdr location))
+		       (message "Unable to find location in file"))))
   'help-echo (purecopy "mouse-2, RET: find face's definition"))
 
 (define-button-type 'help-package
@@ -421,15 +402,7 @@ it does not already exist."
         (or (and (boundp symbol) (not (keywordp symbol)))
             (get symbol 'variable-documentation)))
      ,#'describe-variable)
-    ("face" ,#'facep ,(lambda (s _b _f) (describe-face s))))
-  "List of providers of information about symbols.
-Each element has the form (NAME TESTFUN DESCFUN) where:
-  NAME is a string naming a category of object, such as \"type\" or \"face\".
-  TESTFUN is a predicate which takes a symbol and returns non-nil if the
-    symbol is such an object.
-  DESCFUN is a function which takes three arguments (a symbol, a buffer,
-    and a frame), inserts the description of that symbol in the current buffer
-    and returns that text as well.")
+    ("face" ,#'facep ,(lambda (s _b _f) (describe-face s)))))
 
 ;;;###autoload
 (defun help-make-xrefs (&optional buffer)

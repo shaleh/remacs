@@ -56,7 +56,7 @@ FIND_DELETE = @FIND_DELETE@
 # We never change directory before running Emacs, so a relative file
 # name is fine, and makes life easier.  If we need to change
 # directory, we can use emacs --chdir.
-EMACS = ../src/remacs${EXEEXT}
+EMACS = ../src/emacs${EXEEXT}
 
 # Command line flags for Emacs.
 
@@ -101,10 +101,6 @@ COMPILE_FIRST = \
 	$(lisp)/emacs-lisp/bytecomp.elc \
 	$(lisp)/emacs-lisp/autoload.elc
 
-# Files to compile early in compile-main.  Works around bug#25556.
-MAIN_FIRST = ./emacs-lisp/eieio.el ./emacs-lisp/eieio-base.el \
-  ./cedet/semantic/db.el
-
 # Prevent any settings in the user environment causing problems.
 unexport EMACSDATA EMACSDOC EMACSPATH
 
@@ -132,22 +128,17 @@ all: compile-main $(lisp)/cus-load.el $(lisp)/finder-inf.el
 PHONY_EXTRAS =
 .PHONY: all custom-deps finder-data autoloads update-subdirs $(PHONY_EXTRAS)
 
-# Clean out the compiled .elc files
-clean:
-	find . -type f -name "*.elc" -print | xargs -I {} -- rm {}
-
-
 # custom-deps and finder-data both used to scan _all_ the *.el files.
 # This could lead to problems in parallel builds if automatically
 # generated *.el files (eg loaddefs etc) were being changed at the same time.
 # One solution was to add autoloads as a prerequisite:
-# https://lists.gnu.org/archive/html/emacs-pretest-bug/2007-01/msg00469.html
-# https://lists.gnu.org/archive/html/bug-gnu-emacs/2007-12/msg00171.html
+# https://lists.gnu.org/r/emacs-pretest-bug/2007-01/msg00469.html
+# https://lists.gnu.org/r/bug-gnu-emacs/2007-12/msg00171.html
 # However, this meant that running these targets modified loaddefs.el,
 # every time (due to time-stamping).  Calling these rules from
 # bootstrap-after would modify loaddefs after src/emacs, resulting
 # in make install remaking src/emacs for no real reason:
-# https://lists.gnu.org/archive/html/emacs-devel/2008-02/msg00311.html
+# https://lists.gnu.org/r/emacs-devel/2008-02/msg00311.html
 # Nowadays these commands don't scan automatically generated files,
 # since they will never contain any useful information
 # (see finder-no-scan-regexp and custom-dependencies-no-scan-regexp).
@@ -328,7 +319,7 @@ compile-targets: $(TARGETS)
 compile-main: gen-lisp compile-clean
 	@(cd $(lisp) && \
 	els=`echo "${SUBDIRS_REL} " | sed -e 's|/\./|/|g' -e 's|/\. | |g' -e 's| |/*.el |g'`; \
-	for el in ${MAIN_FIRST} $$els; do \
+	for el in $$els; do \
 	  test -f $$el || continue; \
 	  test ! -f $${el}c && GREP_OPTIONS= grep '^;.*no-byte-compile: t' $$el > /dev/null && continue; \
 	  echo "$${el}c"; \

@@ -67,8 +67,6 @@
 
 ;;; Code:
 
-(load "erc-loaddefs" nil t)
-
 (eval-when-compile (require 'cl-lib))
 (require 'font-lock)
 (require 'pp)
@@ -77,7 +75,7 @@
 (require 'erc-compat)
 
 (defvar erc-official-location
-  "https://emacswiki.org/cgi-bin/wiki/ERC (mailing list: erc-discuss@gnu.org)"
+  "https://www.emacswiki.org/emacs/ERC (mailing list: erc-discuss@gnu.org)"
   "Location of the ERC client on the Internet.")
 
 (defgroup erc nil
@@ -401,28 +399,25 @@ If no server buffer exists, return nil."
   ;; This is useful for ordered name completion.
   (last-message-time nil))
 
-(define-inline erc-get-channel-user (nick)
+(defsubst erc-get-channel-user (nick)
   "Find the (USER . CHANNEL-DATA) element corresponding to NICK
 in the current buffer's `erc-channel-users' hash table."
-  (inline-quote (gethash (erc-downcase ,nick) erc-channel-users)))
+  (gethash (erc-downcase nick) erc-channel-users))
 
-(define-inline erc-get-server-user (nick)
+(defsubst erc-get-server-user (nick)
   "Find the USER corresponding to NICK in the current server's
 `erc-server-users' hash table."
-  (inline-letevals (nick)
-    (inline-quote (erc-with-server-buffer
-		    (gethash (erc-downcase ,nick) erc-server-users)))))
+  (erc-with-server-buffer
+    (gethash (erc-downcase nick) erc-server-users)))
 
-(define-inline erc-add-server-user (nick user)
+(defsubst erc-add-server-user (nick user)
   "This function is for internal use only.
 
 Adds USER with nickname NICK to the `erc-server-users' hash table."
-  (inline-letevals (nick user)
-    (inline-quote
-     (erc-with-server-buffer
-       (puthash (erc-downcase ,nick) ,user erc-server-users)))))
+  (erc-with-server-buffer
+    (puthash (erc-downcase nick) user erc-server-users)))
 
-(define-inline erc-remove-server-user (nick)
+(defsubst erc-remove-server-user (nick)
   "This function is for internal use only.
 
 Removes the user with nickname NICK from the `erc-server-users'
@@ -430,10 +425,8 @@ hash table.  This user is not removed from the
 `erc-channel-users' lists of other buffers.
 
 See also: `erc-remove-user'."
-  (inline-letevals (nick)
-    (inline-quote
-     (erc-with-server-buffer
-       (remhash (erc-downcase ,nick) erc-server-users)))))
+  (erc-with-server-buffer
+    (remhash (erc-downcase nick) erc-server-users)))
 
 (defun erc-change-user-nickname (user new-nick)
   "This function is for internal use only.
@@ -504,55 +497,45 @@ Removes all users in the current channel.  This is called by
              erc-channel-users)
     (clrhash erc-channel-users)))
 
-(define-inline erc-channel-user-owner-p (nick)
+(defsubst erc-channel-user-owner-p (nick)
   "Return non-nil if NICK is an owner of the current channel."
-  (inline-letevals (nick)
-    (inline-quote
-     (and ,nick
-	  (hash-table-p erc-channel-users)
-	  (let ((cdata (erc-get-channel-user ,nick)))
-	    (and cdata (cdr cdata)
-		 (erc-channel-user-owner (cdr cdata))))))))
+  (and nick
+       (hash-table-p erc-channel-users)
+       (let ((cdata (erc-get-channel-user nick)))
+         (and cdata (cdr cdata)
+              (erc-channel-user-owner (cdr cdata))))))
 
-(define-inline erc-channel-user-admin-p (nick)
+(defsubst erc-channel-user-admin-p (nick)
   "Return non-nil if NICK is an admin in the current channel."
-  (inline-letevals (nick)
-    (inline-quote
-     (and ,nick
+  (and nick
        (hash-table-p erc-channel-users)
-       (let ((cdata (erc-get-channel-user ,nick)))
+       (let ((cdata (erc-get-channel-user nick)))
          (and cdata (cdr cdata)
-              (erc-channel-user-admin (cdr cdata))))))))
+              (erc-channel-user-admin (cdr cdata))))))
 
-(define-inline erc-channel-user-op-p (nick)
+(defsubst erc-channel-user-op-p (nick)
   "Return non-nil if NICK is an operator in the current channel."
-  (inline-letevals (nick)
-    (inline-quote
-     (and ,nick
+  (and nick
        (hash-table-p erc-channel-users)
-       (let ((cdata (erc-get-channel-user ,nick)))
+       (let ((cdata (erc-get-channel-user nick)))
          (and cdata (cdr cdata)
-              (erc-channel-user-op (cdr cdata))))))))
+              (erc-channel-user-op (cdr cdata))))))
 
-(define-inline erc-channel-user-halfop-p (nick)
+(defsubst erc-channel-user-halfop-p (nick)
   "Return non-nil if NICK is a half-operator in the current channel."
-  (inline-letevals (nick)
-    (inline-quote
-     (and ,nick
+  (and nick
        (hash-table-p erc-channel-users)
-       (let ((cdata (erc-get-channel-user ,nick)))
+       (let ((cdata (erc-get-channel-user nick)))
          (and cdata (cdr cdata)
-              (erc-channel-user-halfop (cdr cdata))))))))
+              (erc-channel-user-halfop (cdr cdata))))))
 
-(define-inline erc-channel-user-voice-p (nick)
+(defsubst erc-channel-user-voice-p (nick)
   "Return non-nil if NICK has voice in the current channel."
-  (inline-letevals (nick)
-    (inline-quote
-     (and ,nick
+  (and nick
        (hash-table-p erc-channel-users)
-       (let ((cdata (erc-get-channel-user ,nick)))
+       (let ((cdata (erc-get-channel-user nick)))
          (and cdata (cdr cdata)
-              (erc-channel-user-voice (cdr cdata))))))))
+              (erc-channel-user-voice (cdr cdata))))))
 
 (defun erc-get-channel-user-list ()
   "Return a list of users in the current channel.  Each element
@@ -1277,7 +1260,7 @@ erc-NAME-enable, and erc-NAME-disable.
 
 Example:
 
-  ;;;###autoload(autoload \\='erc-replace-mode \"erc-replace\")
+  ;;;###autoload (autoload \\='erc-replace-mode \"erc-replace\")
   (define-erc-module replace nil
     \"This mode replaces incoming text according to `erc-replace-alist'.\"
     ((add-hook \\='erc-insert-modify-hook
@@ -1360,11 +1343,10 @@ capabilities."
     (add-hook hook fun nil t)
     fun))
 
-(define-inline erc-log (string)
+(defsubst erc-log (string)
   "Logs STRING if logging is on (see `erc-log-p')."
-  (inline-quote
-   (when erc-log-p
-     (erc-log-aux ,string))))
+  (when erc-log-p
+    (erc-log-aux string)))
 
 (defun erc-server-buffer ()
   "Return the server buffer for the current buffer's process.
@@ -1850,6 +1832,7 @@ removed from the list will be disabled."
   :get (lambda (sym)
          ;; replace outdated names with their newer equivalents
          (erc-migrate-modules (symbol-value sym)))
+  :initialize 'custom-initialize-default
   :set (lambda (sym val)
          ;; disable modules which have just been removed
          (when (and (boundp 'erc-modules) erc-modules val)
@@ -2566,7 +2549,9 @@ consumption for long-lived IRC or Emacs sessions."
      (maphash
       (lambda (nick last-PRIVMSG-time)
         (when
-            (> (float-time (time-subtract nil last-PRIVMSG-time))
+            (> (float-time (time-subtract
+                            (current-time)
+                            last-PRIVMSG-time))
                erc-lurker-threshold-time)
           (remhash nick hash)))
       hash)
@@ -2633,7 +2618,7 @@ server within `erc-lurker-threshold-time'.  See also
                    (gethash server erc-lurker-state (make-hash-table)))))
     (or (null last-PRIVMSG-time)
         (> (float-time
-            (time-subtract nil last-PRIVMSG-time))
+            (time-subtract (current-time) last-PRIVMSG-time))
            erc-lurker-threshold-time))))
 
 (defcustom erc-common-server-suffixes

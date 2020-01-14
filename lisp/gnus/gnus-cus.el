@@ -406,7 +406,7 @@ category."))
       ;; every duplicate ends up being displayed.  So, rather than
       ;; display them, remove them from the list.
 
-      (let ((tmp (setq values (copy-tree values)))
+      (let ((tmp (setq values (gnus-copy-sequence values)))
 	    elem)
 	(while (cdr tmp)
 	  (while (setq elem (assq (caar tmp) (cdr tmp)))

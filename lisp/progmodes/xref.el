@@ -503,9 +503,8 @@ SELECT is `quit', also quit the *xref* window."
              (xref-buffer (current-buffer)))
         (cond (select
                (if (eq select 'quit) (quit-window nil nil))
-               (select-window
-                (with-current-buffer xref-buffer
-                  (xref--show-pos-in-buf marker buf))))
+               (with-current-buffer xref-buffer
+                 (select-window (xref--show-pos-in-buf marker buf))))
               (t
                (save-selected-window
                  (xref--with-dedicated-window

@@ -77,7 +77,6 @@
 ;;; Code:
 
 (eval-when-compile (require 'cl))
-(eval-when-compile (require 'subr-x))
 
 (require 'gnus)
 (require 'gnus-int)
@@ -845,17 +844,21 @@ Addresses without a name will say \"noname\"."
     nil))
 
 (defun gnus-registry-fetch-sender-fast (article)
-  (when-let* ((data (and (numberp article)
-			 (assoc article (gnus-data-list nil)))))
-    (mail-header-from (gnus-data-header data))))
+  (gnus-registry-fetch-header-fast "from" article))
 
 (defun gnus-registry-fetch-recipients-fast (article)
-  (when-let* ((data (and (numberp article)
-			 (assoc article (gnus-data-list nil))))
-	      (extra (mail-header-extra (gnus-data-header data))))
-    (gnus-registry-sort-addresses
-     (or (cdr (assq 'Cc extra)) "")
-     (or (cdr (assq 'To extra)) ""))))
+  (gnus-registry-sort-addresses
+   (or (ignore-errors (gnus-registry-fetch-header-fast "Cc" article)) "")
+   (or (ignore-errors (gnus-registry-fetch-header-fast "To" article)) "")))
+
+(defun gnus-registry-fetch-header-fast (article header)
+  "Fetch the HEADER quickly, using the internal gnus-data-list function."
+  (if (and (numberp article)
+           (assoc article (gnus-data-list nil)))
+      (gnus-string-remove-all-properties
+       (cdr (assq header (gnus-data-header
+                          (assoc article (gnus-data-list nil))))))
+    nil))
 
 ;; registry marks glue
 (defun gnus-registry-do-marks (type function)

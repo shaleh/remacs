@@ -364,10 +364,10 @@ This variable is buffer-local."
    "\\(?:" (regexp-opt password-word-equivalents) "\\|Response\\)"
    "\\(?:\\(?:, try\\)? *again\\| (empty for no passphrase)\\| (again)\\)?"
    ;; "[[:alpha:]]" used to be "for", which fails to match non-English.
-   "\\(?: [[:alpha:]]+ .+\\)?[\\s  ]*[:：៖][\\s  ]*\\'")
+   "\\(?: [[:alpha:]]+ .+\\)?[:：៖]\\s *\\'")
   "Regexp matching prompts for passwords in the inferior process.
 This is used by `comint-watch-for-password-prompt'."
-  :version "27.1"
+  :version "26.1"
   :type 'regexp
   :group 'comint)
 
@@ -428,6 +428,9 @@ This is called from the user command `comint-send-input'.")
 See `comint-send-input'."
   :type 'boolean
   :group 'comint)
+
+(define-obsolete-variable-alias 'comint-use-prompt-regexp-instead-of-fields
+  'comint-use-prompt-regexp "22.1")
 
 ;; Note: If it is decided to purge comint-prompt-regexp from the source
 ;; entirely, searching for uses of this variable will help to identify
@@ -682,7 +685,7 @@ Entry to this mode runs the hooks on `comint-mode-hook'."
   ;; comint-scroll-show-maximum-output is nil, and no-one can remember
   ;; what the original problem was.  If there are problems with point
   ;; not going to the end, consider re-enabling this.
-  ;; https://lists.gnu.org/archive/html/emacs-devel/2007-08/msg00827.html
+  ;; https://lists.gnu.org/r/emacs-devel/2007-08/msg00827.html
   ;;
   ;; This makes it really work to keep point at the bottom.
   ;; (make-local-variable 'scroll-conservatively)
@@ -1431,32 +1434,24 @@ If nil, Isearch operates on the whole comint buffer."
 (defun comint-history-isearch-backward ()
   "Search for a string backward in input history using Isearch."
   (interactive)
-  (setq comint-history-isearch t)
-  (isearch-backward nil t))
+  (let ((comint-history-isearch t))
+    (isearch-backward nil t)))
 
 (defun comint-history-isearch-backward-regexp ()
   "Search for a regular expression backward in input history using Isearch."
   (interactive)
-  (setq comint-history-isearch t)
-  (isearch-backward-regexp nil t))
+  (let ((comint-history-isearch t))
+    (isearch-backward-regexp nil t)))
 
 (defvar-local comint-history-isearch-message-overlay nil)
 
 (defun comint-history-isearch-setup ()
   "Set up a comint for using Isearch to search the input history.
 Intended to be added to `isearch-mode-hook' in `comint-mode'."
-  (when (and
-         ;; Prompt is not empty like in Async Shell Command buffers
-         ;; or in finished shell buffers
-         (not (eq (save-excursion
-		    (goto-char (comint-line-beginning-position))
-		    (forward-line 0)
-		    (point))
-		  (comint-line-beginning-position)))
-	 (or (eq comint-history-isearch t)
-	     (and (eq comint-history-isearch 'dwim)
-		  ;; Point is at command line.
-		  (comint-after-pmark-p))))
+  (when (or (eq comint-history-isearch t)
+	    (and (eq comint-history-isearch 'dwim)
+		 ;; Point is at command line.
+		 (comint-after-pmark-p)))
     (setq isearch-message-prefix-add "history ")
     (setq-local isearch-search-fun-function
                 #'comint-history-isearch-search)
@@ -1477,9 +1472,7 @@ Intended to be added to `isearch-mode-hook' in `comint-mode'."
   (setq isearch-message-function nil)
   (setq isearch-wrap-function nil)
   (setq isearch-push-state-function nil)
-  (remove-hook 'isearch-mode-end-hook 'comint-history-isearch-end t)
-  (unless isearch-suspended
-    (custom-reevaluate-setting 'comint-history-isearch)))
+  (remove-hook 'isearch-mode-end-hook 'comint-history-isearch-end t))
 
 (defun comint-goto-input (pos)
   "Put input history item of the absolute history position POS."
@@ -2288,10 +2281,8 @@ If this takes us past the end of the current line, don't skip at all."
 
 (defun comint-after-pmark-p ()
   "Return t if point is after the process output marker."
-  (let ((process (get-buffer-process (current-buffer))))
-    (when process
-      (let ((pmark (process-mark process)))
-        (<= (marker-position pmark) (point))))))
+  (let ((pmark (process-mark (get-buffer-process (current-buffer)))))
+    (<= (marker-position pmark) (point))))
 
 (defun comint-simple-send (proc string)
   "Default function for sending to PROC input STRING.

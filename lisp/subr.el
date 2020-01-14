@@ -78,8 +78,8 @@ If FORM does return, signal an error."
 
 (defmacro 1value (form)
   "Evaluate FORM, expecting a constant return value.
-If FORM returns differing values when running under Testcover,
-Testcover will raise an error."
+This is the global do-nothing version.  There is also `testcover-1value'
+that complains if FORM ever does return differing values."
   (declare (debug t))
   form)
 
@@ -578,7 +578,7 @@ one is kept."
           (setq tail (cdr tail))))))
   list)
 
-;; See https://lists.gnu.org/archive/html/emacs-devel/2013-05/msg00204.html
+;; See https://lists.gnu.org/r/emacs-devel/2013-05/msg00204.html
 (defun delete-consecutive-dups (list &optional circular)
   "Destructively remove `equal' consecutive duplicates from LIST.
 First and last elements are considered consecutive if CIRCULAR is
@@ -681,6 +681,20 @@ If TEST is omitted or nil, `equal' is used."
       (setq tail (cdr tail)))
     value))
 
+(defun assoc-ignore-case (key alist)
+  "Like `assoc', but ignores differences in case and text representation.
+KEY must be a string.  Upper-case and lower-case letters are treated as equal.
+Unibyte strings are converted to multibyte for comparison."
+  (declare (obsolete assoc-string "22.1"))
+  (assoc-string key alist t))
+
+(defun assoc-ignore-representation (key alist)
+  "Like `assoc', but ignores differences in text representation.
+KEY must be a string.
+Unibyte strings are converted to multibyte for comparison."
+  (declare (obsolete assoc-string "22.1"))
+  (assoc-string key alist nil))
+
 (defun member-ignore-case (elt list)
   "Like `member', but ignore differences in case and text representation.
 ELT must be a string.  Upper-case and lower-case letters are treated as equal.
@@ -692,19 +706,17 @@ Non-strings in LIST are ignored."
     (setq list (cdr list)))
   list)
 
-(defun assoc-delete-all (key alist &optional test)
-  "Delete from ALIST all elements whose car is KEY.
-Compare keys with TEST.  Defaults to `equal'.
+(defun assoc-delete-all (key alist)
+  "Delete from ALIST all elements whose car is `equal' to KEY.
 Return the modified alist.
 Elements of ALIST that are not conses are ignored."
-  (unless test (setq test #'equal))
   (while (and (consp (car alist))
-	      (funcall test (caar alist) key))
+	      (equal (car (car alist)) key))
     (setq alist (cdr alist)))
   (let ((tail alist) tail-cdr)
     (while (setq tail-cdr (cdr tail))
       (if (and (consp (car tail-cdr))
-	       (funcall test (caar tail-cdr) key))
+	       (equal (car (car tail-cdr)) key))
 	  (setcdr tail (cdr tail-cdr))
 	(setq tail tail-cdr))))
   alist)
@@ -713,7 +725,16 @@ Elements of ALIST that are not conses are ignored."
   "Delete from ALIST all elements whose car is `eq' to KEY.
 Return the modified alist.
 Elements of ALIST that are not conses are ignored."
-  (assoc-delete-all key alist #'eq))
+  (while (and (consp (car alist))
+	      (eq (car (car alist)) key))
+    (setq alist (cdr alist)))
+  (let ((tail alist) tail-cdr)
+    (while (setq tail-cdr (cdr tail))
+      (if (and (consp (car tail-cdr))
+	       (eq (car (car tail-cdr)) key))
+	  (setcdr tail (cdr tail-cdr))
+	(setq tail tail-cdr))))
+  alist)
 
 (defun rassq-delete-all (value alist)
   "Delete from ALIST all elements whose cdr is `eq' to VALUE.
@@ -1435,10 +1456,6 @@ be a list of the form returned by `event-start' and `event-end'."
 (make-obsolete 'forward-point "use (+ (point) N) instead." "23.1")
 (make-obsolete 'buffer-has-markers-at nil "24.3")
 
-(make-obsolete 'invocation-directory "use the variable of the same name."
-               "27.1")
-(make-obsolete 'invocation-name "use the variable of the same name." "27.1")
-
 ;; bug#23850
 (make-obsolete 'string-to-unibyte   "use `encode-coding-string'." "26.1")
 (make-obsolete 'string-as-unibyte   "use `encode-coding-string'." "26.1")
@@ -1451,6 +1468,12 @@ be a list of the form returned by `event-start' and `event-end'."
   "Return (log X 10), the log base 10 of X."
   (declare (obsolete log "24.4"))
   (log x 10))
+
+;; These are used by VM and some old programs
+(defalias 'focus-frame 'ignore "")
+(make-obsolete 'focus-frame "it does nothing." "22.1")
+(defalias 'unfocus-frame 'ignore "")
+(make-obsolete 'unfocus-frame "it does nothing." "22.1")
 
 (set-advertised-calling-convention
  'all-completions '(string collection &optional predicate) "23.1")
@@ -1473,6 +1496,15 @@ be a list of the form returned by `event-start' and `event-end'."
 
 (make-obsolete-variable 'command-debug-status
                         "expect it to be removed in a future version." "25.2")
+
+;; Lisp manual only updated in 22.1.
+(define-obsolete-variable-alias 'executing-macro 'executing-kbd-macro
+  "before 19.34")
+
+(define-obsolete-variable-alias 'x-lost-selection-hooks
+  'x-lost-selection-functions "22.1")
+(define-obsolete-variable-alias 'x-sent-selection-hooks
+  'x-sent-selection-functions "22.1")
 
 ;; This was introduced in 21.4 for pre-unicode unification.  That
 ;; usage was rendered obsolete in 23.1 which uses Unicode internally.
@@ -1825,13 +1857,15 @@ if it is empty or a duplicate."
 
 (defvar delay-mode-hooks nil
   "If non-nil, `run-mode-hooks' should delay running the hooks.")
-(defvar-local delayed-mode-hooks nil
+(defvar delayed-mode-hooks nil
   "List of delayed mode hooks waiting to be run.")
+(make-variable-buffer-local 'delayed-mode-hooks)
 (put 'delay-mode-hooks 'permanent-local t)
 
-(defvar-local delayed-after-hook-functions nil
+(defvar delayed-after-hook-functions nil
   "List of delayed :after-hook forms waiting to be run.
 These forms come from `define-derived-mode'.")
+(make-variable-buffer-local 'delayed-after-hook-functions)
 
 (defvar change-major-mode-after-body-hook nil
   "Normal hook run in major mode functions, before the mode hooks.")
@@ -1860,22 +1894,15 @@ running their FOO-mode-hook."
 	(push hook delayed-mode-hooks))
     ;; Normal case, just run the hook as before plus any delayed hooks.
     (setq hooks (nconc (nreverse delayed-mode-hooks) hooks))
-    (and syntax-propertize-function
-         (not (local-variable-p 'parse-sexp-lookup-properties))
-         ;; `syntax-propertize' sets `parse-sexp-lookup-properties' for us, but
-         ;; in order for the sexp primitives to automatically call
-         ;; `syntax-propertize' we need `parse-sexp-lookup-properties' to be
-         ;; set first.
-         (setq-local parse-sexp-lookup-properties t))
     (setq delayed-mode-hooks nil)
-    (apply #'run-hooks (cons 'change-major-mode-after-body-hook hooks))
+    (apply 'run-hooks (cons 'change-major-mode-after-body-hook hooks))
     (if (buffer-file-name)
         (with-demoted-errors "File local-variables error: %s"
           (hack-local-variables 'no-mode)))
     (run-hooks 'after-change-major-mode-hook)
-    (dolist (fun (prog1 (nreverse delayed-after-hook-functions)
-                    (setq delayed-after-hook-functions nil)))
-      (funcall fun))))
+    (dolist (fun (nreverse delayed-after-hook-functions))
+      (funcall fun))
+    (setq delayed-after-hook-functions nil)))
 
 (defmacro delay-mode-hooks (&rest body)
   "Execute BODY, but delay any `run-mode-hooks'.
@@ -2101,10 +2128,10 @@ and the file name is displayed in the echo area."
 NAME is name for process.  It is modified if necessary to make it unique.
 BUFFER is the buffer (or buffer name) to associate with the process.
 
-Process output (both standard output and standard error streams) goes
-at end of BUFFER, unless you specify an output stream or filter
-function to handle the output.  BUFFER may also be nil, meaning that
-this process is not associated with any buffer.
+Process output (both standard output and standard error streams)
+goes at end of BUFFER, unless you specify a filter function to
+handle the output.  BUFFER may also be nil, meaning that this
+process is not associated with any buffer.
 
 PROGRAM is the program file name.  It is searched for in `exec-path'
 \(which see).  If nil, just associate a pty with the buffer.  Remaining
@@ -2150,6 +2177,19 @@ process."
   (and (processp process)
        (memq (process-status process)
 	     '(run open listen connect stop))))
+
+;; compatibility
+
+(defun process-kill-without-query (process &optional _flag)
+  "Say no query needed if PROCESS is running when Emacs is exited.
+Optional second argument if non-nil says to require a query.
+Value is t if a query was formerly required."
+  (declare (obsolete
+            "use `process-query-on-exit-flag' or `set-process-query-on-exit-flag'."
+            "22.1"))
+  (let ((old (process-query-on-exit-flag process)))
+    (set-process-query-on-exit-flag process nil)
+    old))
 
 (defun process-kill-buffer-query-function ()
   "Ask before killing a buffer that has a running process."
@@ -2408,7 +2448,7 @@ in milliseconds; this was useful when Emacs was built without
 floating point support."
   (declare (advertised-calling-convention (seconds &optional nodisp) "22.1"))
   ;; This used to be implemented in C until the following discussion:
-  ;; https://lists.gnu.org/archive/html/emacs-devel/2006-07/msg00401.html
+  ;; https://lists.gnu.org/r/emacs-devel/2006-07/msg00401.html
   ;; Then it was moved here using an implementation based on an idle timer,
   ;; which was then replaced by the use of read-event.
   (if (numberp nodisp)
@@ -2551,7 +2591,7 @@ is nil and `use-dialog-box' is non-nil."
 ;;; Atomic change groups.
 
 (defmacro atomic-change-group (&rest body)
-  "Like `progn' but perform BODY as an atomic change group.
+  "Perform BODY as an atomic change group.
 This means that if BODY exits abnormally,
 all of its changes to the current buffer are undone.
 This works regardless of whether undo is enabled in the buffer.
@@ -2574,8 +2614,8 @@ user can undo the change normally."
 	     ;; it enables undo if that was disabled; we need
 	     ;; to make sure that it gets disabled again.
 	     (activate-change-group ,handle)
-	     (prog1 ,(macroexp-progn body)
-	       (setq ,success t)))
+	     ,@body
+	     (setq ,success t))
 	 ;; Either of these functions will disable undo
 	 ;; if it was disabled before.
 	 (if ,success
@@ -3079,7 +3119,7 @@ Do nothing if FACE is nil."
        (put-text-property start end 'face face)))
 
 ;; This removes `mouse-face' properties in *Help* buffer buttons:
-;; https://lists.gnu.org/archive/html/emacs-devel/2002-04/msg00648.html
+;; https://lists.gnu.org/r/emacs-devel/2002-04/msg00648.html
 (defun yank-handle-category-property (category start end)
   "Apply property category CATEGORY's properties between START and END."
   (when category
@@ -4194,7 +4234,7 @@ Used from `delayed-warnings-hook' (which see)."
     (setq delayed-warnings-list (nreverse collapsed))))
 
 ;; At present this is only used for Emacs internals.
-;; Ref https://lists.gnu.org/archive/html/emacs-devel/2012-02/msg00085.html
+;; Ref https://lists.gnu.org/r/emacs-devel/2012-02/msg00085.html
 (defvar delayed-warnings-hook '(collapse-delayed-warnings
                                 display-delayed-warnings)
   "Normal hook run to process and display delayed warnings.
@@ -4506,10 +4546,10 @@ EVALD, FUNC, ARGS, FLAGS are as in `mapbacktrace'."
   (princ (if (plist-get flags :debug-on-exit) "* " "  "))
   (cond
    ((and evald (not debugger-stack-frame-as-list))
-    (cl-prin1 func)
-    (if args (cl-prin1 args) (princ "()")))
+    (prin1 func)
+    (if args (prin1 args) (princ "()")))
    (t
-    (cl-prin1 (cons func args))))
+    (prin1 (cons func args))))
   (princ "\n"))
 
 (defun backtrace ()
@@ -5204,7 +5244,7 @@ which would presumably appear in this table under another prefix such as
 
 ;; The following statement ought to be in print.c, but `provide' can't
 ;; be used there.
-;; https://lists.gnu.org/archive/html/emacs-devel/2009-08/msg00236.html
+;; https://lists.gnu.org/r/emacs-devel/2009-08/msg00236.html
 (when (hash-table-p (car (read-from-string
 			  (prin1-to-string (make-hash-table)))))
   (provide 'hashtable-print-readable))

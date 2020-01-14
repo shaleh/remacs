@@ -94,7 +94,11 @@ Valid sizes range from 1 to 2048 inclusive."
          (not (file-exists-p (url-cache-create-filename url))))
         (t (let ((cache-time (url-is-cached url)))
              (if cache-time
-                 (time-less-p (time-add cache-time gravatar-cache-ttl) nil)
+                 (time-less-p
+                  (time-add
+                   cache-time
+                   gravatar-cache-ttl)
+                  (current-time))
                t)))))
 
 (defun gravatar-get-data ()

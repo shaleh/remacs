@@ -99,9 +99,17 @@ This might not yet be honored by all index-building functions."
 (defcustom imenu-auto-rescan-maxout 600000
   "Imenu auto-rescan is disabled in buffers larger than this size (in bytes)."
   :type 'integer
-  :group 'imenu)
+  :group 'imenu
+  :version "26.2")
 
-(defcustom imenu-use-popup-menu 'on-mouse
+(defvar imenu-always-use-completion-buffer-p nil)
+(make-obsolete-variable 'imenu-always-use-completion-buffer-p
+			'imenu-use-popup-menu "22.1")
+
+(defcustom imenu-use-popup-menu
+  (if imenu-always-use-completion-buffer-p
+      (not (eq imenu-always-use-completion-buffer-p 'never))
+    'on-mouse)
   "Use a popup menu rather than a minibuffer prompt.
 If nil, always use a minibuffer prompt.
 If t, always use a popup menu,
@@ -111,7 +119,8 @@ If `on-mouse' use a popup menu when `imenu' was invoked with the mouse."
 		 (other :tag "Always" t))
   :group 'imenu)
 
-(defcustom imenu-eager-completion-buffer t
+(defcustom imenu-eager-completion-buffer
+  (not (eq imenu-always-use-completion-buffer-p 'never))
   "If non-nil, eagerly popup the completion buffer."
   :type 'boolean
   :group 'imenu
@@ -217,8 +226,8 @@ If non-nil this pattern is passed to `imenu--generic-function' to
 create a buffer index.
 
 For example, see the value of `fortran-imenu-generic-expression'
-used by `fortran-mode' with `imenu-syntax-alist' set locally to
-give the characters which normally have \"symbol\" syntax
+used by `fortran-mode' with `imenu-syntax-alist' set locally so that
+characters which normally have \"symbol\" syntax are considered to have
 \"word\" syntax during matching.")
 ;;;###autoload(put 'imenu-generic-expression 'risky-local-variable t)
 

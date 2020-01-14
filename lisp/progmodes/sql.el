@@ -26,10 +26,10 @@
 ;;; Commentary:
 
 ;; Please send bug reports and bug fixes to the mailing list at
-;; help-gnu-emacs@gnu.org.  If you want to subscribe to the mailing
-;; list, see the web page at
-;; https://lists.gnu.org/mailman/listinfo/help-gnu-emacs for
-;; instructions.  I monitor this list actively.  If you send an e-mail
+;; bug-gnu-emacs@gnu.org.
+;; See also the general help list at
+;; https://lists.gnu.org/mailman/listinfo/help-gnu-emacs
+;; I monitor this list actively.  If you send an e-mail
 ;; to Alex Schroeder it usually makes it to me when Alex has a chance
 ;; to forward them along (Thanks, Alex).
 
@@ -4426,8 +4426,7 @@ The default comes from `process-coding-system-alist' and
                            (or coding 'utf-8))
                     (when (string-match (format "\\.%s\\'" (car cs)) nlslang)
                       (setq coding (cdr cs)))))
-    (set-process-coding-system (get-buffer-process (current-buffer))
-                               coding coding)))
+    (set-buffer-process-coding-system coding coding)))
 
 (defun sql-oracle-save-settings (sqlbuf)
   "Save most SQL*Plus settings so they may be reset by \\[sql-redirect]."

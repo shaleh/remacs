@@ -153,7 +153,11 @@ Do so even if the buffer is not visiting a file.
 Automatically local in all buffers.
 
 Set to the symbol `always' to offer to save buffer whenever
-`save-some-buffers' is called."
+`save-some-buffers' is called.
+
+Note that this option has no effect on `kill-buffer';
+if you want to control what happens when a buffer is killed,
+use `kill-buffer-query-functions'."
   :type '(choice (const :tag "Never" nil)
                  (const :tag "On Emacs exit" t)
                  (const :tag "Whenever save-some-buffers is called" always))
@@ -474,7 +478,7 @@ location of point in the current buffer."
   :group 'find-file)
 
 ;;;It is not useful to make this a local variable.
-;;;(put 'find-file-not-found-functions 'permanent-local t)
+;;;(put 'find-file-not-found-hooks 'permanent-local t)
 (define-obsolete-variable-alias 'find-file-not-found-hooks
     'find-file-not-found-functions "22.1")
 (defvar find-file-not-found-functions nil
@@ -484,8 +488,7 @@ Variable `buffer-file-name' is already set up.
 The functions are called in the order given until one of them returns non-nil.")
 
 ;;;It is not useful to make this a local variable.
-;;;(put 'find-file-hook 'permanent-local t)
-;; I found some external files still using the obsolete form in 2018.
+;;;(put 'find-file-hooks 'permanent-local t)
 (define-obsolete-variable-alias 'find-file-hooks 'find-file-hook "22.1")
 (defcustom find-file-hook nil
   "List of functions to be called after a buffer is loaded from a file.
@@ -497,7 +500,6 @@ for the file's directory."
   :options '(auto-insert)
   :version "22.1")
 
-;; I found some external files still using the obsolete form in 2018.
 (define-obsolete-variable-alias 'write-file-hooks 'write-file-functions "22.1")
 (defvar write-file-functions nil
   "List of functions to be called before saving a buffer to a file.
@@ -517,13 +519,11 @@ node `(elisp)Saving Buffers'.)  To perform various checks or
 updates before the buffer is saved, use `before-save-hook'.")
 (put 'write-file-functions 'permanent-local t)
 
-;; I found some files still using the obsolete form in 2018.
 (defvar local-write-file-hooks nil)
 (make-variable-buffer-local 'local-write-file-hooks)
 (put 'local-write-file-hooks 'permanent-local t)
 (make-obsolete-variable 'local-write-file-hooks 'write-file-functions "22.1")
 
-;; I found some files still using the obsolete form in 2018.
 (define-obsolete-variable-alias 'write-contents-hooks
     'write-contents-functions "22.1")
 (defvar write-contents-functions nil
@@ -975,8 +975,7 @@ the function needs to examine, starting with FILE."
                     (null file)
                     (string-match locate-dominating-stop-dir-regexp file)))
       (setq try (if (stringp name)
-                    (and (file-directory-p file)
-                         (file-exists-p (expand-file-name name file)))
+                    (file-exists-p (expand-file-name name file))
                   (funcall name file)))
       (cond (try (setq root file))
             ((equal file (setq file (file-name-directory
@@ -1817,11 +1816,7 @@ killed."
 	  (setq buffer-file-truename nil)
 	  ;; Likewise for dired buffers.
 	  (setq dired-directory nil)
-          ;; Don't use `find-file' because it may end up using another window
-          ;; in some corner cases, e.g. when the selected window is
-          ;; softly-dedicated.
-	  (let ((newbuf (find-file-noselect filename wildcards)))
-            (switch-to-buffer newbuf)))
+	  (find-file filename wildcards))
       (when (eq obuf (current-buffer))
 	;; This executes if find-file gets an error
 	;; and does not really find anything.
@@ -2248,7 +2243,8 @@ Do you want to revisit the file normally now? ")
       (kill-local-variable 'cursor-type)
       (let ((inhibit-read-only t))
 	(erase-buffer))
-      (and (not rawfile)
+      (and (default-value 'enable-multibyte-characters)
+	   (not rawfile)
 	   (set-buffer-multibyte t))
       (if rawfile
 	  (condition-case ()
@@ -3336,7 +3332,7 @@ n  -- to ignore the local variables list.")
 
       ;; Display the buffer and read a choice.
       (save-window-excursion
-	(pop-to-buffer buf '(display-buffer--maybe-at-bottom))
+	(pop-to-buffer buf)
 	(let* ((exit-chars '(?y ?n ?\s ?\C-g ?\C-v))
 	       (prompt (format "Please type %s%s: "
 			       (if offer-save "y, n, or !" "y or n")
@@ -4031,8 +4027,51 @@ This function returns either:
       ;; No cache entry.
       locals-dir)))
 
-(declare-function map-merge-with "map" (type function &rest maps))
-(declare-function map-merge "map" (type &rest maps))
+(defun dir-locals--get-sort-score (node)
+  "Return a number used for sorting the definitions of dir locals.
+NODE is assumed to be a cons cell where the car is either a
+string or a symbol representing a mode name.
+
+If it is a mode then the the depth of the mode (ie, how many
+parents that mode has) will be returned.
+
+If it is a string then the length of the string plus 1000 will be
+returned.
+
+Otherwise it returns -1.
+
+That way the value can be used to sort the list such that deeper
+modes will be after the other modes.  This will be followed by
+directory entries in order of length.  If the entries are all
+applied in order then that means the more specific modes will
+override the values specified by the earlier modes and directory
+variables will override modes."
+  (let ((key (car node)))
+    (cond ((null key) -1)
+          ((symbolp key)
+           (let ((mode key)
+                 (depth 0))
+             (while (setq mode (get mode 'derived-mode-parent))
+               (setq depth (1+ depth)))
+             depth))
+          ((stringp key)
+           (+ 1000 (length key)))
+          (t -2))))
+
+(defun dir-locals--sort-variables (variables)
+  "Sorts VARIABLES so that applying them in order has the right effect.
+The variables are compared by dir-locals--get-sort-score.
+Directory entries are then recursively sorted using the same
+criteria."
+  (setq variables (sort variables
+                        (lambda (a b)
+                          (< (dir-locals--get-sort-score a)
+                             (dir-locals--get-sort-score b)))))
+  (dolist (n variables)
+    (when (stringp (car n))
+      (setcdr n (dir-locals--sort-variables (cdr n)))))
+
+  variables)
 
 (defun dir-locals-read-from-dir (dir)
   "Load all variables files in DIR and register a new class and instance.
@@ -4040,6 +4079,7 @@ DIR is the absolute name of a directory which must contain at
 least one dir-local file (which is a file holding variables to
 apply).
 Return the new class name, which is a symbol named DIR."
+  (require 'map)
   (let* ((class-name (intern dir))
          (files (dir-locals--all-files dir))
          (read-circle nil)
@@ -4054,19 +4094,12 @@ Return the new class name, which is a symbol named DIR."
 	    (setq latest file-time)))
         (with-temp-buffer
           (insert-file-contents file)
-          (let ((newvars
-                 (condition-case-unless-debug nil
-                     (read (current-buffer))
-                   (end-of-file nil))))
-            (setq variables
-                  ;; Try and avoid loading `map' since that also loads cl-lib
-                  ;; which then might hamper bytecomp warnings (bug#30635).
-                  (if (not (and newvars variables))
-                      (or newvars variables)
-                    (require 'map)
+          (condition-case-unless-debug nil
+              (setq variables
                     (map-merge-with 'list (lambda (a b) (map-merge 'list a b))
                                     variables
-                                    newvars))))))
+                                    (read (current-buffer))))
+            (end-of-file nil))))
       (setq success latest))
     (setq variables (dir-locals--sort-variables variables))
     (dir-locals-set-class-variables class-name variables)
@@ -4561,8 +4594,8 @@ extension, the value is \"\"."
             "")))))
 
 (defun file-name-base (&optional filename)
-  "Return the base name of the FILENAME: no directory, no extension."
-  (declare (advertised-calling-convention (filename) "27.1"))
+  "Return the base name of the FILENAME: no directory, no extension.
+FILENAME defaults to `buffer-file-name'."
   (file-name-sans-extension
    (file-name-nondirectory (or filename (buffer-file-name)))))
 
@@ -5242,14 +5275,9 @@ about certain files that you'd usually rather not save."
 
 (defun save-some-buffers (&optional arg pred)
   "Save some modified file-visiting buffers.  Asks user about each one.
-You can answer `y' or SPC to save, `n' or DEL not to save, `C-r'
-to look at the buffer in question with `view-buffer' before
-deciding, `d' to view the differences using
-`diff-buffer-with-file', `!' to save the buffer and all remaining
-buffers without any further querying, `.' to save only the
-current buffer and skip the remaining ones and `q' or RET to exit
-the function without saving any more buffers.  `C-h' displays a
-help message describing these options.
+You can answer `y' to save, `n' not to save, `C-r' to look at the
+buffer in question with `view-buffer' before deciding or `d' to
+view the differences using `diff-buffer-with-file'.
 
 This command first saves any buffers where `buffer-save-without-query' is
 non-nil, without asking.
@@ -5949,11 +5977,7 @@ an auto-save file."
       (error "%s is an auto-save file" (abbreviate-file-name file)))
   (let ((file-name (let ((buffer-file-name file))
 		     (make-auto-save-file-name))))
-    (cond ((and (file-exists-p file)
-                (not (file-exists-p file-name)))
-           (error "Auto save file %s does not exist"
-                  (abbreviate-file-name file-name)))
-          ((if (file-exists-p file)
+    (cond ((if (file-exists-p file)
 	       (not (file-newer-than-file-p file-name file))
 	     (not (file-exists-p file-name)))
 	   (error "Auto-save file %s not current"
@@ -6485,32 +6509,58 @@ if you want to specify options, use `directory-free-space-args'.
 
 A value of nil disables this feature.
 
-This variable is obsolete; Emacs no longer uses it."
+If the function `file-system-info' is defined, it is always used in
+preference to the program given by this variable."
   :type '(choice (string :tag "Program") (const :tag "None" nil))
   :group 'dired)
-(make-obsolete-variable 'directory-free-space-program
-			"ignored, as Emacs uses `file-system-info' instead"
-			"27.1")
 
 (defcustom directory-free-space-args
   (purecopy (if (eq system-type 'darwin) "-k" "-Pk"))
   "Options to use when running `directory-free-space-program'."
   :type 'string
   :group 'dired)
-(make-obsolete-variable 'directory-free-space-args
-			"ignored, as Emacs uses `file-system-info' instead"
-			"27.1")
 
 (defun get-free-disk-space (dir)
   "Return the amount of free space on directory DIR's file system.
 The return value is a string describing the amount of free
 space (normally, the number of free 1KB blocks).
 
-If DIR's free space cannot be obtained, this function returns nil."
-  (save-match-data
-    (let ((avail (nth 2 (file-system-info dir))))
-      (if avail
-	  (format "%.0f" (/ avail 1024))))))
+This function calls `file-system-info' if it is available, or
+invokes the program specified by `directory-free-space-program'
+and `directory-free-space-args'.  If the system call or program
+is unsuccessful, or if DIR is a remote directory, this function
+returns nil."
+  (unless (file-remote-p (expand-file-name dir))
+    ;; Try to find the number of free blocks.  Non-Posix systems don't
+    ;; always have df, but might have an equivalent system call.
+    (if (fboundp 'file-system-info)
+	(let ((fsinfo (file-system-info dir)))
+	  (if fsinfo
+	      (format "%.0f" (/ (nth 2 fsinfo) 1024))))
+      (setq dir (expand-file-name dir))
+      (save-match-data
+	(with-temp-buffer
+	  (when (and directory-free-space-program
+		     ;; Avoid failure if the default directory does
+		     ;; not exist (Bug#2631, Bug#3911).
+                     (let ((default-directory
+                             (locate-dominating-file dir 'file-directory-p)))
+                       (eq (process-file directory-free-space-program
+					 nil t nil
+					 directory-free-space-args
+                                         (file-relative-name dir))
+			   0)))
+	    ;; Assume that the "available" column is before the
+	    ;; "capacity" column.  Find the "%" and scan backward.
+	    (goto-char (point-min))
+	    (forward-line 1)
+	    (when (re-search-forward
+		   "[[:space:]]+[^[:space:]]+%[^%]*$"
+		   (line-end-position) t)
+	      (goto-char (match-beginning 0))
+	      (let ((endpt (point)))
+		(skip-chars-backward "^[:space:]")
+		(buffer-substring-no-properties (point) endpt)))))))))
 
 ;; The following expression replaces `dired-move-to-filename-regexp'.
 (defvar directory-listing-before-filename-regexp
@@ -6960,9 +7010,8 @@ if any returns nil.  If `confirm-kill-emacs' is non-nil, calls it."
                   (setq active t))
              (setq processes (cdr processes)))
            (or (not active)
-               (with-displayed-buffer-window
-                (get-buffer-create "*Process List*")
-                '(display-buffer--maybe-at-bottom)
+               (with-current-buffer-window
+                (get-buffer-create "*Process List*") nil
                 #'(lambda (window _value)
                     (with-selected-window window
                       (unwind-protect
@@ -7002,75 +7051,60 @@ only these files will be asked to be saved."
 ;; We depend on being the last handler on the list,
 ;; so that anything else which does need handling
 ;; has been handled already.
-;; So it is safe for us to inhibit *all* magic file name handlers for
-;; operations, which return a file name.  See Bug#29579.
+;; So it is safe for us to inhibit *all* magic file name handlers.
 
 (defun file-name-non-special (operation &rest arguments)
-  (let* ((op-returns-file-name-list
-          '(expand-file-name file-name-directory file-name-as-directory
-                             directory-file-name file-name-sans-versions
-                             find-backup-file-name file-remote-p))
-         (file-name-handler-alist
-          (and
-           (not (memq operation op-returns-file-name-list))
-           file-name-handler-alist))
-	 (default-directory
-           ;; Some operations respect file name handlers in
-           ;; `default-directory'.  Because core function like
-           ;; `call-process' don't care about file name handlers in
-           ;; `default-directory', we here have to resolve the
-           ;; directory into a local one.  For `process-file',
-           ;; `start-file-process', and `shell-command', this fixes
-           ;; Bug#25949.
-	   (if (memq operation
-                     '(insert-directory process-file start-file-process
-                                        shell-command temporary-file-directory))
-	       (directory-file-name
-	        (expand-file-name
-		 (unhandled-file-name-directory default-directory)))
-	     default-directory))
-	 ;; Get a list of the indices of the args which are file names.
-	 (file-arg-indices
-	  (cdr (or (assq operation
-			 ;; The first seven are special because they
-			 ;; return a file name.  We want to include the /:
-			 ;; in the return value.
-			 ;; So just avoid stripping it in the first place.
-                         (append
-                          (mapcar 'list op-returns-file-name-list)
-			  '(;; `identity' means just return the first arg
-			    ;; not stripped of its quoting.
-			    (substitute-in-file-name identity)
-			    ;; `add' means add "/:" to the result.
-			    (file-truename add 0)
-			    (insert-file-contents insert-file-contents 0)
-			    ;; `unquote-then-quote' means set buffer-file-name
-			    ;; temporarily to unquoted filename.
-			    (verify-visited-file-modtime unquote-then-quote)
-			    ;; List the arguments which are filenames.
-			    (file-name-completion 0 1)
-			    (file-name-all-completions 0 1)
-                            (file-equal-p 0 1)
-                            (file-newer-than-file-p 0 1)
-			    (write-region 2 5)
-			    (rename-file 0 1)
-			    (copy-file 0 1)
-			    (copy-directory 0 1)
-			    (file-in-directory-p 0 1)
-			    (make-symbolic-link 0 1)
-			    (add-name-to-file 0 1)
-                            (make-auto-save-file-name buffer-file-name)
-                            (set-visited-file-modtime buffer-file-name)
-                            ;; These file-notify-* operations take a
-                            ;; descriptor.
-                            (file-notify-rm-watch . nil)
-                            (file-notify-valid-p . nil))))
-		   ;; For all other operations, treat the first argument only
-		   ;; as the file name.
-		   '(nil 0))))
-	 method
-	 ;; Copy ARGUMENTS so we can replace elements in it.
-	 (arguments (copy-sequence arguments)))
+  (let ((file-name-handler-alist nil)
+	(default-directory
+          ;; Some operations respect file name handlers in
+          ;; `default-directory'.  Because core function like
+          ;; `call-process' don't care about file name handlers in
+          ;; `default-directory', we here have to resolve the
+          ;; directory into a local one.  For `process-file',
+          ;; `start-file-process', and `shell-command', this fixes
+          ;; Bug#25949.
+	  (if (memq operation '(insert-directory process-file start-file-process
+                                                 shell-command))
+	      (directory-file-name
+	       (expand-file-name
+		(unhandled-file-name-directory default-directory)))
+	    default-directory))
+	;; Get a list of the indices of the args which are file names.
+	(file-arg-indices
+	 (cdr (or (assq operation
+			;; The first six are special because they
+			;; return a file name.  We want to include the /:
+			;; in the return value.
+			;; So just avoid stripping it in the first place.
+			'((expand-file-name . nil)
+			  (file-name-directory . nil)
+			  (file-name-as-directory . nil)
+			  (directory-file-name . nil)
+			  (file-name-sans-versions . nil)
+			  (find-backup-file-name . nil)
+			  ;; `identity' means just return the first arg
+			  ;; not stripped of its quoting.
+			  (substitute-in-file-name identity)
+			  ;; `add' means add "/:" to the result.
+			  (file-truename add 0)
+			  (insert-file-contents insert-file-contents 0)
+			  ;; `unquote-then-quote' means set buffer-file-name
+			  ;; temporarily to unquoted filename.
+			  (verify-visited-file-modtime unquote-then-quote)
+			  ;; List the arguments which are filenames.
+			  (file-name-completion 1)
+			  (file-name-all-completions 1)
+			  (write-region 2 5)
+			  (rename-file 0 1)
+			  (copy-file 0 1)
+			  (make-symbolic-link 0 1)
+			  (add-name-to-file 0 1)))
+		  ;; For all other operations, treat the first argument only
+		  ;; as the file name.
+		  '(nil 0))))
+	method
+	;; Copy ARGUMENTS so we can replace elements in it.
+	(arguments (copy-sequence arguments)))
     (if (symbolp (car file-arg-indices))
 	(setq method (pop file-arg-indices)))
     ;; Strip off the /: from the file names that have it.
@@ -7087,12 +7121,6 @@ only these files will be asked to be saved."
     (pcase method
       (`identity (car arguments))
       (`add (file-name-quote (apply operation arguments)))
-      (`buffer-file-name
-       (let ((buffer-file-name
-              (if (string-match "\\`/:" buffer-file-name)
-                  (substring buffer-file-name (match-end 0))
-                buffer-file-name)))
-         (apply operation arguments)))
       (`insert-file-contents
        (let ((visit (nth 1 arguments)))
          (unwind-protect

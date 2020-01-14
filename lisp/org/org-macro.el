@@ -164,7 +164,7 @@ function installs the following ones: \"property\",
     (org-macro--counter-initialize)
     (funcall update-templates
 	     (cons "n" "(eval (org-macro--counter-increment \"$1\" \"$2\"))"))
-    (setq org-macro-templates templates)))
+    (setq org-macro-templates (nconc (org-macro--collect-macros) templates))))
 
 (defun org-macro-expand (macro templates)
   "Return expanded MACRO, as a string.

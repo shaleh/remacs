@@ -196,19 +196,16 @@ KIND should be `var' for a variable or `subr' for a subroutine."
 		      (let ((pnt (search-forward (concat "" name "\n"))))
 			(re-search-backward "S\\(.*\\)")
 			(let ((file (match-string 1)))
-                          (throw 'loop file)
-			    (goto-char pnt)))))))
+			  (if (member file build-files)
+			      (throw 'loop file)
+			    (goto-char pnt))))))))
 	(if (string-match "^ns.*\\(\\.o\\|obj\\)\\'" file)
 	    (setq file (replace-match ".m" t t file 1))
 	  (if (string-match "\\.\\(o\\|obj\\)\\'" file)
 	      (setq file (replace-match ".c" t t file))))
-        (cond
-         ((string-match "\\.\\(c\\|m\\)\\'" file)
-          (concat "src/" file))
-         ((string-match "\\.rs\\'" file)
-          (concat "rust_src/src/" file))
-         (t
-          file))))))
+	(if (string-match "\\.\\(c\\|m\\)\\'" file)
+	    (concat "src/" file)
+	  file)))))
 
 (defcustom help-downcase-arguments nil
   "If non-nil, argument names in *Help* buffers are downcased."
@@ -575,7 +572,7 @@ FILE is the file where FUNCTION was probably defined."
             (setq short rel))))
     short))
 
-(defun help-fns--analyse-function (function)
+(defun help-fns--analyze-function (function)
   ;; FIXME: Document/explain the differences between FUNCTION,
   ;; REAL-FUNCTION, DEF, and REAL-DEF.
   "Return information about FUNCTION.
@@ -657,8 +654,6 @@ Returns a list of the form (REAL-FUNCTION DEF ALIASED REAL-DEF)."
 		  (concat beg "Lisp macro"))
 		 ((byte-code-function-p def)
 		  (concat beg "compiled Lisp function"))
-                 ((module-function-p def)
-                  (concat beg "module function"))
 		 ((eq (car-safe def) 'lambda)
 		  (concat beg "Lisp function"))
 		 ((eq (car-safe def) 'closure)
@@ -689,7 +684,7 @@ Returns a list of the form (REAL-FUNCTION DEF ALIASED REAL-DEF)."
 	;; but that's completely wrong when the user used load-file.
 	(princ (format-message " in `%s'"
                                (if (eq file-name 'C-source)
-                                   (concat (subr-lang def) " source code")
+                                   "C source code"
                                  (help-fns-short-filename file-name))))
 	;; Make a hyperlink to the library.
 	(with-current-buffer standard-output
@@ -709,13 +704,13 @@ Returns a list of the form (REAL-FUNCTION DEF ALIASED REAL-DEF)."
   (terpri)(terpri)
 
   (pcase-let* ((`(,real-function ,def ,_aliased ,real-def)
-                (help-fns--analyse-function function))
+                (help-fns--analyze-function function))
                (doc-raw (condition-case nil
                             ;; FIXME: Maybe `documentation' should return nil
                             ;; for invalid functions i.s.o. signaling an error.
                             (documentation function t)
                           ;; E.g. an alias for a not yet defined function.
-                          (invalid-function nil)))
+                          ((invalid-function void-function) nil)))
                (key-bindings-buffer (current-buffer)))
 
     ;; If the function is autoloaded, and its docstring has
@@ -735,13 +730,9 @@ Returns a list of the form (REAL-FUNCTION DEF ALIASED REAL-DEF)."
                       (if (subrp def) (indirect-function real-def) real-def)
                       real-function key-bindings-buffer)
                    ;; E.g. an alias for a not yet defined function.
-                   (invalid-function doc-raw))))
+                   ((invalid-function void-function) doc-raw))))
         (run-hook-with-args 'help-fns-describe-function-functions function)
         (insert "\n" (or doc "Not documented.")))
-      (when (or (function-get function 'pure)
-                (function-get function 'side-effect-free))
-        (insert "\nThis function does not change global state, "
-                "including the match data."))
       ;; Avoid asking the user annoying questions if she decides
       ;; to save the help buffer, when her locale's codeset
       ;; isn't UTF-8.

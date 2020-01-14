@@ -468,38 +468,6 @@ to add an effort property.")
 (defvar org-clock-stored-resume-clock nil
   "Clock to resume, saved by `org-clock-load'")
 
-(defconst org-clock--oldest-date
-  (let* ((dichotomy
-	  (lambda (min max pred)
-	    (if (funcall pred min) min
-	      (cl-incf min)
-	      (while (> (- max min) 1)
-		(let ((mean (+ (ash min -1) (ash max -1) (logand min max 1))))
-		  (if (funcall pred mean) (setq max mean) (setq min mean)))))
-	    max))
-	 (high
-	  (funcall dichotomy
-		   most-negative-fixnum
-		   0
-		   (lambda (m)
-                     ;; libc in macOS 10.6 hangs when decoding times
-                     ;; around year -2**31.  Limit `high' not to go
-                     ;; any earlier than that.
-                     (unless (and (eq system-type 'darwin)
-                                  (string-match-p
-                                   "10\\.6\\.[[:digit:]]"
-                                   (shell-command-to-string
-                                    "sw_vers -productVersion"))
-                                  (<= m -1034058203136))
-                       (ignore-errors (decode-time (list m 0)))))))
-	 (low
-	  (funcall dichotomy
-		   most-negative-fixnum
-		   0
-		   (lambda (m) (ignore-errors (decode-time (list high m)))))))
-    (list high low))
-  "Internal time for oldest date representable on the system.")
-
 ;;; The clock for measuring work time.
 
 (defvar org-mode-line-string "")
@@ -544,6 +512,15 @@ cannot be translated."
 	     ("ALL" 6) ("Total time" 7) ("File time" 8) ("Clock summary at" 9))
 	   (assoc-string language org-clock-clocktable-language-setup t))
       s))
+
+(defun org-clock--mode-line-heading ()
+  "Return currently clocked heading, formatted for mode line."
+  (cond ((functionp org-clock-heading-function)
+	 (funcall org-clock-heading-function))
+	((org-before-first-heading-p) "???")
+	(t (replace-regexp-in-string
+	    org-bracket-link-analytic-regexp "\\5"
+	    (org-no-properties (org-get-heading t t t t))))))
 
 (defun org-clock-menu ()
   (interactive)
@@ -693,19 +670,18 @@ If not, show simply the clocked time like 01:50."
     (if org-clock-effort
 	(let* ((effort-in-minutes (org-duration-to-minutes org-clock-effort))
 	       (work-done-str
-		(propertize
-		 (org-duration-from-minutes clocked-time)
-		 'face (if (and org-clock-task-overrun (not org-clock-task-overrun-text))
-			   'org-mode-line-clock-overrun 'org-mode-line-clock)))
-	       (effort-str (org-duration-from-minutes effort-in-minutes))
-	       (clockstr (propertize
-			  (concat  " [%s/" effort-str
-				   "] (" (replace-regexp-in-string "%" "%%" org-clock-heading) ")")
-			  'face 'org-mode-line-clock)))
-	  (format clockstr work-done-str))
-      (propertize (concat " [" (org-duration-from-minutes clocked-time)
-			  "]" (format " (%s)" org-clock-heading))
-		  'face 'org-mode-line-clock))))
+		(propertize (org-duration-from-minutes clocked-time)
+			    'face
+			    (if (and org-clock-task-overrun
+				     (not org-clock-task-overrun-text))
+				'org-mode-line-clock-overrun
+			      'org-mode-line-clock)))
+	       (effort-str (org-duration-from-minutes effort-in-minutes)))
+	  (format (propertize " [%s/%s] (%s)" 'face 'org-mode-line-clock)
+		  work-done-str effort-str org-clock-heading))
+      (format (propertize " [%s] (%s)" 'face 'org-mode-line-clock)
+	      (org-duration-from-minutes clocked-time)
+	      org-clock-heading))))
 
 (defun org-clock-get-last-clock-out-time ()
   "Get the last clock-out time for the current subtree."
@@ -1948,15 +1924,17 @@ Use `\\[org-clock-remove-overlays]' to remove the subtree times."
 	;; Arrange to remove the overlays upon next change.
 	(when org-remove-highlights-with-change
 	  (add-hook 'before-change-functions 'org-clock-remove-overlays
-			nil 'local))))
-    (message (concat (format "Total file time%s: "
-			     (cond (todayp " for today")
-				   (customp " (custom)")
-				   (t "")))
-		     (org-duration-from-minutes
-		      org-clock-file-total-minutes)
-		     " (%d hours and %d minutes)")
-	     h m)))
+		    nil 'local))))
+    (let* ((h (/ org-clock-file-total-minutes 60))
+	   (m (- org-clock-file-total-minutes (* 60 h))))
+      (message (concat (format "Total file time%s: "
+			       (cond (todayp " for today")
+				     (customp " (custom)")
+				     (t "")))
+		       (org-duration-from-minutes
+			org-clock-file-total-minutes)
+		       " (%d hours and %d minutes)")
+	       h m))))
 
 (defvar-local org-clock-overlays nil)
 
@@ -2727,34 +2705,37 @@ LEVEL is an integer.  Indent by two spaces per level above 1."
     (setq tsb
 	  (if (eq step0 'week)
 	      (let ((dow (nth 6 (decode-time (seconds-to-time ts)))))
-		(if (< dow ws) ts
+		(if (<= dow ws) ts
 		  (- ts (* 86400 (- dow ws)))))
 	    ts))
     (while (< tsb te)
-      (or (bolp) (insert "\n"))
-      (setq p1 (plist-put p1 :tstart (format-time-string
-				      (org-time-stamp-format nil t)
-				      (seconds-to-time (max tsb ts)))))
-      (cl-incf tsb (let ((dow (nth 6 (decode-time (seconds-to-time tsb)))))
-		     (if (or (eq step0 'day)
-			     (= dow ws))
-			 step
-		       (* 86400 (- ws dow)))))
-      (setq p1 (plist-put p1 :tend (format-time-string
-				    (org-time-stamp-format nil t)
-				    (seconds-to-time (min te tsb)))))
-      (insert "\n" (if (eq step0 'day) "Daily report: "
-		     "Weekly report starting on: ")
-	      (plist-get p1 :tstart) "\n")
-      (setq step-time (org-dblock-write:clocktable p1))
-      (re-search-forward "^[ \t]*#\\+END:")
-      (when (and (equal step-time 0) stepskip0)
-	;; Remove the empty table
-	(delete-region (point-at-bol)
-		       (save-excursion
-			 (re-search-backward "^\\(Daily\\|Weekly\\) report"
-					     nil t)
-			 (point))))
+      (unless (bolp) (insert "\n"))
+      (let ((start-time (seconds-to-time (max tsb ts))))
+	(cl-incf tsb (let ((dow (nth 6 (decode-time (seconds-to-time tsb)))))
+		       (if (or (eq step0 'day)
+			       (= dow ws))
+			   step
+			 (* 86400 (- ws dow)))))
+	(insert "\n"
+		(if (eq step0 'day) "Daily report: "
+		  "Weekly report starting on: ")
+		(format-time-string (org-time-stamp-format nil t) start-time)
+		"\n")
+	(let ((table-begin (line-beginning-position 0))
+	      (step-time
+	       (org-dblock-write:clocktable
+		(org-combine-plists
+		 params
+		 (list
+		  :header "" :step nil :block nil
+		  :tstart (format-time-string (org-time-stamp-format t t)
+					      start-time)
+		  :tend (format-time-string (org-time-stamp-format t t)
+					    (seconds-to-time (min te tsb))))))))
+	  (re-search-forward "^[ \t]*#\\+END:")
+	  (when (and stepskip0 (equal step-time 0))
+	    ;; Remove the empty table
+	    (delete-region (line-beginning-position) table-begin))))
       (end-of-line 0))))
 
 (defun org-clock-get-table-data (file params)

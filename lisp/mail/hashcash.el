@@ -1,4 +1,4 @@
-;;; hashcash.el --- Add hashcash payments to email  -*- lexical-binding:t -*-
+;;; hashcash.el --- Add hashcash payments to email
 
 ;; Copyright (C) 2003-2005, 2007-2019 Free Software Foundation, Inc.
 
@@ -47,7 +47,7 @@
 
 ;;; Code:
 
-(eval-when-compile (require 'cl-lib))
+(eval-when-compile (require 'cl))	; for case
 
 (defgroup hashcash nil
   "Hashcash configuration."
@@ -133,18 +133,18 @@ For example, you may want to set this to (\"-Z2\") to reduce header length."
 
 (declare-function message-narrow-to-headers-or-head "message" ())
 (declare-function message-fetch-field "message" (header &optional not-all))
-(declare-function message-goto-eoh "message" (&optional interactive))
+(declare-function message-goto-eoh "message" ())
 (declare-function message-narrow-to-headers "message" ())
 
 (defun hashcash-token-substring ()
   (save-excursion
     (let ((token ""))
-      (cl-loop
+      (loop
 	(setq token
 	  (concat token (buffer-substring (point) (hashcash-point-at-eol))))
 	(goto-char (hashcash-point-at-eol))
 	(forward-char 1)
-	(unless (looking-at "[ \t]") (cl-return token))
+	(unless (looking-at "[ \t]") (return token))
 	(while (looking-at "[ \t]") (forward-char 1))))))
 
 (defun hashcash-payment-required (addr)
@@ -298,7 +298,7 @@ BUFFER defaults to the current buffer."
   (let* ((split (split-string token ":"))
 	 (key (if (< (hashcash-version token) 1.2)
 		  (nth 1 split)
-		  (pcase (string-to-number (nth 0 split))
+		  (case (string-to-number (nth 0 split))
 		    (0 (nth 2 split))
 		    (1 (nth 3 split))))))
     (cond ((null resource)

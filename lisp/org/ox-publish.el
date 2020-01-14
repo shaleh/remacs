@@ -405,11 +405,9 @@ definition."
 (defun org-publish--expand-file-name (file project)
   "Return full file name for FILE in PROJECT.
 When FILE is a relative file name, it is expanded according to
-project base directory.  Always return the true name of the file,
-ignoring symlinks."
-  (file-truename
-   (if (file-name-absolute-p file) file
-     (expand-file-name file (org-publish-property :base-directory project)))))
+project base directory."
+  (if (file-name-absolute-p file) file
+    (expand-file-name file (org-publish-property :base-directory project))))
 
 (defun org-publish-expand-projects (projects-alist)
   "Expand projects in PROJECTS-ALIST.
@@ -433,13 +431,35 @@ This splices all the components into the list."
   (let* ((base-dir (file-name-as-directory
 		    (org-publish-property :base-directory project)))
 	 (extension (or (org-publish-property :base-extension project) "org"))
-	 (match (and (not (eq extension 'any))
-		     (concat "^[^\\.].*\\.\\(" extension "\\)$")))
+	 (match (if (eq extension 'any) ""
+		  (format "^[^\\.].*\\.\\(%s\\)$" extension)))
 	 (base-files
-	  (cl-remove-if #'file-directory-p
-			(if (org-publish-property :recursive project)
-			    (directory-files-recursively base-dir match)
-			  (directory-files base-dir t match t)))))
+	  (cond ((not (file-exists-p base-dir)) nil)
+		((not (org-publish-property :recursive project))
+		 (cl-remove-if #'file-directory-p
+			       (directory-files base-dir t match t)))
+		(t
+		 ;; Find all files recursively.  Unlike to
+		 ;; `directory-files-recursively', we follow symlinks
+		 ;; to other directories.
+		 (letrec ((files nil)
+			  (walk-tree
+			   (lambda (dir depth)
+			     (when (> depth 100)
+			       (error "Apparent cycle of symbolic links for %S"
+				      base-dir))
+			     (dolist (f (file-name-all-completions "" dir))
+			       (pcase f
+				 ((or "./" "../") nil)
+				 ((pred directory-name-p)
+				  (funcall walk-tree
+					   (expand-file-name f dir)
+					   (1+ depth)))
+				 ((pred (string-match match))
+				  (push (expand-file-name f dir) files))
+				 (_ nil)))
+			     files)))
+		   (funcall walk-tree base-dir 0))))))
     (org-uniquify
      (append
       ;; Files from BASE-DIR.  Apply exclusion filter before adding
@@ -468,7 +488,7 @@ This splices all the components into the list."
   "Return a project that FILENAME belongs to.
 When UP is non-nil, return a meta-project (i.e., with a :components part)
 publishing FILENAME."
-  (let* ((filename (file-truename filename))
+  (let* ((filename (expand-file-name filename))
 	 (project
 	  (cl-some
 	   (lambda (p)

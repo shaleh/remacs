@@ -1,4 +1,4 @@
-;;; pop3.el --- Post Office Protocol (RFC 1460) interface  -*- lexical-binding:t -*-
+;;; pop3.el --- Post Office Protocol (RFC 1460) interface
 
 ;; Copyright (C) 1996-2019 Free Software Foundation, Inc.
 
@@ -32,7 +32,7 @@
 
 ;;; Code:
 
-(eval-when-compile (require 'cl-lib))
+(eval-when-compile (require 'cl))
 
 (require 'mail-utils)
 (defvar parse-time-months)
@@ -237,8 +237,8 @@ Use streaming commands."
 	(setq start-point
 	      (pop3-wait-for-messages process pop3-stream-length
 				      total-size start-point))
-	(cl-incf waited-for pop3-stream-length))
-      (cl-incf i))
+	(incf waited-for pop3-stream-length))
+      (incf i))
     (pop3-wait-for-messages process (- count waited-for)
 			    total-size start-point)))
 
@@ -249,7 +249,7 @@ Use streaming commands."
 		    (or (not total-size)
 			(re-search-forward "^\\.\r?\n" nil t)))
 	       (re-search-forward "^-ERR " nil t))
-      (cl-decf count)
+      (decf count)
       (setq start-point (point)))
     (unless (memq (process-status process) '(open run))
       (error "pop3 process died"))
@@ -269,6 +269,7 @@ Use streaming commands."
 
 (defun pop3-write-to-file (file messages)
   (let ((pop-buffer (current-buffer))
+	(start (point-min))
 	beg end
 	temp-buffer)
     (with-temp-buffer
@@ -279,6 +280,7 @@ Use streaming commands."
 	  (forward-line 1)
 	  (setq beg (point))
 	  (when (re-search-forward "^\\.\r?\n" nil t)
+	    (setq start (point))
 	    (forward-line -1)
 	    (setq end (point)))
 	  (with-current-buffer temp-buffer
@@ -367,7 +369,7 @@ Use streaming commands."
 		(while (> i 0)
 		  (unless (member (nth (1- i) pop3-uidl) saved)
 		    (push i messages))
-		  (cl-decf i)))
+		  (decf i)))
 	      (when messages
 		(setq list (pop3-list process)
 		      size 0)
@@ -397,7 +399,7 @@ Return non-nil if it is necessary to update the local UIDL file."
 	     (unless (member (setq uidl (nth i pop3-uidl)) (cdr saved))
 	       (push ctime new)
 	       (push uidl new))
-	     (cl-decf i)))
+	     (decf i)))
 	  (pop3-uidl
 	   (setq new (mapcan (lambda (elt) (list elt ctime)) pop3-uidl))))
     (when new (setq mod t))
@@ -422,7 +424,7 @@ Return non-nil if it is necessary to update the local UIDL file."
 	      (push uidl new)))
 	;; Mails having been deleted in the server.
 	(setq mod t))
-      (cl-decf i 2))
+      (decf i 2))
     (cond (saved
 	   (setcdr saved new))
 	  (srvr
@@ -438,7 +440,7 @@ Return non-nil if it is necessary to update the local UIDL file."
       (while (> i 0)
 	(when (member (nth (1- i) pop3-uidl) dele)
 	  (push i uidl))
-	(cl-decf i))
+	(decf i))
       (when uidl
 	(pop3-send-streaming-command process "DELE" uidl nil)))
     mod))
@@ -618,8 +620,10 @@ Return the response string if optional second argument is non-nil."
 If NOW, use that time instead."
   (require 'parse-time)
   (let* ((now (or now (current-time)))
-	 (zone (nth 8 (decode-time now))))
+	 (zone (nth 8 (decode-time now)))
+	 (sign "+"))
     (when (< zone 0)
+      (setq sign "-")
       (setq zone (- zone)))
     (concat
      (format-time-string "%d" now)
@@ -781,7 +785,7 @@ Otherwise, return the size of the message-id MSG"
   (pop3-send-command process (format "DELE %s" msg))
   (pop3-read-response process))
 
-(defun pop3-noop (process _msg)
+(defun pop3-noop (process msg)
   "No-operation."
   (pop3-send-command process "NOOP")
   (pop3-read-response process))

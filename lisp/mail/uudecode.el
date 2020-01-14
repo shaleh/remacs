@@ -1,4 +1,4 @@
-;;; uudecode.el -- elisp native uudecode  -*- lexical-binding:t -*-
+;;; uudecode.el -- elisp native uudecode
 
 ;; Copyright (C) 1998-2019 Free Software Foundation, Inc.
 
@@ -24,10 +24,13 @@
 
 ;;; Code:
 
-(defalias 'uudecode-char-int
-  (if (fboundp 'char-int)
-      'char-int
-    'identity))
+(eval-when-compile (require 'cl))
+
+(eval-and-compile
+  (defalias 'uudecode-char-int
+    (if (fboundp 'char-int)
+	'char-int
+      'identity)))
 
 (defgroup uudecode nil
   "Decoding of uuencoded data."
@@ -75,7 +78,7 @@ input and write the converted data to its standard output."
 If FILE-NAME is non-nil, save the result to FILE-NAME.  The program
 used is specified by `uudecode-decoder-program'."
   (interactive "r\nP")
-  (let ((cbuf (current-buffer)) tempfile firstline)
+  (let ((cbuf (current-buffer)) tempfile firstline status)
     (save-excursion
       (goto-char start)
       (when (re-search-forward uudecode-begin-line nil t)
@@ -107,7 +110,7 @@ used is specified by `uudecode-decoder-program'."
 		(insert "begin 600 " (file-name-nondirectory tempfile) "\n")
 		(insert-buffer-substring cbuf firstline end)
 		(cd (file-name-directory tempfile))
-		(apply #'call-process-region
+		(apply 'call-process-region
 		       (point-min)
 		       (point-max)
 		       uudecode-decoder-program
@@ -124,6 +127,20 @@ used is specified by `uudecode-decoder-program'."
 		(insert-file-contents-literally tempfile)))
 	  (message "Can not uudecode")))
       (ignore-errors (or file-name (delete-file tempfile))))))
+
+(eval-and-compile
+  (defalias 'uudecode-string-to-multibyte
+    (cond
+     ((featurep 'xemacs)
+      'identity)
+     ((fboundp 'string-to-multibyte)
+      'string-to-multibyte)
+     (t
+      (lambda (string)
+	"Return a multibyte string with the same individual chars as string."
+	(mapconcat
+	 (lambda (ch) (string-as-multibyte (char-to-string ch)))
+	 string ""))))))
 
 ;;;###autoload
 (defun uudecode-decode-region-internal (start end &optional file-name)
@@ -199,13 +216,13 @@ If FILE-NAME is non-nil, save the result to FILE-NAME."
 	(if file-name
             (with-temp-file file-name
               (unless (featurep 'xemacs) (set-buffer-multibyte nil))
-              (insert (apply #'concat (nreverse result))))
+              (insert (apply 'concat (nreverse result))))
 	  (or (markerp end) (setq end (set-marker (make-marker) end)))
 	  (goto-char start)
 	  (if enable-multibyte-characters
 	      (dolist (x (nreverse result))
-                (insert (decode-coding-string x 'binary)))
-	    (insert (apply #'concat (nreverse result))))
+                (insert (uudecode-string-to-multibyte x)))
+	    (insert (apply 'concat (nreverse result))))
 	  (delete-region (point) end))))))
 
 ;;;###autoload

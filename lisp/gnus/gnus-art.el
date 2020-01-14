@@ -761,6 +761,9 @@ Obsolete; use the face `gnus-signature' for customizations instead."
   "Face used for highlighting a signature in the article buffer."
   :group 'gnus-article-highlight
   :group 'gnus-article-signature)
+;; backward-compatibility alias
+(put 'gnus-signature-face 'face-alias 'gnus-signature)
+(put 'gnus-signature-face 'obsolete-face "22.1")
 
 (defface gnus-header-from
   '((((class color)
@@ -774,6 +777,9 @@ Obsolete; use the face `gnus-signature' for customizations instead."
   "Face used for displaying from headers."
   :group 'gnus-article-headers
   :group 'gnus-article-highlight)
+;; backward-compatibility alias
+(put 'gnus-header-from-face 'face-alias 'gnus-header-from)
+(put 'gnus-header-from-face 'obsolete-face "22.1")
 
 (defface gnus-header-subject
   '((((class color)
@@ -787,6 +793,9 @@ Obsolete; use the face `gnus-signature' for customizations instead."
   "Face used for displaying subject headers."
   :group 'gnus-article-headers
   :group 'gnus-article-highlight)
+;; backward-compatibility alias
+(put 'gnus-header-subject-face 'face-alias 'gnus-header-subject)
+(put 'gnus-header-subject-face 'obsolete-face "22.1")
 
 (defface gnus-header-newsgroups
   '((((class color)
@@ -802,6 +811,9 @@ In the default setup this face is only used for crossposted
 articles."
   :group 'gnus-article-headers
   :group 'gnus-article-highlight)
+;; backward-compatibility alias
+(put 'gnus-header-newsgroups-face 'face-alias 'gnus-header-newsgroups)
+(put 'gnus-header-newsgroups-face 'obsolete-face "22.1")
 
 (defface gnus-header-name
   '((((class color)
@@ -815,6 +827,9 @@ articles."
   "Face used for displaying header names."
   :group 'gnus-article-headers
   :group 'gnus-article-highlight)
+;; backward-compatibility alias
+(put 'gnus-header-name-face 'face-alias 'gnus-header-name)
+(put 'gnus-header-name-face 'obsolete-face "22.1")
 
 (defface gnus-header-content
   '((((class color)
@@ -827,6 +842,9 @@ articles."
      (:italic t)))  "Face used for displaying header content."
   :group 'gnus-article-headers
   :group 'gnus-article-highlight)
+;; backward-compatibility alias
+(put 'gnus-header-content-face 'face-alias 'gnus-header-content)
+(put 'gnus-header-content-face 'obsolete-face "22.1")
 
 (defcustom gnus-header-face-alist
   '(("From" nil gnus-header-from)
@@ -3618,7 +3636,8 @@ possible values."
 (defun article-lapsed-string (time &optional max-segments)
   ;; If the date is seriously mangled, the timezone functions are
   ;; liable to bug out, so we ignore all errors.
-  (let* ((real-time (time-subtract nil time))
+  (let* ((now (current-time))
+	 (real-time (time-subtract now time))
 	 (real-sec (and real-time
 			(+ (* (float (car real-time)) 65536)
 			   (cadr real-time))))
@@ -5209,7 +5228,7 @@ available media-types."
 	    (gnus-completing-read
 	     "View as MIME type"
 	     (if pred
-		 (seq-filter pred (mailcap-mime-types))
+		 (gnus-remove-if-not pred (mailcap-mime-types))
 	       (mailcap-mime-types))
 	     nil nil nil
 	     (car default)))))

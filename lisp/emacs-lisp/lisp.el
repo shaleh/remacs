@@ -339,18 +339,12 @@ is called as a function to find the defun's beginning."
 
    ((or defun-prompt-regexp open-paren-in-column-0-is-defun-start)
     (and (< arg 0) (not (eobp)) (forward-char 1))
-    (and (let (found)
-           (while
-               (and (setq found
-                          (re-search-backward
-                           (if defun-prompt-regexp
-			       (concat (if open-paren-in-column-0-is-defun-start
-					   "^\\s(\\|" "")
-				       "\\(?:" defun-prompt-regexp "\\)\\s(")
-			     "^\\s(")
-			                      nil 'move arg))
-                    (nth 8 (syntax-ppss))))
-           found)
+    (and (re-search-backward (if defun-prompt-regexp
+				 (concat (if open-paren-in-column-0-is-defun-start
+					     "^\\s(\\|" "")
+					 "\\(?:" defun-prompt-regexp "\\)\\s(")
+			       "^\\s(")
+			     nil 'move arg)
 	 (progn (goto-char (1- (match-end 0)))
                 t)))
 
@@ -408,7 +402,7 @@ is called as a function to find the defun's beginning."
   "Return non-nil if the point is in an \"emptyish\" line.
 This means a line that consists entirely of comments and/or
 whitespace."
-;; See https://lists.gnu.org/archive/html/help-gnu-emacs/2016-08/msg00141.html
+;; See https://lists.gnu.org/r/help-gnu-emacs/2016-08/msg00141.html
   (save-excursion
     (forward-line 0)
     (let ((ppss (syntax-ppss)))

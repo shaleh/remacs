@@ -191,6 +191,9 @@ Its name should end with a slash."
   :group 'rmail-retrieve
   :type '(choice (const nil) string))
 
+(define-obsolete-variable-alias 'rmail-pop-password
+  'rmail-remote-password "22.1")
+
 (defcustom rmail-remote-password nil
   "Password to use when reading mail from a remote server.
 This setting is ignored for mailboxes whose URL already contains a password."
@@ -198,6 +201,9 @@ This setting is ignored for mailboxes whose URL already contains a password."
 		 (const :tag "Not Required" nil))
   :group 'rmail-retrieve
   :version "22.1")
+
+(define-obsolete-variable-alias 'rmail-pop-password-required
+  'rmail-remote-password-required "22.1")
 
 (defcustom rmail-remote-password-required nil
   "Non-nil if a password is required when reading mail from a remote server."
@@ -272,7 +278,7 @@ Otherwise, look for `movemail' in the directories in
 	  ;; rmail-insert-inbox-text before r1.439 fell back to using
 	  ;; (expand-file-name "movemail" exec-directory) and just
 	  ;; assuming it would work.
-	  ;; https://lists.gnu.org/archive/html/bug-gnu-emacs/2008-02/msg00087.html
+	  ;; https://lists.gnu.org/r/bug-gnu-emacs/2008-02/msg00087.html
 	  (let ((progname (expand-file-name
 			   (concat "movemail"
 				   (if (memq system-type '(ms-dos windows-nt))
@@ -528,7 +534,7 @@ still the current message in the Rmail buffer.")
 ;; It's not clear what it should do now, since there is nothing that
 ;; records when a message is shown for the first time (unseen is not
 ;; necessarily the same thing).
-;; See https://lists.gnu.org/archive/html/emacs-devel/2009-03/msg00013.html
+;; See https://lists.gnu.org/r/emacs-devel/2009-03/msg00013.html
 (defcustom rmail-message-filter nil
   "If non-nil, a filter function for new messages in RMAIL.
 Called with region narrowed to the message, including headers,
@@ -1325,7 +1331,8 @@ Instead, these commands are available:
   (let ((finding-rmail-file (not (eq major-mode 'rmail-mode))))
     (rmail-mode-2)
     (when (and finding-rmail-file
-	       (null coding-system-for-read))
+	       (null coding-system-for-read)
+	       (default-value 'enable-multibyte-characters))
       (let ((rmail-enable-multibyte t))
 	(rmail-require-mime-maybe)
 	(rmail-convert-file-maybe)
@@ -1752,7 +1759,7 @@ not be a new one).  It returns non-nil if it got any new messages."
   (or (eq buffer-undo-list t)
       (setq buffer-undo-list nil))
   (let ((all-files (if file-name (list file-name) rmail-inbox-list))
-	(rmail-enable-multibyte t)
+	(rmail-enable-multibyte (default-value 'enable-multibyte-characters))
 	found)
     (unwind-protect
 	(progn
@@ -3393,15 +3400,21 @@ Interactively, empty argument means use same regexp used last time."
 
 (defun rmail-simplified-subject (&optional msgnum)
   "Return the simplified subject of message MSGNUM (or current message).
-Simplifying the subject means stripping leading and trailing
-whitespace, replacing whitespace runs with a single space and
-removing prefixes such as Re:, Fwd: and so on and mailing list
-tags such as [tag]."
-  (let ((subject (or (rmail-get-header "Subject" msgnum) ""))
-	(regexp "\\`[ \t\n]*\\(\\(\\w\\{1,3\\}:\\|\\[[^]]+]\\)[ \t\n]+\\)*"))
+Simplifying the subject means stripping leading and trailing whitespace,
+and typical reply prefixes such as Re:."
+  (let ((subject (or (rmail-get-header "Subject" msgnum) "")))
     (setq subject (rfc2047-decode-string subject))
-    (setq subject (replace-regexp-in-string regexp "" subject))
-    (replace-regexp-in-string "[ \t\n]+" " " subject)))
+    (if (string-match "\\`[ \t]+" subject)
+	(setq subject (substring subject (match-end 0))))
+    (if (string-match rmail-reply-regexp subject)
+	(setq subject (substring subject (match-end 0))))
+    (if (string-match "[ \t]+\\'" subject)
+	(setq subject (substring subject 0 (match-beginning 0))))
+    ;; If Subject is long, mailers will break it into several lines at
+    ;; arbitrary places, so normalize whitespace by replacing every
+    ;; run of whitespace characters with a single space.
+    (setq subject (replace-regexp-in-string "[ \t\n]+" " " subject))
+    subject))
 
 (defun rmail-simplified-subject-regexp ()
   "Return a regular expression matching the current simplified subject.
