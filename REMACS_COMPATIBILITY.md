@@ -1,8 +1,8 @@
 # Elisp Compatibility
 
-Remacs should generally behave identically to GNU Emacs. If you find a
-difference, please
-[file a bug](https://github.com/Wilfred/remacs/issues/new).
+Remacs should generally behave identically to GNU Emacs and is currently
+based on the Emacs 26 branch. If you find a difference, please
+[file a bug](https://github.com/remacs/remacs/issues/new).
 
 ## Detecting Remacs
 
