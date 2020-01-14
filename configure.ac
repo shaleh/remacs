@@ -23,7 +23,7 @@ dnl  along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.
 
 AC_PREREQ(2.65)
 dnl Note this is parsed by (at least) make-dist and lisp/cedet/ede/emacs.el.
-AC_INIT(GNU Emacs, 26.3.50, bug-gnu-emacs@gnu.org, , https://www.gnu.org/software/emacs/)
+AC_INIT(GNU Emacs, 26.3.50, bug-gnu-emacs@gnu.org)
 
 dnl Set emacs_config_options to the options of 'configure', quoted for the shell,
 dnl and then quoted again for a C string.  Separate options with spaces.
@@ -324,7 +324,7 @@ AC_ARG_WITH([x-toolkit],[AS_HELP_STRING([--with-x-toolkit=KIT],
 	    gtk3  )	val=gtk3 ;;
 	    * )
 AC_MSG_ERROR(['--with-x-toolkit=$withval' is invalid;
-this option's value should be 'yes', 'gtk',
+this option's value should be 'no', 'yes', 'gtk',
 'gtk2' or 'gtk3'.  'yes' and 'gtk' are synonyms.])
 	    ;;
 	  esac
@@ -350,7 +350,6 @@ OPTION_DEFAULT_ON([libsystemd],[don't compile with libsystemd support])
 OPTION_DEFAULT_OFF([cairo],[compile with Cairo drawing (experimental)])
 OPTION_DEFAULT_ON([xml2],[don't compile with XML parsing support])
 OPTION_DEFAULT_ON([imagemagick],[don't compile with ImageMagick image support])
-OPTION_DEFAULT_ON([json], [don't compile with native JSON support])
 
 OPTION_DEFAULT_ON([xft],[don't use XFT for anti aliased fonts])
 OPTION_DEFAULT_ON([libotf],[don't use libotf for OpenType font support])
@@ -900,9 +899,10 @@ AC_ARG_ENABLE([gcc-warnings],
 
 AC_ARG_ENABLE([check-lisp-object-type],
   [AS_HELP_STRING([--enable-check-lisp-object-type],
-     [Enable compile time checks for the Lisp_Object data type,
-      which can catch some bugs during development.])])
-if test "$enable_check_lisp_object_type" = yes; then
+     [Enable compile-time checks for the Lisp_Object data type,
+      which can catch some bugs during development.
+      The default is "no" if --enable-gcc-warnings is "no".])])
+if test "${enable_check_lisp_object_type-$gl_gcc_warnings}" != "no"; then
   AC_DEFINE([CHECK_LISP_OBJECT_TYPE], 1,
     [Define to enable compile-time checks for the Lisp_Object data type.])
 fi
@@ -1261,14 +1261,6 @@ case $opsys,$PAXCTL_notdumped,$emacs_uname_r in
 esac
 AC_SUBST([PAXCTL_dumped])
 AC_SUBST([PAXCTL_notdumped])
-
-# Makeinfo on macOS is ancient, check whether there is a more recent
-# version installed by Homebrew.
-AC_CHECK_PROGS(BREW, [brew])
-if test -n "$BREW"; then
-  AC_PATH_PROG([MAKEINFO], [makeinfo], [],
-    [`$BREW --prefix texinfo 2>/dev/null`/bin$PATH_SEPARATOR$PATH])
-fi
 
 ## Require makeinfo >= 4.13 (last of the 4.x series) to build the manuals.
 if test "${MAKEINFO:=makeinfo}" != "no"; then
@@ -2072,7 +2064,7 @@ if test "${HAVE_W32}" = "yes"; then
   AC_CHECK_TOOL(WINDRES, [windres],
                 [AC_MSG_ERROR([No resource compiler found.])])
   W32_OBJ="w32fns.o w32menu.o w32reg.o w32font.o w32term.o"
-  W32_OBJ="$W32_OBJ w32xfns.o w32select.o w32uniscribe.o w32cygwinx.o"
+  W32_OBJ="$W32_OBJ w32xfns.o w32select.o w32uniscribe.o"
   EMACSRES="emacs.res"
   case "$canonical" in
     x86_64-*-*) EMACS_MANIFEST="emacs-x64.manifest" ;;
@@ -2106,11 +2098,6 @@ if test "${HAVE_W32}" = "yes"; then
     NTLIB="ntlib.$ac_objext"
     XARGS_LIMIT="-s 10000"
   fi
-fi
-
-if test "${HAVE_W32}" = "no" && test "${opsys}" = "cygwin"; then
-  W32_LIBS="-lkernel32"
-  W32_OBJ="w32cygwinx.o"
 fi
 
 AC_SUBST(W32_OBJ)
@@ -2520,12 +2507,6 @@ fi
 HAVE_IMAGEMAGICK=no
 if test "${HAVE_X11}" = "yes" || test "${HAVE_NS}" = "yes" || test "${HAVE_W32}" = "yes"; then
   if test "${with_imagemagick}" != "no"; then
-    if test -n "$BREW"; then
-      # Homebrew doesn't link ImageMagick 6 by default, so make sure
-      # pkgconfig can find it.
-      export PKG_CONFIG_PATH="$PKG_CONFIG_PATH$PATH_SEPARATOR`$BREW --prefix imagemagick@6 2>/dev/null`/lib/pkgconfig"
-    fi
-
     ## 6.3.5 is the earliest version known to work; see Bug#17339.
     ## 6.8.2 makes Emacs crash; see Bug#13867.
     ## 7 and later have not been ported to; See Bug#25967.
@@ -2869,27 +2850,6 @@ fi
 AC_SUBST(LIBSYSTEMD_LIBS)
 AC_SUBST(LIBSYSTEMD_CFLAGS)
 
-HAVE_JSON=no
-JSON_OBJ=
-
-if test "${with_json}" = yes; then
-  EMACS_CHECK_MODULES([JSON], [jansson >= 2.7],
-    [HAVE_JSON=yes], [HAVE_JSON=no])
-  if test "${HAVE_JSON}" = yes; then
-    AC_DEFINE(HAVE_JSON, 1, [Define if using Jansson.])
-    JSON_OBJ=json.o
-  fi
-
-  # Windows loads libjansson dynamically
-  if test "${opsys}" = "mingw32"; then
-    JSON_LIBS=
-  fi
-fi
-
-AC_SUBST(JSON_LIBS)
-AC_SUBST(JSON_CFLAGS)
-AC_SUBST(JSON_OBJ)
-
 NOTIFY_OBJ=
 NOTIFY_SUMMARY=no
 
@@ -3176,10 +3136,6 @@ if test "${HAVE_X11}" = "yes"; then
 	    AC_DEFINE(HAVE_OTF_GET_VARIATION_GLYPHS, 1,
 		      [Define to 1 if libotf has OTF_get_variation_glyphs.])
 	  fi
-          if ! $PKG_CONFIG --atleast-version=0.9.16 libotf; then
-	    AC_DEFINE(HAVE_OTF_KANNADA_BUG, 1,
-[Define to 1 if libotf is affected by https://debbugs.gnu.org/28110.])
-	  fi
 	fi
       fi
     dnl FIXME should there be an error if HAVE_FREETYPE != yes?
@@ -3336,9 +3292,7 @@ AC_SUBST(LIBXPM)
 ### Use -ljpeg if available, unless '--with-jpeg=no'.
 HAVE_JPEG=no
 LIBJPEG=
-if test "${NS_IMPL_COCOA}" = yes; then
-  : # Cocoa provides its own jpeg support, so do nothing.
-elif test "${with_jpeg}" != "no"; then
+if test "${with_jpeg}" != "no"; then
   AC_CACHE_CHECK([for jpeglib 6b or later],
     [emacs_cv_jpeglib],
     [OLD_LIBS=$LIBS
@@ -3413,6 +3367,7 @@ if test "${HAVE_ZLIB}" = "yes"; then
      LIBZ=
   fi
 fi
+AC_SUBST(LIBZ)
 
 ### Dynamic modules support
 LIBMODULES=
@@ -3475,48 +3430,39 @@ elif test "${with_png}" != no; then
   if test "$opsys" = mingw32; then
     AC_CHECK_HEADER([png.h], [HAVE_PNG=yes])
   elif test "${HAVE_X11}" = "yes" || test "${HAVE_W32}" = "yes"; then
-    EMACS_CHECK_MODULES([PNG], [libpng >= 1.0.0])
-    if test $HAVE_PNG = yes; then
-      LIBPNG=$PNG_LIBS
-    else
-      # Test old way in case pkg-config doesn't have it (older machines).
-      AC_MSG_CHECKING([for libpng not configured by pkg-config])
-
-      png_cflags=`(libpng-config --cflags) 2>&AS_MESSAGE_LOG_FD` &&
-      png_ldflags=`(libpng-config --ldflags) 2>&AS_MESSAGE_LOG_FD` || {
-	# libpng-config does not work; configure by hand.
-	# Debian unstable as of July 2003 has multiple libpngs, and puts png.h
-	# in /usr/include/libpng.
-	if test -r /usr/include/libpng/png.h &&
-	   test ! -r /usr/include/png.h; then
-	  png_cflags=-I/usr/include/libpng
-	else
-	  png_cflags=
-	fi
-	png_ldflags='-lpng'
-      }
-      SAVE_CFLAGS=$CFLAGS
-      SAVE_LIBS=$LIBS
-      CFLAGS="$CFLAGS $png_cflags"
-      LIBS="$png_ldflags -lz -lm $LIBS"
-      AC_LINK_IFELSE(
-	[AC_LANG_PROGRAM([[#include <png.h>]],
-	   [[return !png_get_channels (0, 0);]])],
-	[HAVE_PNG=yes
-	 PNG_CFLAGS=`AS_ECHO(["$png_cflags"]) | sed -e "$edit_cflags"`
-	 LIBPNG=$png_ldflags])
-      CFLAGS=$SAVE_CFLAGS
-      LIBS=$SAVE_LIBS
-      AC_MSG_RESULT([$HAVE_PNG])
-    fi
-
-    # $LIBPNG requires explicit -lz in some cases.
-    # We don't know what those cases are, exactly, so play it safe and
-    # append -lz to any nonempty $LIBPNG, unless we're already using LIBZ.
-    case " $LIBPNG ",$LIBZ in
-      *' -lz '*, | *' ',?*) ;;
-      *) LIBPNG="$LIBPNG -lz" ;;
-    esac
+    AC_MSG_CHECKING([for png])
+    png_cflags=`(libpng-config --cflags) 2>&AS_MESSAGE_LOG_FD` &&
+    png_ldflags=`(libpng-config --ldflags) 2>&AS_MESSAGE_LOG_FD` || {
+      # libpng-config does not work; configure by hand.
+      # Debian unstable as of July 2003 has multiple libpngs, and puts png.h
+      # in /usr/include/libpng.
+      if test -r /usr/include/libpng/png.h &&
+        test ! -r /usr/include/png.h; then
+       png_cflags=-I/usr/include/libpng
+      else
+       png_cflags=
+      fi
+      png_ldflags='-lpng'
+    }
+    SAVE_CFLAGS=$CFLAGS
+    SAVE_LIBS=$LIBS
+    CFLAGS="$CFLAGS $png_cflags"
+    LIBS="$png_ldflags -lz -lm $LIBS"
+    AC_LINK_IFELSE(
+      [AC_LANG_PROGRAM([[#include <png.h>]],
+        [[return !png_get_channels (0, 0);]])],
+      [HAVE_PNG=yes
+       PNG_CFLAGS=`AS_ECHO(["$png_cflags"]) | sed -e "$edit_cflags"`
+       LIBPNG=$png_ldflags
+       # $LIBPNG requires explicit -lz in some cases.
+       # We don't know what those cases are, exactly, so play it safe and
+       # append -lz to any nonempty $LIBPNG, unless we're already using LIBZ.
+       if test -n "$LIBPNG" && test -z "$LIBZ"; then
+        LIBPNG="$LIBPNG -lz"
+       fi])
+    CFLAGS=$SAVE_CFLAGS
+    LIBS=$SAVE_LIBS
+    AC_MSG_RESULT([$HAVE_PNG])
   fi
 fi
 if test $HAVE_PNG = yes; then
@@ -3777,13 +3723,13 @@ if test "${with_xml2}" != "no"; then
 	xcsdkdir="" ;;
       esac
     fi
-    CPPFLAGS="$CPPFLAGS -isystem${xcsdkdir}/usr/include/libxml2"
+    CPPFLAGS="$CPPFLAGS -i${xcsdkdir}/usr/include/libxml2"
     AC_CHECK_HEADER(libxml/HTMLparser.h,
       [AC_CHECK_DECL(HTML_PARSE_RECOVER, HAVE_LIBXML2=yes, ,
 		     [#include <libxml/HTMLparser.h>])])
     CPPFLAGS="$SAVE_CPPFLAGS"
     if test "${HAVE_LIBXML2}" = "yes"; then
-      LIBXML2_CFLAGS="-isystem${xcsdkdir}/usr/include/libxml2"
+      LIBXML2_CFLAGS="-i${xcsdkdir}/usr/include/libxml2"
       LIBXML2_LIBS="-lxml2"
     fi
   fi
@@ -4994,8 +4940,16 @@ else
 fi
 AC_SUBST(LIBX_OTHER)
 
+HAVE_OLDXMENU=no
 if test "$HAVE_GTK" = yes || test "$HAVE_X11" != yes; then
   LIBXMENU=
+elif test "$USE_X_TOOLKIT" = none; then
+  HAVE_OLDXMENU=yes
+  LIBXMENU='$(oldXMenudir)/libXMenu11.a'
+  AUTODEPEND_PARENTS="$AUTODEPEND_PARENTS oldXMenu"
+else
+  LIBXMENU='$(lwlibdir)/liblw.a'
+  AUTODEPEND_PARENTS="$AUTODEPEND_PARENTS lwlib"
 fi
 AC_SUBST(LIBXMENU)
 
@@ -5164,7 +5118,7 @@ case "$opsys" in
    if test "$HAVE_NS" = "yes"; then
      libs_nsgui="-framework AppKit"
      if test "$NS_IMPL_COCOA" = "yes"; then
-        libs_nsgui="$libs_nsgui -framework IOKit -framework Carbon"
+        libs_nsgui="$libs_nsgui -framework IOKit"
      fi
    else
      libs_nsgui=
@@ -5306,16 +5260,16 @@ Configured for '${canonical}'.
   Should Emacs use mmap(2) for buffer allocation?         $use_mmap_for_buffers
   What window system should Emacs use?                    ${window_system}
   What toolkit should Emacs use?                          ${USE_X_TOOLKIT}
-  What libraries will lib-remacs link against?            ${RUST_DEPS}
   Where do we find X Windows header files?                ${x_includes:-$emacs_standard_dirs}
   Where do we find X Windows libraries?                   ${x_libraries:-$emacs_standard_dirs}"])
+  What libraries will lib-remacs link against?            ${RUST_DEPS}
 
 optsep=
 emacs_config_features=
 for opt in XPM JPEG TIFF GIF PNG RSVG CAIRO IMAGEMAGICK SOUND GPM DBUS \
   GCONF GSETTINGS NOTIFY ACL LIBSELINUX GNUTLS LIBXML2 FREETYPE M17N_FLT \
   LIBOTF XFT ZLIB TOOLKIT_SCROLL_BARS X_TOOLKIT OLDXMENU X11 NS MODULES \
-  XWIDGETS LIBSYSTEMD JSON CANNOT_DUMP LCMS2; do
+  XWIDGETS LIBSYSTEMD CANNOT_DUMP LCMS2; do
 
     case $opt in
       CANNOT_DUMP) eval val=\${$opt} ;;
@@ -5365,7 +5319,6 @@ AS_ECHO(["  Does Emacs use -lXpm?                                   ${HAVE_XPM}
   Does Emacs use -lotf?                                   ${HAVE_LIBOTF}
   Does Emacs use -lxft?                                   ${HAVE_XFT}
   Does Emacs use -lsystemd?                               ${HAVE_LIBSYSTEMD}
-  Does Emacs use -ljansson?                               ${HAVE_JSON}
   Does Emacs directly use zlib?                           ${HAVE_ZLIB}
   Does Emacs have dynamic modules support?                ${HAVE_MODULES}
   Does Emacs support Xwidgets (requires gtk3)?            ${HAVE_XWIDGETS}
