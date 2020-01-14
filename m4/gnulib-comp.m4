@@ -305,13 +305,6 @@ AC_DEFUN([gl_INIT],
   fi
   gl_STRING_MODULE_INDICATOR([memrchr])
   gl_MINMAX
-  gl_FUNC_MKOSTEMP
-  if test $HAVE_MKOSTEMP = 0; then
-    AC_LIBOBJ([mkostemp])
-    gl_PREREQ_MKOSTEMP
-  fi
-  gl_MODULE_INDICATOR([mkostemp])
-  gl_STDLIB_MODULE_INDICATOR([mkostemp])
   gl_FUNC_MKTIME
   if test $REPLACE_MKTIME = 1; then
     AC_LIBOBJ([mktime])
