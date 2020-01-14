@@ -1325,6 +1325,10 @@ free_realized_fontsets (Lisp_Object base)
       if (CHAR_TABLE_P (this) && EQ (FONTSET_BASE (this), base))
 	{
 	  Fclear_face_cache (Qt);
+	  /* This is in case some Lisp calls this function and then
+	     proceeds with calling some other function, like font-at,
+	     which needs the basic faces.  */
+	  recompute_basic_faces (XFRAME (FONTSET_FRAME (this)));
 	  break;
 	}
     }
@@ -1502,7 +1506,7 @@ appended.  By default, FONT-SPEC overrides the previous settings.  */)
   else if (FONT_SPEC_P (font_spec))
     fontname = Ffont_xlfd_name (font_spec, Qnil);
   else if (! NILP (font_spec))
-    xsignal2 (Qfont, build_string ("Invalid font-spec"), font_spec);
+    Fsignal (Qfont, list2 (build_string ("Invalid font-spec"), font_spec));
 
   if (! NILP (font_spec))
     {

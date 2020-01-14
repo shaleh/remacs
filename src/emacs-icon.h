@@ -23,7 +23,7 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 
 /* Note that the GTK port uses gdk to display the icon, so Emacs need
    not have XPM support compiled in.  */
-#if defined (USE_GTK)
+#if (defined (HAVE_XPM) && defined (HAVE_X_WINDOWS)) || defined (USE_GTK)
 static const char * gnu_xpm_bits[] = {
 /* width height ncolors chars_per_pixel */
 "32 32 255 2",
@@ -284,39 +284,39 @@ static const char * gnu_xpm_bits[] = {
 "E+ c #FCFFFB",
 "F+ c #FEFFFC",
 /* pixels */
-"OPOPOPOPOPOPOPOPOPOPOPOPNHNHGCGCGCJGGCGCOPOPOPOPOPOPOPOPOPOPOPOP",
-"OPOPOPOPOPOPOPOPOPMAMANHMADHOFAJKOAJOFDHJGJGGCOPOPOPOPOPOPOPOPOP",
-"OPOPOPOPOPOPOPMAMAMAMAHIILAFJHCJEHLMIGHKGHLDFDFDNHOPOPOPOPOPOPOP",
-"OPOPOPOPOPOPDHFGOIHIILIDCJOAECKAGJHHMCMCMFJOCKGHFPFDOPOPOPOPOPOP",
-"OPOPOPOPOPDHFGBAOHJFMDKFLAIHBGJCGDFELELFJKPIELFJMBAJFDOPOPOPOPOP",
-"OPOPOPOPBAHIHIDCDEJHLANDHOPCLNNBGDMFLOHHGDAGMNKMAADGFDNHOPOPOPOP",
-"OPOPOPBABAHIDCJFKHKAIMKJKJDDKEFCKKBMDGPEDOHDEDCDLIDBCKCHMAOPOPOP",
-"OPOPBAHIHIOHEILHCJNBGPIJMOABJBADEJEJKPJPKMADDBIAJBDBKACHDHMAOPOP",
-"OPOPHIHIPHDCJFCJCKCFIBIAMPDDKGNKIBIBPGMELJJILIDBDBNEEIFGFGMAOPOP",
-"OPHIHIPHPHAIAFKFKAGJAGKGKJIALEBDHOPCBDEBLNEBNAPONDAFDCMHBAGLCBOP",
-"OPHIPHCICIILDNGAKAJOJCEOJIJBIONALPKDBDNDKLCFCKIGJDDIOBINOMHAMMAC",
-"HIPHCIOHDCILAFKFNCBGKLMCMBNIPIIFFENBNDGDJCEFOANFGKGEILLCOEGGMLKB",
-"PHCIOHDCDCOBDEIGLAIHBGLOJCKDEPALKGIIPACFIHBJNFMGJDEGPKOEHGACAOHA",
-"PHOHDCNPNPOBOBMIMDNCMCBDDJEBLNGNLJGINENCIGODHBIDGKCLBNHGGBGGOEOM",
-"PHOHDCNPNPAMMDKDPFIFPJKIKIHPOKLBLBOKKGLBCFGKKHDNJEHAGGFANNAHOMHI",
-"CIDCNPNPFGFMNGDBLIGIPBFJKGDDABIAGIKEJJAEIKPCDNJEJLGGFACEICINAJBA",
-"OHDCNPAMJCALDBEKGPJIDDLIPJEDIIFEHDNALPNDNBKLCPGMAOPDCEFHBBOMHIHI",
-"OHNPAIBBPELIBEABIAJBIAIIIHODNFNFNFNFHBKHAFJEBLCNFACMJACBLCCIPHHI",
-"DCDCAIAMPCDDJKKIDDLIDJGEHBPLBJOALALABJKFKFJDMKPDNNFBEMLCDCOHPHHI",
-"DCNPNPDCPMPFIJLJJJHJCGJDKFLAECEENCNCEEECBFDKNLPNJACODPNPDCOHPHOP",
-"OPNPAIILPHDNNENIIKPBIOHEKFGANCGJGJGJGJDMBOFFAKJADFCLOBNPDCOHPHOP",
-"OPNPAIEADIKCEINMMEBEGIKEEDOOLOKAKAIHHFOJCCCCJADKAPJFAINPDCOHPHOP",
-"OPOPNPILILFIILOIKFIIOKKJHCLIKELFHLMBOLLGFOJADAGOEHIDILNPDCOHOPOP",
-"OPOPNPOBILDIFIGEJFMDGDLEIFHJCDKNAAONLGCCFHAKJCGAPLLHEANPDCOHOPOP",
-"OPOPOPOBILDIEIGEMDLAKABGNBHDIENOPGCCAOFHMMIPMPPELAGENPNPDCOPOPOP",
-"OPOPOPAIOBBIDIGEEHBGNBBDNANAHDJNJMHNFBLGMJFNENAANMAMNPDCOPOPOPOP",
-"OPOPOPOPOBILBIILNFLOHDANPFLBOCLKFBFHFFNJKIBHBKOGJFDCNPOPOPOPOPOP",
-"OPOPOPOPOPILILBIILGEHBOAGJMCHMHGFHAHLLDLKAPLBIAMNPNPOPOPOPOPOPOP",
-"OPOPOPOPOPOPOPILBIBIFIDEFKBFDAJAAHGFBFIDJFOBFLOBAIOPOPOPOPOPOPOP",
-"OPOPOPOPOPOPOPOPILILBIILPKCBJAAHJFBPILILOBOBAIOPOPOPOPOPOPOPOPOP",
-"OPOPOPOPOPOPOPOPOPOPILMIGECABCPKGHAIILOBOBOPOPOPOPOPOPOPOPOPOPOP",
-"OPOPOPOPOPOPOPOPOPOPOPOPOPCAOPOPOPOPOPOPOPOPOPOPOPOPOPOPOPOPOPOP"};
-#endif /* defined (USE_GTK) */
+"                                                                ",
+"                        g d l p p i b c                         ",
+"                  8 n S d.G.J.G.E.B.z.<.C b |                   ",
+"              3 m !.J.J.J.J.G.B.A.z.y.v.t.o.O 4                 ",
+"            8 E B.J.J.J.J.E.B.A.z.y.v.t.r.o.n.a.o :             ",
+"          0 ..J.J.J.J.G.E.B.A.A.X.]+6+g+|+N.j.i.e.x <           ",
+"        b Y J.J.J.J.G.B.A.A. +:+1+1+8+A+F+t+x.e.0.0.u ^         ",
+"      1 C J.J.J.J.E.B.A.z.y.v.r.r.x.`.s+F+F+++0.0.0.3.a         ",
+"      h A.J.J.G.E.I. +~+(+}+6+h+w+F+F+F+F+F+U.0.0.4.2.>.(       ",
+"    9 -.J.J.J.B.E.j+F+F+F+F+F+F+A+u+k+c+5+Z.0.4.2.|.1.:.t -     ",
+"    j D.J.E.B.A.I.x+F+F+F+h+-+U.p.g.e.0.0.0.4.2.|.[.:._.;./     ",
+"    H G.E.B.A.y.w.$+B+F+F+T.j.i.g.0.0.0.0.4.2.1.[._._.~.).7     ",
+"  b 5.B.A.z.y.v.t.r..+v+F+q+#+g.0.0.0.4.2.|.1.:._.~.~.).'.y *   ",
+"  e z.A.z.y.v.r.r.o.k.C.<+z+F+i+#+0.4.2.1.[._._.~.).).=.=.R )   ",
+"  e z.y.v.t.r.q.n.k.i.i.e.F.(+o+F+n+&+8.:._.~.~.).'.=.*.#. .]   ",
+"  i y.v.t.r.o.n.j.i.K.*+|+f+f+n+B+F+F+l+P.~.).).=.=.*.#.+.Z !   ",
+"  i t.r.q.o.k.j.R.5+A+F+F+F+F+z+7+)+Q.}.~.).'.=.*.#.@.+.Z Z !   ",
+"  b r.q.n.k.i.!+A+F+F+F+F+i+%+h.:._.~.~.).'.=.*.#.+.+.Z W W '   ",
+"  6 l.n.j.i.++F+F+F+F+F+{+8.[.:._.~.).).=.=.*.#.+.Z Z W X I >   ",
+"  3 {.j.i.g.2+F+F+F+F+<+1.[._._.~.).'.=.*.#.@.+.Z Z W V V s #   ",
+"    z i.e.0.%+F+F+F+F+(+:._.~.~.).'.=.*.#.+.+.Z W X V V T _     ",
+"    2 0.0.0.0.^+F+F+F+F+f+>+S.u.6.=.*.&.+.Z Z W X V U T K =     ",
+"    < S 0.0.4.2.O.3+z+F+F+F+F+F+F+F+F+y+v+p+9+,+,.T T N f +     ",
+"      5 |.2.|.1.:._.8.Y._+0+i+m+h+0+0+b+F+F+F+r+9.Q P F &       ",
+"      ^ w |.[.:._.~.).).=.=.#.@.%.H.'+i+F+m+;+(.Q N G _         ",
+"        ( D _._.~.).'.=.].M.=+4+t+e+[+@+m.T T P P G f @         ",
+"          ( D ).).=.=.s.W.V.L.f.$.X V V T Q P P G k %           ",
+"            ^ r =.*.#.@.+.Z Z W X V T Q Q N G G } $             ",
+"              ! ( B @.+.Z W X V V T T P N G q = +               ",
+"                  ) : v L X V V T Q N A k ; $                   ",
+"                      # ' , ( [ | { = = .                       ",
+"                                                                "};
+#endif /* (defined (HAVE_XPM) && defined (HAVE_X_WINDOWS)) || defined (USE_GTK) */
 
 #define gnu_xbm_width 50
 #define gnu_xbm_height 50

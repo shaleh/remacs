@@ -83,6 +83,10 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 #include <sys/systeminfo.h>
 #endif
 
+#ifdef MSDOS	/* Demacs 1.1.2 91/10/20 Manabu Higashida, MW Aug 1993 */
+#include "msdos.h"
+#endif
+
 #include <sys/param.h>
 #include <sys/file.h>
 #include <fcntl.h>
@@ -336,6 +340,10 @@ discard_tty_input (void)
   if (noninteractive)
     return;
 
+#ifdef MSDOS    /* Demacs 1.1.1 91/10/16 HIRANO Satoshi */
+  while (dos_keyread () != -1)
+    ;
+#else /* not MSDOS */
   {
     struct tty_display_info *tty;
     for (tty = tty_list; tty; tty = tty->next)
@@ -347,6 +355,7 @@ discard_tty_input (void)
           }
       }
   }
+#endif /* not MSDOS */
 #endif /* not WINDOWSNT */
 }
 
@@ -403,6 +412,8 @@ init_baud_rate (int fd)
 }
 
 
+
+#ifndef MSDOS
 
 /* Wait for the subprocess with process id CHILD to terminate or change status.
    CHILD must be a child process that has not been reaped.
@@ -497,7 +508,7 @@ child_setup_tty (int out)
   s.main.c_oflag |= OPOST;	/* Enable output postprocessing */
   s.main.c_oflag &= ~ONLCR;	/* Disable map of NL to CR-NL on output */
 #ifdef NLDLY
-  /* https://lists.gnu.org/archive/html/emacs-devel/2008-05/msg00406.html
+  /* https://lists.gnu.org/r/emacs-devel/2008-05/msg00406.html
      Some versions of GNU Hurd do not have FFDLY?  */
 #ifdef FFDLY
   s.main.c_oflag &= ~(NLDLY|CRDLY|TABDLY|BSDLY|VTDLY|FFDLY);
@@ -574,6 +585,7 @@ child_setup_tty (int out)
   emacs_set_tty (out, &s, 0);
 #endif /* not WINDOWSNT */
 }
+#endif	/* not MSDOS */
 
 
 /* Record a signal code and the action for it.  */
@@ -583,9 +595,7 @@ struct save_signal
   struct sigaction action;
 };
 
-#ifdef DOS_NT
 static void save_signal_handlers (struct save_signal *);
-#endif
 static void restore_signal_handlers (struct save_signal *);
 
 /* Suspend the Emacs process; give terminal to its superior.  */
@@ -610,8 +620,14 @@ void
 sys_subshell (void)
 {
 #ifdef DOS_NT	/* Demacs 1.1.2 91/10/20 Manabu Higashida */
+#ifdef MSDOS
   int st;
+  char oldwd[MAXPATHLEN+1]; /* Fixed length is safe on MSDOS.  */
+#else
   char oldwd[MAX_UTF8_PATH];
+#endif	/* MSDOS */
+#else	/* !DOS_NT */
+  int status;
 #endif
   pid_t pid;
   struct save_signal saved_handlers[5];
@@ -667,6 +683,23 @@ sys_subshell (void)
 #endif
 	}
 
+#ifdef MSDOS    /* Demacs 1.1.2 91/10/20 Manabu Higashida */
+      {
+	char *epwd = getenv ("PWD");
+	char old_pwd[MAXPATHLEN+1+4];
+
+	/* If PWD is set, pass it with corrected value.  */
+	if (epwd)
+	  {
+	    strcpy (old_pwd, epwd);
+	    setenv ("PWD", str, 1);
+	  }
+	st = system (sh);
+	chdir (oldwd);	/* FIXME: Do the right thing on chdir failure.  */
+	if (epwd)
+	  putenv (old_pwd);	/* restore previous value */
+      }
+#else /* not MSDOS */
 #ifdef  WINDOWSNT
       /* Waits for process completion */
       pid = _spawnlp (_P_WAIT, sh, sh, NULL);
@@ -678,7 +711,13 @@ sys_subshell (void)
       emacs_perror (sh);
       _exit (errno == ENOENT ? EXIT_ENOENT : EXIT_CANNOT_INVOKE);
 #endif  /* not WINDOWSNT */
+#endif /* not MSDOS */
     }
+
+  /* Do this now if we did not do it before.  */
+#ifndef MSDOS
+  save_signal_handlers (saved_handlers);
+#endif
 
 #ifndef DOS_NT
   wait_for_termination (pid, &status, 0);
@@ -686,7 +725,6 @@ sys_subshell (void)
   restore_signal_handlers (saved_handlers);
 }
 
-#ifdef DOS_NT
 static void
 save_signal_handlers (struct save_signal *saved_handlers)
 {
@@ -698,7 +736,6 @@ save_signal_handlers (struct save_signal *saved_handlers)
       saved_handlers++;
     }
 }
-#endif
 
 static void
 restore_signal_handlers (struct save_signal *saved_handlers)
@@ -773,6 +810,7 @@ unrequest_sigio (void)
 #endif
 }
 
+#ifndef MSDOS
 /* Block SIGCHLD.  */
 
 void
@@ -789,6 +827,25 @@ block_child_signal (sigset_t *oldset)
 
 void
 unblock_child_signal (sigset_t const *oldset)
+{
+  pthread_sigmask (SIG_SETMASK, oldset, 0);
+}
+
+#endif	/* !MSDOS */
+
+/* Block SIGINT.  */
+void
+block_interrupt_signal (sigset_t *oldset)
+{
+  sigset_t blocked;
+  sigemptyset (&blocked);
+  sigaddset (&blocked, SIGINT);
+  pthread_sigmask (SIG_BLOCK, &blocked, oldset);
+}
+
+/* Restore previously saved signal mask.  */
+void
+restore_signal_mask (sigset_t const *oldset)
 {
   pthread_sigmask (SIG_SETMASK, oldset, 0);
 }
@@ -1172,6 +1229,12 @@ init_sys_modes (struct tty_display_info *tty_out)
 #endif
 #endif /* not DOS_NT */
 
+#ifdef MSDOS	/* Demacs 1.1.2 91/10/20 Manabu Higashida, MW Aug 1993 */
+  if (!tty_out->term_initted)
+    internal_terminal_init ();
+  dos_ttraw (tty_out);
+#endif
+
   emacs_set_tty (fileno (tty_out->input), &tty, 0);
 
   /* This code added to insure that, if flow-control is not to be used,
@@ -1244,7 +1307,8 @@ init_sys_modes (struct tty_display_info *tty_out)
       frame_garbaged = 1;
       FOR_EACH_FRAME (tail, frame)
         {
-            if (FRAME_TERMCAP_P (XFRAME (frame))
+          if ((FRAME_TERMCAP_P (XFRAME (frame))
+	       || FRAME_MSDOS_P (XFRAME (frame)))
               && FRAME_TTY (XFRAME (frame)) == tty_out)
             FRAME_GARBAGED_P (XFRAME (frame)) = 1;
         }
@@ -1334,6 +1398,11 @@ get_tty_size (int fd, int *widthp, int *heightp)
     }
   else
     *widthp = *heightp = 0;
+
+#elif defined MSDOS
+
+  *widthp = ScreenCols ();
+  *heightp = ScreenRows ();
 
 #else /* system doesn't know size */
 
@@ -1447,6 +1516,10 @@ reset_sys_modes (struct tty_display_info *tty_out)
     while (emacs_set_tty (fileno (tty_out->input),
                           tty_out->old_tty, 0) < 0 && errno == EINTR)
       ;
+
+#ifdef MSDOS	/* Demacs 1.1.2 91/10/20 Manabu Higashida */
+  dos_ttcooked ();
+#endif
 
   widen_foreground_group (fileno (tty_out->input));
 }
@@ -1598,7 +1671,7 @@ emacs_sigaction_init (struct sigaction *action, signal_handler_t handler)
 }
 
 #ifdef FORWARD_SIGNAL_TO_MAIN_THREAD
-static pthread_t main_thread_id;
+pthread_t main_thread_id;
 #endif
 
 /* SIG has arrived at the current process.  Deliver it to the main
@@ -2029,7 +2102,7 @@ init_signals (bool dumping)
   thread_fatal_action.sa_flags = process_fatal_action.sa_flags;
 
   /* SIGINT may need special treatment on MS-Windows.  See
-     https://lists.gnu.org/archive/html/emacs-devel/2010-09/msg01062.html
+     https://lists.gnu.org/r/emacs-devel/2010-09/msg01062.html
      Please update the doc of kill-emacs, kill-emacs-hook, and
      NEWS if you change this.  */
 
@@ -2408,13 +2481,11 @@ emacs_fopen (char const *file, char const *mode)
 int
 emacs_pipe (int fd[2])
 {
-  int result = pipe2 (fd, O_BINARY | O_CLOEXEC);
-  if (! O_CLOEXEC && result == 0)
-    {
-      fcntl (fd[0], F_SETFD, FD_CLOEXEC);
-      fcntl (fd[1], F_SETFD, FD_CLOEXEC);
-    }
-  return result;
+#ifdef MSDOS
+  return pipe (fd);
+#else  /* !MSDOS */
+  return pipe2 (fd, O_BINARY | O_CLOEXEC);
+#endif	/* !MSDOS */
 }
 
 /* Approximate posix_close and POSIX_CLOSE_RESTART well enough for Emacs.
@@ -2483,22 +2554,6 @@ emacs_close (int fd)
 #define MAX_RW_COUNT (INT_MAX >> 18 << 18)
 #endif
 
-/* Verify that MAX_RW_COUNT fits in the relevant standard types.  */
-#ifndef SSIZE_MAX
-# define SSIZE_MAX TYPE_MAXIMUM (ssize_t)
-#endif
-verify (MAX_RW_COUNT <= PTRDIFF_MAX);
-verify (MAX_RW_COUNT <= SIZE_MAX);
-verify (MAX_RW_COUNT <= SSIZE_MAX);
-
-#ifdef WINDOWSNT
-/* Verify that Emacs read requests cannot cause trouble, even in
-   64-bit builds.  The last argument of 'read' is 'unsigned int', and
-   the return value's type (see 'sys_read') is 'int'.  */
-verify (MAX_RW_COUNT <= INT_MAX);
-verify (MAX_RW_COUNT <= UINT_MAX);
-#endif
-
 /* Read from FD to a buffer BUF with size NBYTE.
    If interrupted, process any quits and pending signals immediately
    if INTERRUPTIBLE, and then retry the read unless quitting.
@@ -2507,11 +2562,10 @@ verify (MAX_RW_COUNT <= UINT_MAX);
 static ptrdiff_t
 emacs_intr_read (int fd, void *buf, ptrdiff_t nbyte, bool interruptible)
 {
-  /* No caller should ever pass a too-large size to emacs_read.  */
-  eassert (nbyte <= MAX_RW_COUNT);
-
   ssize_t result;
 
+  /* There is no need to check against MAX_RW_COUNT, since no caller ever
+     passes a size that large to emacs_read.  */
   do
     {
       if (interruptible)
@@ -2985,8 +3039,9 @@ list_system_processes (void)
   return  proclist;
 }
 
-/* The WINDOWSNT implementation is in w32.c. */
-#elif !defined (WINDOWSNT)
+/* The WINDOWSNT implementation is in w32.c.
+   The MSDOS implementation is in dosfns.c.  */
+#elif !defined (WINDOWSNT) && !defined (MSDOS)
 
 Lisp_Object
 list_system_processes (void)
@@ -3704,8 +3759,144 @@ system_process_attributes (Lisp_Object pid)
   return attrs;
 }
 
-/* The WINDOWSNT implementation is in w32.c. */
-#elif !defined (WINDOWSNT)
+#elif defined DARWIN_OS
+
+static struct timespec
+timeval_to_timespec (struct timeval t)
+{
+  return make_timespec (t.tv_sec, t.tv_usec * 1000);
+}
+
+static Lisp_Object
+make_lisp_timeval (struct timeval t)
+{
+  return make_lisp_time (timeval_to_timespec (t));
+}
+
+Lisp_Object
+system_process_attributes (Lisp_Object pid)
+{
+  int proc_id;
+  struct passwd *pw;
+  struct group  *gr;
+  char *ttyname;
+  struct timeval starttime;
+  struct timespec t, now;
+  struct rusage *rusage;
+  dev_t tdev;
+  uid_t uid;
+  gid_t gid;
+
+  int mib[4] = {CTL_KERN, KERN_PROC, KERN_PROC_PID};
+  struct kinfo_proc proc;
+  size_t proclen = sizeof proc;
+
+  Lisp_Object attrs = Qnil;
+  Lisp_Object decoded_comm;
+
+  CHECK_NUMBER_OR_FLOAT (pid);
+  CONS_TO_INTEGER (pid, int, proc_id);
+  mib[3] = proc_id;
+
+  if (sysctl (mib, 4, &proc, &proclen, NULL, 0) != 0 || proclen == 0)
+    return attrs;
+
+  uid = proc.kp_eproc.e_ucred.cr_uid;
+  attrs = Fcons (Fcons (Qeuid, make_fixnum_or_float (uid)), attrs);
+
+  block_input ();
+  pw = getpwuid (uid);
+  unblock_input ();
+  if (pw)
+    attrs = Fcons (Fcons (Quser, build_string (pw->pw_name)), attrs);
+
+  gid = proc.kp_eproc.e_pcred.p_svgid;
+  attrs = Fcons (Fcons (Qegid, make_fixnum_or_float (gid)), attrs);
+
+  block_input ();
+  gr = getgrgid (gid);
+  unblock_input ();
+  if (gr)
+    attrs = Fcons (Fcons (Qgroup, build_string (gr->gr_name)), attrs);
+
+  decoded_comm = (code_convert_string_norecord
+		  (build_unibyte_string (proc.kp_proc.p_comm),
+		   Vlocale_coding_system, 0));
+
+  attrs = Fcons (Fcons (Qcomm, decoded_comm), attrs);
+  {
+    char state[2] = {'\0', '\0'};
+    switch (proc.kp_proc.p_stat)
+      {
+      case SRUN:
+	state[0] = 'R';
+	break;
+
+      case SSLEEP:
+	state[0] = 'S';
+	break;
+
+      case SZOMB:
+	state[0] = 'Z';
+	break;
+
+      case SSTOP:
+	state[0] = 'T';
+	break;
+
+      case SIDL:
+	state[0] = 'I';
+	break;
+      }
+    attrs = Fcons (Fcons (Qstate, build_string (state)), attrs);
+  }
+
+  attrs = Fcons (Fcons (Qppid, make_fixnum_or_float (proc.kp_eproc.e_ppid)),
+		 attrs);
+  attrs = Fcons (Fcons (Qpgrp, make_fixnum_or_float (proc.kp_eproc.e_pgid)),
+		 attrs);
+
+  tdev = proc.kp_eproc.e_tdev;
+  block_input ();
+  ttyname = tdev == NODEV ? NULL : devname (tdev, S_IFCHR);
+  unblock_input ();
+  if (ttyname)
+    attrs = Fcons (Fcons (Qtty, build_string (ttyname)), attrs);
+
+  attrs = Fcons (Fcons (Qtpgid,   make_fixnum_or_float (proc.kp_eproc.e_tpgid)),
+		 attrs);
+
+  rusage = proc.kp_proc.p_ru;
+  if (rusage)
+    {
+      attrs = Fcons (Fcons (Qminflt,  make_fixnum_or_float (rusage->ru_minflt)),
+		     attrs);
+      attrs = Fcons (Fcons (Qmajflt,  make_fixnum_or_float (rusage->ru_majflt)),
+		     attrs);
+
+      attrs = Fcons (Fcons (Qutime, make_lisp_timeval (rusage->ru_utime)),
+		     attrs);
+      attrs = Fcons (Fcons (Qstime, make_lisp_timeval (rusage->ru_stime)),
+		     attrs);
+      t = timespec_add (timeval_to_timespec (rusage->ru_utime),
+			timeval_to_timespec (rusage->ru_stime));
+      attrs = Fcons (Fcons (Qtime, make_lisp_time (t)), attrs);
+    }
+
+  starttime = proc.kp_proc.p_starttime;
+  attrs = Fcons (Fcons (Qnice,  make_number (proc.kp_proc.p_nice)), attrs);
+  attrs = Fcons (Fcons (Qstart, make_lisp_timeval (starttime)), attrs);
+
+  now = current_timespec ();
+  t = timespec_sub (now, timeval_to_timespec (starttime));
+  attrs = Fcons (Fcons (Qetime, make_lisp_time (t)), attrs);
+
+  return attrs;
+}
+
+/* The WINDOWSNT implementation is in w32.c.
+   The MSDOS implementation is in dosfns.c.  */
+#elif !defined (WINDOWSNT) && !defined (MSDOS)
 
 Lisp_Object
 system_process_attributes (Lisp_Object pid)

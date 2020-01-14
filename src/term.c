@@ -44,6 +44,15 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 #include "keymap.h"
 #include "blockinput.h"
 #include "syssignal.h"
+#include "sysstdio.h"
+#ifdef MSDOS
+#include "msdos.h"
+static int been_here = -1;
+#endif
+
+#ifdef USE_X_TOOLKIT
+#include "../lwlib/lwlib.h"
+#endif
 
 #include "cm.h"
 #include "menu.h"
@@ -113,8 +122,7 @@ enum no_color_bit
 
 static int max_frame_cols;
 
-
-
+
 
 #ifdef HAVE_GPM
 #include <sys/fcntl.h>
@@ -268,8 +276,7 @@ tty_set_scroll_region (struct frame *f, int start, int stop)
   losecursor (tty);
 }
 
-
-
+
 static void
 tty_turn_on_insert (struct tty_display_info *tty)
 {
@@ -285,8 +292,7 @@ tty_turn_off_insert (struct tty_display_info *tty)
     OUTPUT (tty, tty->TS_end_insert_mode);
   tty->insert_mode = 0;
 }
-
-
+
 /* Handle highlighting.  */
 
 static void
@@ -374,8 +380,7 @@ tty_highlight_if_desired (struct tty_display_info *tty)
   else
     tty_turn_off_highlight (tty);
 }
-
-
+
 
 /* Move cursor to row/column position VPOS/HPOS.  HPOS/VPOS are
    frame-relative coordinates.  */
@@ -416,8 +421,7 @@ tty_raw_cursor_to (struct frame *f, int row, int col)
     tty_turn_off_insert (tty);
   cmgoto (tty, row, col);
 }
-
-
+
 /* Erase operations */
 
 /* Clear from cursor to end of frame on a termcap device. */
@@ -504,8 +508,7 @@ tty_clear_end_of_line (struct frame *f, int first_unused_hpos)
       cmplus (tty, first_unused_hpos - curX (tty));
     }
 }
-
-
+
 /* Buffers to store the source and result of code conversion for terminal.  */
 static unsigned char *encode_terminal_src;
 static unsigned char *encode_terminal_dst;
@@ -971,8 +974,7 @@ tty_delete_glyphs (struct frame *f, int n)
   if (!tty->delete_in_insert_mode)
     OUTPUT_IF (tty, tty->TS_end_delete_mode);
 }
-
-
+
 /* An implementation of ins_del_lines for termcap frames. */
 
 static void
@@ -1039,8 +1041,7 @@ tty_ins_del_lines (struct frame *f, int vpos, int n)
       clear_to_end (f);
     }
 }
-
-
+
 /* Compute cost of sending "str", in characters,
    not counting any line-dependent padding.  */
 
@@ -1208,8 +1209,7 @@ calculate_costs (struct frame *frame)
       cmcostinit (FRAME_TTY (frame)); /* set up cursor motion costs */
     }
 }
-
-
+
 struct fkey_table {
   const char *cap, *name;
 };
@@ -1444,8 +1444,7 @@ term_get_fkeys_1 (void)
 }
 #endif /* not DOS_NT */
 
-
-
+
 /***********************************************************************
 		       Character Display Information
  ***********************************************************************/
@@ -1592,13 +1591,13 @@ produce_glyphs (struct it *it)
 			+ it->continuation_lines_width);
       int x0 = absolute_x;
       /* Adjust for line numbers.  */
-      if (!NILP (Vdisplay_line_numbers))
+      if (!NILP (Vdisplay_line_numbers) && it->line_number_produced_p)
 	absolute_x -= it->lnum_pixel_width;
       int next_tab_x
 	= (((1 + absolute_x + it->tab_width - 1)
 	    / it->tab_width)
 	   * it->tab_width);
-      if (!NILP (Vdisplay_line_numbers))
+      if (!NILP (Vdisplay_line_numbers) && it->line_number_produced_p)
 	next_tab_x += it->lnum_pixel_width;
       int nspaces;
 
@@ -1886,8 +1885,7 @@ produce_glyphless_glyph (struct it *it, Lisp_Object acronym)
     append_glyphless_glyph (it, face_id, str);
 }
 
-
-
+
 /***********************************************************************
 				Faces
  ***********************************************************************/
@@ -2059,7 +2057,7 @@ TERMINAL does not refer to a text terminal.  */)
 
 /* Declare here rather than in the function, as in the rest of Emacs,
    to work around an HPUX compiler bug (?). See
-   https://lists.gnu.org/archive/html/emacs-devel/2007-08/msg00410.html  */
+   https://lists.gnu.org/r/emacs-devel/2007-08/msg00410.html  */
 static int default_max_colors;
 static int default_no_color_video;
 static char *default_orig_pair;
@@ -2222,8 +2220,7 @@ top-most frame on the text terminal.  */)
   return Qnil;
 }
 
-
-
+
 
 DEFUN ("suspend-tty", Fsuspend_tty, Ssuspend_tty, 0, 1, 0,
        doc: /* Suspend the terminal device TTY.
@@ -2265,6 +2262,12 @@ A suspended tty may be resumed by calling `resume-tty' on it.  */)
 
       reset_sys_modes (t->display_info.tty);
       delete_keyboard_wait_descriptor (fileno (f));
+
+#ifndef MSDOS
+      fclose (f);
+      if (f != t->display_info.tty->output)
+        fclose (t->display_info.tty->output);
+#endif
 
       t->display_info.tty->input = 0;
       t->display_info.tty->output = 0;
@@ -2310,6 +2313,10 @@ frame's terminal). */)
       if (get_named_terminal (t->display_info.tty->name))
         error ("Cannot resume display while another display is active on the same device");
 
+#ifdef MSDOS
+      t->display_info.tty->output = stdout;
+      t->display_info.tty->input  = stdin;
+#else  /* !MSDOS */
       fd = emacs_open (t->display_info.tty->name, O_RDWR | O_NOCTTY, 0);
       t->display_info.tty->input = t->display_info.tty->output
 	= fd < 0 ? 0 : fdopen (fd, "w+");
@@ -2325,6 +2332,7 @@ frame's terminal). */)
 
       if (!O_IGNORE_CTTY && strcmp (t->display_info.tty->name, DEV_TTY) != 0)
         dissociate_if_controlling_tty (fd);
+#endif
 
       add_keyboard_wait_descriptor (fd);
 
@@ -2358,8 +2366,7 @@ frame's terminal). */)
   return Qnil;
 }
 
-
-
+
 /***********************************************************************
 			       Mouse
  ***********************************************************************/
@@ -2666,11 +2673,12 @@ DEFUN ("gpm-mouse-stop", Fgpm_mouse_stop, Sgpm_mouse_stop,
 }
 #endif /* HAVE_GPM */
 
-
-
+
 /***********************************************************************
 			       Menus
  ***********************************************************************/
+
+#if !defined (MSDOS)
 
 /* TTY menu implementation and main ideas are borrowed from msdos.c.
 
@@ -3767,8 +3775,10 @@ tty_menu_show (struct frame *f, int x, int y, int menuflags,
   return entry;
 }
 
+#endif	/* !MSDOS */
 
-
+
+#ifndef MSDOS
 /***********************************************************************
 			    Initialization
  ***********************************************************************/
@@ -3798,8 +3808,18 @@ tty_free_frame_resources (struct frame *f)
   xfree (f->output_data.tty);
 }
 
+#else  /* MSDOS */
 
+/* Delete frame F's face cache.  */
 
+static void
+tty_free_frame_resources (struct frame *f)
+{
+  eassert (FRAME_TERMCAP_P (f) || FRAME_MSDOS_P (f));
+  free_frame_faces (f);
+}
+#endif	/* MSDOS */
+
 /* Reset the hooks in TERMINAL.  */
 
 static void
@@ -3858,7 +3878,11 @@ set_tty_hooks (struct terminal *terminal)
   terminal->reset_terminal_modes_hook = &tty_reset_terminal_modes;
   terminal->set_terminal_modes_hook = &tty_set_terminal_modes;
   terminal->update_end_hook = &tty_update_end;
+#ifdef MSDOS
+  terminal->menu_show_hook = &x_menu_show;
+#else
   terminal->menu_show_hook = &tty_menu_show;
+#endif
   terminal->set_terminal_window_hook = &tty_set_terminal_window;
   terminal->read_socket_hook = &tty_read_avail_input; /* keyboard.c */
   terminal->delete_frame_hook = &tty_free_frame_resources;
@@ -3932,7 +3956,15 @@ init_tty (const char *name, const char *terminal_type, bool must_succeed)
     return terminal;
 
   terminal = create_terminal (output_termcap, NULL);
+#ifdef MSDOS
+  if (been_here > 0)
+    maybe_fatal (0, 0, "Attempt to create another terminal %s", "",
+		 name, "");
+  been_here = 1;
+  tty = &the_only_display_info;
+#else
   tty = xzalloc (sizeof *tty);
+#endif
   tty->top_frame = Qnil;
   tty->next = tty_list;
   tty_list = tty;
@@ -4113,24 +4145,16 @@ use the Bourne shell command 'TERM=...; export TERM' (C-shell:\n\
       tty->TN_max_colors = tgetnum ("Co");
 
 #ifdef TERMINFO
+      /* Non-standard support for 24-bit colors. */
       {
 	const char *fg = tigetstr ("setf24");
 	const char *bg = tigetstr ("setb24");
-	/* Non-standard support for 24-bit colors. */
 	if (fg && bg
 	    && fg != (char *) (intptr_t) -1
 	    && bg != (char *) (intptr_t) -1)
 	  {
 	    tty->TS_set_foreground = fg;
 	    tty->TS_set_background = bg;
-	    tty->TN_max_colors = 16777216;
-	  }
-	/* Standard support for 24-bit colors.  */
-	else if (tigetflag ("RGB") > 0)
-	  {
-	    /* If the used Terminfo library supports only 16-bit
-	       signed values, tgetnum("Co") and tigetnum("colors")
-	       could return 32767.  */
 	    tty->TN_max_colors = 16777216;
 	  }
       }
@@ -4173,7 +4197,20 @@ use the Bourne shell command 'TERM=...; export TERM' (C-shell:\n\
     tty->char_ins_del_ok = 1;
     baud_rate = 19200;
   }
-#endif	/* WINDOWSNT */
+#else  /* MSDOS */
+  {
+    int height, width;
+    if (strcmp (terminal_type, "internal") == 0)
+      terminal->type = output_msdos_raw;
+    initialize_msdos_display (terminal);
+
+    get_tty_size (fileno (tty->input), &width, &height);
+    FrameCols (tty) = width;
+    FrameRows (tty) = height;
+    tty->char_ins_del_ok = 0;
+    init_baud_rate (fileno (tty->input));
+  }
+#endif	/* MSDOS */
   tty->output = stdout;
   tty->input = stdin;
   /* The following two are inaccessible from w32console.c.  */
@@ -4506,6 +4543,7 @@ bigger, or it may make it blink, or it may do nothing at all.  */);
   DEFSYM (Qtty_mode_set_strings, "tty-mode-set-strings");
   DEFSYM (Qtty_mode_reset_strings, "tty-mode-reset-strings");
 
+#ifndef MSDOS
   DEFSYM (Qtty_menu_next_item, "tty-menu-next-item");
   DEFSYM (Qtty_menu_prev_item, "tty-menu-prev-item");
   DEFSYM (Qtty_menu_next_menu, "tty-menu-next-menu");
@@ -4515,4 +4553,5 @@ bigger, or it may make it blink, or it may do nothing at all.  */);
   DEFSYM (Qtty_menu_exit, "tty-menu-exit");
   DEFSYM (Qtty_menu_mouse_movement, "tty-menu-mouse-movement");
   DEFSYM (Qtty_menu_navigation_map, "tty-menu-navigation-map");
+#endif
 }

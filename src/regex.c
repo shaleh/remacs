@@ -519,7 +519,13 @@ ptrdiff_t emacs_re_safe_alloca = MAX_ALLOCA;
 #endif
 
 /* Type of source-pattern and string chars.  */
+#ifdef _MSC_VER
+typedef unsigned char re_char;
+typedef const re_char const_re_char;
+#else
 typedef const unsigned char re_char;
+typedef re_char const_re_char;
+#endif
 
 typedef char boolean;
 
@@ -1194,8 +1200,7 @@ static const char *re_error_msgid[] =
     gettext_noop ("Premature end of regular expression"), /* REG_EEND */
     gettext_noop ("Regular expression too big"), /* REG_ESIZE */
     gettext_noop ("Unmatched ) or \\)"), /* REG_ERPAREN */
-    gettext_noop ("Range striding over charsets"), /* REG_ERANGEX  */
-    gettext_noop ("Invalid content of \\{\\}, repetitions too big") /* REG_ESIZEBR  */
+    gettext_noop ("Range striding over charsets") /* REG_ERANGEX  */
   };
 
 /* Whether to allocate memory during matching.  */
@@ -1916,7 +1921,7 @@ struct range_table_work_area
 	    if (num < 0)						\
 	      num = 0;							\
 	    if (RE_DUP_MAX / 10 - (RE_DUP_MAX % 10 < c - '0') < num)	\
-	      FREE_STACK_RETURN (REG_ESIZEBR);				\
+	      FREE_STACK_RETURN (REG_BADBR);				\
 	    num = num * 10 + c - '0';					\
 	    if (p == pend)						\
 	      FREE_STACK_RETURN (REG_EBRACE);				\
@@ -2398,7 +2403,7 @@ do {									\
   } while (0)
 
 static reg_errcode_t
-regex_compile (re_char *pattern, size_t size,
+regex_compile (const_re_char *pattern, size_t size,
 #ifdef emacs
 # define syntax RE_SYNTAX_EMACS
 	       bool posix_backtracking,
@@ -3723,7 +3728,7 @@ insert_op2 (re_opcode_t op, unsigned char *loc, int arg1, int arg2, unsigned cha
    least one character before the ^.  */
 
 static boolean
-at_begline_loc_p (re_char *pattern, re_char *p, reg_syntax_t syntax)
+at_begline_loc_p (const_re_char *pattern, const_re_char *p, reg_syntax_t syntax)
 {
   re_char *prev = p - 2;
   boolean odd_backslashes;
@@ -3764,7 +3769,7 @@ at_begline_loc_p (re_char *pattern, re_char *p, reg_syntax_t syntax)
    at least one character after the $, i.e., `P < PEND'.  */
 
 static boolean
-at_endline_loc_p (re_char *p, re_char *pend, reg_syntax_t syntax)
+at_endline_loc_p (const_re_char *p, const_re_char *pend, reg_syntax_t syntax)
 {
   re_char *next = p;
   boolean next_backslash = *next == '\\';
@@ -3808,7 +3813,7 @@ group_in_compile_stack (compile_stack_type compile_stack, regnum_t regnum)
    Return -1 if fastmap was not updated accurately.  */
 
 static int
-analyze_first (re_char *p, re_char *pend, char *fastmap,
+analyze_first (const_re_char *p, const_re_char *pend, char *fastmap,
 	       const int multibyte)
 {
   int j, k;
@@ -4549,7 +4554,7 @@ static int bcmp_translate (re_char *s1, re_char *s2,
 /* If the operation is a match against one or more chars,
    return a pointer to the next operation, else return NULL.  */
 static re_char *
-skip_one_char (re_char *p)
+skip_one_char (const_re_char *p)
 {
   switch (*p++)
     {
@@ -4591,7 +4596,7 @@ skip_one_char (re_char *p)
 
 /* Jump over non-matching operations.  */
 static re_char *
-skip_noops (re_char *p, re_char *pend)
+skip_noops (const_re_char *p, const_re_char *pend)
 {
   int mcnt;
   while (p < pend)
@@ -4622,7 +4627,7 @@ skip_noops (re_char *p, re_char *pend)
    character (i.e. without any translations).  UNIBYTE denotes whether c is
    unibyte or multibyte character. */
 static bool
-execute_charset (re_char **pp, unsigned c, unsigned corig, bool unibyte)
+execute_charset (const_re_char **pp, unsigned c, unsigned corig, bool unibyte)
 {
   re_char *p = *pp, *rtp = NULL;
   bool not = (re_opcode_t) *p == charset_not;
@@ -4686,8 +4691,8 @@ execute_charset (re_char **pp, unsigned c, unsigned corig, bool unibyte)
 
 /* Non-zero if "p1 matches something" implies "p2 fails".  */
 static int
-mutually_exclusive_p (struct re_pattern_buffer *bufp, re_char *p1,
-		      re_char *p2)
+mutually_exclusive_p (struct re_pattern_buffer *bufp, const_re_char *p1,
+		      const_re_char *p2)
 {
   re_opcode_t op2;
   const boolean multibyte = RE_MULTIBYTE_P (bufp);
@@ -4925,8 +4930,8 @@ WEAK_ALIAS (__re_match_2, re_match_2)
 /* This is a separate function so that we can force an alloca cleanup
    afterwards.  */
 static regoff_t
-re_match_2_internal (struct re_pattern_buffer *bufp, re_char *string1,
-		     size_t size1, re_char *string2, size_t size2,
+re_match_2_internal (struct re_pattern_buffer *bufp, const_re_char *string1,
+		     size_t size1, const_re_char *string2, size_t size2,
 		     ssize_t pos, struct re_registers *regs, ssize_t stop)
 {
   /* General temporaries.  */
@@ -6216,10 +6221,10 @@ re_match_2_internal (struct re_pattern_buffer *bufp, re_char *string1,
    bytes; nonzero otherwise.  */
 
 static int
-bcmp_translate (re_char *s1, re_char *s2, ssize_t len,
+bcmp_translate (const_re_char *s1, const_re_char *s2, register ssize_t len,
 		RE_TRANSLATE_TYPE translate, const int target_multibyte)
 {
-  re_char *p1 = s1, *p2 = s2;
+  register re_char *p1 = s1, *p2 = s2;
   re_char *p1_end = s1 + len;
   re_char *p2_end = s2 + len;
 

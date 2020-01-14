@@ -676,10 +676,21 @@ struct coding_system
 #define UTF_16_LOW_SURROGATE_P(val) \
   (((val) & 0xFC00) == 0xDC00)
 
+/* Return the Unicode code point for the given UTF-16 surrogates.  */
+
+INLINE int
+surrogates_to_codepoint (int low, int high)
+{
+  eassert (0 <= low && low <= 0xFFFF);
+  eassert (0 <= high && high <= 0xFFFF);
+  eassert (UTF_16_LOW_SURROGATE_P (low));
+  eassert (UTF_16_HIGH_SURROGATE_P (high));
+  return 0x10000 + (low - 0xDC00) + ((high - 0xD800) * 0x400);
+}
+
 /* Extern declarations.  */
 extern Lisp_Object code_conversion_save (bool, bool);
 extern bool encode_coding_utf_8 (struct coding_system *);
-extern bool utf8_string_p (Lisp_Object);
 extern void setup_coding_system (Lisp_Object, struct coding_system *);
 extern Lisp_Object coding_charset_list (struct coding_system *);
 extern Lisp_Object coding_system_charset_list (Lisp_Object);
@@ -701,10 +712,7 @@ extern void decode_coding_object (struct coding_system *,
                                   ptrdiff_t, ptrdiff_t, Lisp_Object);
 extern void encode_coding_object (struct coding_system *,
                                   Lisp_Object, ptrdiff_t, ptrdiff_t,
-				  ptrdiff_t, ptrdiff_t, Lisp_Object);
-
-/* Defined in this file.  */
-INLINE int surrogates_to_codepoint (int, int);
+                                  ptrdiff_t, ptrdiff_t, Lisp_Object);
 
 #if defined (WINDOWSNT) || defined (CYGWIN)
 
@@ -748,18 +756,6 @@ extern Lisp_Object from_unicode_buffer (const wchar_t *wstr);
 			  (dst_object));				\
   } while (false)
 
-
-/* Return the Unicode code point for the given UTF-16 surrogates.  */
-
-INLINE int
-surrogates_to_codepoint (int low, int high)
-{
-  eassert (0 <= low && low <= 0xFFFF);
-  eassert (0 <= high && high <= 0xFFFF);
-  eassert (UTF_16_LOW_SURROGATE_P (low));
-  eassert (UTF_16_HIGH_SURROGATE_P (high));
-  return 0x10000 + (low - 0xDC00) + ((high - 0xD800) * 0x400);
-}
 
 extern Lisp_Object preferred_coding_system (void);
 

@@ -421,11 +421,11 @@ internal_self_insert (int c, EMACS_INT n)
 	 and the hook has a non-nil `no-self-insert' property,
 	 return right away--don't really self-insert.  */
       if (SYMBOLP (sym) && ! NILP (sym)
-	  && ! NILP (XSYMBOL (sym)->function)
-	  && SYMBOLP (XSYMBOL (sym)->function))
+	  && ! NILP (XSYMBOL (sym)->u.s.function)
+	  && SYMBOLP (XSYMBOL (sym)->u.s.function))
 	{
 	  Lisp_Object prop;
-	  prop = Fget (XSYMBOL (sym)->function, intern ("no-self-insert"));
+	  prop = Fget (XSYMBOL (sym)->u.s.function, intern ("no-self-insert"));
 	  if (! NILP (prop))
 	    return 1;
 	}
@@ -439,13 +439,12 @@ internal_self_insert (int c, EMACS_INT n)
       int mc = ((NILP (BVAR (current_buffer, enable_multibyte_characters))
 		 && SINGLE_BYTE_CHAR_P (c))
 		? UNIBYTE_TO_CHAR (c) : c);
-      Lisp_Object string = Fmake_string (make_number (n), make_number (mc),
-					 Qnil);
+      Lisp_Object string = Fmake_string (make_number (n), make_number (mc));
 
       if (spaces_to_insert)
 	{
 	  tem = Fmake_string (make_number (spaces_to_insert),
-			      make_number (' '), Qnil);
+			      make_number (' '));
 	  string = concat2 (string, tem);
 	}
 
@@ -493,14 +492,56 @@ internal_self_insert (int c, EMACS_INT n)
 
 /* module initialization */
 
-extern void rust_syms_of_cmds(void);
-
 void
 syms_of_cmds (void)
 {
-  rust_syms_of_cmds();
+  DEFSYM (Qinternal_auto_fill, "internal-auto-fill");
+
+  DEFSYM (Qundo_auto_amalgamate, "undo-auto-amalgamate");
+  DEFSYM (Qundo_auto__this_command_amalgamating,
+          "undo-auto--this-command-amalgamating");
+
+  DEFSYM (Qkill_forward_chars, "kill-forward-chars");
+
+  /* A possible value for a buffer's overwrite-mode variable.  */
+  DEFSYM (Qoverwrite_mode_binary, "overwrite-mode-binary");
+
+  DEFSYM (Qexpand_abbrev, "expand-abbrev");
+  DEFSYM (Qpost_self_insert_hook, "post-self-insert-hook");
+
   DEFVAR_LISP ("post-self-insert-hook", Vpost_self_insert_hook,
 	       doc: /* Hook run at the end of `self-insert-command'.
 This is run after inserting the character.  */);
   Vpost_self_insert_hook = Qnil;
+
+  defsubr (&Sforward_point);
+  defsubr (&Sforward_char);
+  defsubr (&Sbackward_char);
+  defsubr (&Sforward_line);
+  defsubr (&Sbeginning_of_line);
+  defsubr (&Send_of_line);
+
+  defsubr (&Sdelete_char);
+  defsubr (&Sself_insert_command);
+}
+
+void
+keys_of_cmds (void)
+{
+  int n;
+
+  initial_define_key (global_map, Ctl ('I'), "self-insert-command");
+  for (n = 040; n < 0177; n++)
+    initial_define_key (global_map, n, "self-insert-command");
+#ifdef MSDOS
+  for (n = 0200; n < 0240; n++)
+    initial_define_key (global_map, n, "self-insert-command");
+#endif
+  for (n = 0240; n < 0400; n++)
+    initial_define_key (global_map, n, "self-insert-command");
+
+  initial_define_key (global_map, Ctl ('A'), "beginning-of-line");
+  initial_define_key (global_map, Ctl ('B'), "backward-char");
+  initial_define_key (global_map, Ctl ('E'), "end-of-line");
+  initial_define_key (global_map, Ctl ('F'), "forward-char");
 }

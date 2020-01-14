@@ -35,7 +35,7 @@ _GL_INLINE_HEADER_BEGIN
 #endif
 
 #if O_BINARY
-# if defined __EMX__ || defined __CYGWIN__
+# if defined __EMX__ || defined __DJGPP__ || defined __CYGWIN__
 #  include <io.h> /* declares setmode() */
 #  define __gl_setmode setmode
 # else
@@ -48,23 +48,19 @@ _GL_INLINE_HEADER_BEGIN
   /* Use a function rather than a macro, to avoid gcc warnings
      "warning: statement with no effect".  */
 BINARY_IO_INLINE int
-__gl_setmode (int fd _GL_UNUSED, int mode _GL_UNUSED)
+__gl_setmode (int fd, int mode)
 {
+  (void) fd;
+  (void) mode;
   return O_BINARY;
 }
 #endif
 
-/* SET_BINARY (fd);
-   changes the file descriptor fd to perform binary I/O.  */
-#if defined __EMX__
-# include <unistd.h> /* declares isatty() */
-  /* Avoid putting stdin/stdout in binary mode if it is connected to
-     the console, because that would make it impossible for the user
-     to interrupt the program through Ctrl-C or Ctrl-Break.  */
-# define SET_BINARY(fd) ((void) (!isatty (fd) ? (set_binary_mode (fd, O_BINARY), 0) : 0))
+#if defined __DJGPP__ || defined __EMX__
+extern int __gl_setmode_check (int);
 #else
 BINARY_IO_INLINE int
-__gl_setmode_check (int fd _GL_UNUSED) { return 0; }
+__gl_setmode_check (int fd) { return 0; }
 #endif
 
 /* Set FD's mode to MODE, which should be either O_TEXT or O_BINARY.

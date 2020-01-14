@@ -83,7 +83,6 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 #include "charset.h"
 #include "composite.h"
 #include "dispextern.h"
-#include "ptr-bounds.h"
 #include "regex.h"
 #include "sheap.h"
 #include "syntax.h"
@@ -187,7 +186,7 @@ bool no_site_lisp;
 bool build_details;
 
 /* Name for the server started by the daemon.*/
-char *daemon_name;
+static char *daemon_name;
 
 /* 0 not a daemon, 1 new-style (foreground), 2 old-style (background).  */
 int daemon_type;
@@ -388,12 +387,14 @@ terminate_due_to_signal (int sig, int backtrace_limit)
   /* Signal the same code; this time it will really be fatal.
      Since we're in a signal handler, the signal is blocked, so we
      have to unblock it if we want to really receive it.  */
+#ifndef MSDOS
   {
     sigset_t unblocked;
     sigemptyset (&unblocked);
     sigaddset (&unblocked, sig);
     pthread_sigmask (SIG_UNBLOCK, &unblocked, 0);
   }
+#endif
 
   emacs_raise (sig);
 
@@ -498,7 +499,15 @@ init_cmdargs (int argc, char **argv, int skip_args, char *original_pwd)
 	  tem = Fexpand_file_name (build_string ("lib-src"), dir);
 	  lib_src_exists = Ffile_exists_p (tem);
 
+#ifdef MSDOS
+	  /* MSDOS installations frequently remove lib-src, but we still
+	     must set installation-directory, or else info won't find
+	     its files (it uses the value of installation-directory).  */
+	  tem = Fexpand_file_name (build_string ("info"), dir);
+	  info_exists = Ffile_exists_p (tem);
+#else
 	  info_exists = Qnil;
+#endif
 
 	  if (!NILP (lib_src_exists) || !NILP (info_exists))
 	    {
@@ -516,7 +525,14 @@ init_cmdargs (int argc, char **argv, int skip_args, char *original_pwd)
 	  tem = Fexpand_file_name (build_string ("../lib-src"), dir);
 	  lib_src_exists = Ffile_exists_p (tem);
 
+
+#ifdef MSDOS
+	  /* See the MSDOS commentary above.  */
+	  tem = Fexpand_file_name (build_string ("../info"), dir);
+	  info_exists = Ffile_exists_p (tem);
+#else
 	  info_exists = Qnil;
+#endif
 
 	  if (!NILP (lib_src_exists) || !NILP (info_exists))
 	    {
@@ -557,6 +573,22 @@ init_cmdargs (int argc, char **argv, int skip_args, char *original_pwd)
     }
 
   unbind_to (count, Qnil);
+}
+
+DEFUN ("invocation-name", Finvocation_name, Sinvocation_name, 0, 0, 0,
+       doc: /* Return the program name that was used to run Emacs.
+Any directory names are omitted.  */)
+  (void)
+{
+  return Fcopy_sequence (Vinvocation_name);
+}
+
+DEFUN ("invocation-directory", Finvocation_directory, Sinvocation_directory,
+       0, 0, 0,
+       doc: /* Return the directory name in which the Emacs executable was located.  */)
+  (void)
+{
+  return Fcopy_sequence (Vinvocation_directory);
 }
 
 
@@ -879,6 +911,12 @@ main (int argc, char **argv)
 
 #endif	/* not SYSTEM_MALLOC and not HYBRID_MALLOC */
 
+#ifdef MSDOS
+  set_binary_mode (STDIN_FILENO, O_BINARY);
+  fflush (stdout);
+  set_binary_mode (STDOUT_FILENO, O_BINARY);
+#endif /* MSDOS */
+
   /* Skip initial setlocale if LC_ALL is "C", as it's not needed in that case.
      The build procedure uses this while dumping, to ensure that the
      dumped Emacs does not have its system locale tables initialized,
@@ -1143,7 +1181,10 @@ Using an Emacs configured with --with-x-toolkit=lucid does not have this problem
 		   w32_strerror (0));
           exit (1);
         }
-#endif /* DOS */
+#else /* MSDOS */
+      fprintf (stderr, "This platform does not support daemon mode.\n");
+      exit (1);
+#endif /* MSDOS */
       if (dname_arg)
 	daemon_name = xstrdup (dname_arg);
     }
@@ -1229,10 +1270,6 @@ Using an Emacs configured with --with-x-toolkit=lucid does not have this problem
   init_atimer ();
   running_asynch_code = 0;
   init_random ();
-
-#if defined HAVE_JSON && !defined WINDOWSNT
-  init_json ();
-#endif
 
   no_loadup
     = argmatch (argv, argc, "-nl", "--no-loadup", 6, NULL, &skip_args);
@@ -1353,6 +1390,16 @@ Using an Emacs configured with --with-x-toolkit=lucid does not have this problem
      except when building temacs
      because the -d argument has not been skipped in skip_args.  */
 
+#ifdef MSDOS
+  /* Call early 'cause init_environment needs it.  */
+  init_dosfns ();
+  /* Set defaults for several environment variables.  */
+  if (initialized)
+    init_environment (argc, argv, skip_args);
+  else
+    tzset ();
+#endif /* MSDOS */
+
 #ifdef HAVE_KQUEUE
   globals_of_kqueue ();
 #endif
@@ -1436,6 +1483,7 @@ Using an Emacs configured with --with-x-toolkit=lucid does not have this problem
       syms_of_lread ();
       syms_of_print ();
       syms_of_eval ();
+      syms_of_floatfns ();
 
       syms_of_buffer ();
       syms_of_bytecode ();
@@ -1456,6 +1504,7 @@ Using an Emacs configured with --with-x-toolkit=lucid does not have this problem
       syms_of_insdel ();
       /* syms_of_keymap (); */
       syms_of_macros ();
+      syms_of_marker ();
       syms_of_minibuf ();
       syms_of_process ();
       syms_of_search ();
@@ -1502,10 +1551,16 @@ Using an Emacs configured with --with-x-toolkit=lucid does not have this problem
 #endif
 #endif /* HAVE_X_WINDOWS */
 
+#ifdef HAVE_LIBXML2
       syms_of_xml ();
+#endif
 
 #ifdef HAVE_LCMS2
       syms_of_lcms2 ();
+#endif
+
+#ifdef HAVE_ZLIB
+      syms_of_decompress ();
 #endif
 
       syms_of_menu ();
@@ -1517,13 +1572,16 @@ Using an Emacs configured with --with-x-toolkit=lucid does not have this problem
       syms_of_fontset ();
 #endif /* HAVE_NTGUI */
 
-#if defined HAVE_NTGUI || defined CYGWIN
-      syms_of_w32cygwinx ();
-#endif
-
 #if defined WINDOWSNT || defined HAVE_NTGUI
       syms_of_w32select ();
 #endif
+
+#ifdef MSDOS
+      syms_of_xmenu ();
+      syms_of_dosfns ();
+      syms_of_msdos ();
+      syms_of_win16select ();
+#endif	/* MSDOS */
 
 #ifdef HAVE_NS
       syms_of_nsterm ();
@@ -1560,10 +1618,6 @@ Using an Emacs configured with --with-x-toolkit=lucid does not have this problem
 
       syms_of_threads ();
       syms_of_profiler ();
-
-#ifdef HAVE_JSON
-      syms_of_json ();
-#endif
 
       keys_of_casefiddle ();
       keys_of_cmds ();
@@ -2068,6 +2122,10 @@ shut_down_emacs (int sig, Lisp_Object stuff)
       check_message_stack ();
     }
 
+#ifdef MSDOS
+  dos_cleanup ();
+#endif
+
 #ifdef HAVE_NS
   ns_term_shutdown (sig);
 #endif
@@ -2329,6 +2387,9 @@ decode_env_path (const char *evarname, const char *defalt, bool empty)
 	  d[-1] = '\0';	/* remove last semi-colon and null-terminate PATH */
       } while (q);
       path_copy = path_utf8;
+#else  /* MSDOS */
+      path_copy = alloca (strlen (path) + 1);
+      strcpy (path_copy, path);
 #endif
       dostounix_filename (path_copy);
       path = path_copy;
@@ -2384,6 +2445,20 @@ decode_env_path (const char *evarname, const char *defalt, bool empty)
 	break;
     }
   return Fnreverse (lpath);
+}
+
+DEFUN ("daemonp", Fdaemonp, Sdaemonp, 0, 0, 0,
+       doc: /* Return non-nil if the current emacs process is a daemon.
+If the daemon was given a name argument, return that name. */)
+  (void)
+{
+  if (IS_DAEMON)
+    if (daemon_name)
+      return build_string (daemon_name);
+    else
+      return Qt;
+  else
+    return Qnil;
 }
 
 DEFUN ("daemon-initialized", Fdaemon_initialized, Sdaemon_initialized, 0, 0, 0,
@@ -2457,6 +2532,9 @@ syms_of_emacs (void)
 
   defsubr (&Skill_emacs);
 
+  defsubr (&Sinvocation_name);
+  defsubr (&Sinvocation_directory);
+  defsubr (&Sdaemonp);
   defsubr (&Sdaemon_initialized);
 
   DEFVAR_LISP ("command-line-args", Vcommand_line_args,

@@ -44,6 +44,14 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 #include "blockinput.h"
 #include <c-ctype.h>
 
+#ifdef MSDOS
+#include "msdos.h"
+#if __DJGPP__ == 2 && __DJGPP_MINOR__ < 5
+# define INFINITY  __builtin_inf()
+# define NAN       __builtin_nan("")
+#endif
+#endif
+
 #ifdef HAVE_NS
 #include "nsterm.h"
 #endif
@@ -95,6 +103,21 @@ static Lisp_Object read_objects_map;
    (to reduce allocations), or nil.  */
 static Lisp_Object read_objects_completed;
 
+/* File and lookahead for get-file-char and get-emacs-mule-file-char
+   to read from.  Used by Fload.  */
+static struct infile
+{
+  /* The input stream.  */
+  FILE *stream;
+
+  /* Lookahead byte count.  */
+  signed char lookahead;
+
+  /* Lookahead bytes, in reverse order.  Keep these here because it is
+     not portable to ungetc more than one byte at a time.  */
+  unsigned char buf[MAX_MULTIBYTE_LENGTH - 1];
+} *infile;
+
 /* For use within read-from-string (this reader is non-reentrant!!)  */
 static ptrdiff_t read_from_string_index;
 static ptrdiff_t read_from_string_index_byte;
@@ -124,10 +147,10 @@ static ptrdiff_t prev_saved_doc_string_length;
 /* This is the file position that string came from.  */
 static file_offset prev_saved_doc_string_position;
 
-/* True means inside a new-style backquote with no surrounding
-   parentheses.  Fread initializes this to the value of
-   `force_new_style_backquotes', so we need not specbind it or worry
-   about what happens to it when there is an error.  */
+/* True means inside a new-style backquote
+   with no surrounding parentheses.
+   Fread initializes this to false, so we need not specbind it
+   or worry about what happens to it when there is an error.  */
 static bool new_backquote_flag;
 
 /* A list of file names for files being loaded in Fload.  Used to
@@ -141,8 +164,6 @@ static int read_emacs_mule_char (int, int (*) (int, Lisp_Object),
 static void readevalloop (Lisp_Object, struct infile *, Lisp_Object, bool,
                           Lisp_Object, Lisp_Object,
                           Lisp_Object, Lisp_Object);
-
-static void build_load_history (Lisp_Object, bool);
 
 /* Functions that read one byte from the current source READCHARFUN
    or unreads one byte.  If the integer argument C is -1, it returns
@@ -451,6 +472,32 @@ readbyte_for_lambda (int c, Lisp_Object readcharfun)
 
 
 static int
+readbyte_from_stdio (void)
+{
+  if (infile->lookahead)
+    return infile->buf[--infile->lookahead];
+
+  int c;
+  FILE *instream = infile->stream;
+
+  block_input ();
+
+  /* Interrupted reads have been observed while reading over the network.  */
+  while ((c = getc_unlocked (instream)) == EOF && errno == EINTR
+	 && ferror_unlocked (instream))
+    {
+      unblock_input ();
+      maybe_quit ();
+      block_input ();
+      clearerr_unlocked (instream);
+    }
+
+  unblock_input ();
+
+  return (c == EOF ? -1 : c);
+}
+
+static int
 readbyte_from_file (int c, Lisp_Object readcharfun)
 {
   if (c >= 0)
@@ -542,8 +589,8 @@ read_emacs_mule_char (int c, int (*readbyte) (int, Lisp_Object), Lisp_Object rea
     }
   c = DECODE_CHAR (charset, code);
   if (c < 0)
-    xsignal1 (Qinvalid_read_syntax,
-              build_string ("invalid multibyte form"));
+    Fsignal (Qinvalid_read_syntax,
+	     list1 (build_string ("invalid multibyte form")));
   return c;
 }
 
@@ -562,6 +609,8 @@ struct subst
   Lisp_Object seen;
 };
 
+static Lisp_Object read_internal_start (Lisp_Object, Lisp_Object,
+                                        Lisp_Object);
 static Lisp_Object read0 (Lisp_Object);
 static Lisp_Object read1 (Lisp_Object, int *, bool);
 
@@ -595,7 +644,7 @@ static void substitute_in_interval (INTERVAL, void *);
    If SECONDS is a number, wait that many seconds for input, and
    return Qnil if no input arrives within that time.  */
 
-Lisp_Object
+static Lisp_Object
 read_filtered_event (bool no_switch_frame, bool ascii_required,
 		     bool error_nonascii, bool input_method, Lisp_Object seconds)
 {
@@ -684,6 +733,103 @@ read_filtered_event (bool no_switch_frame, bool ascii_required,
 
   return val;
 }
+
+DEFUN ("read-char", Fread_char, Sread_char, 0, 3, 0,
+       doc: /* Read a character event from the command input (keyboard or macro).
+It is returned as a number.
+If the event has modifiers, they are resolved and reflected in the
+returned character code if possible (e.g. C-SPC yields 0 and C-a yields 97).
+If some of the modifiers cannot be reflected in the character code, the
+returned value will include those modifiers, and will not be a valid
+character code: it will fail the `characterp' test.  Use `event-basic-type'
+to recover the character code with the modifiers removed.
+
+If the user generates an event which is not a character (i.e. a mouse
+click or function key event), `read-char' signals an error.  As an
+exception, switch-frame events are put off until non-character events
+can be read.
+If you want to read non-character events, or ignore them, call
+`read-event' or `read-char-exclusive' instead.
+
+If the optional argument PROMPT is non-nil, display that as a prompt.
+If the optional argument INHERIT-INPUT-METHOD is non-nil and some
+input method is turned on in the current buffer, that input method
+is used for reading a character.
+If the optional argument SECONDS is non-nil, it should be a number
+specifying the maximum number of seconds to wait for input.  If no
+input arrives in that time, return nil.  SECONDS may be a
+floating-point value.  */)
+  (Lisp_Object prompt, Lisp_Object inherit_input_method, Lisp_Object seconds)
+{
+  Lisp_Object val;
+
+  if (! NILP (prompt))
+    message_with_string ("%s", prompt, 0);
+  val = read_filtered_event (1, 1, 1, ! NILP (inherit_input_method), seconds);
+
+  return (NILP (val) ? Qnil
+	  : make_number (char_resolve_modifier_mask (XINT (val))));
+}
+
+DEFUN ("read-event", Fread_event, Sread_event, 0, 3, 0,
+       doc: /* Read an event object from the input stream.
+If the optional argument PROMPT is non-nil, display that as a prompt.
+If the optional argument INHERIT-INPUT-METHOD is non-nil and some
+input method is turned on in the current buffer, that input method
+is used for reading a character.
+If the optional argument SECONDS is non-nil, it should be a number
+specifying the maximum number of seconds to wait for input.  If no
+input arrives in that time, return nil.  SECONDS may be a
+floating-point value.  */)
+  (Lisp_Object prompt, Lisp_Object inherit_input_method, Lisp_Object seconds)
+{
+  if (! NILP (prompt))
+    message_with_string ("%s", prompt, 0);
+  return read_filtered_event (0, 0, 0, ! NILP (inherit_input_method), seconds);
+}
+
+DEFUN ("read-char-exclusive", Fread_char_exclusive, Sread_char_exclusive, 0, 3, 0,
+       doc: /* Read a character event from the command input (keyboard or macro).
+It is returned as a number.  Non-character events are ignored.
+If the event has modifiers, they are resolved and reflected in the
+returned character code if possible (e.g. C-SPC yields 0 and C-a yields 97).
+If some of the modifiers cannot be reflected in the character code, the
+returned value will include those modifiers, and will not be a valid
+character code: it will fail the `characterp' test.  Use `event-basic-type'
+to recover the character code with the modifiers removed.
+
+If the optional argument PROMPT is non-nil, display that as a prompt.
+If the optional argument INHERIT-INPUT-METHOD is non-nil and some
+input method is turned on in the current buffer, that input method
+is used for reading a character.
+If the optional argument SECONDS is non-nil, it should be a number
+specifying the maximum number of seconds to wait for input.  If no
+input arrives in that time, return nil.  SECONDS may be a
+floating-point value.  */)
+  (Lisp_Object prompt, Lisp_Object inherit_input_method, Lisp_Object seconds)
+{
+  Lisp_Object val;
+
+  if (! NILP (prompt))
+    message_with_string ("%s", prompt, 0);
+
+  val = read_filtered_event (1, 1, 0, ! NILP (inherit_input_method), seconds);
+
+  return (NILP (val) ? Qnil
+	  : make_number (char_resolve_modifier_mask (XINT (val))));
+}
+
+DEFUN ("get-file-char", Fget_file_char, Sget_file_char, 0, 0, 0,
+       doc: /* Don't use this yourself.  */)
+  (void)
+{
+  if (!infile)
+    error ("get-file-char misused");
+  return make_number (readbyte_from_stdio ());
+}
+
+
+
 
 /* Return true if the lisp code read using READCHARFUN defines a non-nil
    `lexical-binding' file variable.  After returning, the stream is
@@ -867,15 +1013,13 @@ load_error_handler (Lisp_Object data)
   return Qnil;
 }
 
-static _Noreturn void
-load_error_old_style_backquotes (void)
+static void
+load_warn_old_style_backquotes (Lisp_Object file)
 {
-  if (NILP (Vload_file_name))
-    xsignal1 (Qerror, build_string ("Old-style backquotes detected!"));
-  else
+  if (!NILP (Vlread_old_style_backquotes))
     {
       AUTO_STRING (format, "Loading `%s': old-style backquotes detected!");
-      xsignal1 (Qerror, CALLN (Fformat_message, format, Vload_file_name));
+      CALLN (Fmessage, format, file);
     }
 }
 
@@ -985,7 +1129,7 @@ Return t if the file exists and loads successfully.  */)
   (Lisp_Object file, Lisp_Object noerror, Lisp_Object nomessage,
    Lisp_Object nosuffix, Lisp_Object must_suffix)
 {
-  FILE *stream UNINIT;
+  FILE *stream;
   int fd;
   int fd_index UNINIT;
   ptrdiff_t count = SPECPDL_INDEX ();
@@ -1110,9 +1254,8 @@ Return t if the file exists and loads successfully.  */)
     }
 
 #ifdef HAVE_MODULES
-  bool is_module = suffix_p (found, MODULES_SUFFIX);
-#else
-  bool is_module = false;
+  if (suffix_p (found, MODULES_SUFFIX))
+    return unbind_to (count, Fmodule_load (found));
 #endif
 
   /* Check if we're stuck in a recursive load cycle.
@@ -1148,6 +1291,10 @@ Return t if the file exists and loads successfully.  */)
                     : found) ;
 
   version = -1;
+
+  /* Check for the presence of old-style quotes and warn about them.  */
+  specbind (Qlread_old_style_backquotes, Qnil);
+  record_unwind_protect (load_warn_old_style_backquotes, file);
 
   /* Check for the presence of unescaped character literals and warn
      about them. */
@@ -1213,7 +1360,7 @@ Return t if the file exists and loads successfully.  */)
             } /* !load_prefer_newer */
 	}
     }
-  else if (!is_module)
+  else
     {
       /* We are loading a source file (*.el).  */
       if (!NILP (Vload_source_file_function))
@@ -1240,7 +1387,7 @@ Return t if the file exists and loads successfully.  */)
       stream = NULL;
       errno = EINVAL;
     }
-  else if (!is_module)
+  else
     {
 #ifdef WINDOWSNT
       emacs_close (fd);
@@ -1251,23 +1398,9 @@ Return t if the file exists and loads successfully.  */)
       stream = fdopen (fd, fmode);
 #endif
     }
-
-  if (is_module)
-    {
-      /* `module-load' uses the file name, so we can close the stream
-         now.  */
-      if (fd >= 0)
-        {
-          emacs_close (fd);
-          clear_unwind_protect (fd_index);
-        }
-    }
-  else
-    {
-      if (! stream)
-        report_file_error ("Opening stdio stream", file);
-      set_unwind_protect_ptr (fd_index, close_infile_unwind, stream);
-    }
+  if (! stream)
+    report_file_error ("Opening stdio stream", file);
+  set_unwind_protect_ptr (fd_index, close_infile_unwind, stream);
 
   if (! NILP (Vpurify_flag))
     Vpreloaded_file_list = Fcons (Fpurecopy (file), Vpreloaded_file_list);
@@ -1277,8 +1410,6 @@ Return t if the file exists and loads successfully.  */)
       if (!safe_p)
 	message_with_string ("Loading %s (compiled; note unsafe, not compiled in Emacs)...",
 		 file, 1);
-      else if (is_module)
-        message_with_string ("Loading %s (module)...", file, 1);
       else if (!compiled)
 	message_with_string ("Loading %s (source)...", file, 1);
       else if (newer)
@@ -1292,39 +1423,24 @@ Return t if the file exists and loads successfully.  */)
   specbind (Qinhibit_file_name_operation, Qnil);
   specbind (Qload_in_progress, Qt);
 
-  if (is_module)
-    {
-#ifdef HAVE_MODULES
-      specbind (Qcurrent_load_list, Qnil);
-      LOADHIST_ATTACH (found);
-      Fmodule_load (found);
-      build_load_history (found, true);
-#else
-      /* This cannot happen.  */
-      emacs_abort ();
-#endif
-    }
+  struct infile input;
+  input.stream = stream;
+  input.lookahead = 0;
+  infile = &input;
+
+  if (lisp_file_lexically_bound_p (Qget_file_char))
+    Fset (Qlexical_binding, Qt);
+
+  if (! version || version >= 22)
+    readevalloop (Qget_file_char, &input, hist_file_name,
+		  0, Qnil, Qnil, Qnil, Qnil);
   else
     {
-      struct infile input;
-      input.stream = stream;
-      input.lookahead = 0;
-      infile = &input;
-
-      if (lisp_file_lexically_bound_p (Qget_file_char))
-        Fset (Qlexical_binding, Qt);
-
-      if (! version || version >= 22)
-        readevalloop (Qget_file_char, &input, hist_file_name,
-                      0, Qnil, Qnil, Qnil, Qnil);
-      else
-        {
-          /* We can't handle a file which was compiled with
-             byte-compile-dynamic by older version of Emacs.  */
-          specbind (Qload_force_doc_strings, Qt);
-          readevalloop (Qget_emacs_mule_file_char, &input, hist_file_name,
-                        0, Qnil, Qnil, Qnil, Qnil);
-        }
+      /* We can't handle a file which was compiled with
+	 byte-compile-dynamic by older version of Emacs.  */
+      specbind (Qload_force_doc_strings, Qt);
+      readevalloop (Qget_emacs_mule_file_char, &input, hist_file_name,
+		    0, Qnil, Qnil, Qnil, Qnil);
     }
   unbind_to (count, Qnil);
 
@@ -1345,8 +1461,6 @@ Return t if the file exists and loads successfully.  */)
       if (!safe_p)
 	message_with_string ("Loading %s (compiled; note unsafe, not compiled in Emacs)...done",
 		 file, 1);
-      else if (is_module)
-        message_with_string ("Loading %s (module)...done", file, 1);
       else if (!compiled)
 	message_with_string ("Loading %s (source)...done", file, 1);
       else if (newer)
@@ -1564,7 +1678,7 @@ openp (Lisp_Object path, Lisp_Object str, Lisp_Object suffixes,
 				      AT_EACCESS)
 			   == 0)
 		    {
-		      if (file_directory_p (encoded_fn))
+		      if (file_directory_p (pfn))
 			last_errno = EISDIR;
 		      else
 			fd = 1;
@@ -1754,7 +1868,7 @@ readevalloop_eager_expand_eval (Lisp_Object val, Lisp_Object macroexpand)
    START, END specify region to read in current buffer (from eval-region).
    If the input is not from a buffer, they must be nil.  */
 
-void
+static void
 readevalloop (Lisp_Object readcharfun,
 	      struct infile *infile0,
 	      Lisp_Object sourcename,
@@ -2003,7 +2117,71 @@ This function preserves the position of point.  */)
   return Qnil;
 }
 
+DEFUN ("eval-region", Feval_region, Seval_region, 2, 4, "r",
+       doc: /* Execute the region as Lisp code.
+When called from programs, expects two arguments,
+giving starting and ending indices in the current buffer
+of the text to be executed.
+Programs can pass third argument PRINTFLAG which controls output:
+ a value of nil means discard it; anything else is stream for printing it.
+ See Info node `(elisp)Output Streams' for details on streams.
+Also the fourth argument READ-FUNCTION, if non-nil, is used
+instead of `read' to read each expression.  It gets one argument
+which is the input stream for reading characters.
+
+This function does not move point.  */)
+  (Lisp_Object start, Lisp_Object end, Lisp_Object printflag, Lisp_Object read_function)
+{
+  /* FIXME: Do the eval-sexp-add-defvars dance!  */
+  ptrdiff_t count = SPECPDL_INDEX ();
+  Lisp_Object tem, cbuf;
+
+  cbuf = Fcurrent_buffer ();
+
+  if (NILP (printflag))
+    tem = Qsymbolp;
+  else
+    tem = printflag;
+  specbind (Qstandard_output, tem);
+  specbind (Qeval_buffer_list, Fcons (cbuf, Veval_buffer_list));
+
+  /* `readevalloop' calls functions which check the type of start and end.  */
+  readevalloop (cbuf, 0, BVAR (XBUFFER (cbuf), filename),
+		!NILP (printflag), Qnil, read_function,
+		start, end);
+
+  return unbind_to (count, Qnil);
+}
+
 
+DEFUN ("read", Fread, Sread, 0, 1, 0,
+       doc: /* Read one Lisp expression as text from STREAM, return as Lisp object.
+If STREAM is nil, use the value of `standard-input' (which see).
+STREAM or the value of `standard-input' may be:
+ a buffer (read from point and advance it)
+ a marker (read from where it points and advance it)
+ a function (call it with no arguments for each character,
+     call it with a char as argument to push a char back)
+ a string (takes text from string, starting at the beginning)
+ t (read text line using minibuffer and use it, or read from
+    standard input in batch mode).  */)
+  (Lisp_Object stream)
+{
+  if (NILP (stream))
+    stream = Vstandard_input;
+  if (EQ (stream, Qt))
+    stream = Qread_char;
+  if (EQ (stream, Qread_char))
+    /* FIXME: ?! This is used when the reader is called from the
+       minibuffer without a stream, as in (read).  But is this feature
+       ever used, and if so, why?  IOW, will anything break if this
+       feature is removed !?  */
+    return call1 (intern ("read-minibuffer"),
+		  build_string ("Lisp expression: "));
+
+  return read_internal_start (stream, Qnil, Qnil);
+}
+
 DEFUN ("read-from-string", Fread_from_string, Sread_from_string, 1, 3, 0,
        doc: /* Read one Lisp expression which is represented as text by STRING.
 Returns a cons: (OBJECT-READ . FINAL-STRING-INDEX).
@@ -2023,13 +2201,13 @@ the end of STRING.  */)
 
 /* Function to set up the global context we need in toplevel read
    calls.  START and END only used when STREAM is a string.  */
-Lisp_Object
+static Lisp_Object
 read_internal_start (Lisp_Object stream, Lisp_Object start, Lisp_Object end)
 {
   Lisp_Object retval;
 
   readchar_count = 0;
-  new_backquote_flag = force_new_style_backquotes;
+  new_backquote_flag = 0;
   /* We can get called from readevalloop which may have set these
      already.  */
   if (! HASH_TABLE_P (read_objects_map)
@@ -2104,7 +2282,7 @@ read0 (Lisp_Object readcharfun)
     return val;
 
   xsignal1 (Qinvalid_read_syntax,
-	    Fmake_string (make_number (1), make_number (c), Qnil));
+	    Fmake_string (make_number (1), make_number (c)));
 }
 
 /* Grow a read buffer BUF that contains OFFSET useful bytes of data,
@@ -2494,7 +2672,7 @@ read_integer (Lisp_Object readcharfun, EMACS_INT radix)
       invalid_syntax (buf);
     }
 
-  return string_to_number (buf, radix, false);
+  return string_to_number (buf, radix, 0);
 }
 
 
@@ -3013,7 +3191,10 @@ read1 (Lisp_Object readcharfun, int *pch, bool first_in_list)
 	   first_in_list exception (old-style can still be obtained via
 	   "(\`" anyway).  */
 	if (!new_backquote_flag && first_in_list && next_char == ' ')
-	  load_error_old_style_backquotes ();
+	  {
+	    Vlread_old_style_backquotes = Qt;
+	    goto default_label;
+	  }
 	else
 	  {
 	    Lisp_Object value;
@@ -3064,7 +3245,10 @@ read1 (Lisp_Object readcharfun, int *pch, bool first_in_list)
 	    return list2 (comma_type, value);
 	  }
 	else
-	  load_error_old_style_backquotes ();
+	  {
+	    Vlread_old_style_backquotes = Qt;
+	    goto default_label;
+	  }
       }
     case '?':
       {
@@ -3252,6 +3436,7 @@ read1 (Lisp_Object readcharfun, int *pch, bool first_in_list)
 	 row.  */
       FALLTHROUGH;
     default:
+    default_label:
       if (c <= 040) goto retry;
       if (c == NO_BREAK_SPACE)
 	goto retry;
@@ -3303,17 +3488,10 @@ read1 (Lisp_Object readcharfun, int *pch, bool first_in_list)
 
 	if (!quoted && !uninterned_symbol)
 	  {
-	    Lisp_Object result = string_to_number (read_buffer, 10, false);
+	    Lisp_Object result = string_to_number (read_buffer, 10, 0);
 	    if (! NILP (result))
 	      return unbind_to (count, result);
 	  }
-        if (!quoted && multibyte)
-          {
-            int ch = STRING_CHAR ((unsigned char *) read_buffer);
-            if (confusable_symbol_character_p (ch))
-              xsignal2 (Qinvalid_read_syntax, build_string ("strange quote"),
-                        CALLN (Fstring, make_number (ch)));
-          }
 	{
 	  Lisp_Object result;
 	  ptrdiff_t nbytes = p - read_buffer;
@@ -3828,15 +4006,34 @@ read_list (bool flag, Lisp_Object readcharfun)
     }
 }
 
-Lisp_Object initial_obarray;
+static Lisp_Object initial_obarray;
 
 /* `oblookup' stores the bucket number here, for the sake of Funintern.  */
 
-size_t oblookup_last_bucket_number;
+static size_t oblookup_last_bucket_number;
+
+/* Get an error if OBARRAY is not an obarray.
+   If it is one, return it.  */
+
+Lisp_Object
+check_obarray (Lisp_Object obarray)
+{
+  /* We don't want to signal a wrong-type-argument error when we are
+     shutting down due to a fatal error, and we don't want to hit
+     assertions in VECTORP and ASIZE if the fatal error was during GC.  */
+  if (!fatal_error_in_progress
+      && (!VECTORP (obarray) || ASIZE (obarray) == 0))
+    {
+      /* If Vobarray is now invalid, force it to be valid.  */
+      if (EQ (Vobarray, obarray)) Vobarray = initial_obarray;
+      wrong_type_argument (Qvectorp, obarray);
+    }
+  return obarray;
+}
 
 /* Intern symbol SYM in OBARRAY using bucket INDEX.  */
 
-Lisp_Object
+static Lisp_Object
 intern_sym (Lisp_Object sym, Lisp_Object obarray, Lisp_Object index)
 {
   Lisp_Object *ptr;
@@ -3858,6 +4055,46 @@ intern_sym (Lisp_Object sym, Lisp_Object obarray, Lisp_Object index)
   return sym;
 }
 
+/* Intern a symbol with name STRING in OBARRAY using bucket INDEX.  */
+
+Lisp_Object
+intern_driver (Lisp_Object string, Lisp_Object obarray, Lisp_Object index)
+{
+  return intern_sym (Fmake_symbol (string), obarray, index);
+}
+
+/* Intern the C string STR: return a symbol with that name,
+   interned in the current obarray.  */
+
+Lisp_Object
+intern_1 (const char *str, ptrdiff_t len)
+{
+  Lisp_Object obarray = check_obarray (Vobarray);
+  Lisp_Object tem = oblookup (obarray, str, len, len);
+
+  return (SYMBOLP (tem) ? tem
+	  /* The above `oblookup' was done on the basis of nchars==nbytes, so
+	     the string has to be unibyte.  */
+	  : intern_driver (make_unibyte_string (str, len),
+			   obarray, tem));
+}
+
+Lisp_Object
+intern_c_string_1 (const char *str, ptrdiff_t len)
+{
+  Lisp_Object obarray = check_obarray (Vobarray);
+  Lisp_Object tem = oblookup (obarray, str, len, len);
+
+  if (!SYMBOLP (tem))
+    {
+      /* Creating a non-pure string from a string literal not implemented yet.
+	 We could just use make_string here and live with the extra copy.  */
+      eassert (!NILP (Vpurify_flag));
+      tem = intern_driver (make_pure_c_string (str, len), obarray, tem);
+    }
+  return tem;
+}
+
 static void
 define_symbol (Lisp_Object sym, char const *str)
 {
@@ -3874,7 +4111,127 @@ define_symbol (Lisp_Object sym, char const *str)
       intern_sym (sym, initial_obarray, bucket);
     }
 }
+
+DEFUN ("intern", Fintern, Sintern, 1, 2, 0,
+       doc: /* Return the canonical symbol whose name is STRING.
+If there is none, one is created by this function and returned.
+A second optional argument specifies the obarray to use;
+it defaults to the value of `obarray'.  */)
+  (Lisp_Object string, Lisp_Object obarray)
+{
+  Lisp_Object tem;
 
+  obarray = check_obarray (NILP (obarray) ? Vobarray : obarray);
+  CHECK_STRING (string);
+
+  tem = oblookup (obarray, SSDATA (string), SCHARS (string), SBYTES (string));
+  if (!SYMBOLP (tem))
+    tem = intern_driver (NILP (Vpurify_flag) ? string : Fpurecopy (string),
+			 obarray, tem);
+  return tem;
+}
+
+DEFUN ("intern-soft", Fintern_soft, Sintern_soft, 1, 2, 0,
+       doc: /* Return the canonical symbol named NAME, or nil if none exists.
+NAME may be a string or a symbol.  If it is a symbol, that exact
+symbol is searched for.
+A second optional argument specifies the obarray to use;
+it defaults to the value of `obarray'.  */)
+  (Lisp_Object name, Lisp_Object obarray)
+{
+  register Lisp_Object tem, string;
+
+  if (NILP (obarray)) obarray = Vobarray;
+  obarray = check_obarray (obarray);
+
+  if (!SYMBOLP (name))
+    {
+      CHECK_STRING (name);
+      string = name;
+    }
+  else
+    string = SYMBOL_NAME (name);
+
+  tem = oblookup (obarray, SSDATA (string), SCHARS (string), SBYTES (string));
+  if (INTEGERP (tem) || (SYMBOLP (name) && !EQ (name, tem)))
+    return Qnil;
+  else
+    return tem;
+}
+
+DEFUN ("unintern", Funintern, Sunintern, 1, 2, 0,
+       doc: /* Delete the symbol named NAME, if any, from OBARRAY.
+The value is t if a symbol was found and deleted, nil otherwise.
+NAME may be a string or a symbol.  If it is a symbol, that symbol
+is deleted, if it belongs to OBARRAY--no other symbol is deleted.
+OBARRAY, if nil, defaults to the value of the variable `obarray'.
+usage: (unintern NAME OBARRAY)  */)
+  (Lisp_Object name, Lisp_Object obarray)
+{
+  register Lisp_Object string, tem;
+  size_t hash;
+
+  if (NILP (obarray)) obarray = Vobarray;
+  obarray = check_obarray (obarray);
+
+  if (SYMBOLP (name))
+    string = SYMBOL_NAME (name);
+  else
+    {
+      CHECK_STRING (name);
+      string = name;
+    }
+
+  tem = oblookup (obarray, SSDATA (string),
+		  SCHARS (string),
+		  SBYTES (string));
+  if (INTEGERP (tem))
+    return Qnil;
+  /* If arg was a symbol, don't delete anything but that symbol itself.  */
+  if (SYMBOLP (name) && !EQ (name, tem))
+    return Qnil;
+
+  /* There are plenty of other symbols which will screw up the Emacs
+     session if we unintern them, as well as even more ways to use
+     `setq' or `fset' or whatnot to make the Emacs session
+     unusable.  Let's not go down this silly road.  --Stef  */
+  /* if (EQ (tem, Qnil) || EQ (tem, Qt))
+       error ("Attempt to unintern t or nil"); */
+
+  XSYMBOL (tem)->u.s.interned = SYMBOL_UNINTERNED;
+
+  hash = oblookup_last_bucket_number;
+
+  if (EQ (AREF (obarray, hash), tem))
+    {
+      if (XSYMBOL (tem)->u.s.next)
+	{
+	  Lisp_Object sym;
+	  XSETSYMBOL (sym, XSYMBOL (tem)->u.s.next);
+	  ASET (obarray, hash, sym);
+	}
+      else
+	ASET (obarray, hash, make_number (0));
+    }
+  else
+    {
+      Lisp_Object tail, following;
+
+      for (tail = AREF (obarray, hash);
+	   XSYMBOL (tail)->u.s.next;
+	   tail = following)
+	{
+	  XSETSYMBOL (following, XSYMBOL (tail)->u.s.next);
+	  if (EQ (following, tem))
+	    {
+	      set_symbol_next (tail, XSYMBOL (following)->u.s.next);
+	      break;
+	    }
+	}
+    }
+
+  return Qt;
+}
 
 /* Return the symbol in OBARRAY whose names matches the string
    of SIZE characters (SIZE_BYTE bytes) at PTR.
@@ -3915,6 +4272,44 @@ oblookup (Lisp_Object obarray, register const char *ptr, ptrdiff_t size, ptrdiff
   return tem;
 }
 
+void
+map_obarray (Lisp_Object obarray, void (*fn) (Lisp_Object, Lisp_Object), Lisp_Object arg)
+{
+  ptrdiff_t i;
+  register Lisp_Object tail;
+  CHECK_VECTOR (obarray);
+  for (i = ASIZE (obarray) - 1; i >= 0; i--)
+    {
+      tail = AREF (obarray, i);
+      if (SYMBOLP (tail))
+	while (1)
+	  {
+	    (*fn) (tail, arg);
+	    if (XSYMBOL (tail)->u.s.next == 0)
+	      break;
+	    XSETSYMBOL (tail, XSYMBOL (tail)->u.s.next);
+	  }
+    }
+}
+
+static void
+mapatoms_1 (Lisp_Object sym, Lisp_Object function)
+{
+  call1 (function, sym);
+}
+
+DEFUN ("mapatoms", Fmapatoms, Smapatoms, 1, 2, 0,
+       doc: /* Call FUNCTION on every symbol in OBARRAY.
+OBARRAY defaults to the value of `obarray'.  */)
+  (Lisp_Object function, Lisp_Object obarray)
+{
+  if (NILP (obarray)) obarray = Vobarray;
+  obarray = check_obarray (obarray);
+
+  map_obarray (obarray, mapatoms_1, function);
+  return Qnil;
+}
+
 #define OBARRAY_SIZE 15121
 
 void
@@ -3965,6 +4360,79 @@ defalias (struct Lisp_Subr *sname, char *string)
 }
 #endif /* NOTDEF */
 
+/* Define an "integer variable"; a symbol whose value is forwarded to a
+   C variable of type EMACS_INT.  Sample call (with "xx" to fool make-docfile):
+   DEFxxVAR_INT ("emacs-priority", &emacs_priority, "Documentation");  */
+void
+defvar_int (struct Lisp_Intfwd *i_fwd,
+	    const char *namestring, EMACS_INT *address)
+{
+  Lisp_Object sym;
+  sym = intern_c_string (namestring);
+  i_fwd->type = Lisp_Fwd_Int;
+  i_fwd->intvar = address;
+  XSYMBOL (sym)->u.s.declared_special = true;
+  XSYMBOL (sym)->u.s.redirect = SYMBOL_FORWARDED;
+  SET_SYMBOL_FWD (XSYMBOL (sym), (union Lisp_Fwd *)i_fwd);
+}
+
+/* Similar but define a variable whose value is t if address contains 1,
+   nil if address contains 0.  */
+void
+defvar_bool (struct Lisp_Boolfwd *b_fwd,
+	     const char *namestring, bool *address)
+{
+  Lisp_Object sym;
+  sym = intern_c_string (namestring);
+  b_fwd->type = Lisp_Fwd_Bool;
+  b_fwd->boolvar = address;
+  XSYMBOL (sym)->u.s.declared_special = true;
+  XSYMBOL (sym)->u.s.redirect = SYMBOL_FORWARDED;
+  SET_SYMBOL_FWD (XSYMBOL (sym), (union Lisp_Fwd *)b_fwd);
+  Vbyte_boolean_vars = Fcons (sym, Vbyte_boolean_vars);
+}
+
+/* Similar but define a variable whose value is the Lisp Object stored
+   at address.  Two versions: with and without gc-marking of the C
+   variable.  The nopro version is used when that variable will be
+   gc-marked for some other reason, since marking the same slot twice
+   can cause trouble with strings.  */
+void
+defvar_lisp_nopro (struct Lisp_Objfwd *o_fwd,
+		   const char *namestring, Lisp_Object *address)
+{
+  Lisp_Object sym;
+  sym = intern_c_string (namestring);
+  o_fwd->type = Lisp_Fwd_Obj;
+  o_fwd->objvar = address;
+  XSYMBOL (sym)->u.s.declared_special = true;
+  XSYMBOL (sym)->u.s.redirect = SYMBOL_FORWARDED;
+  SET_SYMBOL_FWD (XSYMBOL (sym), (union Lisp_Fwd *)o_fwd);
+}
+
+void
+defvar_lisp (struct Lisp_Objfwd *o_fwd,
+	     const char *namestring, Lisp_Object *address)
+{
+  defvar_lisp_nopro (o_fwd, namestring, address);
+  staticpro (address);
+}
+
+/* Similar but define a variable whose value is the Lisp Object stored
+   at a particular offset in the current kboard object.  */
+
+void
+defvar_kboard (struct Lisp_Kboard_Objfwd *ko_fwd,
+	       const char *namestring, int offset)
+{
+  Lisp_Object sym;
+  sym = intern_c_string (namestring);
+  ko_fwd->type = Lisp_Fwd_Kboard_Obj;
+  ko_fwd->offset = offset;
+  XSYMBOL (sym)->u.s.declared_special = true;
+  XSYMBOL (sym)->u.s.redirect = SYMBOL_FORWARDED;
+  SET_SYMBOL_FWD (XSYMBOL (sym), (union Lisp_Fwd *)ko_fwd);
+}
 
 /* Check that the elements of lpath exist.  */
 
@@ -4270,11 +4738,21 @@ dir_warning (char const *use, Lisp_Object dirname)
 void
 syms_of_lread (void)
 {
+  defsubr (&Sread);
   defsubr (&Sread_from_string);
   defsubr (&Slread__substitute_object_in_subtree);
+  defsubr (&Sintern);
+  defsubr (&Sintern_soft);
+  defsubr (&Sunintern);
   defsubr (&Sget_load_suffixes);
   defsubr (&Sload);
   defsubr (&Seval_buffer);
+  defsubr (&Seval_region);
+  defsubr (&Sread_char);
+  defsubr (&Sread_char_exclusive);
+  defsubr (&Sread_event);
+  defsubr (&Sget_file_char);
+  defsubr (&Smapatoms);
   defsubr (&Slocate_file_internal);
 
   DEFVAR_LISP ("obarray", Vobarray,
@@ -4423,7 +4901,7 @@ directory.  These file names are converted to absolute at startup.  */);
 If the file loaded had extension `.elc', and the corresponding source file
 exists, this variable contains the name of source file, suitable for use
 by functions like `custom-save-all' which edit the init file.
-While Emacs loads and evaluates any init file, value is the real name
+While Emacs loads and evaluates the init file, value is the real name
 of the file, regardless of whether or not it has the `.elc' extension.  */);
   Vuser_init_file = Qnil;
 
@@ -4513,6 +4991,12 @@ variables, this must be set in the first line of a file.  */);
 	       doc: /* List of buffers being read from by calls to `eval-buffer' and `eval-region'.  */);
   Veval_buffer_list = Qnil;
 
+  DEFVAR_LISP ("lread--old-style-backquotes", Vlread_old_style_backquotes,
+	       doc: /* Set to non-nil when `read' encounters an old-style backquote.
+For internal use only.  */);
+  Vlread_old_style_backquotes = Qnil;
+  DEFSYM (Qlread_old_style_backquotes, "lread--old-style-backquotes");
+
   DEFVAR_LISP ("lread--unescaped-character-literals",
                Vlread_unescaped_character_literals,
                doc: /* List of deprecated unescaped character literals encountered by `read'.
@@ -4537,21 +5021,11 @@ Note that if you customize this, obviously it will not affect files
 that are loaded before your customizations are read!  */);
   load_prefer_newer = 0;
 
-  DEFVAR_BOOL ("force-new-style-backquotes", force_new_style_backquotes,
-               doc: /* Non-nil means to always use the current syntax for backquotes.
-If nil, `load' and `read' raise errors when encountering some
-old-style variants of backquote and comma.  If non-nil, these
-constructs are always interpreted as described in the Info node
-`(elisp)Backquotes', even if that interpretation is incompatible with
-previous versions of Emacs.  Setting this variable to non-nil makes
-Emacs compatible with the behavior planned for Emacs 28.  In Emacs 28,
-this variable will become obsolete.  */);
-  force_new_style_backquotes = false;
-
   /* Vsource_directory was initialized in init_lread.  */
 
   DEFSYM (Qcurrent_load_list, "current-load-list");
   DEFSYM (Qstandard_input, "standard-input");
+  DEFSYM (Qread_char, "read-char");
   DEFSYM (Qget_file_char, "get-file-char");
 
   /* Used instead of Qget_file_char while loading *.elc files compiled
@@ -4567,6 +5041,7 @@ this variable will become obsolete.  */);
 
   DEFSYM (Qinhibit_file_name_operation, "inhibit-file-name-operation");
   DEFSYM (Qascii_character, "ascii-character");
+  DEFSYM (Qfunction, "function");
   DEFSYM (Qload, "load");
   DEFSYM (Qload_file_name, "load-file-name");
   DEFSYM (Qeval_buffer_list, "eval-buffer-list");

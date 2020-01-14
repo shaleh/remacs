@@ -661,7 +661,6 @@ extern int string_char (const unsigned char *,
                         const unsigned char **, int *);
 
 extern int translate_char (Lisp_Object, int c);
-extern ptrdiff_t char_width (int, struct Lisp_Char_Table *);
 extern ptrdiff_t count_size_as_multibyte (const unsigned char *, ptrdiff_t);
 extern ptrdiff_t str_as_multibyte (unsigned char *, ptrdiff_t, ptrdiff_t,
 				   ptrdiff_t *);
@@ -683,8 +682,6 @@ extern bool alphanumericp (int);
 extern bool graphicp (int);
 extern bool printablep (int);
 extern bool blankp (int);
-
-extern bool confusable_symbol_character_p (int ch);
 
 /* Return a translation table of id number ID.  */
 #define GET_TRANSLATION_TABLE(id) \

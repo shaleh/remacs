@@ -32,7 +32,28 @@ static void set_canon (Lisp_Object case_table, Lisp_Object range, Lisp_Object el
 static void set_identity (Lisp_Object table, Lisp_Object c, Lisp_Object elt);
 static void shuffle (Lisp_Object table, Lisp_Object c, Lisp_Object elt);
 
-extern void rust_syms_of_casetab (void);
+DEFUN ("case-table-p", Fcase_table_p, Scase_table_p, 1, 1, 0,
+       doc: /* Return t if OBJECT is a case table.
+See `set-case-table' for more information on these data structures.  */)
+  (Lisp_Object object)
+{
+  Lisp_Object up, canon, eqv;
+
+  if (! CHAR_TABLE_P (object))
+    return Qnil;
+  if (! EQ (XCHAR_TABLE (object)->purpose, Qcase_table))
+    return Qnil;
+
+  up = XCHAR_TABLE (object)->extras[0];
+  canon = XCHAR_TABLE (object)->extras[1];
+  eqv = XCHAR_TABLE (object)->extras[2];
+
+  return ((NILP (up) || CHAR_TABLE_P (up))
+	  && ((NILP (canon) && NILP (eqv))
+ 	      || (CHAR_TABLE_P (canon)
+		  && (NILP (eqv) || CHAR_TABLE_P (eqv))))
+	  ? Qt : Qnil);
+}
 
 static Lisp_Object
 check_case_table (Lisp_Object obj)
@@ -41,7 +62,55 @@ check_case_table (Lisp_Object obj)
   return (obj);
 }
 
-Lisp_Object
+DEFUN ("current-case-table", Fcurrent_case_table, Scurrent_case_table, 0, 0, 0,
+       doc: /* Return the case table of the current buffer.  */)
+  (void)
+{
+  return BVAR (current_buffer, downcase_table);
+}
+
+DEFUN ("standard-case-table", Fstandard_case_table, Sstandard_case_table, 0, 0, 0,
+       doc: /* Return the standard case table.
+This is the one used for new buffers.  */)
+  (void)
+{
+  return Vascii_downcase_table;
+}
+
+static Lisp_Object set_case_table (Lisp_Object, bool);
+
+DEFUN ("set-case-table", Fset_case_table, Sset_case_table, 1, 1, 0,
+       doc: /* Select a new case table for the current buffer.
+A case table is a char-table which maps characters
+to their lower-case equivalents.  It also has three \"extra\" slots
+which may be additional char-tables or nil.
+These slots are called UPCASE, CANONICALIZE and EQUIVALENCES.
+UPCASE maps each non-upper-case character to its upper-case equivalent.
+ (The value in UPCASE for an upper-case character is never used.)
+ If lower and upper case characters are in 1-1 correspondence,
+ you may use nil and the upcase table will be deduced from DOWNCASE.
+CANONICALIZE maps each character to a canonical equivalent;
+ any two characters that are related by case-conversion have the same
+ canonical equivalent character; it may be nil, in which case it is
+ deduced from DOWNCASE and UPCASE.
+EQUIVALENCES is a map that cyclically permutes each equivalence class
+ (of characters with the same canonical equivalent); it may be nil,
+ in which case it is deduced from CANONICALIZE.  */)
+  (Lisp_Object table)
+{
+  return set_case_table (table, 0);
+}
+
+DEFUN ("set-standard-case-table", Fset_standard_case_table,
+       Sset_standard_case_table, 1, 1, 0,
+       doc: /* Select a new standard case table for new buffers.
+See `set-case-table' for more info on case tables.  */)
+  (Lisp_Object table)
+{
+  return set_case_table (table, 1);
+}
+
+static Lisp_Object
 set_case_table (Lisp_Object table, bool standard)
 {
   Lisp_Object up, canon, eqv;
@@ -218,10 +287,16 @@ init_casetab_once (void)
 void
 syms_of_casetab (void)
 {
+  DEFSYM (Qcase_table_p, "case-table-p");
+
   staticpro (&Vascii_canon_table);
   staticpro (&Vascii_downcase_table);
   staticpro (&Vascii_eqv_table);
   staticpro (&Vascii_upcase_table);
 
-  rust_syms_of_casetab();
+  defsubr (&Scase_table_p);
+  defsubr (&Scurrent_case_table);
+  defsubr (&Sstandard_case_table);
+  defsubr (&Sset_case_table);
+  defsubr (&Sset_standard_case_table);
 }

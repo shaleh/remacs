@@ -438,7 +438,6 @@ extern unsigned int timers_run;
 extern bool menu_separator_name_p (const char *);
 extern bool parse_menu_item (Lisp_Object, int);
 
-extern void init_raw_keybuf_count (void);
 extern KBOARD *allocate_kboard (Lisp_Object);
 extern void delete_kboard (KBOARD *);
 extern void not_single_kboard_state (KBOARD *);
@@ -497,15 +496,6 @@ extern const char *const lispy_function_keys[];
 #endif
 
 extern char const DEV_TTY[];
-
-Lisp_Object
-make_lispy_position (struct frame *f, Lisp_Object x, Lisp_Object y, Time t);
-
-Lisp_Object
-read_key_sequence_vs (Lisp_Object prompt, Lisp_Object continue_echo,
-		      Lisp_Object dont_downcase_last,
-		      Lisp_Object can_return_switch_frame,
-		      Lisp_Object cmd_loop, bool allow_string);
 
 INLINE_HEADER_END
 

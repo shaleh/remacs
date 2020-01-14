@@ -26,7 +26,7 @@ GNUstep port and post-20 update by Adrian Robert (arobert@cogsci.ucsd.edu)
 */
 
 /* This should be the first include, as it may set up #defines affecting
-   interpretation of even the system includes.  */
+   interpretation of even the system includes. */
 #include <config.h>
 
 #include "lisp.h"
@@ -41,7 +41,7 @@ GNUstep port and post-20 update by Adrian Robert (arobert@cogsci.ucsd.edu)
 
    C interface.  This allows easy calling from C files.  We could just
    compile everything as Objective-C, but that might mean slower
-   compilation and possible difficulties on some platforms.
+   compilation and possible difficulties on some platforms..
 
    ========================================================================== */
 
@@ -76,9 +76,8 @@ ns_load_image (struct frame *f, struct image *img,
 {
   EmacsImage *eImg = nil;
   NSSize size;
-  Lisp_Object lisp_index, lisp_rotation;
+  Lisp_Object lisp_index;
   unsigned int index;
-  double rotation;
 
   NSTRACE ("ns_load_image");
 
@@ -86,9 +85,6 @@ ns_load_image (struct frame *f, struct image *img,
 
   lisp_index = Fplist_get (XCDR (img->spec), QCindex);
   index = INTEGERP (lisp_index) ? XFASTINT (lisp_index) : 0;
-
-  lisp_rotation = Fplist_get (XCDR (img->spec), QCrotation);
-  rotation = NUMBERP (lisp_rotation) ? XFLOATINT (lisp_rotation) : 0;
 
   if (STRINGP (spec_file))
     {
@@ -117,17 +113,6 @@ ns_load_image (struct frame *f, struct image *img,
       return 0;
     }
 
-  img->lisp_data = [eImg getMetadata];
-
-  if (rotation != 0)
-    {
-      EmacsImage *temp = [eImg rotate:rotation];
-      [eImg release];
-      eImg = temp;
-    }
-
-  [eImg setSizeFromSpec:XCDR (img->spec)];
-
   size = [eImg size];
   img->width = size.width;
   img->height = size.height;
@@ -135,6 +120,7 @@ ns_load_image (struct frame *f, struct image *img,
   /* 4) set img->pixmap = emacsimage */
   img->pixmap = eImg;
 
+  img->lisp_data = [eImg getMetadata];
   return 1;
 }
 
@@ -226,7 +212,7 @@ ns_set_alpha (void *img, int x, int y, unsigned char a)
 
 
 /* Create image from monochrome bitmap. If both FG and BG are 0
-   (black), set the background to white and make it transparent.  */
+   (black), set the background to white and make it transparent. */
 - (instancetype)initFromXBM: (unsigned char *)bits width: (int)w height: (int)h
            fg: (unsigned long)fg bg: (unsigned long)bg
 {
@@ -251,7 +237,7 @@ ns_set_alpha (void *img, int x, int y, unsigned char a)
     }
 
   {
-    /* Pull bits out to set the (bytewise) alpha mask.  */
+    /* pull bits out to set the (bytewise) alpha mask */
     int i, j, k;
     unsigned char *s = bits;
     unsigned char *rr = planes[0];
@@ -362,7 +348,7 @@ ns_set_alpha (void *img, int x, int y, unsigned char a)
 }
 
 
-/* Attempt to pull out pixmap data from a BitmapImageRep; returns NO if fails.  */
+/* attempt to pull out pixmap data from a BitmapImageRep; returns NO if fails */
 - (void) setPixmapData
 {
   NSEnumerator *reps;
@@ -386,15 +372,15 @@ ns_set_alpha (void *img, int x, int y, unsigned char a)
 }
 
 
-/* Note: this and next work only for image created with initForXPMWithDepth,
-         initFromSkipXBM, or where setPixmapData was called successfully.  */
+/* note; this and next work only for image created with initForXPMWithDepth,
+         initFromSkipXBM, or where setPixmapData was called successfully */
 /* return ARGB */
 - (unsigned long) getPixelAtX: (int)x Y: (int)y
 {
   if (bmRep == nil)
     return 0;
 
-  /* This method is faster but won't work for bitmaps.  */
+  /* this method is faster but won't work for bitmaps */
   if (pixmapData[0] != NULL)
     {
       int loc = x + y * [self size].width;
@@ -457,7 +443,7 @@ ns_set_alpha (void *img, int x, int y, unsigned char a)
     }
 }
 
-/* Returns a pattern color, which is cached here.  */
+/* returns a pattern color, which is cached here */
 - (NSColor *)stippleMask
 {
   if (stippleMask == nil)
@@ -465,7 +451,7 @@ ns_set_alpha (void *img, int x, int y, unsigned char a)
   return stippleMask;
 }
 
-/* Find the first NSBitmapImageRep which has multiple frames.  */
+/* Find the first NSBitmapImageRep which has multiple frames. */
 - (NSBitmapImageRep *)getAnimatedBitmapImageRep
 {
   for (NSImageRep * r in [self representations])
@@ -481,7 +467,7 @@ ns_set_alpha (void *img, int x, int y, unsigned char a)
 }
 
 /* If the image has multiple frames, get a count of them and the
-   animation delay, if available.  */
+   animation delay, if available. */
 - (Lisp_Object)getMetadata
 {
   Lisp_Object metadata = Qnil;
@@ -502,7 +488,7 @@ ns_set_alpha (void *img, int x, int y, unsigned char a)
   return metadata;
 }
 
-/* Attempt to set the animation frame to be displayed.  */
+/* Attempt to set the animation frame to be displayed. */
 - (BOOL)setFrame: (unsigned int) index
 {
   NSBitmapImageRep * bm = [self getAnimatedBitmapImageRep];
@@ -511,7 +497,7 @@ ns_set_alpha (void *img, int x, int y, unsigned char a)
     {
       int frames = [[bm valueForProperty:NSImageFrameCount] intValue];
 
-      /* If index is invalid, give up.  */
+      /* If index is invalid, give up. */
       if (index < 0 || index > frames)
         return NO;
 
@@ -520,106 +506,8 @@ ns_set_alpha (void *img, int x, int y, unsigned char a)
     }
 
   /* Setting the frame has succeeded, or the image doesn't have
-     multiple frames.  */
+     multiple frames. */
   return YES;
-}
-
-- (void)setSizeFromSpec: (Lisp_Object) spec
-{
-  NSSize size = [self size];
-  Lisp_Object value;
-  double scale = 1, aspect = size.width / size.height;
-  double width = -1, height = -1, max_width = -1, max_height = -1;
-
-  value = Fplist_get (spec, QCscale);
-  if (NUMBERP (value))
-    scale = XFLOATINT (value) ;
-
-  value = Fplist_get (spec, QCmax_width);
-  if (NUMBERP (value))
-    max_width = XFLOATINT (value);
-
-  value = Fplist_get (spec, QCmax_height);
-  if (NUMBERP (value))
-    max_height = XFLOATINT (value);
-
-  value = Fplist_get (spec, QCwidth);
-  if (NUMBERP (value))
-    {
-      width = XFLOATINT (value) * scale;
-      /* :width overrides :max-width. */
-      max_width = -1;
-    }
-
-  value = Fplist_get (spec, QCheight);
-  if (NUMBERP (value))
-    {
-      height = XFLOATINT (value) * scale;
-      /* :height overrides :max-height. */
-      max_height = -1;
-    }
-
-  if (width <= 0 && height <= 0)
-    {
-      width = size.width * scale;
-      height = size.height * scale;
-    }
-  else if (width > 0 && height <= 0)
-      height = width / aspect;
-  else if (height > 0 && width <= 0)
-      width = height * aspect;
-
-  if (max_width > 0 && width > max_width)
-    {
-      width = max_width;
-      height = max_width / aspect;
-    }
-
-  if (max_height > 0 && height > max_height)
-    {
-      height = max_height;
-      width = max_height * aspect;
-    }
-
-  [self setSize:NSMakeSize(width, height)];
-}
-
-- (instancetype)rotate: (double)rotation
-{
-  EmacsImage *new_image;
-  NSPoint new_origin;
-  NSSize new_size, size = [self size];
-  NSRect rect = { NSZeroPoint, [self size] };
-
-  /* Create a bezier path of the outline of the image and do the
-   * rotation on it.  */
-  NSBezierPath *bounds_path = [NSBezierPath bezierPathWithRect:rect];
-  NSAffineTransform *transform = [NSAffineTransform transform];
-  [transform rotateByDegrees: rotation * -1];
-  [bounds_path transformUsingAffineTransform:transform];
-
-  /* Now we can find out how large the rotated image needs to be.  */
-  new_size = [bounds_path bounds].size;
-  new_image = [[EmacsImage alloc] initWithSize:new_size];
-
-  new_origin = NSMakePoint((new_size.width - size.width)/2,
-                           (new_size.height - size.height)/2);
-
-  [new_image lockFocus];
-
-  /* Create the final transform.  */
-  transform = [NSAffineTransform transform];
-  [transform translateXBy:new_size.width/2 yBy:new_size.height/2];
-  [transform rotateByDegrees: rotation * -1];
-  [transform translateXBy:-new_size.width/2 yBy:-new_size.height/2];
-
-  [transform concat];
-  [self drawAtPoint:new_origin fromRect:NSZeroRect
-          operation:NSCompositingOperationCopy fraction:1];
-
-  [new_image unlockFocus];
-
-  return new_image;
 }
 
 @end

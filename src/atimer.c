@@ -31,6 +31,10 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 # include <sys/timerfd.h>
 #endif
 
+#ifdef MSDOS
+#include "msdos.h"
+#endif
+
 /* Free-list of atimer structures.  */
 
 static struct atimer *free_atimers;
@@ -415,7 +419,7 @@ timerfd_callback (int fd, void *arg)
   else if (nbytes < 0)
     /* For some not yet known reason, we may get weird event and no
        data on timer descriptor.  This can break Gnus at least, see:
-       https://lists.gnu.org/archive/html/emacs-devel/2014-07/msg00503.html.  */
+       https://lists.gnu.org/r/emacs-devel/2014-07/msg00503.html.  */
     eassert (errno == EAGAIN);
   else
     /* I don't know what else can happen with this descriptor.  */

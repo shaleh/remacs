@@ -1,5 +1,5 @@
-# stdlib_h.m4 serial 45
-dnl Copyright (C) 2007-2018 Free Software Foundation, Inc.
+# stdlib_h.m4 serial 44
+dnl Copyright (C) 2007-2019 Free Software Foundation, Inc.
 dnl This file is free software; the Free Software Foundation
 dnl gives unlimited permission to copy and/or distribute it,
 dnl with or without modifications, as long as this notice is preserved.
@@ -14,19 +14,16 @@ AC_DEFUN([gl_STDLIB_H],
   dnl guaranteed by C89.
   gl_WARN_ON_USE_PREPARE([[#include <stdlib.h>
 #if HAVE_SYS_LOADAVG_H
-/* OpenIndiana has a bug: <sys/time.h> must be included before
-   <sys/loadavg.h>.  */
-# include <sys/time.h>
 # include <sys/loadavg.h>
 #endif
 #if HAVE_RANDOM_H
 # include <random.h>
 #endif
     ]], [_Exit atoll canonicalize_file_name getloadavg getsubopt grantpt
-    initstate initstate_r mkdtemp
-    posix_openpt ptsname ptsname_r qsort_r random random_r realpath rpmatch
-    secure_getenv setenv setstate setstate_r srandom srandom_r
-    strtod strtoll strtoull unlockpt unsetenv])
+    initstate initstate_r mkdtemp mkostemp mkostemps mkstemp mkstemps
+    posix_openpt ptsname ptsname_r qsort_r random random_r reallocarray
+    realpath rpmatch secure_getenv setenv setstate setstate_r srandom
+    srandom_r strtod strtoll strtoull unlockpt unsetenv])
 ])
 
 AC_DEFUN([gl_STDLIB_MODULE_INDICATOR],
@@ -50,6 +47,10 @@ AC_DEFUN([gl_STDLIB_H_DEFAULTS],
   GNULIB_MALLOC_POSIX=0;  AC_SUBST([GNULIB_MALLOC_POSIX])
   GNULIB_MBTOWC=0;        AC_SUBST([GNULIB_MBTOWC])
   GNULIB_MKDTEMP=0;       AC_SUBST([GNULIB_MKDTEMP])
+  GNULIB_MKOSTEMP=0;      AC_SUBST([GNULIB_MKOSTEMP])
+  GNULIB_MKOSTEMPS=0;     AC_SUBST([GNULIB_MKOSTEMPS])
+  GNULIB_MKSTEMP=0;       AC_SUBST([GNULIB_MKSTEMP])
+  GNULIB_MKSTEMPS=0;      AC_SUBST([GNULIB_MKSTEMPS])
   GNULIB_POSIX_OPENPT=0;  AC_SUBST([GNULIB_POSIX_OPENPT])
   GNULIB_PTSNAME=0;       AC_SUBST([GNULIB_PTSNAME])
   GNULIB_PTSNAME_R=0;     AC_SUBST([GNULIB_PTSNAME_R])
@@ -79,6 +80,10 @@ AC_DEFUN([gl_STDLIB_H_DEFAULTS],
   HAVE_GRANTPT=1;            AC_SUBST([HAVE_GRANTPT])
   HAVE_DECL_INITSTATE=1;     AC_SUBST([HAVE_DECL_INITSTATE])
   HAVE_MKDTEMP=1;            AC_SUBST([HAVE_MKDTEMP])
+  HAVE_MKOSTEMP=1;           AC_SUBST([HAVE_MKOSTEMP])
+  HAVE_MKOSTEMPS=1;          AC_SUBST([HAVE_MKOSTEMPS])
+  HAVE_MKSTEMP=1;            AC_SUBST([HAVE_MKSTEMP])
+  HAVE_MKSTEMPS=1;           AC_SUBST([HAVE_MKSTEMPS])
   HAVE_POSIX_OPENPT=1;       AC_SUBST([HAVE_POSIX_OPENPT])
   HAVE_PTSNAME=1;            AC_SUBST([HAVE_PTSNAME])
   HAVE_PTSNAME_R=1;          AC_SUBST([HAVE_PTSNAME_R])
@@ -104,6 +109,7 @@ AC_DEFUN([gl_STDLIB_H_DEFAULTS],
   REPLACE_CANONICALIZE_FILE_NAME=0;  AC_SUBST([REPLACE_CANONICALIZE_FILE_NAME])
   REPLACE_MALLOC=0;          AC_SUBST([REPLACE_MALLOC])
   REPLACE_MBTOWC=0;          AC_SUBST([REPLACE_MBTOWC])
+  REPLACE_MKSTEMP=0;         AC_SUBST([REPLACE_MKSTEMP])
   REPLACE_PTSNAME=0;         AC_SUBST([REPLACE_PTSNAME])
   REPLACE_PTSNAME_R=0;       AC_SUBST([REPLACE_PTSNAME_R])
   REPLACE_PUTENV=0;          AC_SUBST([REPLACE_PUTENV])

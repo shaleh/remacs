@@ -270,10 +270,8 @@ extern ptrdiff_t emacs_re_safe_alloca;
 #ifdef RE_DUP_MAX
 # undef RE_DUP_MAX
 #endif
-/* Repeat counts are stored in opcodes as 2 byte integers.  This was
-   previously limited to 7fff because the parsing code uses signed
-   ints.  But Emacs only runs on 32 bit platforms anyway.  */
-#define RE_DUP_MAX (0xffff)
+/* If sizeof(int) == 2, then ((1 << 15) - 1) overflows.  */
+#define RE_DUP_MAX (0x7fff)
 
 
 /* POSIX `cflags' bits (i.e., information for `regcomp').  */
@@ -339,8 +337,7 @@ typedef enum
   REG_EEND,		/* Premature end.  */
   REG_ESIZE,		/* Compiled pattern bigger than 2^16 bytes.  */
   REG_ERPAREN,		/* Unmatched ) or \); not returned from regcomp.  */
-  REG_ERANGEX,		/* Range striding over charsets.  */
-  REG_ESIZEBR           /* n or m too big in \{n,m\} */
+  REG_ERANGEX		/* Range striding over charsets.  */
 } reg_errcode_t;
 
 /* This data structure represents a compiled pattern.  Before calling

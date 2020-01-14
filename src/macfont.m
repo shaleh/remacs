@@ -1441,6 +1441,8 @@ macfont_get_glyph_for_character (struct font *font, UTF32Char c)
           CGGlyph *glyphs;
           int i, len;
           int nrows;
+          dispatch_queue_t queue;
+          dispatch_group_t group = NULL;
           int nkeys;
 
           if (row != 0)
@@ -2344,9 +2346,9 @@ macfont_list (struct frame *f, Lisp_Object spec)
                   != (spacing >= FONT_SPACING_MONO)))
             continue;
 
-          /* Don't use a color bitmap font unless its family is
-             explicitly specified.  */
-          if ((sym_traits & kCTFontTraitColorGlyphs) && NILP (family))
+          /* Don't use a color bitmap font until it is supported on
+	     free platforms.  */
+          if (sym_traits & kCTFontTraitColorGlyphs)
             continue;
 
           if (j > 0

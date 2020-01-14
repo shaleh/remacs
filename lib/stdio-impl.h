@@ -18,12 +18,6 @@
    the same implementation of stdio extension API, except that some fields
    have different naming conventions, or their access requires some casts.  */
 
-/* Glibc 2.28 made _IO_IN_BACKUP private.  For now, work around this
-   problem by defining it ourselves.  FIXME: Do not rely on glibc
-   internals.  */
-#if !defined _IO_IN_BACKUP && defined _IO_EOF_SEEN
-# define _IO_IN_BACKUP 0x100
-#endif
 
 /* BSD stdio derived implementations.  */
 
@@ -87,7 +81,7 @@
 #ifdef __TANDEM                     /* NonStop Kernel */
 # ifndef _IOERR
 /* These values were determined by the program 'stdioext-flags' at
-   <https://lists.gnu.org/archive/html/bug-gnulib/2010-12/msg00165.html>.  */
+   <https://lists.gnu.org/r/bug-gnulib/2010-12/msg00165.html>.  */
 #  define _IOERR   0x40
 #  define _IOREAD  0x80
 #  define _IOWRT    0x4
@@ -138,7 +132,7 @@ struct _gl_real_FILE
 # define fp_ ((struct _gl_real_FILE *) fp)
 
 /* These values were determined by a program similar to the one at
-   <https://lists.gnu.org/archive/html/bug-gnulib/2010-12/msg00165.html>.  */
+   <https://lists.gnu.org/r/bug-gnulib/2010-12/msg00165.html>.  */
 # define _IOREAD   0x1
 # define _IOWRT    0x2
 # define _IORW     0x4

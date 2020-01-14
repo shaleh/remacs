@@ -164,7 +164,7 @@ includedir=@includedir@
 # Where to install Emacs's man pages.
 # Note they contain cross-references that expect them to be in section 1.
 mandir=@mandir@
-man2dir=$(mandir)/man2
+man1dir=$(mandir)/man1
 
 # Where to install and expect the info files describing Emacs.
 infodir=@infodir@
@@ -406,10 +406,6 @@ epaths-force-w32:
 	  -e '/^.*#/s/@CFG@/${configuration}/g' 		\
 	  -e "/^.*#/s|@SRC@|$${w32srcdir}|g") &&		\
 	${srcdir}/build-aux/move-if-change epaths.h.$$$$ src/epaths.h
-
-# If lib/Makefile would build files in '.', then build them before
-# building 'lib', to avoid races with parallel makes.
-lib: am--refresh
 
 lib-src src: $(NTDIR) lib
 
@@ -694,17 +690,17 @@ install-info: info
 ## ctags.1 is compressed or not.  "gzip -f" is another option here,
 ## but not sure if portable.
 install-man:
-	umask 022; ${MKDIR_P} "$(DESTDIR)${man2dir}"
+	umask 022; ${MKDIR_P} "$(DESTDIR)${man1dir}"
 	thisdir=`/bin/pwd`; \
 	cd ${mansrcdir}; \
 	for page in *.1; do \
 	  test "$$page" = ChangeLog.1 && continue; \
 	  dest=`echo "$${page}" | sed -e 's/\.1$$//' -e '$(TRANSFORM)'`.1; \
 	  (cd "$${thisdir}"; \
-	   ${INSTALL_DATA} ${mansrcdir}/$${page} "$(DESTDIR)${man2dir}/$${dest}"); \
+	   ${INSTALL_DATA} ${mansrcdir}/$${page} "$(DESTDIR)${man1dir}/$${dest}"); \
 	  [ -n "${GZIP_PROG}" ] || continue ; \
-	  rm -f "$(DESTDIR)${man2dir}/$${dest}.gz"; \
-	  ${GZIP_PROG} -9n "$(DESTDIR)${man2dir}/$${dest}" || true; \
+	  rm -f "$(DESTDIR)${man1dir}/$${dest}.gz"; \
+	  ${GZIP_PROG} -9n "$(DESTDIR)${man1dir}/$${dest}" || true; \
 	done
 
 ## Install those items from etc/ that need to end up elsewhere.
@@ -796,7 +792,7 @@ uninstall: uninstall-$(NTDIR) uninstall-doc
 	    ext=.gz; else ext=; fi; \
 	 if cd ${mansrcdir}; then \
 	   for page in *.1; do \
-	     rm -f "$(DESTDIR)${man2dir}"/`echo "$${page}" | sed -e 's/\.1$$//' -e '$(TRANSFORM)'`.1$$ext; done; \
+	     rm -f "$(DESTDIR)${man1dir}"/`echo "$${page}" | sed -e 's/\.1$$//' -e '$(TRANSFORM)'`.1$$ext; done; \
 	 fi)
 	rm -f "$(DESTDIR)${bindir}/$(EMACS)" "$(DESTDIR)${bindir}/$(EMACSFULL)"
 	(if cd "$(DESTDIR)${icondir}"; then \
@@ -838,7 +834,7 @@ endef
 ###      normally don't want to recompile.  For example, the 'mostlyclean'
 ###      target for GCC does not delete 'libgcc.a', because recompiling it
 ###      is rarely necessary and takes a lot of time.
-mostlyclean_dirs = src lib lib-src nt doc/emacs doc/misc \
+mostlyclean_dirs = src oldXMenu lwlib lib lib-src nt doc/emacs doc/misc \
   doc/lispref doc/lispintro
 
 $(foreach dir,$(mostlyclean_dirs),$(eval $(call submake_template,$(dir),mostlyclean)))
@@ -882,7 +878,7 @@ top_distclean=\
 	rm -f config.status config.log~ \
 	  Makefile lib/gnulib.mk ${SUBDIR_MAKEFILES}
 
-distclean_dirs = $(clean_dirs) leim
+distclean_dirs = $(clean_dirs) leim lisp
 
 $(foreach dir,$(distclean_dirs),$(eval $(call submake_template,$(dir),distclean)))
 
@@ -1197,13 +1193,3 @@ check-declare:
 	fi
 	$(MAKE) -C lisp $@
 	$(MAKE) -C test $@
-
-.PHONY: gitmerge
-
-GITMERGE_EMACS = ./src/emacs${EXEEXT}
-GITMERGE_NMIN = 10
-
-gitmerge:
-	${GITMERGE_EMACS} -batch --no-site-file --no-site-lisp \
-	  -l ${srcdir}/admin/gitmerge.el \
-	  --eval '(setq gitmerge-minimum-missing ${GITMERGE_NMIN})' -f gitmerge

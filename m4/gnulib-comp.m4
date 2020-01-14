@@ -55,6 +55,9 @@ AC_DEFUN([gl_EARLY],
   # Code from module clock-time:
   # Code from module cloexec:
   # Code from module close-stream:
+  # Code from module count-leading-zeros:
+  # Code from module count-one-bits:
+  # Code from module count-trailing-zeros:
   # Code from module crypto/md5:
   # Code from module crypto/sha1:
   # Code from module crypto/sha256:
@@ -86,7 +89,6 @@ AC_DEFUN([gl_EARLY],
   # Code from module fpieee:
   AC_REQUIRE([gl_FP_IEEE])
   # Code from module fstatat:
-  # Code from module fsusage:
   # Code from module fsync:
   # Code from module getdtablesize:
   # Code from module getgroups:
@@ -110,6 +112,7 @@ AC_DEFUN([gl_EARLY],
   # Code from module manywarnings:
   # Code from module memrchr:
   # Code from module minmax:
+  # Code from module mkostemp:
   # Code from module mktime:
   # Code from module mktime-internal:
   # Code from module multiarch:
@@ -125,7 +128,7 @@ AC_DEFUN([gl_EARLY],
   # Code from module readlink:
   # Code from module readlinkat:
   # Code from module root-uid:
-  # Code from module secure_getenv:
+  # Code from module sig2str:
   # Code from module signal-h:
   # Code from module snippet/_Noreturn:
   # Code from module snippet/arg-nonnull:
@@ -193,6 +196,9 @@ AC_DEFUN([gl_INIT],
   gl_CLOCK_TIME
   gl_CLOSE_STREAM
   gl_MODULE_INDICATOR([close-stream])
+  gl_COUNT_LEADING_ZEROS
+  gl_COUNT_ONE_BITS
+  gl_COUNT_TRAILING_ZEROS
   gl_MD5
   gl_SHA1
   gl_SHA256
@@ -252,11 +258,6 @@ AC_DEFUN([gl_INIT],
     AC_LIBOBJ([fstatat])
   fi
   gl_SYS_STAT_MODULE_INDICATOR([fstatat])
-  gl_FSUSAGE
-  if test $gl_cv_fs_space = yes; then
-    AC_LIBOBJ([fsusage])
-    gl_PREREQ_FSUSAGE_EXTRA
-  fi
   gl_FUNC_FSYNC
   if test $HAVE_FSYNC = 0; then
     AC_LIBOBJ([fsync])
@@ -304,6 +305,13 @@ AC_DEFUN([gl_INIT],
   fi
   gl_STRING_MODULE_INDICATOR([memrchr])
   gl_MINMAX
+  gl_FUNC_MKOSTEMP
+  if test $HAVE_MKOSTEMP = 0; then
+    AC_LIBOBJ([mkostemp])
+    gl_PREREQ_MKOSTEMP
+  fi
+  gl_MODULE_INDICATOR([mkostemp])
+  gl_STDLIB_MODULE_INDICATOR([mkostemp])
   gl_FUNC_MKTIME
   if test $REPLACE_MKTIME = 1; then
     AC_LIBOBJ([mktime])
@@ -342,6 +350,11 @@ AC_DEFUN([gl_INIT],
     AC_LIBOBJ([readlinkat])
   fi
   gl_UNISTD_MODULE_INDICATOR([readlinkat])
+  gl_FUNC_SIG2STR
+  if test $ac_cv_func_sig2str = no; then
+    AC_LIBOBJ([sig2str])
+    gl_PREREQ_SIG2STR
+  fi
   gl_SIGNAL_H
   gl_TYPE_SOCKLEN_T
   gt_TYPE_SSIZE_T
@@ -576,18 +589,6 @@ AC_DEFUN([gl_INIT],
       gl_gnulib_enabled_strtoll=true
     fi
   }
-  func_gl_gnulib_m4code_strtoull ()
-  {
-    if ! $gl_gnulib_enabled_strtoull; then
-      gl_FUNC_STRTOULL
-      if test $HAVE_STRTOULL = 0; then
-        AC_LIBOBJ([strtoull])
-        gl_PREREQ_STRTOULL
-      fi
-      gl_STDLIB_MODULE_INDICATOR([strtoull])
-      gl_gnulib_enabled_strtoull=true
-    fi
-  }
   func_gl_gnulib_m4code_682e609604ccaac6be382e4ee3a4eaec ()
   {
     if ! $gl_gnulib_enabled_682e609604ccaac6be382e4ee3a4eaec; then
@@ -631,10 +632,7 @@ AC_DEFUN([gl_INIT],
     func_gl_gnulib_m4code_2049e887c7e5308faad27b3f894bb8c9
   fi
   if test $REPLACE_LSTAT = 1; then
-    func_gl_gnulib_m4code_stat
-  fi
-  if test $HAVE_READLINK = 0 || test $REPLACE_READLINK = 1; then
-    func_gl_gnulib_m4code_stat
+    func_gl_gnulib_m4code_dosname
   fi
   if test $HAVE_READLINKAT = 0; then
     func_gl_gnulib_m4code_260941c0e5dc67ec9e87d1fb321c300b
@@ -837,6 +835,12 @@ AC_DEFUN([gl_FILE_LIST], [
   lib/cloexec.h
   lib/close-stream.c
   lib/close-stream.h
+  lib/count-leading-zeros.c
+  lib/count-leading-zeros.h
+  lib/count-one-bits.c
+  lib/count-one-bits.h
+  lib/count-trailing-zeros.c
+  lib/count-trailing-zeros.h
   lib/diffseq.h
   lib/dirent.in.h
   lib/dirfd.c
@@ -862,8 +866,6 @@ AC_DEFUN([gl_FILE_LIST], [
   lib/fpending.c
   lib/fpending.h
   lib/fstatat.c
-  lib/fsusage.c
-  lib/fsusage.h
   lib/fsync.c
   lib/ftoastr.c
   lib/ftoastr.h
@@ -896,6 +898,7 @@ AC_DEFUN([gl_FILE_LIST], [
   lib/md5.h
   lib/memrchr.c
   lib/minmax.h
+  lib/mkostemp.c
   lib/mktime-internal.h
   lib/mktime.c
   lib/nstrftime.c
@@ -918,6 +921,8 @@ AC_DEFUN([gl_FILE_LIST], [
   lib/sha256.h
   lib/sha512.c
   lib/sha512.h
+  lib/sig2str.c
+  lib/sig2str.h
   lib/signal.in.h
   lib/stat-time.c
   lib/stat-time.h
@@ -968,6 +973,10 @@ AC_DEFUN([gl_FILE_LIST], [
   m4/c-strtod.m4
   m4/clock_time.m4
   m4/close-stream.m4
+  m4/count-leading-zeros.m4
+  m4/count-one-bits.m4
+  m4/count-trailing-zeros.m4
+  m4/d-type.m4
   m4/dirent_h.m4
   m4/dirfd.m4
   m4/dup2.m4
@@ -989,7 +998,6 @@ AC_DEFUN([gl_FILE_LIST], [
   m4/fpending.m4
   m4/fpieee.m4
   m4/fstatat.m4
-  m4/fsusage.m4
   m4/fsync.m4
   m4/getdtablesize.m4
   m4/getgroups.m4
@@ -1012,6 +1020,7 @@ AC_DEFUN([gl_FILE_LIST], [
   m4/md5.m4
   m4/memrchr.m4
   m4/minmax.m4
+  m4/mkostemp.m4
   m4/mktime.m4
   m4/mode_t.m4
   m4/multiarch.m4
@@ -1029,6 +1038,7 @@ AC_DEFUN([gl_FILE_LIST], [
   m4/sha1.m4
   m4/sha256.m4
   m4/sha512.m4
+  m4/sig2str.m4
   m4/signal_h.m4
   m4/socklen.m4
   m4/ssize_t.m4

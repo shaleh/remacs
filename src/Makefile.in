@@ -48,6 +48,8 @@ lispsource = $(top_srcdir)/lisp
 lib = ../lib
 libsrc = ../lib-src
 etc = ../etc
+oldXMenudir = ../oldXMenu
+lwlibdir = ../lwlib
 
 # Configuration files for .o files to depend on.
 config_h = config.h $(srcdir)/conf_post.h
@@ -347,6 +349,9 @@ am__v_at_ = $(am__v_at_@AM_DEFAULT_V@)
 am__v_at_0 = @
 am__v_at_1 =
 
+# Flags that might be in WARN_CFLAGS but are not valid for Objective C.
+NON_OBJC_CFLAGS = -Wignored-attributes -Wignored-qualifiers -Wopenmp-simd
+
 CARGO_BUILD=@CARGO_BUILD@
 CARGO_CLEAN=@CARGO_CLEAN@
 CARGO_CLIPPY=@CARGO_CLIPPY@
@@ -396,21 +401,22 @@ base_obj = dispnew.o frame.o scroll.o xdisp.o menu.o $(XMENU_OBJ) window.o \
 	charset.o coding.o category.o ccl.o character.o chartab.o bidi.o \
 	$(CM_OBJ) term.o terminal.o xfaces.o $(XOBJ) $(GTK_OBJ) $(DBUS_OBJ) \
 	emacs.o keyboard.o macros.o keymap.o sysdep.o \
-	buffer.o filelock.o insdel.o \
+	buffer.o filelock.o insdel.o marker.o \
 	minibuf.o fileio.o dired.o \
-	casefiddle.o indent.o search.o regex.o undo.o \
+	cmds.o casetab.o casefiddle.o indent.o search.o regex.o undo.o \
 	alloc.o data.o doc.o editfns.o callint.o \
-	eval.o fns.o font.o print.o lread.o $(MODULES_OBJ) \
+	eval.o floatfns.o fns.o font.o print.o lread.o $(MODULES_OBJ) \
 	syntax.o $(UNEXEC_OBJ) bytecode.o \
 	process.o gnutls.o callproc.o \
 	region-cache.o sound.o atimer.o \
 	doprnt.o intervals.o textprop.o composite.o xml.o lcms.o $(NOTIFY_OBJ) \
 	$(XWIDGETS_OBJ) \
-	profiler.o \
+	profiler.o decompress.o \
 	thread.o systhread.o \
 	$(if $(HYBRID_MALLOC),sheap.o) \
 	$(MSDOS_OBJ) $(MSDOS_X_OBJ) $(NS_OBJ) $(CYGWIN_OBJ) $(FONT_OBJ) \
-	$(W32_OBJ) $(WINDOW_SYSTEM_OBJ) $(XGSELOBJ) $(JSON_OBJ)
+	$(W32_OBJ) $(WINDOW_SYSTEM_OBJ) $(XGSELOBJ) \
+	$(JSON_OBJ)
 obj = $(base_obj) $(NS_OBJC_OBJ)
 
 ## Object files used on some machine or other.

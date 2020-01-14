@@ -4417,7 +4417,7 @@ sys_open (const char * path, int oflag, int mode)
     }
 
   return res;
-} 
+}
 
 int
 fchmod (int fd, mode_t mode)

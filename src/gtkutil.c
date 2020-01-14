@@ -579,7 +579,18 @@ xg_check_special_colors (struct frame *f,
     if (get_fg)
       gtk_style_context_get_color (gsty, state, &col);
     else
-      gtk_style_context_get_background_color (gsty, state, &col);
+      {
+        GdkRGBA *c;
+        /* FIXME: Retrieving the background color is deprecated in
+           GTK+ 3.16.  New versions of GTK+ don't use the concept of a
+           single background color any more, so we shouldn't query for
+           it.  */
+        gtk_style_context_get (gsty, state,
+                               GTK_STYLE_PROPERTY_BACKGROUND_COLOR, &c,
+                               NULL);
+        col = *c;
+        gdk_rgba_free (c);
+      }
 
     unsigned short
       r = col.red * 65535,
@@ -678,7 +689,6 @@ qttip_cb (GtkWidget  *widget,
       g_signal_connect (x->ttip_lbl, "hierarchy-changed",
                         G_CALLBACK (hierarchy_ch_cb), f);
     }
-
   return FALSE;
 }
 
@@ -705,8 +715,7 @@ xg_prepare_tooltip (struct frame *f,
   GtkRequisition req;
   Lisp_Object encoded_string;
 
-  if (!x->ttip_lbl)
-    return FALSE;
+  if (!x->ttip_lbl) return 0;
 
   block_input ();
   encoded_string = ENCODE_UTF_8 (string);
@@ -738,7 +747,7 @@ xg_prepare_tooltip (struct frame *f,
 
   unblock_input ();
 
-  return TRUE;
+  return 1;
 #endif /* USE_GTK_TOOLTIP */
 }
 
@@ -761,18 +770,18 @@ xg_show_tooltip (struct frame *f, int root_x, int root_y)
 #endif
 }
 
-
 /* Hide tooltip if shown.  Do nothing if not shown.
    Return true if tip was hidden, false if not (i.e. not using
    system tooltips).  */
+
 bool
 xg_hide_tooltip (struct frame *f)
 {
+  bool ret = 0;
 #ifdef USE_GTK_TOOLTIP
   if (f->output_data.x->ttip_window)
     {
       GtkWindow *win = f->output_data.x->ttip_window;
-
       block_input ();
       gtk_widget_hide (GTK_WIDGET (win));
 
@@ -785,10 +794,10 @@ xg_hide_tooltip (struct frame *f)
         }
       unblock_input ();
 
-      return TRUE;
+      ret = 1;
     }
 #endif
-  return FALSE;
+  return ret;
 }
 
 
@@ -1057,23 +1066,16 @@ static void
 xg_set_widget_bg (struct frame *f, GtkWidget *w, unsigned long pixel)
 {
 #ifdef HAVE_GTK3
+  GdkRGBA bg;
   XColor xbg;
   xbg.pixel = pixel;
   if (XQueryColor (FRAME_X_DISPLAY (f), FRAME_X_COLORMAP (f), &xbg))
     {
-      const char format[] = "* { background-color: #%02x%02x%02x; }";
-      /* The format is always longer than the resulting string.  */
-      char buffer[sizeof format];
-      int n = snprintf(buffer, sizeof buffer, format,
-                       xbg.red >> 8, xbg.green >> 8, xbg.blue >> 8);
-      eassert (n > 0);
-      eassert (n < sizeof buffer);
-      GtkCssProvider *provider = gtk_css_provider_new ();
-      gtk_css_provider_load_from_data (provider, buffer, -1, NULL);
-      gtk_style_context_add_provider (gtk_widget_get_style_context(w),
-                                      GTK_STYLE_PROVIDER (provider),
-                                      GTK_STYLE_PROVIDER_PRIORITY_APPLICATION);
-      g_clear_object (&provider);
+      bg.red = (double)xbg.red/65535.0;
+      bg.green = (double)xbg.green/65535.0;
+      bg.blue = (double)xbg.blue/65535.0;
+      bg.alpha = 1.0;
+      gtk_widget_override_background_color (w, GTK_STATE_FLAG_NORMAL, &bg);
     }
 #else
   GdkColor bg;
@@ -1237,11 +1239,9 @@ xg_create_frame_widgets (struct frame *f)
      X and GTK+ drawing to a pure GTK+ build.  */
   gtk_widget_set_double_buffered (wfixed, FALSE);
 
-#if ! GTK_CHECK_VERSION (3, 22, 0)
   gtk_window_set_wmclass (GTK_WINDOW (wtop),
                           SSDATA (Vx_resource_name),
                           SSDATA (Vx_resource_class));
-#endif
 
   /* Add callback to do nothing on WM_DELETE_WINDOW.  The default in
      GTK is to destroy the widget.  We want Emacs to do that instead.  */
@@ -1379,7 +1379,7 @@ x_wm_set_size_hint (struct frame *f, long int flags, bool user_position)
 
   /* Don't set size hints during initialization; that apparently leads
      to a race condition.  See the thread at
-     https://lists.gnu.org/archive/html/emacs-devel/2008-10/msg00033.html  */
+     https://lists.gnu.org/r/emacs-devel/2008-10/msg00033.html  */
   if (NILP (Vafter_init_time)
       || !FRAME_GTK_OUTER_WIDGET (f)
       || FRAME_PARENT_FRAME (f))
@@ -4111,10 +4111,8 @@ xg_set_toolkit_scroll_bar_thumb (struct scroll_bar *bar,
 
         if (int_gtk_range_get_value (GTK_RANGE (wscroll)) != value)
           gtk_range_set_value (GTK_RANGE (wscroll), (gdouble)value);
-#if ! GTK_CHECK_VERSION (3, 18, 0)
         else if (changed)
           gtk_adjustment_changed (adj);
-#endif
 
         xg_ignore_gtk_scrollbar = 0;
 
@@ -4151,9 +4149,7 @@ xg_set_toolkit_horizontal_scroll_bar_thumb (struct scroll_bar *bar,
       gtk_adjustment_configure (adj, (gdouble) value, (gdouble) lower,
 				(gdouble) upper, (gdouble) step_increment,
 				(gdouble) page_increment, (gdouble) pagesize);
-#if ! GTK_CHECK_VERSION (3, 18, 0)
       gtk_adjustment_changed (adj);
-#endif
       unblock_input ();
     }
 }

@@ -24,7 +24,6 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 #include "character.h"
 #include "buffer.h"
 #include "keyboard.h"
-#include "ptr-bounds.h"
 #include "syntax.h"
 #include "window.h"
 
@@ -311,19 +310,22 @@ enum byte_code_op
 
 #define TOP (*top)
 
+DEFUN ("byte-code", Fbyte_code, Sbyte_code, 3, 3, 0,
+       doc: /* Function used internally in byte-compiled code.
+The first argument, BYTESTR, is a string of byte code;
+the second, VECTOR, a vector of constants;
+the third, MAXDEPTH, the maximum stack depth used in this function.
+If the third argument is incorrect, Emacs may crash.  */)
+  (Lisp_Object bytestr, Lisp_Object vector, Lisp_Object maxdepth)
+{
+  return exec_byte_code (bytestr, vector, maxdepth, Qnil, 0, NULL);
+}
+
 static void
 bcall0 (Lisp_Object f)
 {
   Ffuncall (1, &f);
 }
-
-// Defined in Rust.
-Lisp_Object Fminus(ptrdiff_t, Lisp_Object*);
-Lisp_Object Fplus(ptrdiff_t, Lisp_Object*);
-Lisp_Object Ftimes(ptrdiff_t, Lisp_Object*);
-Lisp_Object Fquo(ptrdiff_t, Lisp_Object*);
-Lisp_Object Fmax(ptrdiff_t, Lisp_Object*);
-Lisp_Object Fmin(ptrdiff_t, Lisp_Object*);
 
 /* Execute the byte-code in BYTESTR.  VECTOR is the constant vector, and
    MAXDEPTH is the maximum stack depth used (if MAXDEPTH is incorrect,
@@ -361,15 +363,14 @@ exec_byte_code (Lisp_Object bytestr, Lisp_Object vector, Lisp_Object maxdepth,
   unsigned char quitcounter = 1;
   EMACS_INT stack_items = XFASTINT (maxdepth) + 1;
   USE_SAFE_ALLOCA;
-  void *alloc;
-  SAFE_ALLOCA_LISP_EXTRA (alloc, stack_items, bytestr_length);
-  ptrdiff_t item_bytes = stack_items * word_size;
-  Lisp_Object *stack_base = ptr_bounds_clip (alloc, item_bytes);
-  Lisp_Object *top = stack_base;
+  Lisp_Object *stack_base;
+  SAFE_ALLOCA_LISP_EXTRA (stack_base, stack_items, bytestr_length);
   Lisp_Object *stack_lim = stack_base + stack_items;
-  unsigned char *bytestr_data = alloc;
-  bytestr_data = ptr_bounds_clip (bytestr_data + item_bytes, bytestr_length);
-  memcpy (bytestr_data, SDATA (bytestr), bytestr_length);
+  Lisp_Object *top = stack_base;
+  *top = vector; /* Ensure VECTOR survives GC (Bug#33014).  */
+  memcpy (stack_lim, SDATA (bytestr), bytestr_length);
+  void *void_stack_lim = stack_lim;
+  unsigned char const *bytestr_data = void_stack_lim;
   unsigned char const *pc = bytestr_data;
   ptrdiff_t count = SPECPDL_INDEX ();
 
@@ -382,9 +383,9 @@ exec_byte_code (Lisp_Object bytestr, Lisp_Object vector, Lisp_Object maxdepth,
       ptrdiff_t nonrest = at >> 8;
       ptrdiff_t maxargs = rest ? PTRDIFF_MAX : nonrest;
       if (! (mandatory <= nargs && nargs <= maxargs))
-        xsignal2 (Qwrong_number_of_arguments,
-                  Fcons (make_number (mandatory), make_number (nonrest)),
-                  make_number (nargs));
+	Fsignal (Qwrong_number_of_arguments,
+		 list2 (Fcons (make_number (mandatory), make_number (nonrest)),
+			make_number (nargs)));
       ptrdiff_t pushedargs = min (nonrest, nargs);
       for (ptrdiff_t i = 0; i < pushedargs; i++, args++)
 	PUSH (*args);
@@ -1479,6 +1480,8 @@ get_byte_code_arity (Lisp_Object args_template)
 void
 syms_of_bytecode (void)
 {
+  defsubr (&Sbyte_code);
+
 #ifdef BYTE_CODE_METER
 
   DEFVAR_LISP ("byte-code-meter", Vbyte_code_meter,

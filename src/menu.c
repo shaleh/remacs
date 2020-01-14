@@ -33,6 +33,10 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 #include "blockinput.h"
 #include "buffer.h"
 
+#ifdef USE_X_TOOLKIT
+#include "../lwlib/lwlib.h"
+#endif
+
 #ifdef HAVE_WINDOW_SYSTEM
 #include TERM_HEADER
 #endif /* HAVE_WINDOW_SYSTEM */
@@ -47,7 +51,7 @@ extern AppendMenuW_Proc unicode_append_menu;
 static bool
 have_boxes (void)
 {
-#if defined (USE_GTK) || defined (HAVE_NTGUI) || defined(HAVE_NS)
+#if defined (USE_X_TOOLKIT) || defined (USE_GTK) || defined (HAVE_NTGUI) || defined(HAVE_NS)
   if (FRAME_WINDOW_P (XFRAME (Vmenu_updating_frame)))
     return 1;
 #endif
@@ -166,7 +170,7 @@ ensure_menu_items (int items)
     }
 }
 
-#if (defined USE_GTK || defined HAVE_NS \
+#if (defined USE_X_TOOLKIT || defined USE_GTK || defined HAVE_NS \
      || defined HAVE_NTGUI)
 
 /* Begin a submenu.  */
@@ -191,7 +195,7 @@ push_submenu_end (void)
   menu_items_submenu_depth--;
 }
 
-#endif /* USE_GTK || HAVE_NS || defined HAVE_NTGUI */
+#endif /* USE_X_TOOLKIT || USE_GTK || HAVE_NS || defined HAVE_NTGUI */
 
 /* Indicate boundary between left and right.  */
 
@@ -404,7 +408,8 @@ single_menu_item (Lisp_Object key, Lisp_Object item, Lisp_Object dummy, void *sk
 	}
   }
 
-  if (FRAME_TERMCAP_P (XFRAME (Vmenu_updating_frame))
+  if ((FRAME_TERMCAP_P (XFRAME (Vmenu_updating_frame))
+       || FRAME_MSDOS_P (XFRAME (Vmenu_updating_frame)))
       && !NILP (map))
     /* Indicate visually that this is a submenu.  */
     {
@@ -419,7 +424,7 @@ single_menu_item (Lisp_Object key, Lisp_Object item, Lisp_Object dummy, void *sk
 		  AREF (item_properties, ITEM_PROPERTY_SELECTED),
 		  AREF (item_properties, ITEM_PROPERTY_HELP));
 
-#if defined (USE_GTK) || defined (HAVE_NS) || defined (HAVE_NTGUI)
+#if defined (USE_X_TOOLKIT) || defined (USE_GTK) || defined (HAVE_NS) || defined (HAVE_NTGUI)
   /* Display a submenu using the toolkit.  */
   if (FRAME_WINDOW_P (XFRAME (Vmenu_updating_frame))
       && ! (NILP (map) || NILP (enabled)))
@@ -565,7 +570,7 @@ parse_single_submenu (Lisp_Object item_key, Lisp_Object item_name,
 }
 
 
-#if defined (USE_GTK) || defined (HAVE_NS) || defined (HAVE_NTGUI)
+#if defined (USE_X_TOOLKIT) || defined (USE_GTK) || defined (HAVE_NS) || defined (HAVE_NTGUI)
 
 /* Allocate and basically initialize widget_value, blocking input.  */
 
@@ -687,6 +692,12 @@ digest_single_submenu (int start, int end, bool top_level_items)
 
 		  ASET (menu_items, i + MENU_ITEMS_PANE_NAME, pane_name);
 		}
+#elif defined (USE_LUCID) && defined (HAVE_XFT)
+	      if (STRINGP (pane_name))
+		{
+		  pane_name = ENCODE_UTF_8 (pane_name);
+		  ASET (menu_items, i + MENU_ITEMS_PANE_NAME, pane_name);
+		}
 #elif !defined (HAVE_MULTILINGUAL_MENU)
 	      if (STRINGP (pane_name) && STRING_MULTIBYTE (pane_name))
 		{
@@ -760,6 +771,18 @@ digest_single_submenu (int start, int end, bool top_level_items)
 	      if (STRINGP (descrip) && STRING_MULTIBYTE (descrip))
 		{
 		  descrip = ENCODE_SYSTEM (descrip);
+		  ASET (menu_items, i + MENU_ITEMS_ITEM_EQUIV_KEY, descrip);
+		}
+#elif USE_LUCID
+	      if (STRINGP (item_name))
+		{
+		  item_name = ENCODE_UTF_8 (item_name);
+		  ASET (menu_items, i + MENU_ITEMS_ITEM_NAME, item_name);
+		}
+
+	      if (STRINGP (descrip))
+		{
+		  descrip = ENCODE_UTF_8 (descrip);
 		  ASET (menu_items, i + MENU_ITEMS_ITEM_EQUIV_KEY, descrip);
 		}
 #elif !defined (HAVE_MULTILINGUAL_MENU)
@@ -942,7 +965,7 @@ find_and_call_menu_selection (struct frame *f, int menu_bar_items_used,
   SAFE_FREE ();
 }
 
-#endif /* USE_GTK || HAVE_NS || HAVE_NTGUI */
+#endif /* USE_X_TOOLKIT || USE_GTK || HAVE_NS || HAVE_NTGUI */
 
 #ifdef HAVE_NS
 /* As above, but return the menu selection instead of storing in kb buffer.
@@ -1089,8 +1112,51 @@ into menu items.  */)
   return Qnil;
 }
 
-Lisp_Object
-x_popup_menu_1 (Lisp_Object position, Lisp_Object menu)
+
+DEFUN ("x-popup-menu", Fx_popup_menu, Sx_popup_menu, 2, 2, 0,
+       doc: /* Pop up a deck-of-cards menu and return user's selection.
+POSITION is a position specification.  This is either a mouse button event
+or a list ((XOFFSET YOFFSET) WINDOW)
+where XOFFSET and YOFFSET are positions in pixels from the top left
+corner of WINDOW.  (WINDOW may be a window or a frame object.)
+This controls the position of the top left of the menu as a whole.
+If POSITION is t, it means to use the current mouse position.
+
+MENU is a specifier for a menu.  For the simplest case, MENU is a keymap.
+The menu items come from key bindings that have a menu string as well as
+a definition; actually, the "definition" in such a key binding looks like
+\(STRING . REAL-DEFINITION).  To give the menu a title, put a string into
+the keymap as a top-level element.
+
+If REAL-DEFINITION is nil, that puts a nonselectable string in the menu.
+Otherwise, REAL-DEFINITION should be a valid key binding definition.
+
+You can also use a list of keymaps as MENU.
+  Then each keymap makes a separate pane.
+
+When MENU is a keymap or a list of keymaps, the return value is the
+list of events corresponding to the user's choice. Note that
+`x-popup-menu' does not actually execute the command bound to that
+sequence of events.
+
+Alternatively, you can specify a menu of multiple panes
+  with a list of the form (TITLE PANE1 PANE2...),
+where each pane is a list of form (TITLE ITEM1 ITEM2...).
+Each ITEM is normally a cons cell (STRING . VALUE);
+but a string can appear as an item--that makes a nonselectable line
+in the menu.
+With this form of menu, the return value is VALUE from the chosen item.
+
+If POSITION is nil, don't display the menu at all, just precalculate the
+cached information about equivalent key sequences.
+
+If the user gets rid of the menu without making a valid choice, for
+instance by clicking the mouse away from a valid choice or by typing
+keyboard input, then this normally results in a quit and
+`x-popup-menu' does not return.  But if POSITION is a mouse button
+event (indicating that the user invoked the menu with the mouse) then
+no quit occurs and `x-popup-menu' returns nil.  */)
+  (Lisp_Object position, Lisp_Object menu)
 {
   Lisp_Object keymap, tem, tem2;
   int xpos = 0, ypos = 0;
@@ -1375,55 +1441,6 @@ x_popup_menu_1 (Lisp_Object position, Lisp_Object menu)
 
   if (error_name) error ("%s", error_name);
   return selection;
-}
-
-DEFUN ("x-popup-menu", Fx_popup_menu, Sx_popup_menu, 2, 2, 0,
-       doc: /* Pop up a deck-of-cards menu and return user's selection.
-POSITION is a position specification.  This is either a mouse button event
-or a list ((XOFFSET YOFFSET) WINDOW)
-where XOFFSET and YOFFSET are positions in pixels from the top left
-corner of WINDOW.  (WINDOW may be a window or a frame object.)
-This controls the position of the top left of the menu as a whole.
-If POSITION is t, it means to use the current mouse position.
-
-MENU is a specifier for a menu.  For the simplest case, MENU is a keymap.
-The menu items come from key bindings that have a menu string as well as
-a definition; actually, the "definition" in such a key binding looks like
-\(STRING . REAL-DEFINITION).  To give the menu a title, put a string into
-the keymap as a top-level element.
-
-If REAL-DEFINITION is nil, that puts a nonselectable string in the menu.
-Otherwise, REAL-DEFINITION should be a valid key binding definition.
-
-You can also use a list of keymaps as MENU.
-  Then each keymap makes a separate pane.
-
-When MENU is a keymap or a list of keymaps, the return value is the
-list of events corresponding to the user's choice. Note that
-`x-popup-menu' does not actually execute the command bound to that
-sequence of events.
-
-Alternatively, you can specify a menu of multiple panes
-  with a list of the form (TITLE PANE1 PANE2...),
-where each pane is a list of form (TITLE ITEM1 ITEM2...).
-Each ITEM is normally a cons cell (STRING . VALUE);
-but a string can appear as an item--that makes a nonselectable line
-in the menu.
-With this form of menu, the return value is VALUE from the chosen item.
-
-If POSITION is nil, don't display the menu at all, just precalculate the
-cached information about equivalent key sequences.
-
-If the user gets rid of the menu without making a valid choice, for
-instance by clicking the mouse away from a valid choice or by typing
-keyboard input, then this normally results in a quit and
-`x-popup-menu' does not return.  But if POSITION is a mouse button
-event (indicating that the user invoked the menu with the mouse) then
-no quit occurs and `x-popup-menu' returns nil.  */)
-  (Lisp_Object position, Lisp_Object menu)
-{
-  init_raw_keybuf_count ();
-  return x_popup_menu_1 (position, menu);
 }
 
 /* If F's terminal is not capable of displaying a popup dialog,
