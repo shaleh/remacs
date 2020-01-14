@@ -51,17 +51,17 @@ files.")
     ("Aurélien Aptel" "Aurelien Aptel")
     ("Barry A. Warsaw" "Barry A. Warsaw, Century Computing, Inc."
      "Barry A. Warsaw, ITB" "Barry Warsaw")
-    ("Bastien Guerry" "Bastien")
+    ("Bastien Guerry" "Bastien .*bzg")
     ("Bill Carpenter" "WJ Carpenter")
     ("Bill Mann" "William F. Mann")
     ("Bill Rozas" "Guillermo J. Rozas")
-    (nil "Binjo")
+    (nil "binjo.cn@gmail.com")
     ("Björn Torkelsson" "Bjorn Torkelsson")
     ("Brian Fox" "Brian J. Fox")
     ("Brian P Templeton" "BT Templeton")
     ("Brian Sniffen" "Brian T. Sniffen")
-    (nil "Castor")
-    (nil "cg")
+    (nil "castor@my-dejanews")
+    (nil "chengang31@gmail.com")
     ("David Abrahams" "Dave Abrahams")
     ("David J. Biesack" "David Biesack")
     ("David De La Harpe Golden" "David Golden")
@@ -71,7 +71,7 @@ files.")
     ("David M. Koppelman" "David Koppelman")
     ("David M. Smith" "David Smith" "David M Smith")
     ("David O'Toole" "David T. O'Toole")
-    (nil "Deech")
+    (nil "deech@deech")
     ("Deepak Goel" "D. Goel")
     ("Ed L. Cashin" "Ed L Cashin")
     ("Edward M. Reingold" "Ed\\(ward\\( M\\)?\\)? Reingold" "Reingold Edward M")
@@ -79,7 +79,7 @@ files.")
     ("Eric M. Ludlam" "Eric Ludlam")
     ("Eric S. Raymond" "Eric Raymond")
     ("Fabián Ezequiel Gallina" "Fabian Ezequiel Gallina" "Fabi.n E\\. Gallina")
-    (nil "felix")
+    (nil "felix.*EmacsWiki")
     (nil "foudfou")
     ("Francis Litterio" "Fran Litterio")
     ("Francis J. Wright" "Dr Francis J. Wright" "Francis Wright")
@@ -121,7 +121,7 @@ files.")
     ("Kim F. Storm" "Kim Storm")
     ("Kyle Jones" "Kyle E. Jones")
     ("Lars Magne Ingebrigtsen" "Lars Ingebrigtsen")
-    (nil "LynX")
+    (nil "LynX@bk.ru")
     (nil "lu4nx")
     ("Marcus G. Daniels" "Marcus Daniels")
     ("Mark D. Baushke" "Mark D Baushke")
@@ -143,7 +143,7 @@ files.")
     ("Noorul Islam" "Noorul Islam K M")
 ;;;    ("Tetsurou Okazaki" "OKAZAKI Tetsurou") ; FIXME?
     ("Óscar Fuentes" "Oscar Fuentes")
-    (nil "oblique")
+    (nil "psyberbits@gmail.com")
     ("Paul Eggert" "Paul R\\. Eggert")
     ("Pavel Janík" "Pavel Janík Ml." "Pavel Janik Ml." "Pavel Janik")
     ("Pavel Kobiakov" "Pavel Kobyakov")
@@ -155,10 +155,10 @@ files.")
     ("Philipp Stephani" "Philipp .*phst@google")
     ("Piotr Zieliński" "Piotr Zielinski")
     ("Przemysław Wojnowski" "Przemyslaw Wojnowski")
-    ("R. Bernstein" "rocky")
+    ("R. Bernstein" "rb@dustyfeet.com")
     ("Rainer Schöpf" "Rainer Schoepf")
     ("Raja R. Harinath" "Raja R Harinath")
-    ("Rasmus Pank Roulund" "Rasmus")
+    ("Rasmus Pank Roulund" "Rasmus .*rasmus@gmx")
     ("Richard G. Bielawski" "Richard G Bielawski" "Richard Bielawski")
     ("Richard King" "Dick King")
     ("Richard M. Stallman" "Richard Stallman" "rms@gnu.org")
@@ -175,8 +175,8 @@ files.")
     ("Satyaki Das" "Indexed search by Satyaki Das")
     ("Sébastien Vauban" "Sebastien Vauban")
     ("Sergey Litvinov" "Litvinov Sergey")
-    ("Simen Heggestøyl" "Simen")
-    (nil "sj")
+    ("Simen Heggestøyl" "simenheg@gmail.com")
+    (nil "prime.wizard")
     ("Shun-ichi Goto" "Shun-ichi GOTO")
     ;; There are other Stefans.
 ;;;    ("Stefan Monnier" "Stefan")
@@ -321,6 +321,8 @@ Changes to files matching one of the regexps in this list are not listed.")
     "gfdl.1"
     "texi/Makefile.in"
     "autodeps.mk"
+    "lwlib/autodeps.mk"
+    "oldXMenu/autodeps.mk"
     "src/autodeps.mk"
     "Imakefile" "icons/sink.ico" "aixcc.lex"
     "nxml/char-name/unicode"
@@ -727,6 +729,7 @@ Changes to files in this list are not listed.")
     "revdiff"				; admin/
     "admin/ldefs-clean.el"
     "vcdiff" "rcs-checkin" "tindex.pl"
+    "mainmake" "sed1.inp" "sed2.inp" "sed3.inp" ; msdos/
     "mac-fix-env.m"
     ;; Deleted vms stuff:
     "temacs.opt" "descrip.mms" "compile.com" "link.com"
@@ -777,7 +780,10 @@ Changes to files in this list are not listed.")
     "front-cover-1.texi" "locals.texi" "calendar.texi" "info-stnd.texi"
     "tasks.texi"
     "advice.texi" "picture.texi" "texinfo.tex"
+    ;; lwlib:
     "dispatch.c" "dispatch.h" "xrdb-cpp.c" "xrdb.c"
+    "lwlib-Xol.c" "lwlib-Xol.h" "lwlib-Xolmb.c" "lwlib-Xolmb.h"
+    "lwlib-XolmbP.h"
     ;; lib/
     "lib/stdio.c" "lib/gl_openssl.h" "lib/sigprocmask.c"
     "lib/pthread_sigprocmask.c" "lib/ldtoastr.c" "lib/dummy.c"
@@ -835,7 +841,8 @@ Changes to files in this list are not listed.")
     "lisp/obsolete/sym-comp.el"
     "library-of-babel.org"
     "flymake-elisp.el"
-    "flymake-ui.el")
+    "flymake-ui.el"
+    "pinentry.el")
   "File names which are valid, but no longer exist (or cannot be found)
 in the repository.")
 
@@ -875,6 +882,7 @@ in the repository.")
     ("INSTALL.MSYS" . "INSTALL")
     ("server.c" . "emacsserver.c")
     ("lib-src/etags.c" . "etags.c")
+    ;; msdos/
     ("is-exec.c" . "is_exec.c")
     ("enriched.doc" . "enriched.txt")
     ("GETTING.GNU.SOFTWARE" . "FTP")
@@ -980,6 +988,7 @@ in the repository.")
     ("emacs.tex" . "emacs.texi")
     ("faq.texi" . "efaq.texi")
     ("major.texi" . "modes.texi")
+    ("msdog-xtra.texi" . "msdos-xtra.texi")
     ("msdog.texi" . "msdos.texi")
     ;; Moved from lisp/gnus/ to lisp/calendar/
     ("time-date.el" . "calendar/time-date.el")
