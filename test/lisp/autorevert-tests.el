@@ -161,7 +161,7 @@ This expects `auto-revert--messages' to be bound by
   :tags '(:expensive-test)
 
   (let ((tmpfile (make-temp-file "auto-revert-test"))
-        buf desc)
+        buf)
     (unwind-protect
 	(progn
           (write-region "any text" nil tmpfile nil 'no-message)
@@ -174,7 +174,6 @@ This expects `auto-revert--messages' to be bound by
             (sleep-for 1)
             (auto-revert-mode 1)
             (should auto-revert-mode)
-            (setq desc auto-revert-notify-watch-descriptor)
 
             ;; Remove file while reverting.  We simulate this by
             ;; modifying `before-revert-hook'.
@@ -193,7 +192,7 @@ This expects `auto-revert--messages' to be bound by
             (should (string-match "any text" (buffer-string)))
             ;; With w32notify, the 'stopped' events are not sent.
             (or (eq file-notify--library 'w32notify)
-                (should-not auto-revert-notify-watch-descriptor))
+                (should-not auto-revert-use-notify))
 
             ;; Once the file has been recreated, the buffer shall be
             ;; reverted.
@@ -204,11 +203,6 @@ This expects `auto-revert--messages' to be bound by
               (auto-revert--wait-for-revert buf))
             ;; Check, that the buffer has been reverted.
             (should (string-match "another text" (buffer-string)))
-            ;; When file notification is used, it must be reenabled
-            ;; after recreation of the file.  We cannot expect that
-            ;; the descriptor is the same, so we just check the
-            ;; existence.
-            (should (eq (null desc) (null auto-revert-notify-watch-descriptor)))
 
             ;; An empty file shall still be reverted.
             (ert-with-message-capture auto-revert--messages
@@ -263,7 +257,6 @@ This expects `auto-revert--messages' to be bound by
   "Check autorevert for dired."
   ;; `auto-revert-buffers' runs every 5".  And we must wait, until the
   ;; file has been reverted.
-  (skip-unless (not (eq system-type 'darwin)))
   (let* ((tmpfile (make-temp-file "auto-revert-test"))
          (name (file-name-nondirectory tmpfile))
          buf)

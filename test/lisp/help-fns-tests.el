@@ -51,7 +51,7 @@ Return first line of the output of (describe-function-1 FUNC)."
     (should (string-match regexp result))))
 
 (ert-deftest help-fns-test-interactive-built-in ()
-  (let ((regexp "an interactive built-in function in `Rust source code'")
+  (let ((regexp "an interactive built-in function in .C source code")
         (result (help-fns-tests--describe-function 're-search-forward)))
     (should (string-match regexp result))))
 
@@ -81,11 +81,6 @@ Return first line of the output of (describe-function-1 FUNC)."
         (result (help-fns-tests--describe-function 'search-forward-regexp)))
     (should (string-match regexp result))))
 
-(ert-deftest help-fns-test-dangling-alias ()
-  "Make sure we don't burp on bogus aliases."
-  (let ((f (make-symbol "bogus-alias")))
-    (define-obsolete-function-alias f 'help-fns-test--undefined-function "past")
-    (describe-symbol f)))
 
 ;;; Test describe-function over functions with funny names
 (defun abc\\\[universal-argument\]b\`c\'d\\e\"f (x)

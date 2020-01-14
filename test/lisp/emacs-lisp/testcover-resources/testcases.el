@@ -53,6 +53,7 @@
 
 ;; ==== constants-bug-25316 ====
 "Testcover doesn't splotch constants."
+:expected-result :failed
 ;; ====
 (defconst testcover-testcase-const "apples")
 (defun testcover-testcase-zero () 0)
@@ -75,6 +76,7 @@
 
 ;; ==== customize-defcustom-bug-25326 ====
 "Testcover doesn't prevent testing of defcustom values."
+:expected-result :failed
 ;; ====
 (defgroup testcover-testcase nil
   "Test case for testcover"
@@ -133,6 +135,7 @@
 
 ;; ==== 1-value-symbol-bug-25316 ====
 "Wrapping a form with 1value prevents splotching."
+:expected-result :failed
 ;; ====
 (defun testcover-testcase-always-zero (num)
   (- num%%% num%%%)%%%)
@@ -227,6 +230,7 @@
 
 ;; ==== quotes-within-backquotes-bug-25316 ====
 "Forms to instrument are found within quotes within backquotes."
+:expected-result :failed
 ;; ====
 (defun testcover-testcase-make-list ()
   (list 'defun 'defvar))
@@ -292,6 +296,7 @@
 
 ;; ==== backquote-1value-bug-24509 ====
 "Commas within backquotes are recognized as non-1value."
+:expected-result :failed
 ;; ====
 (defmacro testcover-testcase-lambda (&rest body)
   `(lambda () ,@body))
@@ -315,6 +320,7 @@
 
 ;; ==== pcase-bug-24688 ====
 "Testcover copes with condition-case within backquoted list."
+:expected-result :failed
 ;; ====
 (defun testcover-testcase-pcase (form)
   (pcase form%%%
@@ -329,6 +335,7 @@
 
 ;; ==== defun-in-backquote-bug-11307-and-24743 ====
 "Testcover handles defun forms within backquoted list."
+:expected-result :failed
 ;; ====
 (defmacro testcover-testcase-defun (name &rest body)
   (declare (debug (symbolp def-body)))
@@ -341,6 +348,7 @@
 
 ;; ==== closure-1value-bug ====
 "Testcover does not mark closures as 1value."
+:expected-result :failed
 ;; ====
 ;; -*- lexical-binding:t -*-
 (setq testcover-testcase-foo nil)
@@ -357,6 +365,7 @@
 
 ;; ==== by-value-vs-by-reference-bug-25351 ====
 "An object created by a 1value expression may be modified by other code."
+:expected-result :failed
 ;; ====
 (defun testcover-testcase-ab ()
   (list 'a 'b))
@@ -387,16 +396,9 @@
 (should (equal '(a b c) (testcover-testcase-dotted-bq nil '(d e))))
 (should (equal '(a b c d e) (testcover-testcase-dotted-bq t '(d e))))
 
-;; ==== quoted-backquote ====
-"Testcover correctly instruments the quoted backquote symbol."
-;; ====
-(defun testcover-testcase-special-symbols ()
-  (list '\` '\, '\,@))
-
-(should (equal '(\` \, \,@) (testcover-testcase-special-symbols)))
-
 ;; ==== backquoted-vector-bug-25316 ====
 "Testcover reinstruments within backquoted vectors."
+:expected-result :failed
 ;; ====
 (defun testcover-testcase-vec (a b c)
   `[,a%%% ,(list b%%% c%%%)%%%]%%%)
@@ -413,6 +415,7 @@
 
 ;; ==== vector-in-macro-spec-bug-25316 ====
 "Testcover reinstruments within vectors."
+:expected-result :failed
 ;; ====
 (defmacro testcover-testcase-nth-case (arg vec)
   (declare (indent 1)
@@ -432,6 +435,7 @@
 
 ;; ==== mapcar-is-not-compose ====
 "Mapcar with 1value arguments is not 1value."
+:expected-result :failed
 ;; ====
 (defvar testcover-testcase-num 0)
 (defun testcover-testcase-add-num (n)
@@ -446,10 +450,10 @@
 
 ;; ==== function-with-edebug-spec-bug-25316 ====
 "Functions can have edebug specs too.
-See `c-make-font-lock-search-function' for an example in the
-Emacs sources. `c-make-font-lock-search-function''s Edebug spec
-also contains a quote.  See comment in `testcover-analyze-coverage'
-regarding the odd-looking coverage result for the quoted form."
+See c-make-font-lock-search-function for an example in the Emacs
+sources.  The other issue is that it's ok to use quote in an
+edebug spec, so testcover needs to cope with that."
+:expected-result :failed
 ;; ====
 (defun testcover-testcase-make-function (forms)
   `(lambda (flag) (if flag 0 ,@forms%%%))%%%)
@@ -458,7 +462,7 @@ regarding the odd-looking coverage result for the quoted form."
   (("quote" (&rest def-form))))
 
 (defun testcover-testcase-thing ()
-  (testcover-testcase-make-function '(!!!(+ 1 !!!(+ 2 !!!(+ 3 !!!(+ 4 5)%%%)%%%)%%%)%%%))%%%)
+  (testcover-testcase-make-function '((+ 1 (+ 2 (+ 3 (+ 4 5))))))%%%)
 
 (defun testcover-testcase-use-thing ()
   (funcall (testcover-testcase-thing)%%% nil)%%%)
@@ -490,18 +494,10 @@ regarding the odd-looking coverage result for the quoted form."
 "Testcover captures and ignores circular list errors."
 ;; ====
 (defun testcover-testcase-cyc1 (a)
-  (let ((ls (make-list 10 a%%%)%%%))
-    (nconc ls%%% ls%%%)
-    ls)) ; The lack of a mark here is due to an ignored circular list error.
+  (let ((ls (make-list 10 a%%%)))
+    (nconc ls ls)
+    ls))
 (testcover-testcase-cyc1 1)
 (testcover-testcase-cyc1 1)
-(defun testcover-testcase-cyc2 (a b)
-  (let ((ls1 (make-list 10 a%%%)%%%)
-        (ls2 (make-list 10 b)))
-    (nconc ls2 ls2)
-    (nconc ls1%%% ls2)
-    ls1))
-(testcover-testcase-cyc2 1 2)
-(testcover-testcase-cyc2 1 4)
 
 ;; testcases.el ends here.

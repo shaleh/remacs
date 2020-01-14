@@ -473,8 +473,8 @@ Must called from within a `tar-mode' buffer."
 		       (let ((process-environment
 			      (cons (format "HOME=%s" homedir)
 				    process-environment)))
-			 (epg-check-configuration
-                          (epg-find-configuration 'OpenPGP)))
+			 (epg-check-configuration (epg-configuration))
+			 (epg-find-configuration 'OpenPGP))
 		     (delete-directory homedir t)))))
   (let* ((keyring (expand-file-name "key.pub" package-test-data-dir))
 	 (package-test-data-dir
@@ -484,16 +484,14 @@ Must called from within a `tar-mode' buffer."
       (package-import-keyring keyring)
       (package-refresh-contents)
       (let ((package-check-signature 'allow-unsigned))
-        (should (progn (package-install 'signed-good) 'noerror))
+        (should (package-install 'signed-good))
         (should-error (package-install 'signed-bad)))
-      (package-delete (car (alist-get 'signed-good package-alist)))
       (let ((package-check-signature t))
-        (should (progn (package-install 'signed-good) 'noerror))
+        (should (package-install 'signed-good))
         (should-error (package-install 'signed-bad)))
-      (package-delete (car (alist-get 'signed-good package-alist)))
       (let ((package-check-signature nil))
-        (should (progn (package-install 'signed-good) 'noerror))
-        (should (progn (package-install 'signed-bad) 'noerror)))
+        (should (package-install 'signed-good))
+        (should (package-install 'signed-bad)))
       ;; Check if the installed package status is updated.
       (let ((buf (package-list-packages)))
 	(package-menu-refresh)

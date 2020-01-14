@@ -434,7 +434,7 @@ tag that contains point, and return that."
       (when (interactive-p)
 	(message "Found %d occurrences of %s in %.2f seconds"
 		 Lcount (semantic-tag-name target)
-		 (semantic-elapsed-time start nil)))
+		 (semantic-elapsed-time start (current-time))))
       Lcount)))
 
 (defun semantic-src-utest-buffer-refs ()

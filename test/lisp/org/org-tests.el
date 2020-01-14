@@ -1,9 +1,8 @@
-;;; faceup-test-this-file-directory.el --- Support file for faceup tests
+;;; org-tests.el --- tests for org/org.el
 
-;; Copyright (C) 2014-2018 Free Software Foundation, Inc.
+;; Copyright (C) 2018-2019 Free Software Foundation, Inc.
 
-;; Author: Anders Lindgren
-;; Keywords: languages, faces
+;; Maintainer: emacs-devel@gnu.org
 
 ;; This file is part of GNU Emacs.
 
@@ -22,11 +21,11 @@
 
 ;;; Commentary:
 
-;; Support file for `faceup-test-basics.el'. This file is used to test
-;; `faceup-this-file-directory' in various contexts.
-
 ;;; Code:
 
-(defvar faceup-test-this-file-directory (faceup-this-file-directory))
-
-;;; faceup-test-this-file-directory.el ends here
+(ert-deftest org-package-version ()
+  "Test Version: header is present and correct.
+Ref <https://debbugs.gnu.org/30310>."
+  (should (require 'org-version nil t))
+  (should (equal (version-to-list (org-release))
+                 (cdr (assq 'org package--builtin-versions)))))

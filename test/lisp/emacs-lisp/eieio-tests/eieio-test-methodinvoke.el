@@ -192,8 +192,7 @@
 (ert-deftest eieio-test-method-order-list-6 ()
   ;; FIXME repeated intermittent failures on hydra (bug#24503)
   ;; ((:STATIC C) (:STATIC C-base1) (:STATIC C-base2)) != ((:STATIC C))")
-  (skip-unless (not (getenv "NIX_STORE")))
-  (skip-unless (equal invocation-name "emacs"))
+  :tags '(:unstable)
   (let ((eieio-test-method-order-list nil)
 	(ans '(
 	       (:STATIC C)
@@ -327,7 +326,7 @@
   )
 
 (ert-deftest eieio-test-method-order-list-9 ()
-  (should (eitest-Jd)))
+  (should (eitest-Jd "test")))
 
 ;;; call-next-method with replacement arguments across a simple class hierarchy.
 ;;
@@ -373,7 +372,7 @@
 
 (ert-deftest eieio-test-method-order-list-10 ()
   (let ((eieio-test-call-next-method-arguments nil))
-    (CNM-M (CNM-2) '(INIT))
+    (CNM-M (CNM-2 "") '(INIT))
     (should (equal (eieio-test-arguments-for 'CNM-0)
 		   '(CNM-1-1 CNM-2 INIT)))
     (should (equal (eieio-test-arguments-for 'CNM-1-1)

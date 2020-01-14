@@ -105,22 +105,16 @@ endif
 
 # Whether to run tests from .el files in preference to .elc, we do
 # this by default since it gives nicer stacktraces.
-# If you just want a pass/fail, setting this to no is much faster.
-# export TEST_LOAD_EL ?= \
-#     $(if $(findstring $(MAKECMDGOALS), all check check-maybe),no,yes)
-#
-# Remacs note: keep 'TEST_LOAD_EL ?= yes' instead of the upstream changes or our tests fail
 TEST_LOAD_EL ?= yes
-
-# Additional settings for ert.
-ert_opts =
 
 # Maximum length of lines in ert backtraces; nil for no limit.
 # (if empty, use the default ert-batch-backtrace-right-margin).
 TEST_BACKTRACE_LINE_LENGTH =
 
-ifneq (${TEST_BACKTRACE_LINE_LENGTH},)
-ert_opts += --eval '(setq ert-batch-backtrace-right-margin ${TEST_BACKTRACE_LINE_LENGTH})'
+ifeq (${TEST_BACKTRACE_LINE_LENGTH},)
+ert_opts =
+else
+ert_opts = --eval '(setq ert-batch-backtrace-right-margin ${TEST_BACKTRACE_LINE_LENGTH})'
 endif
 
 ifeq (@HAVE_MODULES@, yes)
@@ -135,7 +129,12 @@ emacs = EMACSLOADPATH= LC_ALL=$(TEST_LOCALE) \
  EMACS_TEST_DIRECTORY=$(abspath $(srcdir)) \
  $(GDB) "$(EMACS)" $(MODULES_EMACSOPT) $(EMACSOPT)
 
-test_module_dir := data/emacs-module
+# Set HOME to a nonexistent directory to prevent tests from accessing
+# it accidentally (e.g., popping up a gnupg dialog if ~/.authinfo.gpg
+# exists, or writing to ~/.bzr.log when running bzr commands).
+TEST_HOME = /nonexistent
+
+test_module_dir := $(srcdir)/data/emacs-module
 
 .PHONY: all check
 
@@ -164,11 +163,6 @@ endif
 
 ## Save logs, and show logs for failed tests.
 WRITE_LOG = > $@ 2>&1 || { STAT=$$?; cat $@; exit $$STAT; }
-ifdef EMACS_HYDRA_CI
-## On Hydra, always show logs for certain problematic tests.
-lisp/net/tramp-tests.log \
-: WRITE_LOG = 2>&1 | tee $@
-endif
 
 ifeq ($(TEST_LOAD_EL), yes)
 testloadfile = $*.el
@@ -188,18 +182,11 @@ else
 maybe_exclude_module_tests := -name emacs-module-tests.el -prune -o
 endif
 
-## To speed up parallel builds, put these slow test files (which can
-## take longer than all the rest combined) at the start of the list.
-SLOW_TESTS = ${srcdir}/lisp/net/tramp-tests.el
-
 ELFILES := $(sort $(shell find ${srcdir} -path "${srcdir}/manual" -prune -o \
 		-path "${srcdir}/data" -prune -o \
 		-name "*resources" -prune -o \
 		${maybe_exclude_module_tests} \
 		-name "*.el" ! -name ".*" -print))
-
-$(foreach slow,${SLOW_TESTS},$(eval ELFILES:= ${slow} $(filter-out ${slow},${ELFILES})))
-
 ## .log files may be in a different directory for out of source builds
 LOGFILES := $(patsubst %.el,%.log, \
 		$(patsubst $(srcdir)/%,%,$(ELFILES)))
@@ -221,12 +208,8 @@ define test_template
   ## otherwise.  Although this heuristic does not identify all the
   ## dependencies, it is better than nothing.
   ifeq (,$(patsubst %-tests,,$(1))$(findstring -tests/,$(1)))
-    ifeq (,$(patsubst rust_src/%,,$(1)))
-    $(1).log: $(patsubst %-tests,$(srcdir)/../%,$(1)).rs
-    else
     $(1).log: $(patsubst %-tests,$(srcdir)/../%,$(1))$(if \
 					$(patsubst src/%,,$(patsubst lib-src/%,,$(1))),.el,.c)
-    endif
   endif
 
   ## Short aliases that always re-run the tests, with no logging.
@@ -248,13 +231,14 @@ else
 FPIC_CFLAGS = -fPIC
 endif
 
+# Note: emacs-module.h is generated from emacs-module.h.in, hence we
+# look in ../src, not $(srcdir)/../src.
 MODULE_CFLAGS = -I../src $(FPIC_CFLAGS) $(PROFILING_CFLAGS) \
   $(WARN_CFLAGS) $(WERROR_CFLAGS) $(CFLAGS)
 
 test_module = $(test_module_dir)/mod-test${SO}
 src/emacs-module-tests.log: $(test_module)
-$(test_module): $(test_module:${SO}=.c) $(srcdir)/../src/emacs-module.h
-	$(AM_V_at)${MKDIR_P} $(dir $@)
+$(test_module): $(test_module:${SO}=.c) ../src/emacs-module.h
 	$(AM_V_CCLD)$(CC) -shared $(CPPFLAGS) $(MODULE_CFLAGS) $(LDFLAGS) \
 	  -o $@ $<
 endif
@@ -299,8 +283,8 @@ ifeq ($(TEST_INTERACTIVE), yes)
 	  $(TEST_RUN_ERT)
 else
 	-@${MAKE} -k  ${LOGFILES}
-	@$(emacs) -l ert --eval \
-	"(ert-summarize-tests-batch-and-exit ${SUMMARIZE_TESTS})" ${LOGFILES}
+	@$(emacs) --batch -l ert -f ert-summarize-tests-batch-and-exit ${LOGFILES}
+endif
 
 .PHONY: mostlyclean clean bootstrap-clean distclean maintainer-clean
 
@@ -320,9 +304,3 @@ distclean: clean
 	rm -f Makefile
 
 maintainer-clean: distclean bootstrap-clean
-
-.PHONY: check-declare
-
-check-declare:
-	$(emacs) -l check-declare \
-	  --eval '(check-declare-directory "$(srcdir)")'

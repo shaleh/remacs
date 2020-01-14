@@ -91,18 +91,22 @@ SEVERITY-PREDICATE is used to setup
 
 (ert-deftest warning-predicate-rx-gcc ()
   "Test GCC warning via regexp predicate."
-  (skip-unless (and (executable-find "gcc") (executable-find "make")
-                    (not (eq system-type 'darwin))))
-  (should (eq 'flymake-warnline
-              (flymake-tests--current-face "test.c" "^[Ww]arning"))))
+  (skip-unless (and (executable-find "gcc") (executable-find "make")))
+  (flymake-tests--with-flymake
+      ("test.c" :severity-predicate "^[Ww]arning")
+    (flymake-goto-next-error)
+    (should (eq 'flymake-warning
+                (face-at-point)))))
 
 (ert-deftest warning-predicate-function-gcc ()
   "Test GCC warning via function predicate."
-  (skip-unless (and (executable-find "gcc") (executable-find "make")
-                    (not (eq system-type 'darwin))))
-  (should (eq 'flymake-warnline
-              (flymake-tests--current-face "test.c"
-               (lambda (msg) (string-match "^[Ww]arning" msg))))))
+  (skip-unless (and (executable-find "gcc") (executable-find "make")))
+  (flymake-tests--with-flymake
+      ("test.c" :severity-predicate
+       (lambda (msg) (string-match "^[Ww]arning" msg)))
+    (flymake-goto-next-error)
+    (should (eq 'flymake-warning
+                (face-at-point)))))
 
 (ert-deftest perl-backend ()
   "Test the perl backend"

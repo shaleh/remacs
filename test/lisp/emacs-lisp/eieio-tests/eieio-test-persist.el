@@ -107,7 +107,7 @@ This is usually a symbol that starts with `:'."
 
 (ert-deftest eieio-test-persist-simple-1 ()
   (let ((persist-simple-1
-	 (persist-simple :slot1 'goose :slot2 "testing"
+	 (persist-simple "simple 1" :slot1 'goose :slot2 "testing"
 			 :file (concat default-directory "test-ps1.pt"))))
     (should persist-simple-1)
 
@@ -141,7 +141,7 @@ Assume SLOTVALUE is a symbol of some sort."
 
 (ert-deftest eieio-test-persist-printer ()
   (let ((persist-:printer-1
-	 (persist-:printer :slot1 'goose :slot2 "testing"
+	 (persist-:printer "persist" :slot1 'goose :slot2 "testing"
 			   :file (concat default-directory "test-ps2.pt"))))
     (should persist-:printer-1)
     (persist-test-save-and-compare persist-:printer-1)
@@ -178,7 +178,8 @@ persistent class.")
 (ert-deftest eieio-test-non-persistent-as-slot ()
   (let ((persist-wos
 	 (persistent-with-objs-slot
-	  :pnp (persist-not-persistent :slot1 3)
+	  "persist wos 1"
+	  :pnp (persist-not-persistent "pnp 1" :slot1 3)
 	  :file (concat default-directory "test-ps3.pt"))))
 
     (persist-test-save-and-compare persist-wos)
@@ -204,7 +205,8 @@ persistent class.")
 (ert-deftest eieio-test-non-persistent-as-slot-child ()
   (let ((persist-woss
 	 (persistent-with-objs-slot-subs
-	  :pnp (persist-not-persistent-subclass :slot1 3)
+	  "persist woss 1"
+	  :pnp (persist-not-persistent-subclass "pnps 1" :slot1 3)
 	  :file (concat default-directory "test-ps4.pt"))))
 
     (persist-test-save-and-compare persist-woss)
@@ -220,13 +222,16 @@ persistent class.")
   ((slot1 :initarg :slot1
           :type (or persistent-random-class null persist-not-persistent))
    (slot2 :initarg :slot2
-          :type (or persist-not-persistent persist-random-class null))))
+          :type (or persist-not-persistent persistent-random-class null))
+   (slot3 :initarg :slot3
+          :type persistent-random-class)))
 
 (ert-deftest eieio-test-multiple-class-slot ()
   (let ((persist
-         (persistent-multiclass-slot
+         (persistent-multiclass-slot "random string"
           :slot1 (persistent-random-class)
           :slot2 (persist-not-persistent)
+          :slot3 (persistent-random-class)
           :file (concat default-directory "test-ps5.pt"))))
     (unwind-protect
         (persist-test-save-and-compare persist)
@@ -244,9 +249,10 @@ persistent class.")
 (ert-deftest eieio-test-slot-with-list-of-objects ()
   (let ((persist-wols
 	 (persistent-with-objs-list-slot
-	  :pnp (list (persist-not-persistent :slot1 3)
-		     (persist-not-persistent :slot1 4)
-		     (persist-not-persistent :slot1 5))
+	  "persist wols 1"
+	  :pnp (list (persist-not-persistent "pnp 1" :slot1 3)
+		     (persist-not-persistent "pnp 2" :slot1 4)
+		     (persist-not-persistent "pnp 3" :slot1 5))
 	  :file (concat default-directory "test-ps5.pt"))))
 
     (persist-test-save-and-compare persist-wols)

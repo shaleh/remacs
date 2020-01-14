@@ -115,21 +115,6 @@ most-positive-fixnum, which is just less than a power of 2.")
   (should (isnan (min 1.0 0.0e+NaN)))
   (should (isnan (min 1.0 0.0e+NaN 1.1))))
 
-(defun data-tests-popcnt (byte)
-  "Calculate the Hamming weight of BYTE."
-  (if (< byte 0)
-      (setq byte (lognot byte)))
-  (if (zerop byte)
-      0
-    (+ (logand byte 1) (data-tests-popcnt (lsh byte -1)))))
-
-(ert-deftest data-tests-logcount ()
-  (should (cl-loop for n in (number-sequence -255 255)
-                   always (= (logcount n) (data-tests-popcnt n))))
-  ;; https://oeis.org/A000120
-  (should (= 11 (logcount 9727)))
-  (should (= 8 (logcount 9999))))
-
 ;; Bool vector tests.  Compactly represent bool vectors as hex
 ;; strings.
 

@@ -27,6 +27,11 @@
 
 (require 'ert)
 
+(ert-deftest eval-tests--bug24673 ()
+  "Check that Bug#24673 has been fixed."
+  ;; This should not crash.
+  (should-error (funcall '(closure)) :type 'invalid-function))
+
 (defvar byte-compile-debug)
 
 (ert-deftest eval-tests--bugs-24912-and-24913 ()
@@ -44,6 +49,36 @@ Bug#24912 and Bug#24913."
     (let ((byte-compile-debug t))
       (should-error (eval `(byte-compile (lambda ,args)) t)))))
 
+
+(dolist (form '(let let*))
+  (dolist (arg '(1 "a" [a]))
+    (eval
+     `(ert-deftest ,(intern (format "eval-tests--%s--%s" form (type-of arg))) ()
+        ,(format "Check that the first argument of `%s' cannot be a %s"
+                 form (type-of arg))
+        (should-error (,form ,arg) :type 'wrong-type-argument))
+     t)))
+
+(ert-deftest eval-tests--if-dot-string ()
+  "Check that Emacs rejects (if . \"string\")."
+  (should-error (eval '(if . "abc")) :type 'wrong-type-argument)
+  (let ((if-tail (list '(setcdr if-tail "abc") t)))
+    (should-error (eval (cons 'if if-tail))))
+  (let ((if-tail (list '(progn (setcdr if-tail "abc") nil) t)))
+    (should-error (eval (cons 'if if-tail)))))
+
+(ert-deftest eval-tests--let-with-circular-defs ()
+  "Check that Emacs reports an error for (let VARS ...) when VARS is circular."
+  (let ((vars (list 'v)))
+    (setcdr vars vars)
+    (dolist (let-sym '(let let*))
+      (should-error (eval (list let-sym vars))))))
+
+(ert-deftest eval-tests--mutating-cond ()
+  "Check that Emacs doesn't crash on a cond clause that mutates during eval."
+  (let ((clauses (list '((progn (setcdr clauses "ouch") nil)))))
+    (should-error (eval (cons 'cond clauses)))))
+
 (defun eval-tests--exceed-specbind-limit ()
   (defvar eval-tests--var1)
   (defvar eval-tests--var2)
@@ -64,24 +99,34 @@ crash/abort/malloc assert failure on the next test."
         (signal-hook-function #'ignore))
     (should-error (eval-tests--exceed-specbind-limit))))
 
-(defun eval-tests--exceed-specbind-limit ()
-  (defvar eval-tests--var1)
-  (defvar eval-tests--var2)
-  ;; Bind two variables, to make extra sure we hit the
-  ;; `max-specpdl-size' limit before the `max-lisp-eval-depth' limit.
-  (let ((eval-tests--var1 1)
-        (eval-tests--var2 2))
-    ;; Recurse until we hit the limit.
-    (eval-tests--exceed-specbind-limit)))
+(ert-deftest eval-tests-byte-code-being-evaluated-is-protected-from-gc ()
+  "Regression test for Bug#33014.
+Check that byte-compiled objects being executed by exec-byte-code
+are found on the stack and therefore not garbage collected."
+  (should (string= (eval-tests-33014-func)
+                   "before after: ok foo: (e) bar: (a b c d e) baz: a bop: c")))
 
-(ert-deftest eval-exceed-specbind-with-signal-hook ()
-  "Test for Bug#30481.
-Check that Emacs doesn't crash when exceeding specbind limit with
-`signal-hook-function' bound.  NOTE: Without the fix for
-Bug#30481, this test can appear to pass, but cause a
-crash/abort/malloc assert failure on the next test."
-  (let ((max-specpdl-size (/ max-lisp-eval-depth 2))
-        (signal-hook-function #'ignore))
-    (should-error (eval-tests--exceed-specbind-limit))))
+(defvar eval-tests-33014-var "ok")
+(defun eval-tests-33014-func ()
+  "A function which has a non-trivial constants vector when byte-compiled."
+  (let ((result "before "))
+    (eval-tests-33014-redefine)
+    (garbage-collect)
+    (setq result (concat result (format "after: %s" eval-tests-33014-var)))
+    (let ((vals '(0 1 2 3))
+          (things '(a b c d e)))
+      (dolist (val vals)
+        (setq result
+              (concat result " "
+                      (cond
+                       ((= val 0) (format "foo: %s" (last things)))
+                       ((= val 1) (format "bar: %s" things))
+                       ((= val 2) (format "baz: %s" (car things)))
+                       (t (format "bop: %s" (nth 2 things))))))))
+    result))
+
+(defun eval-tests-33014-redefine ()
+  "Remove the Lisp reference to the byte-compiled object."
+  (setf (symbol-function #'eval-tests-33014-func) nil))
 
 ;;; eval-tests.el ends here

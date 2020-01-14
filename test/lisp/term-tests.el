@@ -42,21 +42,13 @@
     ;; control chunking, and we don't have to worry about wrestling
     ;; with stty settings.
     (let ((proc (get-buffer-process (current-buffer))))
-      (unwind-protect
-          (prog2 (if (consp input)
-                     (mapc (lambda (input) (term-emulate-terminal proc input)) input)
-                   (term-emulate-terminal proc input))
-              (if return-var (buffer-local-value return-var (current-buffer))
-                (buffer-substring-no-properties (point-min) (point-max)))
-            ;; End the process to avoid query on buffer kill.
-            (process-send-eof proc)
-            (accept-process-output proc))
-        ;; Make extra sure we don't get stuck in case we hit some
-        ;; error before sending eof.
-        (when (process-live-p proc)
-          (kill-process proc)
-          ;; Let Emacs update process status.
-          (accept-process-output proc))))))
+      ;; Don't get stuck when we close the buffer.
+      (set-process-query-on-exit-flag proc nil)
+      (if (consp input)
+                (mapc (lambda (input) (term-emulate-terminal proc input)) input)
+              (term-emulate-terminal proc input))
+      (if return-var (buffer-local-value return-var (current-buffer))
+        (buffer-substring-no-properties (point-min) (point-max))))))
 
 (ert-deftest term-simple-lines ()
   (let ((str "\
@@ -132,17 +124,45 @@ line6\r
                     40 12 (list "\eAnSiTc /f" "oo/\n") 'default-directory)
                    "/foo/"))))
 
-(ert-deftest term-line-wrapping-then-motion ()
-  "Make sure we reset the line-wrapping state after moving cursor.
-A real-life example is the default zsh prompt which writes spaces
-to the end of line (triggering line-wrapping state), and then
-sends a carriage return followed by another space to overwrite
-the first character of the line."
+(ert-deftest term-to-margin ()
+  "Test cursor movement at the scroll margin.
+This is a reduced example from GNU nano's initial screen."
   (let* ((width 10)
-         (strs (list "x" (make-string (1- width) ?_)
-                     "\r_")))
-    (should (equal (term-test-screen-from-input width 12 strs)
-                   (make-string width ?_)))))
+         (x (make-string width ?x))
+         (y (make-string width ?y)))
+    (should (equal (term-test-screen-from-input
+                    width 3
+                    `("\e[1;3r"       ; Setup 3 line scrolling region.
+                      "\e[2;1H"       ; Move to 2nd last line.
+                      ,x              ; Fill with 'x'.
+                      "\r\e[1B"       ; Next line.
+                      ,y))            ; Fill with 'y'.
+                   (concat "\n" x "\n" y)))
+    ;; Same idea, but moving upwards.
+    (should (equal (term-test-screen-from-input
+                    width 3
+                    `("\e[1;3r" "\e[2;1H" ,x "\r\e[1A" ,y))
+                   (concat y "\n" x)))))
+
+(ert-deftest term-decode-partial () ;; Bug#25288.
+  "Test multibyte characters sent into multiple chunks."
+  ;; Set `locale-coding-system' so test will be deterministic.
+  (let* ((locale-coding-system 'utf-8-unix)
+         (string (make-string 7 ?ш))
+         (bytes (encode-coding-string string locale-coding-system)))
+    (should (equal string
+                   (term-test-screen-from-input
+                    40 1 `(,(substring bytes 0 (/ (length bytes) 2))
+                           ,(substring bytes (/ (length bytes) 2))))))))
+
+(ert-deftest term-undecodable-input () ;; Bug#29918.
+  "Undecodable bytes should be passed through without error."
+  (let* ((locale-coding-system 'utf-8-unix) ; As above.
+         (bytes "\376\340\360\370")
+         (string (decode-coding-string bytes locale-coding-system)))
+    (should (equal string
+                   (term-test-screen-from-input
+                    40 1 bytes)))))
 
 (provide 'term-tests)
 

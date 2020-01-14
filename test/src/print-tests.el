@@ -58,9 +58,5 @@
                        (buffer-string))
                      "--------\n"))))
 
-(ert-deftest print-read-roundtrip ()
-  (let ((sym '\’bar))
-    (should (eq (read (prin1-to-string sym)) sym))))
-
 (provide 'print-tests)
 ;;; print-tests.el ends here
