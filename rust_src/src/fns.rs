@@ -165,7 +165,7 @@ pub fn require(feature: LispObject, filename: LispObject, noerror: LispObject) -
         }
     }
 
-    if memq(feature, LispObject::from_raw(unsafe { globals.Vfeatures })).is_not_nil() {
+    if memq(feature, unsafe { globals.Vfeatures }).is_not_nil() {
         return feature;
     }
 
@@ -223,9 +223,9 @@ pub fn require(feature: LispObject, filename: LispObject, noerror: LispObject) -
         }
     }
 
-    let tem = memq(feature, LispObject::from_raw(unsafe { globals.Vfeatures }));
+    let tem = memq(feature, unsafe { globals.Vfeatures });
     if tem.is_nil() {
-        let tem3 = car(car(LispObject::from_raw(unsafe { globals.Vload_history })));
+        let tem3 = car(car(unsafe { globals.Vload_history }));
 
         if tem3.is_nil() {
             error!("Required feature `{}' was not provided", feature);

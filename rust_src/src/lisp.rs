@@ -618,7 +618,7 @@ impl LispObject {
 
     pub fn eql(self, other: impl Into<Self>) -> bool {
         if self.is_float() {
-            self.equal(other)
+            self.equal_no_quit(other)
         } else {
             self.eq(other)
         }

@@ -263,7 +263,7 @@ pub fn ffloor(arg: LispObject) -> EmacsDouble {
 }
 
 /// Truncate a floating point number to an integral float value.
-/// Rounds the value toward zero.
+/// (Round toward zero.)
 #[lisp_fn]
 pub fn ftruncate(arg: LispObject) -> EmacsDouble {
     let d = arg.as_float_or_error();

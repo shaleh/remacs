@@ -424,10 +424,8 @@ pub fn letX(args: LispCons) -> LispObject {
         if lexenv.is_not_nil() {
             if let Some(sym) = var.as_symbol() {
                 if !sym.get_declared_special() {
-                    let bound = memq(
-                        var,
-                        LispObject::from_raw(unsafe { globals.Vinternal_interpreter_environment }),
-                    ).is_not_nil();
+                    let bound = memq(var, unsafe { globals.Vinternal_interpreter_environment })
+                        .is_not_nil();
 
                     if !bound {
                         // Lexically bind VAR by adding it to the interpreter's binding alist.
@@ -487,10 +485,8 @@ pub fn lisp_let(args: LispCons) -> LispObject {
         if lexenv.is_not_nil() {
             if let Some(sym) = var.as_symbol() {
                 if !sym.get_declared_special() {
-                    let bound = memq(
-                        var,
-                        LispObject::from_raw(unsafe { globals.Vinternal_interpreter_environment }),
-                    ).is_not_nil();
+                    let bound = memq(var, unsafe { globals.Vinternal_interpreter_environment })
+                        .is_not_nil();
 
                     if !bound {
                         // Lexically bind VAR by adding it to the lexenv alist.
@@ -560,7 +556,7 @@ pub fn macroexpand(mut form: LispObject, environment: LispObject) -> LispObject 
             sym = def;
             tem = assq(sym, environment);
             if tem.is_nil() {
-                def = sym_ref.function;
+                def = sym_ref.get_function();
                 if def.is_not_nil() {
                     continue;
                 }
@@ -760,7 +756,7 @@ pub fn autoload(
 
 def_lisp_sym!(Qautoload, "autoload");
 
-/// Non-nil if OBJECT is a function.
+/// Return t if OBJECT is a function.
 #[lisp_fn(name = "functionp", c_name = "functionp")]
 pub fn functionp_lisp(object: LispObject) -> bool {
     FUNCTIONP(object)

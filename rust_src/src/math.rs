@@ -50,8 +50,6 @@ pub enum ArithOp {
     Logior,
     // Logical exclusive OR.
     Logxor,
-    Max,
-    Min,
 }
 
 /// Given an array of `LispObject`, reduce over them according to the

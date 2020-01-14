@@ -73,11 +73,11 @@ fn hash_alg(algorithm: LispSymbolRef) -> HashAlg {
 /// OBJECT is a buffer, the default for CODING-SYSTEM is whatever coding
 /// system would be chosen by default for writing this text into a file.
 ///
-/// The two optional arguments START and END are positions specifying for
-/// which part of OBJECT to compute the hash.  If nil or omitted, uses the
-/// whole OBJECT.
+/// If OBJECT is a string, the most preferred coding system (see the
+/// command `prefer-coding-system') is used.
 ///
-/// If BINARY is non-nil, returns a string in binary form.
+/// If NOERROR is non-nil, silently assume the `raw-text' coding if the
+/// guesswork fails.  Normally, an error is signaled in such case.
 #[lisp_fn(min = "1")]
 pub fn md5(
     object: LispObject,
@@ -86,12 +86,9 @@ pub fn md5(
     coding_system: LispObject,
     noerror: LispObject,
 ) -> LispObject {
-    let mut string = object.as_string();
-    let buffer = object.as_buffer();
-    let input = get_input(
+    _secure_hash(
+        HashAlg::MD5,
         object,
-        &mut string,
-        &buffer,
         start,
         end,
         coding_system,
@@ -107,6 +104,8 @@ pub fn md5(
 /// The two optional arguments START and END are positions specifying for
 /// which part of OBJECT to compute the hash.  If nil or omitted, uses the
 /// whole OBJECT.
+///
+/// The full list of algorithms can be obtained with `secure-hash-algorithms'.
 ///
 /// If BINARY is non-nil, returns a string in binary form.
 #[lisp_fn(min = "2")]
@@ -231,8 +230,7 @@ fn sha512_buffer(buffer: &[u8], dest_buf: &mut [u8]) {
 
 /// Return a hash of the contents of BUFFER-OR-NAME.
 /// This hash is performed on the raw internal format of the buffer,
-/// disregarding any coding systems.
-/// If nil, use the current buffer.
+/// disregarding any coding systems.  If nil, use the current buffer.
 #[lisp_fn(min = "0")]
 pub fn buffer_hash(buffer_or_name: Option<LispBufferOrName>) -> LispObject {
     let b = buffer_or_name.map_or_else(ThreadState::current_buffer_unchecked, LispBufferRef::from);

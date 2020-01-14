@@ -321,12 +321,12 @@ impl LispCons {
 
     /// Return the car (first cell).
     pub fn car(self) -> LispObject {
-        unsafe { (*self._extract()).car }
+        unsafe { (*self._extract()).u.s.as_ref().car }
     }
 
     /// Return the cdr (second cell).
     pub fn cdr(self) -> LispObject {
-        unsafe { (*self._extract()).u.cdr }
+        unsafe { (*self._extract()).u.s.as_ref().u.cdr }
     }
 
     /// Set the car of the cons cell.
@@ -590,7 +590,7 @@ pub fn assq(key: LispObject, list: LispObject) -> LispObject {
     assoc_impl(key, list, LispObject::eq)
 }
 
-/// Return non-nil if KEY is `equal' to the car of an element of LIST.
+/// Return non-nil if KEY is equal to the car of an element of LIST.
 /// The value is actually the first element of LIST whose car equals KEY.
 ///
 /// Equality is defined by TESTFN is non-nil or by `equal' if nil.
@@ -670,16 +670,6 @@ pub fn plist_get(plist: LispObject, prop: LispObject) -> LispObject {
         LispConsEndChecks::off,
         LispConsCircularChecks::safe,
     )
-}
-
-/// Extract a value from a property list.
-/// PLIST is a property list, which is a list of the form
-/// (PROP1 VALUE1 PROP2 VALUE2...).  This function returns the value
-/// corresponding to the given PROP, or nil if PROP is not one of the
-/// properties on the list.  This function never signals an error.
-#[lisp_fn]
-fn plist_get(plist: LispObject, prop: LispObject) -> LispObject {
-    internal_plist_get(plist.iter_tails_safe(), prop, LispObject::eq)
 }
 
 /// Extract a value from a property list, comparing with `equal'.

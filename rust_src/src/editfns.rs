@@ -28,11 +28,10 @@ use crate::{
         downcase, find_before_next_newline, find_newline, get_char_property_and_overlay, globals,
         insert_1_both, insert_from_buffer, insert_from_string_1, make_buffer_string,
         make_buffer_string_both, make_save_obj_obj_obj_obj, make_string_from_bytes, maybe_quit,
-        message1, message3, record_unwind_current_buffer, record_unwind_protect,
-        save_excursion_restore, save_restriction_restore, save_restriction_save,
-        scan_newline_from_point, set_buffer_internal_1, set_point, set_point_both,
-        signal_after_change, styled_format, update_buffer_properties, update_compositions,
-        CHECK_BORDER, STRING_BYTES,
+        message1, message3, record_unwind_current_buffer, save_excursion_restore,
+        save_restriction_restore, save_restriction_save, scan_newline_from_point,
+        set_buffer_internal_1, set_point, set_point_both, signal_after_change, styled_format,
+        update_buffer_properties, update_compositions, CHECK_BORDER, STRING_BYTES,
     },
     remacs_sys::{
         Fadd_text_properties, Fget_pos_property, Fnext_single_char_property_change,
@@ -1122,7 +1121,7 @@ pub extern "C" fn save_excursion_save() -> LispObject {
 /// then just use `save-current-buffer', or even `with-current-buffer'.
 ///
 /// Before Emacs 25.1, `save-excursion' used to save the mark state.
-/// To save the marker state as well as the point and buffer, use
+/// To save the mark state as well as point and the current buffer, use
 /// `save-mark-and-excursion'.
 ///
 /// usage: (save-excursion &rest BODY)

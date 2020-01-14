@@ -35,27 +35,33 @@ pub type LispSymbolRef = ExternalPtr<Lisp_Symbol>;
 
 impl LispSymbolRef {
     pub fn symbol_name(self) -> LispObject {
-        self.name
+        let s = unsafe { self.u.s.as_ref() };
+        s.name
     }
 
     pub fn get_function(self) -> LispObject {
-        self.function
+        let s = unsafe { self.u.s.as_ref() };
+        s.function
     }
 
     pub fn get_plist(self) -> LispObject {
-        self.plist
+        let s = unsafe { self.u.s.as_ref() };
+        s.plist
     }
 
     pub fn set_plist(&mut self, plist: LispObject) {
-        self.plist = plist;
+        let s = unsafe { self.u.s.as_mut() };
+        s.plist = plist;
     }
 
     pub fn set_function(&mut self, function: LispObject) {
-        self.function = function;
+        let s = unsafe { self.u.s.as_mut() };
+        s.function = function;
     }
 
     pub fn is_interned_in_initial_obarray(self) -> bool {
-        self.interned() == symbol_interned::SYMBOL_INTERNED_IN_INITIAL_OBARRAY as u32
+        let s = unsafe { self.u.s.as_ref() };
+        s.interned() == symbol_interned::SYMBOL_INTERNED_IN_INITIAL_OBARRAY as u32
     }
 
     pub fn set_uninterned(&mut self) {
@@ -64,7 +70,8 @@ impl LispSymbolRef {
     }
 
     pub fn is_alias(self) -> bool {
-        self.redirect() == symbol_redirect::SYMBOL_VARALIAS
+        let s = unsafe { self.u.s.as_ref() };
+        s.redirect() == symbol_redirect::SYMBOL_VARALIAS
     }
 
     pub fn get_trapped_write(self) -> symbol_trapped_write::Type {
@@ -103,13 +110,13 @@ impl LispSymbolRef {
         let mut hare = self;
 
         while hare.is_alias() {
-            hare = hare.get_alias();
+            hare = unsafe { hare.get_alias() };
 
             if !hare.is_alias() {
                 break;
             }
-            hare = hare.get_alias();
-            tortoise = tortoise.get_alias();
+            hare = unsafe { hare.get_alias() };
+            tortoise = unsafe { tortoise.get_alias() };
 
             if hare == tortoise {
                 xsignal!(Qcyclic_variable_indirection, hare)
@@ -136,8 +143,9 @@ impl LispSymbolRef {
         unsafe { set_symbol_redirect(self.as_mut(), v) }
     }
 
-    pub fn get_value(self) -> LispObject {
-        unsafe { self.val.value }
+    pub unsafe fn get_value(self) -> LispObject {
+        let s = self.u.s.as_ref();
+        s.val.value
     }
 
     // Find the value of a symbol, returning Qunbound if it's not bound.
@@ -171,13 +179,15 @@ impl LispSymbolRef {
         LispBufferLocalValueRef::new(s.val.blv)
     }
 
-    pub fn get_fwd(self) -> *mut Lisp_Fwd {
-        unsafe { self.val.fwd }
+    pub unsafe fn get_fwd(self) -> *mut Lisp_Fwd {
+        let s = self.u.s.as_ref();
+        s.val.fwd
     }
 
     pub fn set_fwd(mut self, fwd: *mut Lisp_Fwd) {
         assert!(self.get_redirect() == symbol_redirect::SYMBOL_FORWARDED && !fwd.is_null());
-        self.val.fwd = fwd;
+        let s = unsafe { self.u.s.as_mut() };
+        s.val.fwd = fwd;
     }
 
     pub const fn iter(self) -> LispSymbolIter {
@@ -338,7 +348,8 @@ impl Iterator for LispSymbolIter {
             None
         } else {
             let sym = self.current;
-            self.current = LispSymbolRef::new(sym.next);
+            let s = unsafe { sym.u.s.as_ref() };
+            self.current = LispSymbolRef::new(s.next);
             Some(sym)
         }
     }
@@ -371,9 +382,9 @@ pub fn boundp(mut symbol: LispSymbolRef) -> bool {
     symbol = symbol.get_indirect_variable();
 
     let valcontents = match symbol.get_redirect() {
-        symbol_redirect::SYMBOL_PLAINVAL => symbol.get_value(),
+        symbol_redirect::SYMBOL_PLAINVAL => unsafe { symbol.get_value() },
         symbol_redirect::SYMBOL_LOCALIZED => {
-            let mut blv = symbol.get_blv();
+            let mut blv = unsafe { symbol.get_blv() };
             if blv.get_fwd().is_null() {
                 unsafe {
                     swap_in_symval_forwarding(symbol.as_mut(), blv.as_mut());

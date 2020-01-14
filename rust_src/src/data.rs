@@ -300,7 +300,7 @@ pub fn defalias(
         // Only add autoload entries after dumping, because the ones before are
         // not useful and else we get loads of them from the loaddefs.el.
 
-        if is_autoload(symbol.function) {
+        if is_autoload(symbol.get_function()) {
             // Remember that the function was already an autoload.
             loadhist_attach((true, sym).into());
         }
@@ -371,13 +371,13 @@ fn default_value(mut symbol: LispSymbolRef) -> LispObject {
         symbol = symbol.get_indirect_variable();
     }
     match symbol.get_redirect() {
-        symbol_redirect::SYMBOL_PLAINVAL => symbol.get_value(),
+        symbol_redirect::SYMBOL_PLAINVAL => unsafe { symbol.get_value() },
         symbol_redirect::SYMBOL_LOCALIZED => {
             // If var is set up for a buffer that lacks a local value for it,
             // the current value is nominally the default value.
             // But the `realvalue' slot may be more up to date, since
             // ordinary setq stores just that slot.  So use that.
-            let blv = symbol.get_blv();
+            let blv = unsafe { symbol.get_blv() };
             let fwd = blv.get_fwd();
             if !fwd.is_null() && blv.valcell.eq(blv.defcell) {
                 unsafe { do_symval_forwarding(fwd) }
@@ -718,7 +718,7 @@ extern "C" fn harmonize_variable_watchers(alias: LispObject, base_variable: Lisp
 /// NEWVAL is the value it will be changed to.
 /// OPERATION is a symbol representing the kind of change, one of: `set',
 /// `let', `unlet', `makunbound', and `defvaralias'.
-/// WHERE is a buffer if the buffer-local value of the variable being
+/// WHERE is a buffer if the buffer-local value of the variable is being
 /// changed, nil otherwise.
 ///
 /// All writes to aliases of SYMBOL will call WATCH-FUNCTION too.
