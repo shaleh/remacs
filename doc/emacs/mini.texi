@@ -57,17 +57,17 @@ the minibuffer (since typing @key{RET} would no longer submit that
 default).  If you ever bring back the original minibuffer text, the
 prompt again shows the default.  Furthermore, if you change the
 variable @code{minibuffer-eldef-shorten-default} to a non-@code{nil}
-value, the default argument is displayed as @samp{[@var{default}]}
-instead of @samp{(default @var{default})}, saving some screen space.
-To enable this minor mode, type @kbd{M-x
+value, the default argument is displayed as @samp{[@var{default-arg}]}
+instead of @samp{(default @var{default-arg})}, saving some screen
+space.  To enable this minor mode, type @kbd{M-x
 minibuffer-electric-default-mode}.
 
   Since the minibuffer appears in the echo area, it can conflict with
 other uses of the echo area.  If an error message or an informative
 message is emitted while the minibuffer is active, the message hides
 the minibuffer for a few seconds, or until you type something; then
-the minibuffer comes back.  While the minibuffer is in use, keystrokes
-do not echo.
+the minibuffer comes back.  While the minibuffer is in use, Emacs does
+not echo keystrokes.
 
 @node Minibuffer File
 @section Minibuffers for File Names
@@ -134,9 +134,16 @@ directory of a user whose login name is @var{user-id}.  Any leading
 directory name in front of the @file{~} is ignored: thus,
 @file{/u2/emacs/~/foo/bar.txt} is equivalent to @file{~/foo/bar.txt}.
 
-  On MS-Windows, where a user doesn't always have a
-home directory, Emacs uses several alternatives.  See
-@ref{Windows HOME}.
+  On MS-Windows and MS-DOS systems, where a user doesn't always have a
+home directory, Emacs uses several alternatives.  For MS-Windows, see
+@ref{Windows HOME}; for MS-DOS, see
+@ifnottex
+@ref{MS-DOS File Names}.
+@end ifnottex
+@iftex
+@ref{MS-DOS File Names, HOME on MS-DOS,, emacs, the digital version of
+the Emacs Manual}.
+@end iftex
 On these systems, the @file{~@var{user-id}/} construct is supported
 only for the current user, i.e., only if @var{user-id} is the current
 user's login name.
@@ -223,7 +230,7 @@ set the variable @code{enable-recursive-minibuffers} to @code{t}.
   When not active, the minibuffer is in @code{minibuffer-inactive-mode},
 and clicking @kbd{mouse-1} there shows the @file{*Messages*} buffer.
 If you use a dedicated frame for minibuffers, Emacs also recognizes
-certain keys there, for example @kbd{n} to make a new frame.
+certain keys there, for example, @kbd{n} to make a new frame.
 
 @node Completion
 @section Completion
@@ -355,26 +362,14 @@ While in the completion list buffer, this chooses the completion at
 point (@code{choose-completion}).
 
 @findex next-completion
-@item @key{TAB}
 @item @key{RIGHT}
-While in the completion list buffer, these keys move point to the
-following completion alternative (@code{next-completion}).
+While in the completion list buffer, this moves point to the following
+completion alternative (@code{next-completion}).
 
 @findex previous-completion
-@item @key{S-TAB}
 @item @key{LEFT}
-While in the completion list buffer, these keys move point to the
-previous completion alternative (@code{previous-completion}).
-
-@findex quit-window
-@item @kbd{q}
-While in the completion list buffer, this quits the window showing it
-and selects the window showing the minibuffer (@code{quit-window}).
-
-@findex kill-current-buffer
-@item @kbd{z}
-While in the completion list buffer, kill it and delete the window
-showing it (@code{kill-current-buffer}).
+While in the completion list buffer, this moves point to the previous
+completion alternative (@code{previous-completion}).
 @end table
 
 @node Completion Exit
@@ -779,10 +774,10 @@ you type the required password, press @key{RET} to submit it.  To
 prevent others from seeing your password, every character you type is
 displayed as a dot (@samp{.}) instead of its usual form.
 
-  Most of the features and commands associated with the minibuffer can
-@emph{not} be used when entering a password.  There is no history or
-completion, and you cannot change windows or perform any other action
-with Emacs until you have submitted the password.
+  Most of the features and commands associated with the minibuffer
+@emph{cannot} be used when entering a password.  There is no history
+or completion, and you cannot change windows or perform any other
+action with Emacs until you have submitted the password.
 
   While you are typing the password, you may press @key{DEL} to delete
 backwards, removing the last character entered.  @kbd{C-u} deletes

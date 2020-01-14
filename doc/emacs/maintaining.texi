@@ -110,7 +110,7 @@ control operations.
 
   Some uncommon or intricate version control operations, such as
 altering repository settings, are not supported in VC@.  You should
-perform such tasks outside Emacs, e.g., via the command line.
+perform such tasks outside VC, e.g., via the command line.
 
   This section provides a general overview of version control, and
 describes the version control systems that VC supports.  You can skip
@@ -128,7 +128,7 @@ you want to use.
 @end menu
 
 @node Why Version Control?
-@subsubsection Understanding the problems it addresses
+@subsubsection Understanding the Problems it Addresses
 
   Version control systems provide you with three important
 capabilities:
@@ -145,10 +145,10 @@ detected and resolved.
 
 @item
 @dfn{History}: the ability to attach historical data to your data,
-such as explanatory comments about the intention behind each change to
-it.  Even for a programmer working solo, change histories are an
-important aid to memory; for a multi-person project, they are a
-vitally important form of communication among developers.
+such as explanatory comments about the intention behind each change.
+Even for a programmer working solo, change histories are an important
+aid to memory; for a multi-person project, they are a vitally
+important form of communication among developers.
 @end itemize
 
 @node Version Control Systems
@@ -270,7 +270,7 @@ or changeset-based; and centralized or decentralized.  VC handles all
 these modes of operation, but it cannot hide the differences.
 
 @node VCS Merging
-@subsubsection Merge-based vs lock-based Version Control
+@subsubsection Merge-based vs Lock-based Version Control
 
   A version control system typically has some mechanism to coordinate
 between users who want to change the same file.  There are two ways to
@@ -541,13 +541,13 @@ been changed in the repository, offer to update it.
   These rules also apply when you use RCS in its non-locking mode,
 except that changes are not automatically merged from the repository.
 Nothing informs you if another user has committed changes in the same
-file since you began editing it; when you commit your revision, his
-changes are removed (however, they remain in the repository and are
-thus not irrevocably lost).  Therefore, you must verify that the
-current revision is unchanged before committing your changes.  In
-addition, locking is possible with RCS even in this mode: @kbd{C-x v
-v} with an unmodified file locks the file, just as it does with RCS in
-its normal locking mode (@pxref{VC With A Locking VCS}).
+file since you began editing it; when you commit your revision, that
+other user's changes are removed (however, they remain in the
+repository and are thus not irrevocably lost).  Therefore, you must
+verify that the current revision is unchanged before committing your
+changes.  In addition, locking is possible with RCS even in this mode:
+@kbd{C-x v v} with an unmodified file locks the file, just as it does
+with RCS in its normal locking mode (@pxref{VC With A Locking VCS}).
 
 @node VC With A Locking VCS
 @subsubsection Basic Version Control with Locking
@@ -1965,9 +1965,14 @@ Restart one of the last 2 commands above, from the current location of point.
 
 @kindex M-?
 @findex xref-find-references
-  @kbd{M-?} finds all the references for the identifier at point.  If
-there's no identifier at point, or when invoked with a prefix
-argument, the command prompts for the identifier, with completion.  It
+  @kbd{M-?} finds all the references for the identifier at point,
+prompting for the identifier as needed, with completion.  Depending on
+the current backend (@pxref{Xref}), the command may prompt even if it
+finds a valid identifier at point.  When invoked with a prefix
+argument, it always prompts for the identifier.  (If you want it to
+prompt always, customize the value of the variable
+@code{xref-prompt-for-identifier} to @code{t}; or set it to @code{nil}
+to prompt only if there's no usable identifier at point.)  The command
 then presents the @file{*xref*} buffer with all the references to the
 identifier, showing the file name and the line where the identifier is
 referenced.  The XREF mode commands are available in this buffer, see
@@ -2356,7 +2361,10 @@ newly created tags table to an existing file by using the @samp{--append}
 option.
 
   If the specified files don't exist, @command{etags} looks for
-compressed versions of them and uncompresses them to read them.
+compressed versions of them and uncompresses them to read them.  Under
+MS-DOS, @command{etags} also looks for file names like @file{mycode.cgz}
+if it is given @samp{mycode.c} on the command line and @file{mycode.c}
+does not exist.
 
   If the tags table becomes outdated due to changes in the files
 described in it, you can update it by running the @command{etags}
@@ -2395,7 +2403,7 @@ generally render the file names invalid.
 the tags file will contain absolute file names.  This way, the tags file
 will still refer to the same files even if you move it, as long as the
 source files remain in the same place.  Absolute file names start with
-@samp{/}, or with @samp{@var{device}:/} on MS-Windows.
+@samp{/}, or with @samp{@var{device}:/} on MS-DOS and MS-Windows.
 
    When you want to make a tags table from a great number of files,
 you may have problems listing them on the command line, because some

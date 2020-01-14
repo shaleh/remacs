@@ -643,7 +643,7 @@ autoloading with a magic comment:
 Here's what that produces in @file{loaddefs.el}:
 
 @example
-(autoload 'doctor "doctor" "\
+(autoload (quote doctor) "doctor" "\
 Switch to *doctor* buffer and start giving psychotherapy.
 
 \(fn)" t nil)

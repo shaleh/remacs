@@ -1144,7 +1144,7 @@ each time you run it!  Here is what happens:
 
 @group
 (symbol-function 'add-foo)
-     @result{} (lambda (x) (nconc '(foo) x))
+     @result{} (lambda (x) (nconc (quote (foo)) x))
 @end group
 
 @group
@@ -1162,7 +1162,7 @@ each time you run it!  Here is what happens:
 
 @group
 (symbol-function 'add-foo)
-     @result{} (lambda (x) (nconc '(foo 1 2 3 4) x))
+     @result{} (lambda (x) (nconc (quote (foo 1 2 3 4) x)))
 @end group
 @end smallexample
 @end defun
@@ -1736,12 +1736,11 @@ alist
 @end example
 @end defun
 
-@defun assoc-delete-all key alist &optional test
-This function is like @code{assq-delete-all} except that it accepts
-an optional argument @var{test}, a predicate function to compare the
-keys in @var{alist}. If omitted or @code{nil}, @var{test} defaults to
-@code{equal}.  As @code{assq-delete-all}, this function often modifies
-the original list structure of @var{alist}.
+@defun assoc-delete-all key alist
+This function deletes from @var{alist} all the elements whose @sc{car}
+is @code{equal} to @var{key}.  It works like @code{assq-delete-all},
+except for the predicate used for comparing alist elements with
+@var{key}.
 @end defun
 
 @defun rassq-delete-all value alist

@@ -363,8 +363,10 @@ the menu, one by one.  Once you reach the end of a node, and have seen
 all of its subnodes, @key{SPC} takes you to the next node or to the
 parent's next node.
 
-@kindex PAGEUP @r{(Info mode)}
-@kindex PAGEDOWN @r{(Info mode)}
+@kindex PageUp @r{(Info mode)}
+@kindex PageDown @r{(Info mode)}
+@kindex prior @r{(Info mode)}
+@kindex next @r{(Info mode)}
   Many keyboards nowadays have two scroll keys labeled @samp{PageUp}
 and @samp{PageDown} (or maybe @samp{prior} and @samp{next}).  If your
 keyboard has these keys, you can use them to move forward and backward

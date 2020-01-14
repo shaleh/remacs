@@ -1129,7 +1129,10 @@ the size of @var{window} is not preserved.
 @cindex window splitting
 
 This section describes functions for creating a new window by
-@dfn{splitting} an existing one.
+@dfn{splitting} an existing one.  Note that some windows are special in
+the sense that these functions may fail to split them as described here.
+Examples of such windows are side windows (@pxref{Side Windows}) and
+atomic windows (@pxref{Atomic Windows}).
 
 @defun split-window &optional window size side pixelwise
 This function creates a new live window next to the window
@@ -5970,27 +5973,17 @@ This parameter is installed by the buffer display functions
 description of @code{quit-restore-window} in @ref{Quitting Windows}
 for details.
 
-The third element is the window selected at the time the parameter was
-created.  If @code{quit-restore-window} deletes the window passed to
-it as argument, it then tries to reselect this window.
-
-The fourth element is the buffer whose display caused the creation of
-this parameter.  @code{quit-restore-window} deletes the specified window
-only if it still shows that buffer.
-
-See the description of @code{quit-restore-window} in @ref{Quitting
-Windows} for details.
-
-@item window-side window-slot
+@item window-side
+@itemx window-slot
 @vindex window-side@r{, a window parameter}
 @vindex window-slot@r{, a window parameter}
-These parameters are used for implementing side windows (@pxref{Side
-Windows}).
+These parameters are used internally for implementing side windows
+(@pxref{Side Windows}).
 
 @item window-atom
 @vindex window-atom@r{, a window parameter}
-This parameter is used for implementing atomic windows, see @ref{Atomic
-Windows}.
+This parameter is used internally for implementing atomic windows, see
+@ref{Atomic Windows}.
 
 @item mode-line-format
 @vindex mode-line-format@r{, a window parameter}
@@ -6012,11 +6005,12 @@ affected.
 
 @item min-margins
 @vindex min-margins@r{, a window parameter}
-The value of this parameter is a cons cell whose @sc{car} and @sc{cdr},
-if non-@code{nil}, specify the minimum values (in columns) for the left
-and right margin of this window.  When present, Emacs will use these
-values instead of the actual margin widths for determining whether a
-window can be split or shrunk horizontally.
+The value of this parameter is a cons cell whose @sc{car} and
+@sc{cdr}, if non-@code{nil}, specify the minimum values (in columns)
+for the left and right margin of this window (@pxref{Display Margins}.
+When present, Emacs will use these values instead of the actual margin
+widths for determining whether a window can be split or shrunk
+horizontally.
 
 Emacs never auto-adjusts the margins of any window after splitting or
 resizing it.  It is the sole responsibility of any application setting

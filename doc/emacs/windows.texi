@@ -174,9 +174,9 @@ After the rightmost and bottommost window, it goes back to the one at
 the upper left corner.  A numeric argument means to move several steps
 in the cyclic order of windows.  A negative argument moves around the
 cycle in the opposite order.  When the minibuffer is active, the
-minibuffer is the last window in the cycle; you can switch from the
-minibuffer window to one of the other windows, and later switch back and
-finish supplying the minibuffer argument that is requested.
+minibuffer window is the last window in the cycle; you can switch from
+the minibuffer window to one of the other windows, and later switch
+back and finish supplying the minibuffer argument that is requested.
 @xref{Minibuffer Edit}.
 
 @kindex C-M-v
@@ -492,12 +492,11 @@ in a window at the bottom of the selected frame, regardless of the
 number of windows already shown on that frame.
 
   If you prefer Emacs to display a temporary buffer in a different
-fashion, we recommend customizing the variable
-@code{display-buffer-alist} (@pxref{Choosing Window,,Choosing a Window
-for Display, elisp, The Emacs Lisp Reference Manual}).  For example,
-to display @file{*Completions*} by splitting a window as described in
-the previous section, use the following form in your initialization
-file (@pxref{Init File}):
+fashion, customize the variable @code{display-buffer-alist}
+(@pxref{Choosing Window,,Choosing a Window for Displaying a Buffer,
+elisp, The Emacs Lisp Reference Manual}) appropriately.  For example,
+to display @file{*Completions*} always below the selected window, use
+the following form in your initialization file (@pxref{Init File}):
 
 @example
 @group

@@ -220,9 +220,9 @@ Appendices
 * GNU Free Documentation License:: The license for this documentation.
 * Emacs Invocation::    Hairy startup options.
 * X Resources::         X resources for customizing Emacs.
-* Antinews::            Information about Emacs version 24.
-* Mac OS / GNUstep::    Using Emacs under Mac OS and GNUstep.
-* Microsoft Windows::   Using Emacs on Microsoft Windows.
+* Antinews::            Information about Emacs version 25.
+* Mac OS / GNUstep::     Using Emacs under macOS and GNUstep.
+* Microsoft Windows::   Using Emacs on Microsoft Windows and MS-DOS.
 * Manifesto::           What's GNU?  Gnu's Not Unix!
 
 * Glossary::            Terms used in this manual.
@@ -482,7 +482,6 @@ Auto Reverting Non-File Buffers
 
 * Auto Reverting the Buffer Menu:: Auto Revert of the Buffer Menu.
 * Auto Reverting Dired::           Auto Revert of Dired buffers.
-* Supporting additional buffers::  How to add more Auto Revert support.
 @end ifnottex
 
 Auto-Saving: Protection Against Disasters
@@ -954,8 +953,6 @@ The Calendar and the Diary
 * Lunar Phases::        Displaying phases of the moon.
 * Other Calendars::     Converting dates to other calendar systems.
 * Diary::               Displaying events from your diary.
-* Appointments::        Reminders when it's time to do something.
-* Importing Diary::     Converting diary events to/from other formats.
 * Daylight Saving::     How to specify when daylight saving time is active.
 * Time Intervals::      Keeping track of time intervals.
 @ifnottex
@@ -983,6 +980,8 @@ The Diary
 * Date Formats::           Various ways you can specify dates.
 * Adding to Diary::        Commands to create diary entries.
 * Special Diary Entries::  Anniversaries, blocks of dates, cyclic entries, etc.
+* Appointments::           Reminders when it's time to do something.
+* Importing Diary::        Converting diary events to/from other formats.
 
 @ifnottex
 More advanced features of the Calendar and Diary
@@ -1165,7 +1164,6 @@ The Emacs Initialization File
 * Terminal Init::       Each terminal type can have an init file.
 * Find Init::           How Emacs finds the init file.
 * Init Non-ASCII::      Using non-@acronym{ASCII} characters in an init file.
-* Early Init File::     Another init file, which is read early on.
 
 Dealing with Emacs Trouble
 
@@ -1235,7 +1233,7 @@ Emacs and macOS / GNUstep
 * Mac / GNUstep Events::        How window system events are handled.
 * GNUstep Support::             Details on status of GNUstep support.
 
-Emacs and Microsoft Windows
+Emacs and Microsoft Windows/MS-DOS
 
 * Windows Startup::     How to start Emacs on Windows.
 * Text and Binary::     Text files use CRLF to terminate lines.
@@ -1249,6 +1247,19 @@ Emacs and Microsoft Windows
 * Windows Printing::    How to specify the printer on MS-Windows.
 * Windows Fonts::       Specifying fonts on MS-Windows.
 * Windows Misc::        Miscellaneous Windows features.
+@ifnottex
+* MS-DOS::              Using Emacs on MS-DOS.
+
+Emacs and MS-DOS
+
+* MS-DOS Keyboard::     Keyboard conventions on MS-DOS.
+* MS-DOS Mouse::        Mouse conventions on MS-DOS.
+* MS-DOS Display::      Fonts, frames and display size on MS-DOS.
+* MS-DOS File Names::   File name conventions on MS-DOS.
+* MS-DOS Printing::     Printing specifics on MS-DOS.
+* MS-DOS and MULE::     Support for internationalization on MS-DOS.
+* MS-DOS Processes::    Running subprocesses on MS-DOS.
+@end ifnottex
 
 @end detailmenu
 @end menu
@@ -1307,9 +1318,10 @@ Customizable Self-Documenting Display Editor}, available from
 
 This version of the manual is mainly intended for use with GNU Emacs
 installed on GNU and Unix systems.  GNU Emacs can also be used on
-Microsoft Windows, and Macintosh systems.  The Info file
+MS-DOS, Microsoft Windows, and Macintosh systems.  The Info file
 version of this manual contains some more information about using
-Emacs on those systems.  Those systems use different file name syntax.
+Emacs on those systems.  Those systems use different file name syntax;
+in addition MS-DOS does not support all GNU Emacs features.
 @xref{Microsoft Windows}, for information about using Emacs on
 Windows.  @xref{Mac OS / GNUstep}, for information about using Emacs
 on Macintosh (and GNUstep).
@@ -1491,7 +1503,7 @@ Neal Ziring, Teodor Zlatanov, and Detlev Zundel.
 advanced, self-documenting, customizable, extensible editor Emacs.
 (The @samp{G} in
 @c Workaround makeinfo 4 bug.
-@c https://lists.gnu.org/archive/html/bug-texinfo/2004-08/msg00009.html
+@c https://lists.gnu.org/r/bug-texinfo/2004-08/msg00009.html
 @iftex
 @acronym{GNU, @acronym{GNU}'s Not Unix}
 @end iftex
@@ -1587,6 +1599,7 @@ Lisp programming.
 
 @include anti.texi
 @include macos.texi
+@c Includes msdos-xtra.
 @include msdos.texi
 @include gnu.texi
 @include glossary.texi

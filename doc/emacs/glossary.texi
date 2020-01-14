@@ -24,7 +24,7 @@ Setting the mark (q.v.@:) at a position in the text also activates it.
 When the mark is active, we call the region an active region.
 @xref{Mark}.
 
-@item Alt
+@item @key{Alt}
 Alt is the name of a modifier bit that a keyboard input character may
 have.  To make a character Alt, type it while holding down the @key{Alt}
 key.  Such characters are given names that start with @kbd{@key{Alt}-}
@@ -161,6 +161,12 @@ right away when you press down on a mouse button.  @xref{Mouse Buttons}.
 @item Byte Compilation
 @xref{Glossary---Compilation}.
 
+@item cf.
+@itemx c.f.
+Short for ``confer'' in Latin, which means ``compare with'' or
+``compare to''.  The second variant, ``c.f.'', is a widespread
+misspelling.
+
 @anchor{Glossary---C-}
 @item @kbd{C-}
 @kbd{C-} in the name of a character is an abbreviation for Control.
@@ -188,7 +194,7 @@ other input events as well).  @xref{User Input}.
 
 @item Character Folding
 Character folding means ignoring differences between similarly looking
-characters, such as between @code{a}, and @code{@:a} and @code{@'a}.
+characters, such as between @code{a}, and @code{@"a} and @code{@'a}.
 Emacs performs character folding by default in text search.  @xref{Lax
 Search}.
 
@@ -221,14 +227,16 @@ from a variety of coding systems when reading or writing it.
 @xref{Coding Systems}.
 
 @item Command
-A command is a Lisp function specially defined to be able to serve as a
-key binding in Emacs.  When you type a key sequence (q.v.), its
-binding (q.v.@:) is looked up in the relevant keymaps (q.v.@:) to find
-the command to run.  @xref{Commands}.
+A command is a Lisp function specially defined to be able to serve as
+a key binding in Emacs or to be invoked by its name
+(@pxref{Glossary---Command Name}).  When you type a key sequence
+(q.v.), its binding (q.v.@:) is looked up in the relevant keymaps
+(q.v.@:) to find the command to run.  @xref{Commands}.
 
 @item Command History
 @xref{Glossary---Minibuffer History}.
 
+@anchor{Glossary---Command Name}
 @item Command Name
 A command name is the name of a Lisp symbol that is a command
 (@pxref{Commands}).  You can invoke any command by its name using
@@ -251,7 +259,8 @@ Compilation is the process of creating an executable program from source
 code.  Emacs has commands for compiling files of Emacs Lisp code
 (@pxref{Byte Compilation,,, elisp, the Emacs Lisp
 Reference Manual}) and programs in C and other languages
-(@pxref{Compilation}).
+(@pxref{Compilation}).  Byte-compiled Emacs Lisp code loads and
+executes faster.
 
 @item Complete Key
 A complete key is a key sequence that fully specifies one action to be
@@ -441,6 +450,9 @@ tell it to.  @xref{Bugs}.
 @c TODO?  Not really appropriate for the user manual I think.
 @c Dynamic Binding
 
+@item e.g.
+Short for ``exempli gratia'' in Latin, which means ``for example''.
+
 @item Echo Area
 The echo area is the bottom line of the screen, used for echoing the
 arguments to commands, for asking questions, and showing brief messages
@@ -500,6 +512,9 @@ like the @key{SHIFT} key, is held down while another character is
 typed), you press the @key{ESC} key as you would press a letter key, and
 it applies to the next character you type.
 
+@item etc.
+Short for ``et cetera'' in Latin, which means ``and so on''.
+
 @item Expression
 @xref{Glossary---Balanced Expression}.
 
@@ -533,7 +548,7 @@ or absolute; the meaning of a relative file name depends on the current
 directory, but an absolute file name refers to the same file regardless
 of which directory is current.  On GNU and Unix systems, an absolute
 file name starts with a slash (the root directory) or with @samp{~/} or
-@samp{~@var{user}/} (a home directory).  On MS-Windows, an
+@samp{~@var{user}/} (a home directory).  On MS-Windows/MS-DOS, an
 absolute file name can also start with a drive letter and a colon, e.g.,
 @samp{@var{d}:}.
 
@@ -546,7 +561,7 @@ directory.  On GNU and Unix systems, a file name is a sequence of
 file-name components, separated by slashes.  For example, @file{foo/bar}
 is a file name containing two components, @samp{foo} and @samp{bar}; it
 refers to the file named @samp{bar} in the directory named @samp{foo} in
-the current directory.  MS-Windows file names can also use
+the current directory.  MS-DOS/MS-Windows file names can also use
 backslashes to separate components, as in @file{foo\bar}.
 
 @item Fill Prefix
@@ -1088,6 +1103,9 @@ read an argument (@pxref{Minibuffer}); the echoing that happens when
 you pause in the middle of typing a multi-character key sequence is also
 a kind of prompting (@pxref{Echo Area}).
 
+@item q.v.
+Short for ``quod vide'' in Latin, which means ``which see''.
+
 @item Query-Replace
 Query-replace is an interactive string replacement feature provided by
 Emacs.  @xref{Query Replace}.
@@ -1095,7 +1113,7 @@ Emacs.  @xref{Query Replace}.
 @anchor{Glossary---Quitting}
 @item Quitting
 Quitting means canceling a partially typed command or a running
-command, using @kbd{C-g}.  @xref{Quitting}.
+command, using @kbd{C-g} (or @kbd{C-@key{BREAK}} on MS-DOS).  @xref{Quitting}.
 
 @item Quoting
 Quoting means depriving a character of its usual special significance.
@@ -1128,8 +1146,8 @@ one corner and putting the mark at the diagonally opposite corner.
 A recursive editing level is a state in which part of the execution of
 a command involves asking you to edit some text.  This text may
 or may not be the same as the text to which the command was applied.
-The mode line indicates recursive editing levels with square brackets
-(@samp{[} and @samp{]}).  @xref{Recursive Edit}.
+The mode line (q.v.@:) indicates recursive editing levels with square
+brackets (@samp{[} and @samp{]}).  @xref{Recursive Edit}.
 
 @item Redisplay
 Redisplay is the process of correcting the image on the screen to
@@ -1157,7 +1175,7 @@ digits.  @xref{Regexps}.
 @item Remote File
 A remote file is a file that is stored on a system other than your own.
 Emacs can access files on other computers provided that they are
-connected to the same network as your machine, and (obviously) that
+reachable from your machine over the network, and (obviously) that
 you have a supported method to gain access to those files.
 @xref{Remote Files}.
 
@@ -1179,8 +1197,9 @@ newline into the text.  It is also used to terminate most arguments
 read in the minibuffer (q.v.).  @xref{User Input,Return}.
 
 @item Reverting
-Reverting means returning to the original state.  Emacs lets you
-revert a buffer by re-reading its file from disk.  @xref{Reverting}.
+Reverting means returning to the original state.  For example, Emacs
+lets you revert a buffer by re-reading its file from disk.
+@xref{Reverting}.
 
 @c Seems too obvious, also there is nothing special about the format
 @c these days.
@@ -1353,6 +1372,7 @@ Emacs does not make a termscript file unless you tell it to.
 @xref{Bugs}.
 
 @item Text
+
 ``Text'' has two meanings (@pxref{Text}):
 
 @itemize @bullet
@@ -1361,6 +1381,7 @@ Data consisting of a sequence of characters, as opposed to binary
 numbers, executable programs, and the like.  The basic contents of an
 Emacs buffer (aside from the text properties, q.v.@:) are always text
 in this sense.
+
 @item
 Data consisting of written human language (as opposed to programs),
 or following the stylistic conventions of human language.
@@ -1463,7 +1484,7 @@ where they can be edited.  @xref{Visiting}.
 
 @item Whitespace
 Whitespace is any run of consecutive formatting characters (space,
-tab, newline, and backspace).
+tab, newline, backspace, etc.).
 
 @item Widening
 Widening is removing any restriction (q.v.@:) on the current buffer;

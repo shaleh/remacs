@@ -581,7 +581,7 @@ truncated to fit it.
   The variable @code{max-mini-window-height}, which specifies the
 maximum height for resizing minibuffer windows, also applies to the
 echo area (which is really a special use of the minibuffer window;
-@pxref{Minibuffer Misc}).
+@pxref{Minibuffer Windows}).
 
 @node Warnings
 @section Reporting Warnings
@@ -2246,10 +2246,10 @@ attribute is ignored.
 
 @table @code
 @item :family
-Font family or fontset (a string).  @xref{Fonts,,, emacs, The GNU
+Font family name (a string).  @xref{Fonts,,, emacs, The GNU
 Emacs Manual}, for more information about font families.  The function
 @code{font-family-list} (see below) returns a list of available family
-names.  @xref{Fontsets}, for information about fontsets.
+names.
 
 @item :foundry
 The name of the @dfn{font foundry} for the font family specified by
@@ -2409,9 +2409,10 @@ Normally you do not need to set the stipple attribute, because it is
 used automatically to handle certain shades of gray.
 
 @item :font
-The font used to display the face.  Its value should be a font object.
-@xref{Low-Level Font}, for information about font objects, font specs,
-and font entities.
+The font used to display the face.  Its value should be a font object
+or a fontset.  @xref{Low-Level Font}, for information about font
+objects, font specs, and font entities.  @xref{Fontsets}, for
+information about fontsets.
 
 When specifying this attribute using @code{set-face-attribute}
 (@pxref{Attribute Functions}), you may also supply a font spec, a font
@@ -2548,8 +2549,8 @@ apply to.  Here are the possible values of @var{characteristic}:
 @table @code
 @item type
 The kind of window system the terminal uses---either @code{graphic}
-(any graphics-capable display), @code{x},
-@code{w32} (for MS Windows 9X/NT/2K/XP), or @code{tty} (a
+(any graphics-capable display), @code{x}, @code{pc} (for the MS-DOS
+console), @code{w32} (for MS Windows 9X/NT/2K/XP), or @code{tty} (a
 non-graphics-capable display).  @xref{Window Systems, window-system}.
 
 @item class
@@ -5436,7 +5437,8 @@ Specifies a rotation angle in degrees.
 
 SVG (Scalable Vector Graphics) is an XML format for specifying images.
 If your Emacs build has SVG support, you can create and manipulate
-these images with the following functions.
+these images with the following functions from the @file{svg.el}
+library.
 
 @defun svg-create width height &rest args
 Create a new, empty SVG image with the specified dimensions.
@@ -5450,8 +5452,11 @@ The default width (in pixels) of any lines created.
 The default stroke color on any lines created.
 @end table
 
-This function returns an SVG structure, and all the following functions
-work on that structure.
+@cindex SVG object
+This function returns an @dfn{SVG object}, a Lisp data structure that
+specifies an SVG image, and all the following functions work on that
+structure.  The argument @var{svg} in the following functions
+specifies such an SVG object.
 @end defun
 
 @defun svg-gradient svg id type stops
@@ -7012,7 +7017,7 @@ The glyph for the end of a truncated screen line (the default for this
 is @samp{$}).  @xref{Glyphs}.  On graphical terminals, Emacs by
 default uses arrows in the fringes to indicate truncation, so the
 display table has no effect, unless you disable the fringes
-(@pxref{Fringes,, Window Fringes, emacs, the Gnu Emacs Manual}).
+(@pxref{Fringes,, Window Fringes, emacs, the GNU Emacs Manual}).
 
 @item 1
 The glyph for the end of a continued line (the default is @samp{\}).
@@ -7348,6 +7353,8 @@ Emacs is displaying the frame using native MS-Windows GUI.
 @item ns
 Emacs is displaying the frame using the Nextstep interface (used on
 GNUstep and macOS).
+@item pc
+Emacs is displaying the frame using MS-DOS direct screen writes.
 @item nil
 Emacs is displaying the frame on a character-based terminal.
 @end table

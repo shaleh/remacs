@@ -1324,13 +1324,13 @@ settings overridden.
 
 @cindex @file{.dir-locals.el} file
   The usual way to define directory-local variables is to put a file
-named @file{.dir-locals.el}
-@footnote{ You can also use @file{.dir-locals-2.el}, which
-is loaded in addition.  This is useful when @file{.dir-locals.el} is
-under version control in a shared repository and can't be used for
-personal customizations.  } in a
-directory.  Whenever Emacs visits any file in that directory or any of
-its subdirectories, it will apply the directory-local variables
+named @file{.dir-locals.el}@footnote{
+On MS-DOS, the name of this file should be @file{_dir-locals.el}, due
+to limitations of the DOS filesystems.  If the filesystem is limited
+to 8+3 file names, the name of the file will be truncated by the OS to
+@file{_dir-loc.el}.
+} in a directory.  Whenever Emacs visits any file in that directory or
+any of its subdirectories, it will apply the directory-local variables
 specified in @file{.dir-locals.el}, as though they had been defined as
 file-local variables for that file (@pxref{File Variables}).  Emacs
 searches for @file{.dir-locals.el} starting in the directory of the
@@ -1927,7 +1927,7 @@ key.
   Many keyboards have a numeric keypad on the right-hand side.
 The numeric keys in the keypad double up as cursor motion keys,
 toggled by a key labeled @samp{Num Lock}.  By default, Emacs
-translates these keys to the corresponding keys in the main keyboard.
+translates these keys to the corresponding keys on the main keyboard.
 For example, when @samp{Num Lock} is on, the key labeled @samp{8} on
 the numeric keypad produces @code{kp-8}, which is translated to
 @kbd{8}; when @samp{Num Lock} is off, the same key produces
@@ -2233,7 +2233,6 @@ Manual}.
 * Terminal Init::       Each terminal type can have an init file.
 * Find Init::           How Emacs finds the init file.
 * Init Non-ASCII::      Using non-@acronym{ASCII} characters in an init file.
-* Early Init File::     Another init file, which is read early on.
 @end menu
 
 @node Init Syntax
@@ -2635,23 +2634,39 @@ instance:
 @noindent
 Type @kbd{C-q}, followed by the key you want to bind, to insert @var{char}.
 
-@node Early Init File
-@subsection The Early Init File
-@cindex early init file
+@node Authentication
+@section Keeping Persistent Authentication Information
 
-  Most customizations for Emacs can be put in the normal init file,
-@file{.emacs} or @file{~/.emacs.d/init.el}.  However, it is sometimes
-desirable to have customizations that take effect during Emacs startup
-earlier than the normal init file is processed.  Such customizations
-can be put in the early init file, @file{~/.emacs.d/early-init.el}.
-This file is loaded before the package system is initialized, so in it
-you can customize variables that affect the package initialization
-process, such as @code{package-enable-at-startup},
-@code{package-load-list}, and @code{package-user-dir}.  Note that
-variables like @code{package-archives} which only affect the
-installation of new packages, and not the process of making
-already-installed packages available, may be customized in the regular
-init file.  @xref{Package Installation}.
+  Some Emacs packages, which connect to other services, require
+authentication (@pxref{Passwords}), e.g., see @ref{Top, Gnus,, gnus, The
+Gnus Manual}, or @ref{Top, Tramp,, tramp, The Tramp Manual}.  Because
+it might be annoying to provide the same user name and password again
+and again, Emacs offers to keep this information persistent via the
+@file{auth-source} library.
 
-  For more information on the early init file, @pxref{Init File,,,
-elisp, The Emacs Lisp Reference Manual}.
+@cindex @file{~/.authinfo} file
+@cindex @file{~/.authinfo.gpg} file
+@cindex ~/.netrc file
+  By default, the authentication information is taken from the file
+@file{~/.authinfo} or @file{~/.authinfo.gpg} or @file{~/.netrc}.
+These files have a syntax similar to netrc files as known from the
+@command{ftp} program, like this:
+
+@example
+machine @var{mymachine} login @var{myloginname} password @var{mypassword} port @var{myport}
+@end example
+
+  Similarly, the @file{auth-source} library supports multiple storage
+backend, currently either the classic netrc backend, JSON files, the
+Secret Service API, and pass, the standard unix password manager.
+
+@vindex auth-sources
+  All these alternatives can be customized via the user option
+@code{auth-sources}, see @ref{Help for users, Emacs auth-source,,
+auth, Emacs auth-source}.
+
+@vindex auth-source-save-behavior
+  When a password is entered interactively, which is not found via the
+configured backend, some of the backends offer to save it
+persistently.  This can be changed by customizing the user option
+@code{auth-source-save-behavior}.

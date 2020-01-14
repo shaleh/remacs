@@ -274,8 +274,9 @@ Put point and mark around this or next paragraph (@code{mark-paragraph}).
 @findex backward-paragraph
 @findex forward-paragraph
   @kbd{M-@{} (@code{backward-paragraph}) moves to the beginning of the
-current or previous paragraph (see below for the definition of a
-paragraph).  @kbd{M-@}} (@code{forward-paragraph}) moves to the end of
+current or previous paragraph, depending on where point is when the
+command is invoked (see below for the definition of a paragraph).
+@kbd{M-@}} (@code{forward-paragraph}) similarly moves to the end of
 the current or next paragraph.  If there is a blank line before the
 paragraph, @kbd{M-@{} moves to the blank line.
 
@@ -458,16 +459,10 @@ non-@code{nil}, and in programming-language strings if
 @code{nil} for @code{electric-quote-string} and @code{t} for the other
 variables.
 
-@vindex electric-quote-replace-double
-  You can also set the option @code{electric-quote-replace-double} to
-a non-@code{nil} value.  Then, typing @t{"} insert an appropriate
-curved double quote depending on context: @t{“} at the beginning of
-the buffer or after a line break, whitespace, opening parenthesis, or
-quote character, and @t{”} otherwise.
-
-  Electric Quote mode is disabled by default.  To toggle it, type
-@kbd{M-x electric-quote-mode}.  To toggle it in a single buffer, use
-@kbd{M-x electric-quote-local-mode}.  To suppress it for a single use,
+  Electric Quote mode is disabled by default.  To toggle it in a
+single buffer, use @kbd{M-x electric-quote-local-mode}.
+To toggle it globally, type
+@kbd{M-x electric-quote-mode}.  To suppress it for a single use,
 type @kbd{C-q `} or @kbd{C-q '} instead of @kbd{`} or @kbd{'}.  To
 insert a curved quote even when Electric Quote is disabled or
 inactive, you can type @kbd{C-x 8 [} for @t{‘}, @kbd{C-x 8 ]} for
@@ -636,11 +631,8 @@ line.  If a function returns a non-@code{nil} value, Emacs will not
 break the line there.  Functions you can use there include:
 @code{fill-single-word-nobreak-p} (don't break after the first word of
 a sentence or before the last); @code{fill-single-char-nobreak-p}
-(don't break after a one-letter word preceded by a whitespace
-character); @code{fill-french-nobreak-p} (don't break after @samp{(}
-or before @samp{)}, @samp{:} or @samp{?}); and
-@code{fill-polish-nobreak-p} (don't break after a one letter word,
-even if preceded by a non-whitespace character).
+(don't break after a one-letter word); and @code{fill-french-nobreak-p}
+(don't break after @samp{(} or before @samp{)}, @samp{:} or @samp{?}).
 
 @node Fill Prefix
 @subsection The Fill Prefix
@@ -1507,15 +1499,14 @@ This is an example.
 @findex doctex-mode
 @findex bibtex-mode
 
-  Emacs provides special major modes for editing files written in
-@TeX{} and its related formats.  @TeX{} is a powerful text formatter
-written by Donald Knuth; like GNU Emacs, it is free software.
-@LaTeX{} is a simplified input format for @TeX{}, implemented using
-@TeX{} macros.  Doc@TeX{} is a special file format in which the
-@LaTeX{} sources are written, combining sources with documentation.
-Sli@TeX{} is an obsolete special form of @LaTeX{}.@footnote{It has
-been replaced by the @samp{slides} document class, which comes with
-@LaTeX{}.}
+  @TeX{} is a powerful text formatter written by Donald Knuth; like
+GNU Emacs, it is free software.  The @TeX{} format has several
+variants, including @LaTeX{}, a simplified input format for @TeX{};
+Doc@TeX{}, a special file format in which the @LaTeX{} sources are
+written, combining sources with documentation; and Sli@TeX{}, an
+obsolete special form of @LaTeX{}@footnote{
+It has been replaced by the @samp{slides} document class, which comes
+with @LaTeX{}.}.
 
 @vindex tex-default-mode
   Emacs provides a @TeX{} major mode for each of these variants: Plain
@@ -1626,7 +1617,9 @@ to keep braces balanced at all times, rather than inserting them
 singly.  Use @kbd{C-c @{} (@code{tex-insert-braces}) to insert a pair of
 braces.  It leaves point between the two braces so you can insert the
 text that belongs inside.  Afterward, use the command @kbd{C-c @}}
-(@code{up-list}) to move forward past the close brace.
+(@code{up-list}) to move forward past the close brace.  You can also
+invoke @kbd{C-c @{} after marking some text: then the command encloses
+the marked text in braces.
 
 @findex tex-validate-region
 @findex tex-terminate-paragraph

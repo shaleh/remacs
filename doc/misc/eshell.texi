@@ -418,7 +418,7 @@ Lisp functions, based on successful completion).
 
 @end table
 
-@ref{Aliases} for the built-in variables @samp{$*}, @samp{$1},
+@xref{Aliases}, for the built-in variables @samp{$*}, @samp{$1},
 @samp{$2}, @dots{}, in alias definitions.
 
 @node Variables

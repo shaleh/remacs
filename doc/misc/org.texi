@@ -4,8 +4,8 @@
 @settitle The Org Manual
 @include docstyle.texi
 
-@set VERSION 9.1.4
-@set DATE 2017-09-17
+@set VERSION 9.1.9
+@set DATE 2018-03-22
 
 @c Version and Contact Info
 @set MAINTAINERSITE @uref{https://orgmode.org,maintainers web page}
@@ -891,8 +891,10 @@ org}.
 been visited, i.e., where no Org built-in function have been loaded.
 Otherwise autoload Org functions will mess up the installation.
 
-If you want to use Org's package repository,
-check out the @uref{http://orgmode.org/elpa.html, Org ELPA page}.
+Then, to make sure your Org configuration is taken into account, initialize
+the package system with @code{(package-initialize)} in your Emacs init file
+before setting any Org option.  If you want to use Org's package repository,
+check out the @uref{https://orgmode.org/elpa.html, Org ELPA page}.
 
 @subsubheading Downloading Org as an archive
 
@@ -4410,7 +4412,7 @@ Then each time you turn an entry from a TODO (not-done) state into any of the
 DONE states, a line @samp{CLOSED: [timestamp]} will be inserted just after
 the headline.  If you turn the entry back into a TODO item through further
 state cycling, that line will be removed again.  If you turn the entry back
-to a non-TODO state (by pressing @key{C-c C-t @key{SPC}} for example), that line
+to a non-TODO state (by pressing @kbd{C-c C-t @key{SPC}} for example), that line
 will also be removed, unless you set @code{org-closed-keep-when-no-todo} to
 non-@code{nil}.  If you want to record a note along with the timestamp,
 use@footnote{The corresponding in-buffer setting is: @code{#+STARTUP:
@@ -8013,7 +8015,7 @@ Remove current file from the list of agenda files.
 @orgcmd{C-',org-cycle-agenda-files}
 @itemx C-,
 Cycle through agenda file list, visiting one file after the other.
-@item M-x org-iswitchb @key{RET}
+@item M-x org-switchb @key{RET}
 Command to use an @code{iswitchb}-like interface to switch to and between Org
 buffers.
 @end table
@@ -10606,7 +10608,7 @@ In-buffer settings may appear anywhere in the file, either directly or
 indirectly through a file included using @samp{#+SETUPFILE: filename or URL}
 syntax.  Option keyword sets tailored to a particular back-end can be
 inserted from the export dispatcher (@pxref{The export dispatcher}) using the
-@code{Insert template} command by pressing @key{#}.  To insert keywords
+@code{Insert template} command by pressing @kbd{#}.  To insert keywords
 individually, a good way to make sure the keyword is correct is to type
 @code{#+} and then to use @kbd{M-@key{TAB}}@footnote{Many desktops intercept
 @kbd{M-@key{TAB}} to switch windows.  Use @kbd{C-M-i} or @kbd{@key{ESC}
@@ -12982,7 +12984,7 @@ of these examples works:
 @subsubheading Embedding clickable images
 For clickable images, provide a link whose description is another link to an
 image file.  For example, to embed an image @file{org-mode-unicorn.png} which
-when clicked jumps to @uref{http://Orgmode.org} website, do the following
+when clicked jumps to @uref{https://orgmode.org} website, do the following
 
 @example
 [[https://orgmode.org][./org-mode-unicorn.png]]
@@ -15501,7 +15503,7 @@ For more examples of header arguments for @code{#+CALL:} lines,
 The ``Library of Babel'' is a collection of code blocks.  Like a function
 library, these code blocks can be called from other Org files.  A collection
 of useful code blocks is available on
-@uref{http://orgmode.org/worg/library-of-babel.html,Worg}.  For remote code
+@uref{https://orgmode.org/worg/library-of-babel.html,Worg}.  For remote code
 block evaluation syntax, @pxref{Evaluating code blocks}.
 
 @kindex C-c C-v i
@@ -18166,7 +18168,7 @@ Suggested Org crypt settings in Emacs init file:
 @lisp
 (require 'org-crypt)
 (org-crypt-use-before-save-magic)
-(setq org-tags-exclude-from-inheritance '("crypt"))
+(setq org-tags-exclude-from-inheritance (quote ("crypt")))
 
 (setq org-crypt-key nil)
   ;; GPG key to use for encryption

@@ -858,7 +858,7 @@ it is a function of two arguments to use instead of the default @code{equal}.
 @end group
 @group
 (seq-uniq '(1 2 2.0 1.0) #'=)
-@result{} [1 2]
+@result{} (1 2)
 @end group
 @end example
 @end defun
@@ -1308,9 +1308,9 @@ not evaluate or even examine the elements of the vector.
 @example
 @group
 (setq avector [1 two '(three) "four" [five]])
-     @result{} [1 two '(three) "four" [five]]
+     @result{} [1 two (quote (three)) "four" [five]]
 (eval avector)
-     @result{} [1 two '(three) "four" [five]]
+     @result{} [1 two (quote (three)) "four" [five]]
 (eq avector (eval avector))
      @result{} t
 @end group
@@ -1400,9 +1400,9 @@ list with the same elements:
 @example
 @group
 (setq avector [1 two (quote (three)) "four" [five]])
-     @result{} [1 two '(three) "four" [five]]
+     @result{} [1 two (quote (three)) "four" [five]]
 (append avector nil)
-     @result{} (1 two '(three) "four" [five])
+     @result{} (1 two (quote (three)) "four" [five])
 @end group
 @end example
 

@@ -743,10 +743,10 @@ C-b}.  To customize this buffer list, use the @code{bs} Custom group
 @kindex C-Down-mouse-1
   MSB global minor mode (``MSB'' stands for ``mouse select buffer'')
 provides a different and customizable mouse buffer menu which you may
-prefer.  It replaces the bindings of @code{mouse-buffer-menu},
-normally on @kbd{C-Down-mouse-1} and @kbd{C-@key{F10}}, and the menu
-bar buffer menu.  You can customize the menu in the @code{msb} Custom
-group.
+prefer.  It replaces the @code{mouse-buffer-menu} commands, normally
+bound to @kbd{C-Down-mouse-1} and @kbd{C-@key{F10}}, with its own
+commands, and also modifies the menu-bar buffer menu.  You can
+customize the menu in the @code{msb} Custom group.
 
 @findex ibuffer
    IBuffer is a major mode for viewing a list of buffers and operating

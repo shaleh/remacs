@@ -53,9 +53,8 @@ but many machines provide a wider range.  Many examples in this
 chapter assume the minimum integer width of 30 bits.
 @cindex overflow
 
-  The Lisp reader reads an integer as a nonempty sequence
-of decimal digits with optional initial sign and optional
-final period.  A decimal integer that is out of the
+  The Lisp reader reads an integer as a sequence of digits with optional
+initial sign and optional final period.  An integer that is out of the
 Emacs range is treated as a floating-point number.
 
 @example
@@ -1105,24 +1104,6 @@ bit is one in the result if, and only if, the @var{n}th bit is zero in
 ;;  5  =  @r{0000...000101} (30 bits total)
 ;; @r{becomes}
 ;; -6  =  @r{1111...111010} (30 bits total)
-@end example
-@end defun
-
-@cindex popcount
-@cindex Hamming weight
-@cindex counting set bits
-@defun logcount integer
-This function returns the @dfn{Hamming weight} of @var{integer}: the
-number of ones in the binary representation of @var{integer}.
-If @var{integer} is negative, it returns the number of zero bits in
-its two's complement binary representation.  The result is always
-nonnegative.
-
-@example
-(logcount 43)     ; 43 = #b101011
-     @result{} 4
-(logcount -43)    ; -43 = #b111...1010101
-     @result{} 3
 @end example
 @end defun
 
