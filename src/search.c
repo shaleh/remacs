@@ -22,6 +22,7 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 #include <config.h>
 
 #include "lisp.h"
+#include "exposed.h"
 #include "character.h"
 #include "buffer.h"
 #include "syntax.h"
@@ -270,7 +271,7 @@ compile_pattern (Lisp_Object pattern, struct re_registers *regp,
 }
 
 
-static Lisp_Object
+Lisp_Object
 looking_at_1 (Lisp_Object string, bool posix)
 {
   Lisp_Object val;
@@ -369,7 +370,7 @@ data if you want to preserve them.  */)
   return looking_at_1 (regexp, 1);
 }
 
-static Lisp_Object
+Lisp_Object
 string_match_1 (Lisp_Object regexp, Lisp_Object string, Lisp_Object start,
 		bool posix)
 {
@@ -1015,7 +1016,7 @@ find_before_next_newline (ptrdiff_t from, ptrdiff_t to,
 
 /* Subroutines of Lisp buffer search functions. */
 
-static Lisp_Object
+Lisp_Object
 search_command (Lisp_Object string, Lisp_Object bound, Lisp_Object noerror,
 		Lisp_Object count, int direction, int RE, bool posix)
 {
@@ -2772,7 +2773,7 @@ since only regular expressions have distinguished subexpressions.  */)
   return Qnil;
 }
 
-static Lisp_Object
+Lisp_Object
 match_limit (Lisp_Object num, bool beginningp)
 {
   EMACS_INT n;

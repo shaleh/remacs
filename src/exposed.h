@@ -38,6 +38,10 @@ enum case_action {CASE_UP, CASE_DOWN, CASE_CAPITALIZE, CASE_CAPITALIZE_UP};
 Lisp_Object casify_object (enum case_action flag, Lisp_Object obj);
 ptrdiff_t casify_region (enum case_action flag, Lisp_Object b, Lisp_Object e);
 
+// character.c
+
+ptrdiff_t char_width (int c, struct Lisp_Char_Table *dp);
+
 // charset.c
 
 /* Structure to hold mapping tables for a charset.  Used by temacs
@@ -138,6 +142,32 @@ ptrdiff_t position_indentation (ptrdiff_t pos_byte);
 void insert_from_string_1 (Lisp_Object string, ptrdiff_t pos, ptrdiff_t pos_byte,
                            ptrdiff_t nchars, ptrdiff_t nbytes,
                            bool inherit, bool before_markers);
+
+// lread.c
+
+Lisp_Object intern_sym (Lisp_Object sym, Lisp_Object obarray, Lisp_Object index);
+
+// process.c
+
+void process_send_signal (Lisp_Object process, int signo, Lisp_Object current_group, bool nomsg);
+void send_process (Lisp_Object proc, const char *buf, ptrdiff_t len, Lisp_Object object);
+void update_status (struct Lisp_Process *p);
+
+// profiler.c
+
+extern Lisp_Object memory_log;
+extern bool profiler_memory_running;
+
+Lisp_Object make_log (EMACS_INT heap_size, EMACS_INT max_stack_depth);
+
+// search.c
+
+Lisp_Object looking_at_1 (Lisp_Object string, bool posix);
+Lisp_Object match_limit (Lisp_Object num, bool beginningp);
+Lisp_Object search_command (Lisp_Object string, Lisp_Object bound, Lisp_Object noerror,
+                            Lisp_Object count, int direction, int RE, bool posix);
+Lisp_Object string_match_1 (Lisp_Object regexp, Lisp_Object string, Lisp_Object start, bool posix);
+
 
 // syntax.c
 

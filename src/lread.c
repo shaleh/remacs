@@ -31,6 +31,7 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 #include <math.h>
 #include <stat-time.h>
 #include "lisp.h"
+#include "exposed.h"
 #include "dispextern.h"
 #include "intervals.h"
 #include "character.h"
@@ -4033,7 +4034,7 @@ check_obarray (Lisp_Object obarray)
 
 /* Intern symbol SYM in OBARRAY using bucket INDEX.  */
 
-static Lisp_Object
+Lisp_Object
 intern_sym (Lisp_Object sym, Lisp_Object obarray, Lisp_Object index)
 {
   Lisp_Object *ptr;

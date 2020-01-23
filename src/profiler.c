@@ -19,6 +19,7 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 
 #include <config.h>
 #include "lisp.h"
+#include "exposed.h"
 #include "syssignal.h"
 #include "systime.h"
 
@@ -37,7 +38,7 @@ typedef struct Lisp_Hash_Table log_t;
 
 static struct hash_table_test hashtest_profiler;
 
-static Lisp_Object
+Lisp_Object
 make_log (EMACS_INT heap_size, EMACS_INT max_stack_depth)
 {
   /* We use a standard Elisp hash-table object, but we use it in
@@ -435,7 +436,7 @@ Before returning, a new log is allocated for future samples.  */)
 /* True if memory profiler is running.  */
 bool profiler_memory_running;
 
-static Lisp_Object memory_log;
+Lisp_Object memory_log;
 
 DEFUN ("profiler-memory-start", Fprofiler_memory_start, Sprofiler_memory_start,
        0, 0, 0,

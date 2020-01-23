@@ -29,6 +29,7 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 #include <intprops.h>
 
 #include "lisp.h"
+#include "exposed.h"
 #include "puresize.h"
 #include "character.h"
 #include "buffer.h"

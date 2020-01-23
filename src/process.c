@@ -31,6 +31,7 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 #include <fcntl.h>
 
 #include "lisp.h"
+#include "exposed.h"
 
 /* Only MS-DOS does not define `subprocesses'.  */
 #ifdef subprocesses
@@ -657,7 +658,7 @@ clear_waiting_thread_info (void)
 
 static Lisp_Object status_convert (int);
 
-static void
+void
 update_status (struct Lisp_Process *p)
 {
   eassert (p->raw_status_new);
@@ -6247,7 +6248,7 @@ write_queue_pop (struct Lisp_Process *p, Lisp_Object *obj,
 
    This function can evaluate Lisp code and can garbage collect.  */
 
-static void
+void
 send_process (Lisp_Object proc, const char *buf, ptrdiff_t len,
 	      Lisp_Object object)
 {
@@ -6592,7 +6593,7 @@ process group.  */)
    down the pty.  This allows us to signal inferiors who have changed
    their uid, for which kill would return an EPERM error.  */
 
-static void
+void
 process_send_signal (Lisp_Object process, int signo, Lisp_Object current_group,
 		     bool nomsg)
 {

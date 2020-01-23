@@ -276,7 +276,7 @@ If the multibyte character does not represent a byte, return -1.  */)
 
 /* Return width (columns) of C considering the buffer display table DP. */
 
-static ptrdiff_t
+ptrdiff_t
 char_width (int c, struct Lisp_Char_Table *dp)
 {
   ptrdiff_t width = CHARACTER_WIDTH (c);
