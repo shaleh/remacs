@@ -80,6 +80,10 @@ extern struct Temp_Charset_Work *temp_charset_work;
 
 Lisp_Object uniprop_table_uncompress (Lisp_Object table, int idx);
 
+// data.c
+
+void swap_in_symval_forwarding (struct Lisp_Symbol *, struct Lisp_Buffer_Local_Value *);
+
 // dispnew.c
 
 bool update_frame (struct frame *f, bool force_p, bool inhibit_hairy_id_p);
@@ -135,9 +139,64 @@ void insert_from_string_1 (Lisp_Object string, ptrdiff_t pos, ptrdiff_t pos_byte
                            ptrdiff_t nchars, ptrdiff_t nbytes,
                            bool inherit, bool before_markers);
 
+// syntax.c
+
+Lisp_Object skip_chars (bool forwardp, Lisp_Object string, Lisp_Object lim, bool handle_iso_classes);
+Lisp_Object skip_syntaxes (bool forwardp, Lisp_Object string, Lisp_Object lim);
+
+
 // window.c
 
+struct save_window_data
+  {
+    union vectorlike_header header;
+    Lisp_Object selected_frame;
+    Lisp_Object current_window;
+    Lisp_Object f_current_buffer;
+    Lisp_Object minibuf_scroll_window;
+    Lisp_Object minibuf_selected_window;
+    Lisp_Object root_window;
+    Lisp_Object focus_frame;
+    /* A vector, each of whose elements is a struct saved_window
+       for one window.  */
+    Lisp_Object saved_windows;
+
+    /* All fields above are traced by the GC.
+       From `frame-cols' down, the fields are ignored by the GC.  */
+    /* We should be able to do without the following two.  */
+    int frame_cols, frame_lines;
+    /* These two should get eventually replaced by their pixel
+       counterparts.  */
+    int frame_menu_bar_lines, frame_tool_bar_lines;
+    int frame_text_width, frame_text_height;
+    /* These are currently unused.  We need them as soon as we convert
+       to pixels.  */
+    int frame_menu_bar_height, frame_tool_bar_height;
+  };
+
+/* This is saved as a Lisp_Vector.  */
+struct saved_window
+{
+  union vectorlike_header header;
+
+  Lisp_Object window, buffer, start, pointm, old_pointm;
+  Lisp_Object pixel_left, pixel_top, pixel_height, pixel_width;
+  Lisp_Object pixel_height_before_size_change, pixel_width_before_size_change;
+  Lisp_Object left_col, top_line, total_cols, total_lines;
+  Lisp_Object normal_cols, normal_lines;
+  Lisp_Object hscroll, min_hscroll, hscroll_whole, suspend_auto_hscroll;
+  Lisp_Object parent, prev;
+  Lisp_Object start_at_line_beg;
+  Lisp_Object display_table;
+  Lisp_Object left_margin_cols, right_margin_cols;
+  Lisp_Object left_fringe_width, right_fringe_width, fringes_outside_margins;
+  Lisp_Object scroll_bar_width, vertical_scroll_bar_type, dedicated;
+  Lisp_Object scroll_bar_height, horizontal_scroll_bar_type;
+  Lisp_Object combination_limit, window_parameters;
+};
+
 void apply_window_adjustment (struct window *w);
+void run_window_configuration_change_hook (struct frame *f);
 Lisp_Object select_window (Lisp_Object window, Lisp_Object norecord, bool inhibit_point_swap);
 struct window * set_window_fringes (struct window *w, Lisp_Object left_width,
                                     Lisp_Object right_width, Lisp_Object outside_margins);
@@ -147,6 +206,7 @@ void window_scroll (Lisp_Object window, EMACS_INT n, bool whole, bool noerror);
 // xfaces.c
 
 bool face_color_supported_p (struct frame *f, const char *color_name, bool background_p);
+void set_face_change(bool value);
 
 // xml.c
 

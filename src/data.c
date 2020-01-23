@@ -37,9 +37,6 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 #include "frame.h"
 #include "keymap.h"
 
-static void swap_in_symval_forwarding (struct Lisp_Symbol *,
-				       struct Lisp_Buffer_Local_Value *);
-
 static bool
 BOOLFWDP (union Lisp_Fwd *a)
 {
@@ -1198,7 +1195,7 @@ swap_in_global_binding (struct Lisp_Symbol *symbol)
    Return the value forwarded one step past the buffer-local stage.
    This could be another forwarding pointer.  */
 
-static void
+void
 swap_in_symval_forwarding (struct Lisp_Symbol *symbol, struct Lisp_Buffer_Local_Value *blv)
 {
   register Lisp_Object tem1;

@@ -178,8 +178,6 @@ static ptrdiff_t find_start_begv;
 static EMACS_INT find_start_modiff;
 
 
-static Lisp_Object skip_chars (bool, Lisp_Object, Lisp_Object, bool);
-static Lisp_Object skip_syntaxes (bool, Lisp_Object, Lisp_Object);
 static Lisp_Object scan_lists (EMACS_INT, EMACS_INT, EMACS_INT, bool);
 static void scan_sexps_forward (struct lisp_parse_state *,
                                 ptrdiff_t, ptrdiff_t, ptrdiff_t, EMACS_INT,
@@ -1627,7 +1625,7 @@ of this is the distance traveled.  */)
   return skip_syntaxes (0, syntax, lim);
 }
 
-static Lisp_Object
+Lisp_Object
 skip_chars (bool forwardp, Lisp_Object string, Lisp_Object lim,
 	    bool handle_iso_classes)
 {
@@ -2078,7 +2076,7 @@ skip_chars (bool forwardp, Lisp_Object string, Lisp_Object lim,
 }
 
 
-static Lisp_Object
+Lisp_Object
 skip_syntaxes (bool forwardp, Lisp_Object string, Lisp_Object lim)
 {
   int c;

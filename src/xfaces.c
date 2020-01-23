@@ -365,6 +365,11 @@ static struct face *realize_non_ascii_face (struct frame *, Lisp_Object,
 			      Utilities
  ***********************************************************************/
 
+void set_face_change(bool value)
+{
+    face_change = value;
+}
+
 #ifdef HAVE_X_WINDOWS
 
 #ifdef DEBUG_X_COLORS

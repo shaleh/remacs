@@ -3231,6 +3231,18 @@ set_hash_value_slot (struct Lisp_Hash_Table *h, ptrdiff_t idx, Lisp_Object val)
 /* Use these functions to set Lisp_Object
    or pointer slots of struct Lisp_Symbol.  */
 
+INLINE bool
+get_symbol_declared_special(const struct Lisp_Symbol *sym)
+{
+  return sym->u.s.declared_special;
+}
+
+INLINE void
+set_symbol_declared_special(struct Lisp_Symbol *sym, bool value)
+{
+  sym->u.s.declared_special = value;
+}
+
 INLINE void
 set_symbol_function (Lisp_Object sym, Lisp_Object function)
 {
@@ -3241,6 +3253,18 @@ INLINE void
 set_symbol_plist (Lisp_Object sym, Lisp_Object plist)
 {
   XSYMBOL (sym)->u.s.plist = plist;
+}
+
+INLINE enum symbol_redirect
+get_symbol_redirect(const struct Lisp_Symbol *sym)
+{
+  return sym->u.s.redirect;
+}
+
+INLINE void
+set_symbol_redirect(struct Lisp_Symbol *sym, enum symbol_redirect v)
+{
+  sym->u.s.redirect = v;
 }
 
 INLINE void
