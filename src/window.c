@@ -57,7 +57,6 @@ static bool foreach_window_1 (struct window *,
 static bool window_resize_check (struct window *, bool);
 static void window_resize_apply (struct window *, bool);
 static void select_window_1 (Lisp_Object, bool);
-static void run_window_configuration_change_hook (struct frame *);
 
 static struct window *set_window_fringes (struct window *, Lisp_Object,
 					  Lisp_Object, Lisp_Object);
@@ -66,7 +65,6 @@ static struct window *set_window_margins (struct window *, Lisp_Object,
 static struct window *set_window_scroll_bars (struct window *, Lisp_Object,
 					      Lisp_Object, Lisp_Object,
 					      Lisp_Object);
-static void apply_window_adjustment (struct window *);
 
 /* This is the window in which the terminal's cursor should
    be left when nothing is being done with it.  This must
@@ -472,7 +470,7 @@ EMACS_INT window_select_count;
    window's pointm slot.  This is needed by Fset_window_configuration to
    avoid that the display routine is called with selected_window set to
    Qnil causing a subsequent crash.  */
-static Lisp_Object
+Lisp_Object
 select_window (Lisp_Object window, Lisp_Object norecord,
 	       bool inhibit_point_swap)
 {
@@ -2717,7 +2715,7 @@ reverse order.  */)
 /* Return a list of windows in cyclic ordering.  Arguments are like
    for `next-window'.  */
 
-static Lisp_Object
+Lisp_Object
 window_list_1 (Lisp_Object window, Lisp_Object minibuf, Lisp_Object all_frames)
 {
   Lisp_Object tail, list, rest;
@@ -3324,7 +3322,7 @@ select_frame_norecord (Lisp_Object frame)
     Fselect_frame (frame, Qt);
 }
 
-static void
+void
 run_window_configuration_change_hook (struct frame *f)
 {
   ptrdiff_t count = SPECPDL_INDEX ();
@@ -4970,7 +4968,7 @@ window_internal_height (struct window *w)
    means don't signal an error if we try to move over BEGV or ZV,
    respectively.  */
 
-static void
+void
 window_scroll (Lisp_Object window, EMACS_INT n, bool whole, bool noerror)
 {
   ptrdiff_t count = SPECPDL_INDEX ();
@@ -7018,7 +7016,7 @@ saved by this function.  */)
 
 /* Called after W's margins, fringes or scroll bars was adjusted.  */
 
-static void
+void
 apply_window_adjustment (struct window *w)
 {
   eassert (w);
@@ -7115,7 +7113,7 @@ as nil.  */)
 			    Fringes
  ***********************************************************************/
 
-static struct window *
+struct window *
 set_window_fringes (struct window *w, Lisp_Object left_width,
 		    Lisp_Object right_width, Lisp_Object outside_margins)
 {

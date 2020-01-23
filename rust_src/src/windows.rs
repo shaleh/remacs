@@ -26,8 +26,8 @@ use crate::{
         run_window_configuration_change_hook as run_window_conf_change_hook,
         save_excursion_restore, save_excursion_save, select_window,
         selected_window as current_window, set_buffer_internal, set_window_fringes,
-        update_mode_lines, window_list_1, window_menu_bar_p, window_scroll, window_tool_bar_p,
-        windows_or_buffers_changed, wset_redisplay,
+        update_mode_lines, window_list_1, window_scroll, windows_or_buffers_changed,
+        wset_redisplay,
     },
     remacs_sys::{face_id, glyph_matrix, glyph_row, pvec_type, vertical_scroll_bar_type},
     remacs_sys::{EmacsDouble, EmacsInt, Lisp_Type, Lisp_Window},
@@ -149,11 +149,21 @@ impl LispWindowRef {
     }
 
     pub fn is_menu_bar(mut self) -> bool {
-        unsafe { window_menu_bar_p(self.as_mut()) }
+        false
     }
 
-    pub fn is_tool_bar(mut self) -> bool {
-        unsafe { window_tool_bar_p(self.as_mut()) }
+    #[cfg(all(feature = "window-system", target_os = "windows"))]
+    pub fn is_tool_bar(self) -> bool {
+        let frame: LispFrameRef = self.frame.into();
+        match frame.tool_bar_window.into() {
+            None => false,
+            Some(w) => w == self,
+        }
+    }
+
+    #[cfg(not(all(feature = "window-system", target_os = "windows")))]
+    pub fn is_tool_bar(self) -> bool {
+        false
     }
 
     pub fn total_width(self, round: LispObject) -> i32 {

@@ -135,6 +135,15 @@ void insert_from_string_1 (Lisp_Object string, ptrdiff_t pos, ptrdiff_t pos_byte
                            ptrdiff_t nchars, ptrdiff_t nbytes,
                            bool inherit, bool before_markers);
 
+// window.c
+
+void apply_window_adjustment (struct window *w);
+Lisp_Object select_window (Lisp_Object window, Lisp_Object norecord, bool inhibit_point_swap);
+struct window * set_window_fringes (struct window *w, Lisp_Object left_width,
+                                    Lisp_Object right_width, Lisp_Object outside_margins);
+Lisp_Object window_list_1 (Lisp_Object window, Lisp_Object minibuf, Lisp_Object all_frames);
+void window_scroll (Lisp_Object window, EMACS_INT n, bool whole, bool noerror);
+
 // xfaces.c
 
 bool face_color_supported_p (struct frame *f, const char *color_name, bool background_p);
