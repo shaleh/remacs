@@ -284,7 +284,7 @@ usage: (call-process PROGRAM &optional INFILE DESTINATION DISPLAY &rest ARGS)  *
 
    At entry, the specpdl stack top entry must be close_file_unwind (FILEFD).  */
 
-static Lisp_Object
+Lisp_Object
 call_process (ptrdiff_t nargs, Lisp_Object *args, int filefd,
 	      ptrdiff_t tempfile_index)
 {
@@ -921,7 +921,7 @@ call_process (ptrdiff_t nargs, Lisp_Object *args, int filefd,
    Unwind-protect the file, so that the file descriptor will be closed
    and the file removed when the caller unwinds the specpdl stack.  */
 
-static int
+int
 create_temp_file (ptrdiff_t nargs, Lisp_Object *args,
 		  Lisp_Object *filename_string_ptr)
 {

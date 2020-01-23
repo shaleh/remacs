@@ -31,6 +31,7 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 #include <verify.h>
 
 #include "lisp.h"
+#include "exposed.h"
 #include "intervals.h"
 #include "process.h"
 #include "systime.h"
@@ -99,7 +100,7 @@ struct buffer buffer_local_symbols;
 
 /* Flags indicating which built-in buffer-local variables
    are permanent locals.  */
-static char buffer_permanent_local_flags[MAX_PER_BUFFER_VARS];
+char buffer_permanent_local_flags[MAX_PER_BUFFER_VARS];
 
 /* Number of per-buffer variables used.  */
 
@@ -116,11 +117,13 @@ static void reset_buffer_local_variables (struct buffer *, bool);
 Lisp_Object Vbuffer_alist;
 
 static Lisp_Object QSFundamental;	/* A string "Fundamental".  */
+Lisp_Object buffer_fundamental_string(void)
+{
+  return QSFundamental;
+}
 
-static void alloc_buffer_text (struct buffer *, ptrdiff_t);
 static void free_buffer_text (struct buffer *b);
 static struct Lisp_Overlay * copy_overlays (struct buffer *, struct Lisp_Overlay *);
-static void modify_overlay (struct buffer *, ptrdiff_t, ptrdiff_t);
 static Lisp_Object buffer_lisp_local_variables (struct buffer *, bool);
 
 static void
@@ -3913,7 +3916,7 @@ for the rear of the overlay advance when text is inserted there
 
 /* Mark a section of BUF as needing redisplay because of overlays changes.  */
 
-static void
+void
 modify_overlay (struct buffer *buf, ptrdiff_t start, ptrdiff_t end)
 {
   if (start > end)
@@ -4981,7 +4984,7 @@ mmap_realloc (void **var, size_t nbytes)
 
 /* Allocate NBYTES bytes for buffer B's text buffer.  */
 
-static void
+void
 alloc_buffer_text (struct buffer *b, ptrdiff_t nbytes)
 {
   void *p;

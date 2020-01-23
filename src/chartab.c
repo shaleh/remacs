@@ -21,6 +21,7 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 #include <config.h>
 
 #include "lisp.h"
+#include "exposed.h"
 #include "character.h"
 #include "charset.h"
 
@@ -60,7 +61,6 @@ static const int chartab_bits[4] =
 typedef Lisp_Object (*uniprop_decoder_t) (Lisp_Object, Lisp_Object);
 typedef Lisp_Object (*uniprop_encoder_t) (Lisp_Object, Lisp_Object);
 
-static Lisp_Object uniprop_table_uncompress (Lisp_Object, int);
 static uniprop_decoder_t uniprop_get_decoder (Lisp_Object);
 
 /* 1 iff TABLE is a uniprop table.  */
@@ -1106,7 +1106,7 @@ map_char_table_for_charset (void (*c_function) (Lisp_Object, Lisp_Object),
 
 /* Uncompress the IDXth element of sub-char-table TABLE.  */
 
-static Lisp_Object
+Lisp_Object
 uniprop_table_uncompress (Lisp_Object table, int idx)
 {
   Lisp_Object val = XSUB_CHAR_TABLE (table)->contents[idx];

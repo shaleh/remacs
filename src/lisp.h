@@ -1847,6 +1847,7 @@ struct Lisp_Subr
     const char *symbol_name;
     const char *intspec;
     EMACS_INT doc;
+    int lang;
   };
 
 INLINE bool
@@ -2963,14 +2964,14 @@ CHECK_NUMBER_CDR (Lisp_Object x)
    { { (PVEC_SUBR << PSEUDOVECTOR_AREA_BITS)				\
        | (sizeof (struct Lisp_Subr) / sizeof (EMACS_INT)) },		\
       { (Lisp_Object (__cdecl *)(void))fnname },                        \
-       minargs, maxargs, lname, intspec, 0};				\
+       minargs, maxargs, lname, intspec, 0, 0 /* Lisp_Subr_Lang_C */};	\
    Lisp_Object fnname
 #else  /* not _MSC_VER */
 #define DEFUN(lname, fnname, sname, minargs, maxargs, intspec, doc)	\
    static struct Lisp_Subr sname =				\
      { { PVEC_SUBR << PSEUDOVECTOR_AREA_BITS },				\
        { .a ## maxargs = fnname },					\
-       minargs, maxargs, lname, intspec, 0};				\
+       minargs, maxargs, lname, intspec, 0, 0 /* Lisp_Subr_Lang_C */};	\
    Lisp_Object fnname
 #endif
 

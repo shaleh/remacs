@@ -34,6 +34,7 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 #endif
 
 #include "lisp.h"
+#include "exposed.h"
 
 /* systime.h includes <sys/time.h> which, on some systems, is required
    for <sys/resource.h>; thus systime.h must be included before
@@ -74,7 +75,6 @@ static Lisp_Object format_time_string (char const *, ptrdiff_t, struct timespec,
 static long int tm_gmtoff (struct tm *);
 static int tm_diff (struct tm *, struct tm *);
 static void update_buffer_properties (ptrdiff_t, ptrdiff_t);
-static Lisp_Object styled_format (ptrdiff_t, Lisp_Object *, bool);
 
 #ifndef HAVE_TM_GMTOFF
 # define HAVE_TM_GMTOFF false
@@ -4226,7 +4226,7 @@ usage: (format-message STRING &rest OBJECTS)  */)
 
 /* Implement ‘format-message’ if MESSAGE is true, ‘format’ otherwise.  */
 
-static Lisp_Object
+Lisp_Object
 styled_format (ptrdiff_t nargs, Lisp_Object *args, bool message)
 {
   ptrdiff_t n;		/* The number of the next arg to substitute.  */

@@ -140,7 +140,7 @@ static bool e_write (int, Lisp_Object, ptrdiff_t, ptrdiff_t,
 
 /* Return true if FILENAME exists.  */
 
-static bool
+bool
 check_existing (const char *filename)
 {
   return faccessat (AT_FDCWD, filename, F_OK, AT_EACCESS) == 0;
@@ -148,7 +148,7 @@ check_existing (const char *filename)
 
 /* Return true if file FILENAME exists and can be executed.  */
 
-static bool
+bool
 check_executable (char *filename)
 {
   return faccessat (AT_FDCWD, filename, X_OK, AT_EACCESS) == 0;
@@ -1638,11 +1638,11 @@ See also the function `substitute-in-file-name'.")
 #endif
 
 /* If /~ or // appears, discard everything through first slash.  */
-static bool
+bool
 file_name_absolute_p (const char *filename)
 {
   return
-    (IS_DIRECTORY_SEP (*filename) || *filename == '~'
+    filename && (IS_DIRECTORY_SEP (*filename) || *filename == '~'
 #ifdef DOS_NT
      || (IS_DRIVE (*filename) && IS_DEVICE_SEP (filename[1])
 	 && IS_DIRECTORY_SEP (filename[2]))
@@ -2253,7 +2253,7 @@ internal_delete_file (Lisp_Object filename)
    NFS-mounted Windows volumes, might be case-insensitive.  Can we
    detect this?  */
 
-static bool
+bool
 file_name_case_insensitive_p (const char *filename)
 {
   /* Use pathconf with _PC_CASE_INSENSITIVE or _PC_CASE_SENSITIVE if

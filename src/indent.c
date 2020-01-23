@@ -869,7 +869,7 @@ following any initial whitespace.  */)
   return make_number (position_indentation (posbyte));
 }
 
-static ptrdiff_t
+ptrdiff_t
 position_indentation (ptrdiff_t pos_byte)
 {
   register ptrdiff_t column = 0;

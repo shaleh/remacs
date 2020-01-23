@@ -1574,7 +1574,7 @@ frame.  */)
    Otherwise consider any candidate and return nil if CANDIDATE is not
    acceptable.  */
 
-static Lisp_Object
+Lisp_Object
 candidate_frame (Lisp_Object candidate, Lisp_Object frame, Lisp_Object minibuf)
 {
   struct frame *c = XFRAME (candidate), *f = XFRAME (frame);
@@ -1736,7 +1736,7 @@ DEFUN ("last-nonminibuffer-frame", Flast_nonminibuf_frame,
  * If F is the terminal frame and we are using X, return true if at
  * least one X frame exists.
  */
-static bool
+bool
 other_frames (struct frame *f, bool invisible, bool force)
 {
   Lisp_Object frames, frame, frame1;
@@ -1786,7 +1786,7 @@ other_frames (struct frame *f, bool invisible, bool force)
    instead.  If the selected frame doesn't have one, get some other
    frame's minibuffer window.  SELECT non-zero means select the new
    minibuffer window.  */
-static void
+void
 check_minibuf_window (Lisp_Object frame, int select)
 {
   struct frame *f = decode_live_frame (frame);

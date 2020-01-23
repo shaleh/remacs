@@ -186,7 +186,7 @@ bool no_site_lisp;
 bool build_details;
 
 /* Name for the server started by the daemon.*/
-static char *daemon_name;
+char *daemon_name;
 
 /* 0 not a daemon, 1 new-style (foreground), 2 old-style (background).  */
 int daemon_type;
@@ -1008,6 +1008,7 @@ main (int argc, char **argv)
   w32_daemon_event = NULL;
 #endif
 
+  daemon_name = 0;
 
   int sockfd = -1;
 

@@ -86,7 +86,7 @@ libxml2_loaded_p (void)
 
 #endif	/* !WINDOWSNT */
 
-static bool
+bool
 init_libxml2_functions (void)
 {
 #ifdef WINDOWSNT
@@ -173,7 +173,7 @@ make_dom (xmlNode *node)
     return Qnil;
 }
 
-static Lisp_Object
+Lisp_Object
 parse_region (Lisp_Object start, Lisp_Object end, Lisp_Object base_url,
 	      Lisp_Object discard_comments, bool htmlp)
 {

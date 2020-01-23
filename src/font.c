@@ -2227,7 +2227,7 @@ font_compare (const void *d1, const void *d2)
    number of elements is 1.  The caller should avoid calling this in
    such a case.  */
 
-static Lisp_Object
+Lisp_Object
 font_sort_entities (Lisp_Object list, Lisp_Object prefer,
 		    struct frame *f, int best_only)
 {
@@ -3706,7 +3706,7 @@ font_filter_properties (Lisp_Object font,
    at index POS.  If C is negative, get C from the current buffer or
    STRING.  */
 
-static Lisp_Object
+Lisp_Object
 font_at (int c, ptrdiff_t pos, struct face *face, struct window *w,
 	 Lisp_Object string)
 {

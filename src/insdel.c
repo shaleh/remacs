@@ -23,6 +23,7 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 #include <intprops.h>
 
 #include "lisp.h"
+#include "exposed.h"
 #include "composite.h"
 #include "intervals.h"
 #include "character.h"
@@ -30,8 +31,6 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 #include "window.h"
 #include "region-cache.h"
 
-static void insert_from_string_1 (Lisp_Object, ptrdiff_t, ptrdiff_t, ptrdiff_t,
-				  ptrdiff_t, bool, bool);
 static void insert_from_buffer_1 (struct buffer *, ptrdiff_t, ptrdiff_t, bool);
 static void gap_left (ptrdiff_t, ptrdiff_t, bool);
 static void gap_right (ptrdiff_t, ptrdiff_t);
@@ -984,7 +983,7 @@ insert_from_string_before_markers (Lisp_Object string,
 
 /* Subroutine of the insertion functions above.  */
 
-static void
+void
 insert_from_string_1 (Lisp_Object string, ptrdiff_t pos, ptrdiff_t pos_byte,
 		      ptrdiff_t nchars, ptrdiff_t nbytes,
 		      bool inherit, bool before_markers)

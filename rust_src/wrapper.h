@@ -2,6 +2,7 @@
 #include "limits.h"
 
 #include "lisp.h"
+#include "exposed.h"
 
 #include "atimer.h"
 #include "blockinput.h"

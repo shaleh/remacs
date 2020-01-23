@@ -1022,7 +1022,7 @@ face_color_gray_p (struct frame *f, const char *color_name)
 /* Return true if color COLOR_NAME can be displayed on frame F.
    BACKGROUND_P means the color will be used as background color.  */
 
-static bool
+bool
 face_color_supported_p (struct frame *f, const char *color_name,
 			bool background_p)
 {

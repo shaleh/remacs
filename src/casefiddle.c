@@ -23,14 +23,13 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 #include <config.h>
 
 #include "lisp.h"
+#include "exposed.h"
 #include "character.h"
 #include "buffer.h"
 #include "commands.h"
 #include "syntax.h"
 #include "composite.h"
 #include "keymap.h"
-
-enum case_action {CASE_UP, CASE_DOWN, CASE_CAPITALIZE, CASE_CAPITALIZE_UP};
 
 /* State for casing individual characters.  */
 struct casing_context
@@ -313,7 +312,7 @@ do_casify_unibyte_string (struct casing_context *ctx, Lisp_Object obj)
   return obj;
 }
 
-static Lisp_Object
+Lisp_Object
 casify_object (enum case_action flag, Lisp_Object obj)
 {
   struct casing_context ctx;
@@ -478,7 +477,7 @@ do_casify_multibyte_region (struct casing_context *ctx,
 /* flag is CASE_UP, CASE_DOWN or CASE_CAPITALIZE or CASE_CAPITALIZE_UP.  b and
    e specify range of buffer to operate on.  Return character position of the
    end of the region after changes.  */
-static ptrdiff_t
+ptrdiff_t
 casify_region (enum case_action flag, Lisp_Object b, Lisp_Object e)
 {
   ptrdiff_t added;
