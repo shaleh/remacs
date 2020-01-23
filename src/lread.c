@@ -106,7 +106,7 @@ static Lisp_Object read_objects_completed;
 
 /* File and lookahead for get-file-char and get-emacs-mule-file-char
    to read from.  Used by Fload.  */
-static struct infile
+struct Infile
 {
   /* The input stream.  */
   FILE *stream;

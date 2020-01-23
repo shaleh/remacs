@@ -41,7 +41,7 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
    Some things in set last_known_column_point to -1
    to mark the memorized value as invalid.  */
 
-static ptrdiff_t last_known_column;
+ptrdiff_t last_known_column;
 
 /* Value of point when current_column was called.  */
 
@@ -49,7 +49,7 @@ ptrdiff_t last_known_column_point;
 
 /* Value of MODIFF when current_column was called.  */
 
-static EMACS_INT last_known_column_modified;
+EMACS_INT last_known_column_modified;
 
 static ptrdiff_t current_column_1 (void);
 static ptrdiff_t position_indentation (ptrdiff_t);
@@ -528,7 +528,7 @@ check_display_width (ptrdiff_t pos, ptrdiff_t col, ptrdiff_t *endpos)
    Return the resulting buffer position and column in ENDPOS and GOALCOL.
    PREVCOL gets set to the column of the previous position (it's always
    strictly smaller than the goal column).  */
-static void
+void
 scan_for_column (ptrdiff_t *endpos, EMACS_INT *goalcol, ptrdiff_t *prevcol)
 {
   int tab_width = SANE_TAB_WIDTH (current_buffer);

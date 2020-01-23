@@ -135,7 +135,11 @@ void hash_clear (struct Lisp_Hash_Table *h);
 
 // indent.c
 
+extern ptrdiff_t last_known_column;
+extern EMACS_INT last_known_column_modified;
+
 ptrdiff_t position_indentation (ptrdiff_t pos_byte);
+void scan_for_column (ptrdiff_t *endpos, EMACS_INT *goalcol, ptrdiff_t *prevcol);
 
 // insdel.c
 
@@ -143,7 +147,33 @@ void insert_from_string_1 (Lisp_Object string, ptrdiff_t pos, ptrdiff_t pos_byte
                            ptrdiff_t nchars, ptrdiff_t nbytes,
                            bool inherit, bool before_markers);
 
+// keyboard.c
+
+bool get_input_pending (int flags);
+Lisp_Object make_lispy_position (struct frame *f, Lisp_Object x, Lisp_Object y, Time t);
+void process_special_events (void);
+void recursive_edit_unwind (Lisp_Object buffer);
+Lisp_Object read_key_sequence_vs (Lisp_Object prompt, Lisp_Object continue_echo,
+                                  Lisp_Object dont_downcase_last,
+                                  Lisp_Object can_return_switch_frame,
+                                  Lisp_Object cmd_loop, bool allow_string);
+
+// keymap.c
+
+extern Lisp_Object apropos_predicate;
+extern Lisp_Object apropos_accumulate;
+
+void apropos_accum (Lisp_Object symbol, Lisp_Object string);
+Lisp_Object copy_keymap_item (Lisp_Object elt);
+void describe_vector (Lisp_Object vector, Lisp_Object prefix, Lisp_Object args,
+                      void (*elt_describer) (Lisp_Object, Lisp_Object),
+                      bool partial, Lisp_Object shadow, Lisp_Object entire_map,
+                      bool keymap_p, bool mention_shadow);
+void map_keymap_call (Lisp_Object key, Lisp_Object val, Lisp_Object fun, void *dummy);
+
 // lread.c
+
+extern struct Infile *infile;
 
 Lisp_Object intern_sym (Lisp_Object sym, Lisp_Object obarray, Lisp_Object index);
 

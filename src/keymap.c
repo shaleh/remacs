@@ -44,6 +44,7 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 #include <stdlib.h>
 
 #include "lisp.h"
+#include "exposed.h"
 #include "commands.h"
 #include "character.h"
 #include "buffer.h"
@@ -94,9 +95,6 @@ static void describe_translation (Lisp_Object, Lisp_Object);
 static void describe_map (Lisp_Object, Lisp_Object,
                           void (*) (Lisp_Object, Lisp_Object),
 			  bool, Lisp_Object, Lisp_Object *, bool, bool);
-static void describe_vector (Lisp_Object, Lisp_Object, Lisp_Object,
-                             void (*) (Lisp_Object, Lisp_Object), bool,
-                             Lisp_Object, Lisp_Object, bool, bool);
 static void silly_event_symbol_error (Lisp_Object);
 static Lisp_Object get_keyelt (Lisp_Object, bool);
 
@@ -602,7 +600,7 @@ map_keymap_internal (Lisp_Object map,
   return tail;
 }
 
-static void
+void
 map_keymap_call (Lisp_Object key, Lisp_Object val, Lisp_Object fun, void *dummy)
 {
   call2 (fun, key, val);
@@ -904,7 +902,7 @@ store_in_keymap (Lisp_Object keymap, register Lisp_Object idx, Lisp_Object def)
   return def;
 }
 
-static Lisp_Object
+Lisp_Object
 copy_keymap_item (Lisp_Object elt)
 {
   Lisp_Object res, tem;
@@ -3376,7 +3374,7 @@ DESCRIBER is the output function used; nil means use `princ'.  */)
 
    ARGS is simply passed as the second argument to ELT_DESCRIBER.  */
 
-static void
+void
 describe_vector (Lisp_Object vector, Lisp_Object prefix, Lisp_Object args,
 		 void (*elt_describer) (Lisp_Object, Lisp_Object),
 		 bool partial, Lisp_Object shadow, Lisp_Object entire_map,
@@ -3566,10 +3564,10 @@ describe_vector (Lisp_Object vector, Lisp_Object prefix, Lisp_Object args,
 }
 
 /* Apropos - finding all symbols whose names match a regexp.		*/
-static Lisp_Object apropos_predicate;
-static Lisp_Object apropos_accumulate;
+Lisp_Object apropos_predicate;
+Lisp_Object apropos_accumulate;
 
-static void
+void
 apropos_accum (Lisp_Object symbol, Lisp_Object string)
 {
   register Lisp_Object tem;

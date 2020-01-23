@@ -23,6 +23,7 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 #include <sys/stat.h>
 
 #include "lisp.h"
+#include "exposed.h"
 #include "coding.h"
 #include "termchar.h"
 #include "termopts.h"
@@ -304,7 +305,6 @@ static union buffered_input_event *volatile kbd_store_ptr;
    dequeuing functions?  Such a flag could be screwed up by interrupts
    at inopportune times.  */
 
-static void recursive_edit_unwind (Lisp_Object buffer);
 static Lisp_Object command_loop (void);
 
 static void echo_now (void);
@@ -344,7 +344,6 @@ static struct timespec timer_last_idleness_start_time;
 /* Function for init_keyboard to call with no args (if nonzero).  */
 static void (*keyboard_init_hook) (void);
 
-static bool get_input_pending (int);
 static bool readable_events (int);
 static Lisp_Object read_char_x_menu_prompt (Lisp_Object,
                                             Lisp_Object, bool *);
@@ -4200,7 +4199,7 @@ kbd_buffer_get_event (KBOARD **kbp,
 /* Process any non-user-visible events (currently X selection events),
    without reading any user-visible events.  */
 
-static void
+void
 process_special_events (void)
 {
   union buffered_input_event *event;
@@ -5171,7 +5170,7 @@ static int double_click_count;
 /* X and Y are frame-relative coordinates for a click or wheel event.
    Return a Lisp-style event list.  */
 
-static Lisp_Object
+Lisp_Object
 make_lispy_position (struct frame *f, Lisp_Object x, Lisp_Object y,
 		     Time t)
 {
@@ -6827,7 +6826,7 @@ lucid_event_type_list_p (Lisp_Object object)
    If READABLE_EVENTS_IGNORE_SQUEEZABLES is set in FLAGS, ignore mouse
    movements and toolkit scroll bar thumb drags.  */
 
-static bool
+bool
 get_input_pending (int flags)
 {
   /* First of all, have we already counted some input?  */
@@ -9817,7 +9816,7 @@ read_key_sequence (Lisp_Object *keybuf, int bufsize, Lisp_Object prompt,
   return t;
 }
 
-static Lisp_Object
+Lisp_Object
 read_key_sequence_vs (Lisp_Object prompt, Lisp_Object continue_echo,
 		      Lisp_Object dont_downcase_last,
 		      Lisp_Object can_return_switch_frame,
