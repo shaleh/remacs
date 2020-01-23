@@ -104,20 +104,7 @@ static Lisp_Object read_objects_map;
    (to reduce allocations), or nil.  */
 static Lisp_Object read_objects_completed;
 
-/* File and lookahead for get-file-char and get-emacs-mule-file-char
-   to read from.  Used by Fload.  */
-struct Infile
-{
-  /* The input stream.  */
-  FILE *stream;
-
-  /* Lookahead byte count.  */
-  signed char lookahead;
-
-  /* Lookahead bytes, in reverse order.  Keep these here because it is
-     not portable to ungetc more than one byte at a time.  */
-  unsigned char buf[MAX_MULTIBYTE_LENGTH - 1];
-} *infile;
+struct infile *infile;
 
 /* For use within read-from-string (this reader is non-reentrant!!)  */
 static ptrdiff_t read_from_string_index;
@@ -162,9 +149,6 @@ static Lisp_Object Vloads_in_progress;
 static int read_emacs_mule_char (int, int (*) (int, Lisp_Object),
                                  Lisp_Object);
 
-static void readevalloop (Lisp_Object, struct infile *, Lisp_Object, bool,
-                          Lisp_Object, Lisp_Object,
-                          Lisp_Object, Lisp_Object);
 
 /* Functions that read one byte from the current source READCHARFUN
    or unreads one byte.  If the integer argument C is -1, it returns
@@ -610,8 +594,6 @@ struct subst
   Lisp_Object seen;
 };
 
-static Lisp_Object read_internal_start (Lisp_Object, Lisp_Object,
-                                        Lisp_Object);
 static Lisp_Object read0 (Lisp_Object);
 static Lisp_Object read1 (Lisp_Object, int *, bool);
 
@@ -645,7 +627,7 @@ static void substitute_in_interval (INTERVAL, void *);
    If SECONDS is a number, wait that many seconds for input, and
    return Qnil if no input arrives within that time.  */
 
-static Lisp_Object
+Lisp_Object
 read_filtered_event (bool no_switch_frame, bool ascii_required,
 		     bool error_nonascii, bool input_method, Lisp_Object seconds)
 {
@@ -1869,7 +1851,7 @@ readevalloop_eager_expand_eval (Lisp_Object val, Lisp_Object macroexpand)
    START, END specify region to read in current buffer (from eval-region).
    If the input is not from a buffer, they must be nil.  */
 
-static void
+void
 readevalloop (Lisp_Object readcharfun,
 	      struct infile *infile0,
 	      Lisp_Object sourcename,
@@ -2202,7 +2184,7 @@ the end of STRING.  */)
 
 /* Function to set up the global context we need in toplevel read
    calls.  START and END only used when STREAM is a string.  */
-static Lisp_Object
+Lisp_Object
 read_internal_start (Lisp_Object stream, Lisp_Object start, Lisp_Object end)
 {
   Lisp_Object retval;

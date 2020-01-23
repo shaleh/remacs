@@ -12,12 +12,11 @@ use crate::{
     lists::{LispCons, LispConsCircularChecks, LispConsEndChecks},
     obarray::intern,
     remacs_sys::font_match_p as c_font_match_p,
-    remacs_sys::font_property_index::FONT_TYPE_INDEX,
-    remacs_sys::{font_add_log, font_at, font_list_entities, font_sort_entities},
-    remacs_sys::{
-        pvec_type, Lisp_Font_Object, Lisp_Font_Spec, Lisp_Type, FONT_ENTITY_MAX, FONT_OBJECT_MAX,
-        FONT_SPEC_MAX,
+    remacs_sys::font_property_index::{
+        FONT_ENTITY_MAX, FONT_OBJECT_MAX, FONT_SPEC_MAX, FONT_TYPE_INDEX,
     },
+    remacs_sys::{font_add_log, font_at, font_list_entities, font_sort_entities},
+    remacs_sys::{pvec_type, Lisp_Font_Object, Lisp_Font_Spec, Lisp_Type},
     remacs_sys::{EmacsInt, Qfont, Qfont_entity, Qfont_object, Qfont_spec, Qnil},
     threads::ThreadState,
     vectors::LispVectorlikeRef,

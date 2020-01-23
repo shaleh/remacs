@@ -1,6 +1,8 @@
 #ifndef EXPOSED_H_INCLUDED
 #define EXPOSED_H_INCLUDED
 
+#include <stdio.h> // FILE *
+
 #include "lisp.h"
 #include "buffer.h"
 
@@ -173,9 +175,35 @@ void map_keymap_call (Lisp_Object key, Lisp_Object val, Lisp_Object fun, void *d
 
 // lread.c
 
-extern struct Infile *infile;
+/* File and lookahead for get-file-char and get-emacs-mule-file-char
+   to read from.  Used by Fload.  */
+struct infile
+{
+  /* The input stream.  */
+  FILE *stream;
+
+  /* Lookahead byte count.  */
+  signed char lookahead;
+
+  /* Lookahead bytes, in reverse order.  Keep these here because it is
+     not portable to ungetc more than one byte at a time.  */
+  unsigned char buf[MAX_MULTIBYTE_LENGTH - 1];
+};
+
+extern struct infile *infile;
 
 Lisp_Object intern_sym (Lisp_Object sym, Lisp_Object obarray, Lisp_Object index);
+void readevalloop (Lisp_Object readcharfun,
+                   struct infile *infile0,
+                   Lisp_Object sourcename,
+                   bool printflag,
+                   Lisp_Object unibyte, Lisp_Object readfun,
+                   Lisp_Object start, Lisp_Object end);
+Lisp_Object read_filtered_event (bool no_switch_frame, bool ascii_required,
+                                 bool error_nonascii, bool input_method, Lisp_Object seconds);
+Lisp_Object read_internal_start (Lisp_Object stream, Lisp_Object start, Lisp_Object end); Lisp_Object
+
+
 
 // process.c
 

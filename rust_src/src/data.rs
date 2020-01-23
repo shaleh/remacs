@@ -20,10 +20,9 @@ use crate::{
     remacs_sys::Fdelete,
     remacs_sys::Vautoload_queue,
     remacs_sys::{
-        aset_multibyte_string, bool_vector_binop_driver, buffer_defaults, build_string, globals,
-        rust_count_one_bits, set_default_internal, set_internal, string_to_number,
-        symbol_trapped_write, valid_lisp_object_p, wrong_choice, wrong_range, CHAR_TABLE_SET,
-        CHECK_IMPURE,
+        bool_vector_binop_driver, buffer_defaults, build_string, globals, rust_count_one_bits,
+        set_default_internal, set_internal, string_to_number, symbol_trapped_write,
+        valid_lisp_object_p, wrong_choice, wrong_range, CHAR_TABLE_SET, CHECK_IMPURE,
     },
     remacs_sys::{per_buffer_default, symbol_redirect},
     remacs_sys::{pvec_type, BoolVectorOp, EmacsInt, Lisp_Misc_Type, Lisp_Type, Set_Internal_Bind},
