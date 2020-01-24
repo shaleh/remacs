@@ -201,7 +201,7 @@ void readevalloop (Lisp_Object readcharfun,
                    Lisp_Object start, Lisp_Object end);
 Lisp_Object read_filtered_event (bool no_switch_frame, bool ascii_required,
                                  bool error_nonascii, bool input_method, Lisp_Object seconds);
-Lisp_Object read_internal_start (Lisp_Object stream, Lisp_Object start, Lisp_Object end); Lisp_Object
+Lisp_Object read_internal_start (Lisp_Object stream, Lisp_Object start, Lisp_Object end);
 
 
 
