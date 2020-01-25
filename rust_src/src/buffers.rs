@@ -46,8 +46,9 @@ use crate::{
         unchain_marker, update_mode_lines, windows_or_buffers_changed,
     },
     remacs_sys::{
-        buffer_defaults, equal_kind, pvec_type, EmacsInt, Lisp_Buffer, Lisp_Buffer_Local_Value,
-        Lisp_Misc_Type, Lisp_Overlay, Lisp_Type, Vbuffer_alist, Vrun_hooks,
+        buffer_defaults, cached_buffer, cached_bytepos, cached_charpos, cached_modiff, equal_kind,
+        pvec_type, EmacsInt, Lisp_Buffer, Lisp_Buffer_Local_Value, Lisp_Misc_Type, Lisp_Overlay,
+        Lisp_Type, Vbuffer_alist, Vrun_hooks,
     },
     remacs_sys::{
         buffer_permanent_local_flags, Qafter_string, Qbefore_string, Qbuffer_list_update_hook,
@@ -520,8 +521,12 @@ impl LispBufferRef {
         consider_known!(self.begv_byte, self.begv);
         consider_known!(self.zv_byte, self.zv);
 
-        if self.is_cached && self.modifications() == self.cached_modiff {
-            consider_known!(self.cached_bytepos, self.cached_charpos);
+        if unsafe { self.as_mut() == cached_buffer }
+            && unsafe { self.modifications() == cached_modiff }
+        {
+            unsafe {
+                consider_known!(cached_bytepos, cached_charpos);
+            }
         }
 
         for m in self.markers().iter() {
@@ -558,11 +563,10 @@ impl LispBufferRef {
                 byte_char_debug_check(self, best_below, best_below_byte);
             }
 
-            self.is_cached = true;
-            self.cached_modiff = self.modifications();
-
-            self.cached_charpos = best_below;
-            self.cached_bytepos = best_below_byte;
+            unsafe { cached_buffer = self.as_mut() };
+            unsafe { cached_modiff = self.modifications() };
+            unsafe { cached_charpos = best_below };
+            unsafe { cached_bytepos = best_below_byte };
 
             best_below
         } else {
@@ -585,11 +589,10 @@ impl LispBufferRef {
                 byte_char_debug_check(self, best_below, best_below_byte);
             }
 
-            self.is_cached = true;
-            self.cached_modiff = self.modifications();
-
-            self.cached_charpos = best_above;
-            self.cached_bytepos = best_above_byte;
+            unsafe { cached_buffer = self.as_mut() };
+            unsafe { cached_modiff = self.modifications() };
+            unsafe { cached_charpos = best_above };
+            unsafe { cached_bytepos = best_above_byte };
 
             best_above
         }
@@ -652,8 +655,12 @@ impl LispBufferRef {
         consider_known!(self.begv, self.begv_byte);
         consider_known!(self.zv, self.zv_byte);
 
-        if self.is_cached && self.modifications() == self.cached_modiff {
-            consider_known!(self.cached_charpos, self.cached_bytepos);
+        if unsafe { cached_buffer == self.as_mut() }
+            && unsafe { self.modifications() == cached_modiff }
+        {
+            unsafe {
+                consider_known!(cached_charpos, cached_bytepos);
+            }
         }
 
         for m in self.markers().iter() {
@@ -680,11 +687,10 @@ impl LispBufferRef {
                 byte_char_debug_check(self, best_below, best_below_byte);
             }
 
-            self.is_cached = true;
-            self.cached_modiff = self.modifications();
-
-            self.cached_charpos = best_below;
-            self.cached_bytepos = best_below_byte;
+            unsafe { cached_buffer = self.as_mut() };
+            unsafe { cached_modiff = self.modifications() };
+            unsafe { cached_charpos = best_below };
+            unsafe { cached_bytepos = best_below_byte };
 
             best_below_byte
         } else {
@@ -702,11 +708,10 @@ impl LispBufferRef {
                 byte_char_debug_check(self, best_below, best_below_byte);
             }
 
-            self.is_cached = true;
-            self.cached_modiff = self.modifications();
-
-            self.cached_charpos = best_above;
-            self.cached_bytepos = best_above_byte;
+            unsafe { cached_buffer = self.as_mut() };
+            unsafe { cached_modiff = self.modifications() };
+            unsafe { cached_charpos = best_above };
+            unsafe { cached_bytepos = best_above_byte };
 
             best_above_byte
         }

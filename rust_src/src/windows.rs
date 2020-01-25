@@ -148,7 +148,7 @@ impl LispWindowRef {
         self.is_minibuffer() && self.prev.is_nil()
     }
 
-    pub fn is_menu_bar(mut self) -> bool {
+    pub fn is_menu_bar(self) -> bool {
         false
     }
 

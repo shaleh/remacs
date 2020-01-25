@@ -1480,6 +1480,7 @@ DEFUN ("selected-frame", Fselected_frame, Sselected_frame, 0, 0, 0,
   return selected_frame;
 }
 
+#ifdef IGNORE_RUST_PORT
 DEFUN ("frame-list", Fframe_list, Sframe_list,
        0, 0, 0,
        doc: /* Return a list of all live frames.  */)
@@ -1497,6 +1498,7 @@ DEFUN ("frame-list", Fframe_list, Sframe_list,
 #endif
   return frames;
 }
+#endif
 
 DEFUN ("frame-parent", Fframe_parent, Sframe_parent,
        0, 1, 0,
@@ -6092,7 +6094,9 @@ iconify the top level frame instead.  */);
   defsubr (&Shandle_switch_frame);
   defsubr (&Sselect_frame);
   defsubr (&Sselected_frame);
+#ifdef IGNORE_RUST_PORT
   defsubr (&Sframe_list);
+#endif
   defsubr (&Sframe_parent);
   defsubr (&Sframe_ancestor_p);
   defsubr (&Snext_frame);

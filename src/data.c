@@ -2312,6 +2312,7 @@ or a byte-code object.  IDX starts at 0.  */)
     }
 }
 
+#ifdef IGNORE_RUST_PORT
 DEFUN ("aset", Faset, Saset, 3, 3, 0,
        doc: /* Store into the element of ARRAY at index IDX the value NEWELT.
 Return NEWELT.  ARRAY may be a vector, a string, a char-table or a
@@ -2361,7 +2362,34 @@ bool-vector.  IDX starts at 0.  */)
 
       if (STRING_MULTIBYTE (array))
 	{
-          aset_multibyte_string(array, idx, elt);
+          ptrdiff_t idxval_byte, nbytes;
+          int prev_bytes, new_bytes;
+          unsigned char workbuf[MAX_MULTIBYTE_LENGTH], *p0 = workbuf, *p1;
+
+          nbytes = SBYTES (array);
+          idxval_byte = string_char_to_byte (array, idxval);
+          p1 = SDATA (array) + idxval_byte;
+          prev_bytes = BYTES_BY_CHAR_HEAD (*p1);
+          new_bytes = CHAR_STRING (c, p0);
+          if (prev_bytes != new_bytes)
+            {
+              /* We must relocate the string data.  */
+              ptrdiff_t nchars = SCHARS (array);
+              USE_SAFE_ALLOCA;
+              unsigned char *str = SAFE_ALLOCA (nbytes);
+
+              memcpy (str, SDATA (array), nbytes);
+              allocate_string_data (XSTRING (array), nchars,
+                                    nbytes + new_bytes - prev_bytes);
+              memcpy (SDATA (array), str, idxval_byte);
+              p1 = SDATA (array) + idxval_byte;
+              memcpy (p1 + new_bytes, str + idxval_byte + prev_bytes,
+                      nbytes - (idxval_byte + prev_bytes));
+              SAFE_FREE ();
+              clear_string_char_byte_cache ();
+            }
+          while (new_bytes--)
+            *p1++ = *p0++;
 	}
       else
 	{
@@ -2383,6 +2411,7 @@ bool-vector.  IDX starts at 0.  */)
 
   return newelt;
 }
+#endif
 
 /* Arithmetic functions */
 
@@ -3567,6 +3596,38 @@ A is a bool vector, B is t or nil, and I is an index into A.  */)
   return make_number (count);
 }
 
+void
+aset_multibyte_string(register Lisp_Object array, EMACS_INT idxval, int c)
+{
+  ptrdiff_t idxval_byte, nbytes;
+  int prev_bytes, new_bytes;
+  unsigned char workbuf[MAX_MULTIBYTE_LENGTH], *p0 = workbuf, *p1;
+
+  nbytes = SBYTES (array);
+  idxval_byte = string_char_to_byte (array, idxval);
+  p1 = SDATA (array) + idxval_byte;
+  prev_bytes = BYTES_BY_CHAR_HEAD (*p1);
+  new_bytes = CHAR_STRING (c, p0);
+  if (prev_bytes != new_bytes)
+    {
+      /* We must relocate the string data.  */
+      ptrdiff_t nchars = SCHARS (array);
+      USE_SAFE_ALLOCA;
+      unsigned char *str = SAFE_ALLOCA (nbytes);
+
+      memcpy (str, SDATA (array), nbytes);
+      allocate_string_data (XSTRING (array), nchars,
+                            nbytes + new_bytes - prev_bytes);
+      memcpy (SDATA (array), str, idxval_byte);
+      p1 = SDATA (array) + idxval_byte;
+      memcpy (p1 + new_bytes, str + idxval_byte + prev_bytes,
+              nbytes - (idxval_byte + prev_bytes));
+      SAFE_FREE ();
+      clear_string_char_byte_cache ();
+    }
+  while (new_bytes--)
+    *p1++ = *p0++;
+}
 
 void
 syms_of_data (void)
@@ -3816,7 +3877,9 @@ syms_of_data (void)
   defsubr (&Sset_terminal_local_value);
 #endif
   defsubr (&Saref);
+#if IGNORE_RUST_PORT
   defsubr (&Saset);
+#endif
   defsubr (&Snumber_to_string);
   defsubr (&Sstring_to_number);
   defsubr (&Seqlsign);

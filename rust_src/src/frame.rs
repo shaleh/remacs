@@ -5,6 +5,7 @@ use libc::c_int;
 use remacs_macros::lisp_fn;
 
 use crate::{
+    fns::copy_sequence,
     lisp::{ExternalPtr, LispObject},
     lists::assq,
     lists::{LispConsCircularChecks, LispConsEndChecks},
@@ -24,11 +25,11 @@ use crate::{
 #[cfg(feature = "window-system")]
 use crate::{
     fns::nreverse,
-    remacs_sys::{vertical_scroll_bar_type, x_focus_frame, x_make_frame_invisible},
+    remacs_sys::{tip_frame, vertical_scroll_bar_type, x_focus_frame, x_make_frame_invisible},
 };
 
-#[cfg(not(feature = "window-system"))]
-use crate::fns::copy_sequence;
+#[cfg(feature = "window-system")]
+use crate::remacs_sys::{Fframe_parameter, Qtooltip};
 
 /// LispFrameRef is a reference to the LispFrame
 /// However a reference is guaranteed to point to an existing frame
@@ -63,12 +64,16 @@ impl LispFrameRef {
     pub fn has_tooltip(self) -> bool {
         #[cfg(feature = "window-system")]
         {
-            self.tooltip()
+            if let Some(_) = unsafe { tip_frame.as_frame() } {
+                if cfg!(feature = "window-system-x11") {
+                    return !unsafe { Fframe_parameter(tip_frame, Qtooltip).is_nil() };
+                } else {
+                    return true;
+                }
+            }
         }
-        #[cfg(not(feature = "window-system"))]
-        {
-            false
-        }
+
+        false
     }
 
     pub fn total_fringe_width(self) -> i32 {
@@ -662,19 +667,29 @@ fn filter_frame_list(predicate: impl Fn(LispFrameRef) -> bool) -> LispObject {
 }
 
 /// Return a list of all live frames.
-/// The return value does not include any tooltip frame.
 #[lisp_fn]
 pub fn frame_list() -> LispObject {
-    #[cfg(feature = "window-system")]
+    #[cfg(feature = "window-system-x11")]
     {
-        let list = filter_frame_list(|f| !f.has_tooltip());
-        // Reverse list for consistency with the !HAVE_WINDOW_SYSTEM case.
-        nreverse(list)
+        if let Some(tf) = tip_frame.as_frame() {
+            if !Fframe_parameter(tip_frame, Qtooltip).is_nil() {
+                let list = filter_frame_list(|f| (*f) != tf);
+                // Reverse list for consistency with the !HAVE_WINDOW_SYSTEM case.
+                return nreverse(list);
+            }
+        }
     }
-    #[cfg(not(feature = "window-system"))]
+
+    #[cfg(all(feature = "window-system", not(feature = "window-system-x11")))]
     {
-        copy_sequence(unsafe { Vframe_list })
+        if let Some(tf) = unsafe { tip_frame.as_frame() } {
+            let list = filter_frame_list(|f| f.as_ptr() != tf.as_ptr());
+            // Reverse list for consistency with the !HAVE_WINDOW_SYSTEM case.
+            return nreverse(list);
+        }
     }
+
+    copy_sequence(unsafe { Vframe_list })
 }
 
 /// Return a list of all frames now \"visible\" (being updated).

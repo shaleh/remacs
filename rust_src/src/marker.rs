@@ -10,7 +10,9 @@ use crate::{
     hashtable::LispHashTableRef,
     lisp::{ExternalPtr, LispMiscRef, LispObject, LispStructuralEqual},
     remacs_sys::{allocate_misc, set_point_both, Fmake_marker},
-    remacs_sys::{equal_kind, EmacsInt, Lisp_Buffer, Lisp_Marker, Lisp_Misc_Type, Lisp_Type},
+    remacs_sys::{
+        cached_buffer, equal_kind, EmacsInt, Lisp_Buffer, Lisp_Marker, Lisp_Misc_Type, Lisp_Type,
+    },
     remacs_sys::{Qinteger_or_marker_p, Qmarkerp},
     threads::ThreadState,
     util::clip_to_bounds,
@@ -633,9 +635,11 @@ pub unsafe extern "C" fn buf_bytepos_to_charpos(b: *mut Lisp_Buffer, bytepos: is
 
 #[no_mangle]
 pub extern "C" fn clear_charpos_cache(b: *mut Lisp_Buffer) {
-    let mut buf_ref = LispBufferRef::from_ptr(b as *mut c_void)
-        .unwrap_or_else(|| panic!("Invalid buffer reference."));
-    buf_ref.is_cached = false;
+    unsafe {
+        if cached_buffer == b {
+            cached_buffer = ptr::null_mut();
+        }
+    }
 }
 
 include!(concat!(env!("OUT_DIR"), "/marker_exports.rs"));

@@ -1847,7 +1847,7 @@ struct Lisp_Subr
     const char *symbol_name;
     const char *intspec;
     EMACS_INT doc;
-    int lang;
+    unsigned int lang;
   };
 
 INLINE bool
@@ -4046,6 +4046,7 @@ extern Lisp_Object set_marker_both (Lisp_Object, Lisp_Object, ptrdiff_t, ptrdiff
 extern Lisp_Object set_marker_restricted_both (Lisp_Object, Lisp_Object,
                                                ptrdiff_t, ptrdiff_t);
 extern Lisp_Object build_marker (struct buffer *, ptrdiff_t, ptrdiff_t);
+extern void init_marker (bool);
 extern void syms_of_marker (void);
 
 /* Defined in fileio.c.  */

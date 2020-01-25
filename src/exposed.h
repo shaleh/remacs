@@ -88,6 +88,7 @@ Lisp_Object uniprop_table_uncompress (Lisp_Object table, int idx);
 
 // data.c
 
+void aset_multibyte_string(register Lisp_Object array, EMACS_INT idxval, int c);
 void swap_in_symval_forwarding (struct Lisp_Symbol *, struct Lisp_Buffer_Local_Value *);
 
 // dispnew.c
@@ -203,7 +204,12 @@ Lisp_Object read_filtered_event (bool no_switch_frame, bool ascii_required,
                                  bool error_nonascii, bool input_method, Lisp_Object seconds);
 Lisp_Object read_internal_start (Lisp_Object stream, Lisp_Object start, Lisp_Object end);
 
+// marker.c
 
+extern ptrdiff_t cached_charpos;
+extern ptrdiff_t cached_bytepos;
+extern struct buffer *cached_buffer;
+extern EMACS_INT cached_modiff;
 
 // process.c
 

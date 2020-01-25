@@ -415,9 +415,9 @@ fn internal_self_insert(mut c: Codepoint, n: usize) -> EmacsInt {
         } else {
             c
         };
-        let mut string = unsafe { Fmake_string(n.into(), mc.into(), Qnil) };
+        let mut string = unsafe { Fmake_string(n.into(), mc.into()) };
         if spaces_to_insert > 0 {
-            let tem = unsafe { Fmake_string(spaces_to_insert.into(), b' '.into(), Qnil) };
+            let tem = unsafe { Fmake_string(spaces_to_insert.into(), b' '.into()) };
             string = unsafe { concat2(string, tem) };
         }
 
