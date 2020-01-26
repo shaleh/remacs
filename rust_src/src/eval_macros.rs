@@ -345,6 +345,12 @@ macro_rules! local_unibyte_string {
     };
 }
 
+macro_rules! make_lisp_ptr {
+    ($ptr: ident, $kind: ident) => {
+        LispObject::tag_ptr(ExternalPtr::new($ptr), $kind)
+    };
+}
+
 #[test]
 pub fn test_local_unibyte_string() {
     let mut s = String::from("abc");

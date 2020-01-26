@@ -23,6 +23,35 @@ pub type LispMarkerRef = ExternalPtr<Lisp_Marker>;
 pub const MARKER_DEBUG: bool = cfg!(MARKER_DEBUG);
 
 impl LispMarkerRef {
+    pub fn alloc() -> Self {
+        let mut marker = unsafe { allocate_misc(Lisp_Misc_Type::Lisp_Misc_Marker) }.force_marker();
+
+        marker.init(ptr::null_mut(), 0isize, 0isize, false, false);
+        marker
+    }
+
+    pub fn alloc_with(buffer: *mut Lisp_Buffer, charpos: isize, bytepos: isize) -> Self {
+        let mut marker = unsafe { allocate_misc(Lisp_Misc_Type::Lisp_Misc_Marker) }.force_marker();
+
+        marker.init(buffer, charpos, bytepos, false, false);
+        marker
+    }
+
+    fn init(
+        &mut self,
+        buffer: *mut Lisp_Buffer,
+        charpos: isize,
+        bytepos: isize,
+        insertion_type: bool,
+        need_adjustment: bool,
+    ) {
+        self.buffer = buffer;
+        self.charpos = charpos;
+        self.bytepos = bytepos;
+        self.set_insertion_type(insertion_type);
+        self.set_need_adjustment(need_adjustment);
+    }
+
     pub fn charpos(self) -> Option<isize> {
         match self.buffer() {
             None => None,
@@ -210,14 +239,7 @@ pub fn build_marker_rust(
     debug_assert!(buffer.name_.is_not_nil());
     debug_assert!(charpos <= bytepos);
 
-    let mut marker: LispMarkerRef =
-        unsafe { allocate_misc(Lisp_Misc_Type::Lisp_Misc_Marker) }.into();
-
-    marker.set_buffer(buffer.as_mut());
-    marker.set_charpos(charpos);
-    marker.set_bytepos(bytepos);
-    marker.set_insertion_type(false);
-    marker.set_need_adjustment(false);
+    let mut marker = LispMarkerRef::alloc_with(buffer.as_mut(), charpos, bytepos);
 
     unsafe {
         marker.set_next((*buffer.text).markers);

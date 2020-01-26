@@ -10,6 +10,7 @@ use rand::{rngs::OsRng, Rng};
 use remacs_macros::lisp_fn;
 
 use crate::{
+    alloc::build_overlay,
     casetab::{set_standard_case_table, standard_case_table},
     character::char_head_p,
     chartable::LispCharTableRef,
@@ -202,6 +203,7 @@ impl LispBufferRef {
 
         buffer.into()
     }
+
     pub fn is_read_only(self) -> bool {
         self.read_only_.into()
     }
@@ -1542,25 +1544,6 @@ pub fn force_mode_line_update(all: bool) -> bool {
     all
 }
 
-/// Return a Lisp_Misc_Overlay object with specified START, END and PLIST.
-#[no_mangle]
-pub extern "C" fn build_overlay(
-    start: LispObject,
-    end: LispObject,
-    plist: LispObject,
-) -> LispObject {
-    unsafe {
-        let obj = allocate_misc(Lisp_Misc_Type::Lisp_Misc_Overlay);
-        let mut overlay: LispOverlayRef = obj.into();
-        overlay.start = start;
-        overlay.end = end;
-        overlay.plist = plist;
-        overlay.next = ptr::null_mut();
-
-        overlay.into()
-    }
-}
-
 /// Get the property of overlay OVERLAY with property name PROP.
 #[lisp_fn]
 pub fn overlay_get(overlay: LispOverlayRef, prop: LispObject) -> LispObject {
@@ -1759,17 +1742,6 @@ pub extern "C" fn reset_buffer(mut buffer: LispBufferRef) {
 #[no_mangle]
 pub extern "C" fn reset_buffer_local_variables(mut buffer: LispBufferRef, include_permanent: bool) {
     buffer.reset_local_variables(include_permanent)
-}
-
-#[allow(unused_doc_comments)]
-#[no_mangle]
-pub extern "C" fn rust_syms_of_buffer() {
-    def_lisp_sym!(Qget_file_buffer, "get-file-buffer");
-
-    /// Analogous to `mode-line-format', but controls the header line.
-    /// The header line appears, optionally, at the top of a window;
-    /// the mode line appears at the bottom.
-    defvar_per_buffer!(header_line_format_, "header-line-format", Qnil);
 }
 
 /// Change current buffer's name to NEWNAME (a string).  If second arg
@@ -1985,6 +1957,19 @@ pub fn byte_char_debug_check(b: LispBufferRef, charpos: isize, bytepos: isize) {
     if charpos - 1 != nchars {
         panic!("byte_char_debug_check failed.")
     }
+}
+
+// This should remain the last function in the file.
+
+#[allow(unused_doc_comments)]
+#[no_mangle]
+pub extern "C" fn rust_syms_of_buffer() {
+    def_lisp_sym!(Qget_file_buffer, "get-file-buffer");
+
+    /// Analogous to `mode-line-format', but controls the header line.
+    /// The header line appears, optionally, at the top of a window;
+    /// the mode line appears at the bottom.
+    defvar_per_buffer!(header_line_format_, "header-line-format", Qnil);
 }
 
 include!(concat!(env!("OUT_DIR"), "/buffers_exports.rs"));

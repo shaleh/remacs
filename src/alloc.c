@@ -2370,6 +2370,7 @@ make_uninit_bool_vector (EMACS_INT nbits)
   return val;
 }
 
+#if IGNORE_RUST_PORT
 DEFUN ("make-bool-vector", Fmake_bool_vector, Smake_bool_vector, 2, 2, 0,
        doc: /* Return a new bool-vector of length LENGTH, using INIT for each element.
 LENGTH must be a number.  INIT matters only in whether it is t or nil.  */)
@@ -2381,7 +2382,9 @@ LENGTH must be a number.  INIT matters only in whether it is t or nil.  */)
   val = make_uninit_bool_vector (XFASTINT (length));
   return bool_vector_fill (val, init);
 }
+#endif // IGNORE_RUST_POST
 
+#if IGNORE_RUST_PORT
 DEFUN ("bool-vector", Fbool_vector, Sbool_vector, 0, MANY, 0,
        doc: /* Return a new bool-vector with specified arguments as elements.
 Allows any number of arguments, including zero.
@@ -2397,6 +2400,7 @@ usage: (bool-vector &rest OBJECTS)  */)
 
   return vector;
 }
+#endif // IGNORE_RUST_POST
 
 /* Make a string from NBYTES bytes at CONTENTS, and compute the number
    of characters from the contents.  This string may be unibyte or
@@ -3397,7 +3401,7 @@ allocate_record (EMACS_INT count)
   return p;
 }
 
-
+#if IGNORE_RUST_PORT
 DEFUN ("make-record", Fmake_record, Smake_record, 3, 3, 0,
        doc: /* Create a new record.
 TYPE is its type as returned by `type-of'; it should be either a
@@ -3413,8 +3417,9 @@ each initialized to INIT.  */)
     p->contents[i] = init;
   return make_lisp_ptr (p, Lisp_Vectorlike);
 }
+#endif // IGNORE_RUST_POST
 
-
+#if IGNORE_RUST_PORT
 DEFUN ("record", Frecord, Srecord, 1, MANY, 0,
        doc: /* Create a new record.
 TYPE is its type as returned by `type-of'; it should be either a
@@ -3427,7 +3432,7 @@ usage: (record TYPE &rest SLOTS) */)
   memcpy (p->contents, args, nargs * sizeof *args);
   return make_lisp_ptr (p, Lisp_Vectorlike);
 }
-
+#endif // IGNORE_RUST_POST
 
 DEFUN ("make-vector", Fmake_vector, Smake_vector, 2, 2, 0,
        doc: /* Return a newly created vector of length LENGTH, with each element being INIT.
@@ -3794,6 +3799,7 @@ free_save_value (Lisp_Object save)
   free_misc (save);
 }
 
+#if IGNORE_RUST_PORT
 /* Return a Lisp_Misc_Overlay object with specified START, END and PLIST.  */
 
 Lisp_Object
@@ -3808,7 +3814,9 @@ build_overlay (Lisp_Object start, Lisp_Object end, Lisp_Object plist)
   XOVERLAY (overlay)->next = NULL;
   return overlay;
 }
+#endif // IGNORE_RUST_POST
 
+#if IGNORE_RUST_PORT
 DEFUN ("make-marker", Fmake_marker, Smake_marker, 0, 0, 0,
        doc: /* Return a newly allocated marker which does not point at any place.  */)
   (void)
@@ -3826,6 +3834,7 @@ DEFUN ("make-marker", Fmake_marker, Smake_marker, 0, 0, 0,
   p->need_adjustment = 0;
   return val;
 }
+#endif // IGNORE_RUST_POST
 
 /* Return a newly allocated marker which points into BUF
    at character position CHARPOS and byte position BYTEPOS.  */
@@ -5541,6 +5550,7 @@ purecopy_hash_table (struct Lisp_Hash_Table *table)
   return pure;
 }
 
+#if IGNORE_RUST_PORT
 DEFUN ("purecopy", Fpurecopy, Spurecopy, 1, 1, 0,
        doc: /* Make a copy of object OBJ in pure storage.
 Recursively copies contents of vectors and cons cells.
@@ -5555,6 +5565,7 @@ Does not copy symbols.  Copies strings without text properties.  */)
   else
     return purecopy (obj);
 }
+#endif // IGNORE_RUST_POST
 
 /* Pinned objects are marked before every GC cycle.  */
 static struct pinned_object
@@ -7206,6 +7217,7 @@ We divide the value by 1024 to make sure it fits in a Lisp integer.  */)
   return end;
 }
 
+#if IGNORE_RUST_PORT
 DEFUN ("memory-use-counts", Fmemory_use_counts, Smemory_use_counts, 0, 0, 0,
        doc: /* Return a list of counters that measure how much consing there has been.
 Each of these counters increments for a certain kind of object.
@@ -7231,6 +7243,7 @@ Frames, windows, buffers, and subprocesses count as vectors
 		bounded_number (intervals_consed),
 		bounded_number (strings_consed));
 }
+#endif // IGNORE_RUST_POST
 
 static bool
 symbol_uses_obj (Lisp_Object symbol, Lisp_Object obj)
@@ -7550,22 +7563,36 @@ The time is in seconds as a floating point value.  */);
   defsubr (&Scons);
   defsubr (&Slist);
   defsubr (&Svector);
+#if IGNORE_RUST_PORT
   defsubr (&Srecord);
+#endif // IGNORE_RUST_POST
+#if IGNORE_RUST_PORT
   defsubr (&Sbool_vector);
+#endif // IGNORE_RUST_POST
   defsubr (&Smake_byte_code);
   defsubr (&Smake_list);
   defsubr (&Smake_vector);
+#if IGNORE_RUST_PORT
   defsubr (&Smake_record);
+#endif // IGNORE_RUST_POST
   defsubr (&Smake_string);
+#if IGNORE_RUST_PORT
   defsubr (&Smake_bool_vector);
+#endif // IGNORE_RUST_POST
   defsubr (&Smake_symbol);
+#if IGNORE_RUST_PORT
   defsubr (&Smake_marker);
+#endif // IGNORE_RUST_POST
   defsubr (&Smake_finalizer);
+#if IGNORE_RUST_PORT
   defsubr (&Spurecopy);
+#endif // IGNORE_RUST_POST
   defsubr (&Sgarbage_collect);
   defsubr (&Smemory_limit);
   defsubr (&Smemory_info);
+#if IGNORE_RUST_PORT
   defsubr (&Smemory_use_counts);
+#endif // IGNORE_RUST_POST
   defsubr (&Ssuspicious_object);
 }
 

@@ -1,18 +1,18 @@
 //! Storage allocation and gc
-
-use remacs_macros::lisp_fn;
 use std::ptr;
 
+use remacs_macros::lisp_fn;
+
 use crate::{
+    buffers::LispOverlayRef,
     lisp::{ExternalPtr, LispObject},
     marker::LispMarkerRef,
-    remacs_sys::globals,
-    remacs_sys::Lisp_Type::Lisp_Vectorlike,
     remacs_sys::{
-        allocate_misc, allocate_record, bool_vector_fill, bool_vector_set, bounded_number,
-        make_uninit_bool_vector, purecopy as c_purecopy, Lisp_Misc_Type,
+        allocate_misc, allocate_record, bool_vector_fill, bool_vector_set, bounded_number, globals,
+        make_uninit_bool_vector, purecopy as c_purecopy,
     },
     remacs_sys::{EmacsInt, EmacsUint},
+    remacs_sys::{Lisp_Misc_Type, Lisp_Type::Lisp_Vectorlike},
 };
 
 /// Return a list of counters that measure how much consing there has been.
@@ -45,8 +45,11 @@ pub fn memory_use_counts() -> Vec<LispObject> {
 /// Return a new bool-vector of length LENGTH, using INIT for each element.
 /// LENGTH must be a number.  INIT matters only in whether it is t or nil.
 #[lisp_fn]
-pub fn make_bool_vector(length: EmacsInt, init: bool) -> LispObject {
-    unsafe { bool_vector_fill(make_uninit_bool_vector(length), init.into()) }
+pub fn make_bool_vector(length: EmacsUint, init: bool) -> LispObject {
+    unsafe {
+        let val = make_uninit_bool_vector(length as EmacsInt);
+        bool_vector_fill(val, init.into())
+    }
 }
 
 /// Return a new bool-vector with specified arguments as elements.
@@ -77,7 +80,7 @@ pub fn make_record(r#type: LispObject, slots: EmacsUint, init: LispObject) -> Li
         for rec in contents.iter_mut().skip(1) {
             *rec = init;
         }
-        LispObject::tag_ptr(ExternalPtr::new(ptr), Lisp_Vectorlike)
+        make_lisp_ptr!(ptr, Lisp_Vectorlike)
     }
 }
 
@@ -94,7 +97,7 @@ pub fn record(args: &mut [LispObject]) -> LispObject {
             .contents
             .as_mut_slice(args.len())
             .copy_from_slice(args);
-        LispObject::tag_ptr(ExternalPtr::new(ptr), Lisp_Vectorlike)
+        make_lisp_ptr!(ptr, Lisp_Vectorlike)
     }
 }
 
@@ -103,10 +106,11 @@ pub fn record(args: &mut [LispObject]) -> LispObject {
 /// Does not copy symbols.  Copies strings without text properties.
 #[lisp_fn]
 pub fn purecopy(obj: LispObject) -> LispObject {
-    #![allow(clippy::if_same_then_else)]
-    if unsafe { globals.Vpurify_flag.is_nil() } {
-        obj
-    } else if obj.is_marker() || obj.is_overlay() || obj.is_symbol() {
+    if unsafe { globals.Vpurify_flag.is_nil() }
+        || obj.is_marker()
+        || obj.is_overlay()
+        || obj.is_symbol()
+    {
         // Can't purify those.
         obj
     } else {
@@ -117,16 +121,26 @@ pub fn purecopy(obj: LispObject) -> LispObject {
 /// Return a newly allocated marker which does not point to any place.
 #[lisp_fn]
 pub fn make_marker() -> LispMarkerRef {
-    let mut marker = unsafe { allocate_misc(Lisp_Misc_Type::Lisp_Misc_Marker) }.force_marker();
+    LispMarkerRef::alloc()
+}
 
-    // Set the properties of the marker to nothing
-    marker.set_buffer(ptr::null_mut());
-    marker.set_charpos(0isize);
-    marker.set_bytepos(0isize);
-    marker.set_insertion_type(false);
-    marker.set_need_adjustment(false);
+/// Return a Lisp_Misc_Overlay object with specified START, END and PLIST.
+#[no_mangle]
+pub extern "C" fn build_overlay(
+    start: LispObject,
+    end: LispObject,
+    plist: LispObject,
+) -> LispObject {
+    unsafe {
+        let obj = allocate_misc(Lisp_Misc_Type::Lisp_Misc_Overlay);
+        let mut overlay: LispOverlayRef = obj.into();
+        overlay.start = start;
+        overlay.end = end;
+        overlay.plist = plist;
+        overlay.next = ptr::null_mut();
 
-    marker
+        overlay.into()
+    }
 }
 
 include!(concat!(env!("OUT_DIR"), "/alloc_exports.rs"));
