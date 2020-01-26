@@ -38,7 +38,7 @@ use crate::{
     remacs_sys::symbol_trapped_write::SYMBOL_TRAPPED_WRITE,
     remacs_sys::Fmake_marker,
     remacs_sys::{
-        alloc_buffer_text, allocate_buffer, allocate_misc, block_input, bset_update_mode_line,
+        alloc_buffer_text, allocate_buffer, block_input, bset_update_mode_line,
         buffer_fundamental_string, buffer_local_flags, buffer_local_value, buffer_memory_full,
         buffer_window_count, del_range, delete_all_overlays, globals, last_per_buffer_idx,
         lookup_char_property, make_timespec, marker_position, modify_overlay,
