@@ -3072,9 +3072,8 @@ static const short base64_char_to_value[128] =
    The octets are divided into 6 bit chunks, which are then encoded into
    base64 characters.  */
 
-
-static ptrdiff_t base64_encode_1 (const char *, char *, ptrdiff_t, bool, bool);
-static ptrdiff_t base64_decode_1 (const char *, char *, ptrdiff_t, bool,
+extern ptrdiff_t base64_encode_1 (const char *, char *, ptrdiff_t, bool, bool);
+extern ptrdiff_t base64_decode_1 (const char *, char *, ptrdiff_t, bool,
 				  ptrdiff_t *);
 
 DEFUN ("base64-encode-region", Fbase64_encode_region, Sbase64_encode_region,
@@ -3137,6 +3136,7 @@ into shorter lines.  */)
   return make_number (encoded_length);
 }
 
+#if IGNORE_RUST_PORT
 DEFUN ("base64-encode-string", Fbase64_encode_string, Sbase64_encode_string,
        1, 2, 0,
        doc: /* Base64-encode STRING and return the result.
@@ -3178,7 +3178,9 @@ into shorter lines.  */)
 
   return encoded_string;
 }
+#endif // IGNORE_RUST_POST
 
+#if IGNORE_RUST_PORT
 static ptrdiff_t
 base64_encode_1 (const char *from, char *to, ptrdiff_t length,
 		 bool line_break, bool multibyte)
@@ -3274,7 +3276,7 @@ base64_encode_1 (const char *from, char *to, ptrdiff_t length,
 
   return e - to;
 }
-
+#endif // IGNORE_RUST_POST
 
 DEFUN ("base64-decode-region", Fbase64_decode_region, Sbase64_decode_region,
        2, 2, "r",
@@ -3371,6 +3373,7 @@ DEFUN ("base64-decode-string", Fbase64_decode_string, Sbase64_decode_string,
   return decoded_string;
 }
 
+#if IGNORE_RUST_PORT
 /* Base64-decode the data at FROM of LENGTH bytes into TO.  If
    MULTIBYTE, the decoded result should be in multibyte
    form.  If NCHARS_RETURN is not NULL, store the number of produced
@@ -3454,7 +3457,7 @@ base64_decode_1 (const char *from, char *to, ptrdiff_t length,
       nchars++;
     }
 }
-
+#endif // IGNORE_RUST_POST
 
 
 /***********************************************************************
@@ -5288,10 +5291,12 @@ this variable.  */);
   defsubr (&Swidget_put);
   defsubr (&Swidget_get);
   defsubr (&Swidget_apply);
+#if IGNORE_RUST_PORT
   defsubr (&Sbase64_encode_region);
   defsubr (&Sbase64_decode_region);
   defsubr (&Sbase64_encode_string);
   defsubr (&Sbase64_decode_string);
+#endif // IGNORE_RUST_POST
   defsubr (&Smd5);
   defsubr (&Ssecure_hash_algorithms);
   defsubr (&Ssecure_hash);
