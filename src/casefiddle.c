@@ -330,6 +330,7 @@ casify_object (enum case_action flag, Lisp_Object obj)
     return do_casify_unibyte_string (&ctx, obj);
 }
 
+#if IGNORE_RUST_PORT
 DEFUN ("upcase", Fupcase, Supcase, 1, 1, 0,
        doc: /* Convert argument to upper case and return that.
 The argument may be a character or string.  The result has the same type.
@@ -341,7 +342,9 @@ See also `capitalize', `downcase' and `upcase-initials'.  */)
 {
   return casify_object (CASE_UP, obj);
 }
+#endif // IGNORE_RUST_POST
 
+#if IGNORE_RUST_PORT
 DEFUN ("downcase", Fdowncase, Sdowncase, 1, 1, 0,
        doc: /* Convert argument to lower case and return that.
 The argument may be a character or string.  The result has the same type.
@@ -350,7 +353,9 @@ The argument object is not altered--the value is a copy.  */)
 {
   return casify_object (CASE_DOWN, obj);
 }
+#endif // IGNORE_RUST_POST
 
+#if IGNORE_RUST_PORT
 DEFUN ("capitalize", Fcapitalize, Scapitalize, 1, 1, 0,
        doc: /* Convert argument to capitalized form and return that.
 This means that each word's first character is converted to either
@@ -363,7 +368,9 @@ cased, e.g. ﬁ, are returned unchanged.  */)
 {
   return casify_object (CASE_CAPITALIZE, obj);
 }
+#endif // IGNORE_RUST_POST
 
+#if IGNORE_RUST_PORT
 /* Like Fcapitalize but change only the initials.  */
 
 DEFUN ("upcase-initials", Fupcase_initials, Supcase_initials, 1, 1, 0,
@@ -378,6 +385,7 @@ cased, e.g. ﬁ, are returned unchanged.  */)
 {
   return casify_object (CASE_CAPITALIZE_UP, obj);
 }
+#endif // IGNORE_RUST_POST
 
 /* Based on CTX, case region in a unibyte buffer from *STARTP to *ENDP.
 
@@ -515,6 +523,7 @@ casify_region (enum case_action flag, Lisp_Object b, Lisp_Object e)
   return orig_end + added;
 }
 
+#if IGNORE_RUST_PORT
 DEFUN ("upcase-region", Fupcase_region, Supcase_region, 2, 3,
        "(list (region-beginning) (region-end) (region-noncontiguous-p))",
        doc: /* Convert the region to upper case.  In programs, wants two arguments.
@@ -542,7 +551,9 @@ See also `capitalize-region'.  */)
 
   return Qnil;
 }
+#endif // IGNORE_RUST_POST
 
+#if IGNORE_RUST_PORT
 DEFUN ("downcase-region", Fdowncase_region, Sdowncase_region, 2, 3,
        "(list (region-beginning) (region-end) (region-noncontiguous-p))",
        doc: /* Convert the region to lower case.  In programs, wants two arguments.
@@ -569,7 +580,9 @@ point and the mark is operated on.  */)
 
   return Qnil;
 }
+#endif // IGNORE_RUST_POST
 
+#if IGNORE_RUST_PORT
 DEFUN ("capitalize-region", Fcapitalize_region, Scapitalize_region, 2, 2, "r",
        doc: /* Convert the region to capitalized form.
 This means that each word's first character is converted to either
@@ -581,7 +594,9 @@ character positions to operate on.  */)
   casify_region (CASE_CAPITALIZE, beg, end);
   return Qnil;
 }
+#endif // IGNORE_RUST_POST
 
+#if IGNORE_RUST_PORT
 /* Like Fcapitalize_region but change only the initials.  */
 
 DEFUN ("upcase-initials-region", Fupcase_initials_region,
@@ -596,7 +611,9 @@ character positions to operate on.  */)
   casify_region (CASE_CAPITALIZE_UP, beg, end);
   return Qnil;
 }
+#endif // IGNORE_RUST_POST
 
+#if IGNORE_RUST_PORT
 static Lisp_Object
 casify_word (enum case_action flag, Lisp_Object arg)
 {
@@ -607,7 +624,9 @@ casify_word (enum case_action flag, Lisp_Object arg)
   SET_PT (casify_region (flag, make_number (PT), make_number (farend)));
   return Qnil;
 }
+#endif // IGNORE_RUST_POST
 
+#if IGNORE_RUST_PORT
 DEFUN ("upcase-word", Fupcase_word, Supcase_word, 1, 1, "p",
        doc: /* Convert to upper case from point to end of word, moving over.
 
@@ -620,7 +639,9 @@ See also `capitalize-word'.  */)
 {
   return casify_word (CASE_UP, arg);
 }
+#endif // IGNORE_RUST_POST
 
+#if IGNORE_RUST_PORT
 DEFUN ("downcase-word", Fdowncase_word, Sdowncase_word, 1, 1, "p",
        doc: /* Convert to lower case from point to end of word, moving over.
 
@@ -632,7 +653,9 @@ With negative argument, convert previous words but do not move.  */)
 {
   return casify_word (CASE_DOWN, arg);
 }
+#endif // IGNORE_RUST_POST
 
+#if IGNORE_RUST_PORT
 DEFUN ("capitalize-word", Fcapitalize_word, Scapitalize_word, 1, 1, "p",
        doc: /* Capitalize from point to the end of word, moving over.
 With numerical argument ARG, capitalize the next ARG-1 words as well.
@@ -647,7 +670,9 @@ With negative argument, capitalize previous words but do not move.  */)
 {
   return casify_word (CASE_CAPITALIZE, arg);
 }
+#endif // IGNORE_RUST_POST
 
+#if IGNORE_RUST_PORT
 void
 syms_of_casefiddle (void)
 {
@@ -669,7 +694,9 @@ syms_of_casefiddle (void)
   defsubr (&Sdowncase_word);
   defsubr (&Scapitalize_word);
 }
+#endif // IGNORE_RUST_POST
 
+#if IGNORE_RUST_PORT
 void
 keys_of_casefiddle (void)
 {
@@ -682,3 +709,4 @@ keys_of_casefiddle (void)
   initial_define_key (meta_map, 'l', "downcase-word");
   initial_define_key (meta_map, 'c', "capitalize-word");
 }
+#endif // IGNORE_RUST_POST
