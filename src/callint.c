@@ -34,6 +34,7 @@ static Lisp_Object point_marker;
 /* String for the prompt text used in Fcall_interactively.  */
 static Lisp_Object callint_message;
 
+#if IGNORE_RUST_PORT
 /* ARGSUSED */
 DEFUN ("interactive", Finteractive, Sinteractive, 0, UNEVALLED, 0,
        doc: /* Specify a way of parsing arguments for interactive use of a function.
@@ -109,6 +110,7 @@ usage: (interactive &optional ARG-DESCRIPTOR)  */
 {
   return Qnil;
 }
+#endif // IGNORE_RUST_POST
 
 /* Quotify EXP: if EXP is constant, return it.
    If EXP is not constant, return (quote EXP).  */
@@ -235,6 +237,7 @@ read_file_name (Lisp_Object default_filename, Lisp_Object mustmatch,
 		mustmatch, initial, predicate);
 }
 
+#if IGNORE_RUST_PORT
 /* BEWARE: Calling this directly from C would defeat the purpose!  */
 DEFUN ("funcall-interactively", Ffuncall_interactively, Sfuncall_interactively,
        1, MANY, 0, doc: /* Like `funcall' but marks the call as interactive.
@@ -251,6 +254,7 @@ usage: (funcall-interactively FUNCTION &rest ARGUMENTS)  */)
      backtrace.  */
   return unbind_to (speccount, Ffuncall (nargs, args));
 }
+#endif // IGNORE_RUST_POST
 
 DEFUN ("call-interactively", Fcall_interactively, Scall_interactively, 1, 3, 0,
        doc: /* Call FUNCTION, providing args according to its interactive calling specs.
@@ -963,8 +967,12 @@ Its purpose is to give temporary modes such as Isearch mode
 a way to turn themselves off when a mouse command switches windows.  */);
   Vmouse_leave_buffer_hook = Qnil;
 
+#if IGNORE_RUST_PORT
   defsubr (&Sinteractive);
+#endif // IGNORE_RUST_POST
   defsubr (&Scall_interactively);
+#if IGNORE_RUST_PORT
   defsubr (&Sfuncall_interactively);
+#endif // IGNORE_RUST_POST
   defsubr (&Sprefix_numeric_value);
 }
