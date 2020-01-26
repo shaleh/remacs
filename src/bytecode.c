@@ -310,6 +310,7 @@ enum byte_code_op
 
 #define TOP (*top)
 
+#if IGNORE_RUST_PORT
 DEFUN ("byte-code", Fbyte_code, Sbyte_code, 3, 3, 0,
        doc: /* Function used internally in byte-compiled code.
 The first argument, BYTESTR, is a string of byte code;
@@ -320,6 +321,7 @@ If the third argument is incorrect, Emacs may crash.  */)
 {
   return exec_byte_code (bytestr, vector, maxdepth, Qnil, 0, NULL);
 }
+#endif // IGNORE_RUST_POST
 
 static void
 bcall0 (Lisp_Object f)
@@ -1480,7 +1482,9 @@ get_byte_code_arity (Lisp_Object args_template)
 void
 syms_of_bytecode (void)
 {
+#if IGNORE_RUST_PORT
   defsubr (&Sbyte_code);
+#endif // IGNORE_RUST_POST
 
 #ifdef BYTE_CODE_METER
 
