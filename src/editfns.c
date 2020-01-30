@@ -326,6 +326,7 @@ init_editfns (bool dumping)
 #endif
 }
 
+#if IGNORE_RUST_PORT
 DEFUN ("char-to-string", Fchar_to_string, Schar_to_string, 1, 1, 0,
        doc: /* Convert arg CHAR to a string containing that character.
 usage: (char-to-string CHAR)  */)
@@ -340,7 +341,9 @@ usage: (char-to-string CHAR)  */)
   len = CHAR_STRING (c, str);
   return make_string_from_bytes ((char *) str, 1, len);
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("byte-to-string", Fbyte_to_string, Sbyte_to_string, 1, 1, 0,
        doc: /* Convert arg BYTE to a unibyte string containing that byte.  */)
   (Lisp_Object byte)
@@ -352,7 +355,9 @@ DEFUN ("byte-to-string", Fbyte_to_string, Sbyte_to_string, 1, 1, 0,
   b = XINT (byte);
   return make_string_from_bytes ((char *) &b, 1, 1);
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("string-to-char", Fstring_to_char, Sstring_to_char, 1, 1, 0,
        doc: /* Return the first character in STRING.  */)
   (register Lisp_Object string)
@@ -370,7 +375,9 @@ DEFUN ("string-to-char", Fstring_to_char, Sstring_to_char, 1, 1, 0,
     XSETFASTINT (val, 0);
   return val;
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("point", Fpoint, Spoint, 0, 0, 0,
        doc: /* Return value of point, as an integer.
 Beginning of buffer is position (point-min).  */)
@@ -380,14 +387,18 @@ Beginning of buffer is position (point-min).  */)
   XSETFASTINT (temp, PT);
   return temp;
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("point-marker", Fpoint_marker, Spoint_marker, 0, 0, 0,
        doc: /* Return value of point, as a marker object.  */)
   (void)
 {
   return build_marker (current_buffer, PT, PT_BYTE);
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("goto-char", Fgoto_char, Sgoto_char, 1, 1, "NGoto char: ",
        doc: /* Set point to POSITION, a number or marker.
 Beginning of buffer is position (point-min), end is (point-max).
@@ -403,7 +414,7 @@ The return value is POSITION.  */)
     wrong_type_argument (Qinteger_or_marker_p, position);
   return position;
 }
-
+#endif // IGNORE_RUST_PORT
 
 /* Return the start or end position of the region.
    BEGINNINGP means return the start.
@@ -429,20 +440,25 @@ region_limit (bool beginningp)
 		      : clip_to_bounds (BEGV, XFASTINT (m), ZV));
 }
 
+#if IGNORE_RUST_PORT
 DEFUN ("region-beginning", Fregion_beginning, Sregion_beginning, 0, 0, 0,
        doc: /* Return the integer value of point or mark, whichever is smaller.  */)
   (void)
 {
   return region_limit (1);
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("region-end", Fregion_end, Sregion_end, 0, 0, 0,
        doc: /* Return the integer value of point or mark, whichever is larger.  */)
   (void)
 {
   return region_limit (0);
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("mark-marker", Fmark_marker, Smark_marker, 0, 0, 0,
        doc: /* Return this buffer's mark, as a marker object.
 Watch out!  Moving this marker changes the mark position.
@@ -451,6 +467,7 @@ If you set the marker not to point anywhere, the buffer will have no mark.  */)
 {
   return BVAR (current_buffer, mark);
 }
+#endif // IGNORE_RUST_PORT
 
 
 /* Find all the overlays in the current buffer that touch position POS.
@@ -724,6 +741,7 @@ find_field (Lisp_Object pos, Lisp_Object merge_at_boundary,
 }
 
 
+#if IGNORE_RUST_PORT
 DEFUN ("delete-field", Fdelete_field, Sdelete_field, 0, 1, 0,
        doc: /* Delete the field surrounding POS.
 A field is a region of text with the same `field' property.
@@ -736,7 +754,9 @@ If POS is nil, the value of point is used for POS.  */)
     del_range (beg, end);
   return Qnil;
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("field-string", Ffield_string, Sfield_string, 0, 1, 0,
        doc: /* Return the contents of the field surrounding POS as a string.
 A field is a region of text with the same `field' property.
@@ -747,7 +767,9 @@ If POS is nil, the value of point is used for POS.  */)
   find_field (pos, Qnil, Qnil, &beg, Qnil, &end);
   return make_buffer_string (beg, end, 1);
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("field-string-no-properties", Ffield_string_no_properties, Sfield_string_no_properties, 0, 1, 0,
        doc: /* Return the contents of the field around POS, without text properties.
 A field is a region of text with the same `field' property.
@@ -758,7 +780,9 @@ If POS is nil, the value of point is used for POS.  */)
   find_field (pos, Qnil, Qnil, &beg, Qnil, &end);
   return make_buffer_string (beg, end, 0);
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("field-beginning", Ffield_beginning, Sfield_beginning, 0, 3, 0,
        doc: /* Return the beginning of the field surrounding POS.
 A field is a region of text with the same `field' property.
@@ -773,7 +797,9 @@ is before LIMIT, then LIMIT will be returned instead.  */)
   find_field (pos, escape_from_edge, limit, &beg, Qnil, 0);
   return make_number (beg);
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("field-end", Ffield_end, Sfield_end, 0, 3, 0,
        doc: /* Return the end of the field surrounding POS.
 A field is a region of text with the same `field' property.
@@ -788,7 +814,9 @@ is after LIMIT, then LIMIT will be returned instead.  */)
   find_field (pos, escape_from_edge, Qnil, 0, limit, &end);
   return make_number (end);
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("constrain-to-field", Fconstrain_to_field, Sconstrain_to_field, 2, 5, 0,
        doc: /* Return the position closest to NEW-POS that is in the same field as OLD-POS.
 A field is a region of text with the same `field' property.
@@ -900,8 +928,10 @@ Field boundaries are not noticed if `inhibit-field-text-motion' is non-nil.  */)
 
   return new_pos;
 }
+#endif // IGNORE_RUST_PORT
 
 
+#if IGNORE_RUST_PORT
 DEFUN ("line-beginning-position",
        Fline_beginning_position, Sline_beginning_position, 0, 1, 0,
        doc: /* Return the character position of the first character on the current line.
@@ -935,7 +965,9 @@ This function does not move point.  */)
 			      XINT (n) != 1 ? Qt : Qnil,
 			      Qt, Qnil);
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("line-end-position", Fline_end_position, Sline_end_position, 0, 1, 0,
        doc: /* Return the character position of the last character on the current line.
 With argument N not nil or 1, move forward N - 1 lines first.
@@ -971,7 +1003,9 @@ This function does not move point.  */)
   return Fconstrain_to_field (make_number (end_pos), make_number (orig),
 			      Qnil, Qt, Qnil);
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 /* Save current buffer state for `save-excursion' special form.
    We (ab)use Lisp_Misc_Save_Value to allow explicit free and so
    offload some work from GC.  */
@@ -987,6 +1021,7 @@ save_excursion_save (void)
       ? selected_window : Qnil),
      Qnil);
 }
+#endif // IGNORE_RUST_PORT
 
 /* Restore saved buffer before leaving `save-excursion' special form.  */
 
@@ -1026,6 +1061,7 @@ save_excursion_restore (Lisp_Object info)
   free_misc (info);
 }
 
+#if IGNORE_RUST_PORT
 DEFUN ("save-excursion", Fsave_excursion, Ssave_excursion, 0, UNEVALLED, 0,
        doc: /* Save point, and current buffer; execute BODY; restore those things.
 Executes BODY just like `progn'.
@@ -1050,7 +1086,9 @@ usage: (save-excursion &rest BODY)  */)
   val = Fprogn (args);
   return unbind_to (count, val);
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("save-current-buffer", Fsave_current_buffer, Ssave_current_buffer, 0, UNEVALLED, 0,
        doc: /* Record which buffer is current; execute BODY; make that buffer current.
 BODY is executed just like `progn'.
@@ -1062,7 +1100,9 @@ usage: (save-current-buffer &rest BODY)  */)
   record_unwind_current_buffer ();
   return unbind_to (count, Fprogn (args));
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("buffer-size", Fbuffer_size, Sbuffer_size, 0, 1, 0,
        doc: /* Return the number of characters in the current buffer.
 If BUFFER is not nil, return the number of characters in that buffer
@@ -1084,7 +1124,9 @@ in some other BUFFER, use
 			  - BUF_BEG (XBUFFER (buffer)));
     }
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("point-min", Fpoint_min, Spoint_min, 0, 0, 0,
        doc: /* Return the minimum permissible value of point in the current buffer.
 This is 1, unless narrowing (a buffer restriction) is in effect.  */)
@@ -1094,7 +1136,9 @@ This is 1, unless narrowing (a buffer restriction) is in effect.  */)
   XSETFASTINT (temp, BEGV);
   return temp;
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("point-min-marker", Fpoint_min_marker, Spoint_min_marker, 0, 0, 0,
        doc: /* Return a marker to the minimum permissible value of point in this buffer.
 This is the beginning, unless narrowing (a buffer restriction) is in effect.  */)
@@ -1102,7 +1146,9 @@ This is the beginning, unless narrowing (a buffer restriction) is in effect.  */
 {
   return build_marker (current_buffer, BEGV, BEGV_BYTE);
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("point-max", Fpoint_max, Spoint_max, 0, 0, 0,
        doc: /* Return the maximum permissible value of point in the current buffer.
 This is (1+ (buffer-size)), unless narrowing (a buffer restriction)
@@ -1113,7 +1159,9 @@ is in effect, in which case it is less.  */)
   XSETFASTINT (temp, ZV);
   return temp;
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("point-max-marker", Fpoint_max_marker, Spoint_max_marker, 0, 0, 0,
        doc: /* Return a marker to the maximum permissible value of point in this buffer.
 This is (1+ (buffer-size)), unless narrowing (a buffer restriction)
@@ -1122,7 +1170,9 @@ is in effect, in which case it is less.  */)
 {
   return build_marker (current_buffer, ZV, ZV_BYTE);
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("gap-position", Fgap_position, Sgap_position, 0, 0, 0,
        doc: /* Return the position of the gap, in the current buffer.
 See also `gap-size'.  */)
@@ -1132,7 +1182,9 @@ See also `gap-size'.  */)
   XSETFASTINT (temp, GPT);
   return temp;
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("gap-size", Fgap_size, Sgap_size, 0, 0, 0,
        doc: /* Return the size of the current buffer's gap.
 See also `gap-position'.  */)
@@ -1142,7 +1194,9 @@ See also `gap-position'.  */)
   XSETFASTINT (temp, GAP_SIZE);
   return temp;
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("position-bytes", Fposition_bytes, Sposition_bytes, 1, 1, 0,
        doc: /* Return the byte position for character position POSITION.
 If POSITION is out of range, the value is nil.  */)
@@ -1153,7 +1207,9 @@ If POSITION is out of range, the value is nil.  */)
     return Qnil;
   return make_number (CHAR_TO_BYTE (XINT (position)));
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("byte-to-position", Fbyte_to_position, Sbyte_to_position, 1, 1, 0,
        doc: /* Return the character position for byte position BYTEPOS.
 If BYTEPOS is out of range, the value is nil.  */)
@@ -1174,7 +1230,9 @@ If BYTEPOS is out of range, the value is nil.  */)
       pos_byte--;
   return make_number (BYTE_TO_CHAR (pos_byte));
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("following-char", Ffollowing_char, Sfollowing_char, 0, 0, 0,
        doc: /* Return the character following point, as a number.
 At the end of the buffer or accessible region, return 0.  */)
@@ -1187,7 +1245,9 @@ At the end of the buffer or accessible region, return 0.  */)
     XSETFASTINT (temp, FETCH_CHAR (PT_BYTE));
   return temp;
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("preceding-char", Fprevious_char, Sprevious_char, 0, 0, 0,
        doc: /* Return the character preceding point, as a number.
 At the beginning of the buffer or accessible region, return 0.  */)
@@ -1206,7 +1266,9 @@ At the beginning of the buffer or accessible region, return 0.  */)
     XSETFASTINT (temp, FETCH_BYTE (PT_BYTE - 1));
   return temp;
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("bobp", Fbobp, Sbobp, 0, 0, 0,
        doc: /* Return t if point is at the beginning of the buffer.
 If the buffer is narrowed, this means the beginning of the narrowed part.  */)
@@ -1216,7 +1278,9 @@ If the buffer is narrowed, this means the beginning of the narrowed part.  */)
     return Qt;
   return Qnil;
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("eobp", Feobp, Seobp, 0, 0, 0,
        doc: /* Return t if point is at the end of the buffer.
 If the buffer is narrowed, this means the end of the narrowed part.  */)
@@ -1226,7 +1290,9 @@ If the buffer is narrowed, this means the end of the narrowed part.  */)
     return Qt;
   return Qnil;
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("bolp", Fbolp, Sbolp, 0, 0, 0,
        doc: /* Return t if point is at the beginning of a line.  */)
   (void)
@@ -1235,7 +1301,9 @@ DEFUN ("bolp", Fbolp, Sbolp, 0, 0, 0,
     return Qt;
   return Qnil;
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("eolp", Feolp, Seolp, 0, 0, 0,
        doc: /* Return t if point is at the end of a line.
 `End of a line' includes point being at the end of the buffer.  */)
@@ -1245,7 +1313,9 @@ DEFUN ("eolp", Feolp, Seolp, 0, 0, 0,
     return Qt;
   return Qnil;
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("char-after", Fchar_after, Schar_after, 0, 1, 0,
        doc: /* Return character in current buffer at position POS.
 POS is an integer or a marker and defaults to point.
@@ -1277,7 +1347,9 @@ If POS is out of range, the value is nil.  */)
 
   return make_number (FETCH_CHAR (pos_byte));
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("char-before", Fchar_before, Schar_before, 0, 1, 0,
        doc: /* Return character in current buffer preceding position POS.
 POS is an integer or a marker and defaults to point.
@@ -1322,6 +1394,7 @@ If POS is out of range, the value is nil.  */)
     }
    return val;
 }
+#endif // IGNORE_RUST_PORT
 
 DEFUN ("user-login-name", Fuser_login_name, Suser_login_name, 0, 1, 0,
        doc: /* Return the name under which the user logged in, as a string.
@@ -1367,6 +1440,7 @@ This ignores the environment variables LOGNAME and USER, so it differs from
   return Vuser_real_login_name;
 }
 
+#if IGNORE_RUST_PORT
 DEFUN ("user-uid", Fuser_uid, Suser_uid, 0, 0, 0,
        doc: /* Return the effective uid of Emacs.
 Value is an integer or a float, depending on the value.  */)
@@ -1375,7 +1449,9 @@ Value is an integer or a float, depending on the value.  */)
   uid_t euid = geteuid ();
   return make_fixnum_or_float (euid);
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("user-real-uid", Fuser_real_uid, Suser_real_uid, 0, 0, 0,
        doc: /* Return the real uid of Emacs.
 Value is an integer or a float, depending on the value.  */)
@@ -1384,7 +1460,9 @@ Value is an integer or a float, depending on the value.  */)
   uid_t uid = getuid ();
   return make_fixnum_or_float (uid);
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("group-gid", Fgroup_gid, Sgroup_gid, 0, 0, 0,
        doc: /* Return the effective gid of Emacs.
 Value is an integer or a float, depending on the value.  */)
@@ -1393,7 +1471,9 @@ Value is an integer or a float, depending on the value.  */)
   gid_t egid = getegid ();
   return make_fixnum_or_float (egid);
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("group-real-gid", Fgroup_real_gid, Sgroup_real_gid, 0, 0, 0,
        doc: /* Return the real gid of Emacs.
 Value is an integer or a float, depending on the value.  */)
@@ -1402,6 +1482,7 @@ Value is an integer or a float, depending on the value.  */)
   gid_t gid = getgid ();
   return make_fixnum_or_float (gid);
 }
+#endif // IGNORE_RUST_PORT
 
 DEFUN ("user-full-name", Fuser_full_name, Suser_full_name, 0, 1, 0,
        doc: /* Return the full name of the user logged in, as a string.
@@ -1475,6 +1556,7 @@ DEFUN ("system-name", Fsystem_name, Ssystem_name, 0, 0, 0,
   return Vsystem_name;
 }
 
+#if IGNORE_RUST_PORT
 DEFUN ("emacs-pid", Femacs_pid, Semacs_pid, 0, 0, 0,
        doc: /* Return the process ID of Emacs, as a number.  */)
   (void)
@@ -1482,6 +1564,7 @@ DEFUN ("emacs-pid", Femacs_pid, Semacs_pid, 0, 0, 0,
   pid_t pid = getpid ();
   return make_fixnum_or_float (pid);
 }
+#endif // IGNORE_RUST_PORT
 
 
 
@@ -1607,6 +1690,7 @@ time_arith (Lisp_Object a, Lisp_Object b,
   return val;
 }
 
+#if IGNORE_RUST_PORT
 DEFUN ("time-add", Ftime_add, Stime_add, 2, 2, 0,
        doc: /* Return the sum of two time values A and B, as a time value.
 A nil value for either argument stands for the current time.
@@ -1615,7 +1699,9 @@ See `current-time-string' for the various forms of a time value.  */)
 {
   return time_arith (a, b, time_add);
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("time-subtract", Ftime_subtract, Stime_subtract, 2, 2, 0,
        doc: /* Return the difference between two time values A and B, as a time value.
 Use `float-time' to convert the difference into elapsed seconds.
@@ -1625,7 +1711,9 @@ See `current-time-string' for the various forms of a time value.  */)
 {
   return time_arith (a, b, time_subtract);
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("time-less-p", Ftime_less_p, Stime_less_p, 2, 2, 0,
        doc: /* Return non-nil if time value T1 is earlier than time value T2.
 A nil value for either argument stands for the current time.
@@ -1641,7 +1729,7 @@ See `current-time-string' for the various forms of a time value.  */)
 	   : a.ps < b.ps)
 	  ? Qt : Qnil);
 }
-
+#endif // IGNORE_RUST_PORT
 
 DEFUN ("get-internal-run-time", Fget_internal_run_time, Sget_internal_run_time,
        0, 0, 0,
@@ -1934,6 +2022,7 @@ lisp_seconds_argument (Lisp_Object specified_time)
   return (t.hi << LO_TIME_BITS) + t.lo;
 }
 
+#if IGNORE_RUST_PORT
 DEFUN ("float-time", Ffloat_time, Sfloat_time, 0, 1, 0,
        doc: /* Return the current time, as a float number of seconds since the epoch.
 If SPECIFIED-TIME is given, it is the time to convert to float
@@ -1955,6 +2044,7 @@ or (if you need time as a string) `format-time-string'.  */)
     invalid_time ();
   return make_float (t);
 }
+#endif // IGNORE_RUST_PORT
 
 /* Write information into buffer S of size MAXSIZE, according to the
    FORMAT of length FORMAT_LEN, using time information taken from *TP.
@@ -2499,6 +2589,7 @@ emacs_setenv_TZ (const char *tzstring)
   return 0;
 }
 
+#if IGNORE_RUST_PORT
 /* Insert NARGS Lisp objects in the array ARGS by calling INSERT_FUNC
    (if a type of object is Lisp_Int) or INSERT_FROM_STRING_FUNC (if a
    type of object is Lisp_String).  INHERIT is passed to
@@ -2544,6 +2635,7 @@ general_insert_function (void (*insert_func)
 	wrong_type_argument (Qchar_or_string_p, val);
     }
 }
+#endif // IGNORE_RUST_PORT
 
 void
 insert1 (Lisp_Object arg)
@@ -2551,7 +2643,7 @@ insert1 (Lisp_Object arg)
   Finsert (1, &arg);
 }
 
-
+#if IGNORE_RUST_PORT
 DEFUN ("insert", Finsert, Sinsert, 0, MANY, 0,
        doc: /* Insert the arguments, either strings or characters, at point.
 Point and after-insertion markers move forward to end up
@@ -2574,7 +2666,9 @@ usage: (insert &rest ARGS)  */)
   general_insert_function (insert, insert_from_string, 0, nargs, args);
   return Qnil;
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("insert-and-inherit", Finsert_and_inherit, Sinsert_and_inherit,
    0, MANY, 0,
        doc: /* Insert the arguments at point, inheriting properties from adjoining text.
@@ -2594,7 +2688,9 @@ usage: (insert-and-inherit &rest ARGS)  */)
 			   nargs, args);
   return Qnil;
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("insert-before-markers", Finsert_before_markers, Sinsert_before_markers, 0, MANY, 0,
        doc: /* Insert strings or characters at point, relocating markers after the text.
 Point and markers move forward to end up after the inserted text.
@@ -2616,7 +2712,9 @@ usage: (insert-before-markers &rest ARGS)  */)
 			   nargs, args);
   return Qnil;
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("insert-before-markers-and-inherit", Finsert_and_inherit_before_markers,
   Sinsert_and_inherit_before_markers, 0, MANY, 0,
        doc: /* Insert text at point, relocating markers and inheriting properties.
@@ -2635,7 +2733,9 @@ usage: (insert-before-markers-and-inherit &rest ARGS)  */)
 			   nargs, args);
   return Qnil;
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("insert-char", Finsert_char, Sinsert_char, 1, 3,
        "(list (read-char-by-name \"Insert character (Unicode name or hex): \")\
               (prefix-numeric-value current-prefix-arg)\
@@ -2706,7 +2806,9 @@ called interactively, INHERIT is t.  */)
     insert (string, n);
   return Qnil;
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("insert-byte", Finsert_byte, Sinsert_byte, 2, 3, 0,
        doc: /* Insert COUNT (second arg) copies of BYTE (first arg).
 Both arguments are required.
@@ -2728,7 +2830,7 @@ from adjoining text, if those properties are sticky.  */)
     XSETFASTINT (byte, BYTE8_TO_CHAR (XINT (byte)));
   return Finsert_char (byte, count, inherit);
 }
-
+#endif // IGNORE_RUST_PORT
 
 /* Making strings from buffer contents.  */
 
@@ -2846,6 +2948,7 @@ update_buffer_properties (ptrdiff_t start, ptrdiff_t end)
     }
 }
 
+#if IGNORE_RUST_PORT
 DEFUN ("buffer-substring", Fbuffer_substring, Sbuffer_substring, 2, 2, 0,
        doc: /* Return the contents of part of the current buffer as a string.
 The two arguments START and END are character positions;
@@ -2865,7 +2968,9 @@ use `buffer-substring-no-properties' instead.  */)
 
   return make_buffer_string (b, e, 1);
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("buffer-substring-no-properties", Fbuffer_substring_no_properties,
        Sbuffer_substring_no_properties, 2, 2, 0,
        doc: /* Return the characters of part of the buffer, without the text properties.
@@ -2881,7 +2986,9 @@ they can be in either order.  */)
 
   return make_buffer_string (b, e, 0);
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("buffer-string", Fbuffer_string, Sbuffer_string, 0, 0, 0,
        doc: /* Return the contents of the current buffer as a string.
 If narrowing is in effect, this function returns only the visible part
@@ -2890,7 +2997,9 @@ of the buffer.  */)
 {
   return make_buffer_string_both (BEGV, BEGV_BYTE, ZV, ZV_BYTE, 1);
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("insert-buffer-substring", Finsert_buffer_substring, Sinsert_buffer_substring,
        1, 3, 0,
        doc: /* Insert before point a substring of the contents of BUFFER.
@@ -2947,6 +3056,7 @@ using `string-make-multibyte' or `string-make-unibyte', which see.  */)
   insert_from_buffer (bp, b, e - b, 0);
   return Qnil;
 }
+#endif // IGNORE_RUST_PORT
 
 DEFUN ("compare-buffer-substrings", Fcompare_buffer_substrings, Scompare_buffer_substrings,
        6, 6, 0,
@@ -3107,7 +3217,6 @@ determines whether case is significant or ignored.  */)
   /* Same length too => they are equal.  */
   return make_number (0);
 }
-
 
 /* Set up necessary definitions for diffseq.h; see comments in
    diffseq.h for explanation.  */
@@ -3796,6 +3905,7 @@ It returns the number of characters changed.  */)
   return make_number (cnt);
 }
 
+#if IGNORE_RUST_PORT
 DEFUN ("delete-region", Fdelete_region, Sdelete_region, 2, 2, "r",
        doc: /* Delete the text between START and END.
 If called interactively, delete the region between point and mark.
@@ -3806,7 +3916,9 @@ This command deletes buffer text without modifying the kill ring.  */)
   del_range (XINT (start), XINT (end));
   return Qnil;
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("delete-and-extract-region", Fdelete_and_extract_region,
        Sdelete_and_extract_region, 2, 2, 0,
        doc: /* Delete the text between START and END and return it.  */)
@@ -3817,7 +3929,9 @@ DEFUN ("delete-and-extract-region", Fdelete_and_extract_region,
     return empty_unibyte_string;
   return del_range_1 (XINT (start), XINT (end), 1, 1);
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("widen", Fwiden, Swiden, 0, 0, "",
        doc: /* Remove restrictions (narrowing) from current buffer.
 This allows the buffer's full text to be seen and edited.  */)
@@ -3832,6 +3946,7 @@ This allows the buffer's full text to be seen and edited.  */)
   invalidate_current_column ();
   return Qnil;
 }
+#endif // IGNORE_RUST_PORT
 
 DEFUN ("narrow-to-region", Fnarrow_to_region, Snarrow_to_region, 2, 2, "r",
        doc: /* Restrict editing in this buffer to the current region.
@@ -3964,6 +4079,7 @@ save_restriction_restore (Lisp_Object data)
     set_buffer_internal (cur);
 }
 
+#if IGNORE_RUST_PORT
 DEFUN ("save-restriction", Fsave_restriction, Ssave_restriction, 0, UNEVALLED, 0,
        doc: /* Execute BODY, saving and restoring current buffer's restrictions.
 The buffer's restrictions make parts of the beginning and end invisible.
@@ -3990,7 +4106,9 @@ usage: (save-restriction &rest BODY)  */)
   val = Fprogn (body);
   return unbind_to (count, val);
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("message", Fmessage, Smessage, 1, MANY, 0,
        doc: /* Display a message at the bottom of the screen.
 The message also goes into the `*Messages*' buffer, if `message-log-max'
@@ -4027,7 +4145,9 @@ usage: (message FORMAT-STRING &rest ARGS)  */)
       return val;
     }
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("message-box", Fmessage_box, Smessage_box, 1, MANY, 0,
        doc: /* Display a message, in a dialog box if possible.
 If a dialog box is not available, use the echo area.
@@ -4057,7 +4177,9 @@ usage: (message-box FORMAT-STRING &rest ARGS)  */)
       return val;
     }
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("message-or-box", Fmessage_or_box, Smessage_or_box, 1, MANY, 0,
        doc: /* Display a message in a dialog box or in the echo area.
 If this command was invoked with the mouse, use a dialog box if
@@ -4078,15 +4200,18 @@ usage: (message-or-box FORMAT-STRING &rest ARGS)  */)
     return Fmessage_box (nargs, args);
   return Fmessage (nargs, args);
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("current-message", Fcurrent_message, Scurrent_message, 0, 0, 0,
        doc: /* Return the string currently displayed in the echo area, or nil if none.  */)
   (void)
 {
   return current_message ();
 }
+#endif // IGNORE_RUST_PORT
 
-
+#if IGNORE_RUST_PORT
 DEFUN ("propertize", Fpropertize, Spropertize, 1, MANY, 0,
        doc: /* Return a copy of STRING with text properties added.
 First argument is the string to copy.
@@ -4116,6 +4241,7 @@ usage: (propertize STRING &rest PROPERTIES)  */)
 			properties, string);
   return string;
 }
+#endif // IGNORE_RUST_PORT
 
 /* Convert the prefix of STR from ASCII decimal digits to a number.
    Set *STR_END to the address of the first non-digit.  Return the
@@ -4134,6 +4260,7 @@ str2num (char *str, char **str_end)
   return n;
 }
 
+#if IGNORE_RUST_PORT
 DEFUN ("format", Fformat, Sformat, 1, MANY, 0,
        doc: /* Format a string out of a format-string and arguments.
 The first argument is a format control string.
@@ -4207,7 +4334,9 @@ usage: (format STRING &rest OBJECTS)  */)
 {
   return styled_format (nargs, args, false);
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("format-message", Fformat_message, Sformat_message, 1, MANY, 0,
        doc: /* Format a string out of a format-string and arguments.
 The first argument is a format control string.
@@ -4223,6 +4352,7 @@ usage: (format-message STRING &rest OBJECTS)  */)
 {
   return styled_format (nargs, args, true);
 }
+#endif // IGNORE_RUST_PORT
 
 /* Implement ‘format-message’ if MESSAGE is true, ‘format’ otherwise.  */
 
@@ -5050,6 +5180,7 @@ styled_format (ptrdiff_t nargs, Lisp_Object *args, bool message)
   return val;
 }
 
+#if IGNORE_RUST_PORT
 DEFUN ("char-equal", Fchar_equal, Schar_equal, 2, 2, 0,
        doc: /* Return t if two characters match, optionally ignoring case.
 Both arguments must be characters (i.e. integers).
@@ -5086,6 +5217,7 @@ Case is ignored if `case-fold-search' is non-nil in the current buffer.  */)
 
   return (downcase (i1) == downcase (i2) ? Qt :  Qnil);
 }
+#endif // IGNORE_RUST_PORT
 
 /* Transpose the markers in two regions of the current buffer, and
    adjust the ones between them if necessary (i.e.: if the regions
@@ -5526,6 +5658,7 @@ functions if all the text being accessed has this property.  */);
   DEFVAR_LISP ("operating-system-release", Voperating_system_release,
 	       doc: /* The release of the operating system Emacs is running on.  */);
 
+#if IGNORE_RUST_PORT
   defsubr (&Spropertize);
   defsubr (&Schar_equal);
   defsubr (&Sgoto_char);
@@ -5535,13 +5668,16 @@ functions if all the text being accessed has this property.  */);
   defsubr (&Sbuffer_substring);
   defsubr (&Sbuffer_substring_no_properties);
   defsubr (&Sbuffer_string);
+#endif // IGNORE_RUST_PORT
   defsubr (&Sget_pos_property);
 
+#if IGNORE_RUST_PORT
   defsubr (&Spoint_marker);
   defsubr (&Smark_marker);
   defsubr (&Spoint);
   defsubr (&Sregion_beginning);
   defsubr (&Sregion_end);
+#endif // IGNORE_RUST_PORT
 
   /* Symbol for the text property used to mark fields.  */
   DEFSYM (Qfield, "field");
@@ -5549,19 +5685,26 @@ functions if all the text being accessed has this property.  */);
   /* A special value for Qfield properties.  */
   DEFSYM (Qboundary, "boundary");
 
+#if IGNORE_RUST_PORT
   defsubr (&Sfield_beginning);
   defsubr (&Sfield_end);
   defsubr (&Sfield_string);
   defsubr (&Sfield_string_no_properties);
   defsubr (&Sdelete_field);
   defsubr (&Sconstrain_to_field);
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
   defsubr (&Sline_beginning_position);
   defsubr (&Sline_end_position);
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
   defsubr (&Ssave_excursion);
   defsubr (&Ssave_current_buffer);
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
   defsubr (&Sbuffer_size);
   defsubr (&Spoint_max);
   defsubr (&Spoint_min);
@@ -5571,7 +5714,9 @@ functions if all the text being accessed has this property.  */);
   defsubr (&Sgap_size);
   defsubr (&Sposition_bytes);
   defsubr (&Sbyte_to_position);
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
   defsubr (&Sbobp);
   defsubr (&Seobp);
   defsubr (&Sbolp);
@@ -5586,44 +5731,59 @@ functions if all the text being accessed has this property.  */);
   defsubr (&Sinsert_and_inherit_before_markers);
   defsubr (&Sinsert_char);
   defsubr (&Sinsert_byte);
+#endif // IGNORE_RUST_PORT
 
   defsubr (&Suser_login_name);
   defsubr (&Suser_real_login_name);
+#if IGNORE_RUST_PORT
   defsubr (&Suser_uid);
   defsubr (&Suser_real_uid);
   defsubr (&Sgroup_gid);
   defsubr (&Sgroup_real_gid);
+#endif // IGNORE_RUST_PORT
   defsubr (&Suser_full_name);
+#if IGNORE_RUST_PORT
   defsubr (&Semacs_pid);
   defsubr (&Scurrent_time);
   defsubr (&Stime_add);
   defsubr (&Stime_subtract);
   defsubr (&Stime_less_p);
+#endif // IGNORE_RUST_PORT
   defsubr (&Sget_internal_run_time);
   defsubr (&Sformat_time_string);
+#if IGNORE_RUST_PORT
   defsubr (&Sfloat_time);
+#endif // IGNORE_RUST_PORT
   defsubr (&Sdecode_time);
   defsubr (&Sencode_time);
   defsubr (&Scurrent_time_string);
   defsubr (&Scurrent_time_zone);
   defsubr (&Sset_time_zone_rule);
   defsubr (&Ssystem_name);
+#if IGNORE_RUST_PORT
   defsubr (&Smessage);
   defsubr (&Smessage_box);
   defsubr (&Smessage_or_box);
   defsubr (&Scurrent_message);
   defsubr (&Sformat);
   defsubr (&Sformat_message);
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
   defsubr (&Sinsert_buffer_substring);
+#endif // IGNORE_RUST_PORT
   defsubr (&Scompare_buffer_substrings);
   defsubr (&Sreplace_buffer_contents);
   defsubr (&Ssubst_char_in_region);
   defsubr (&Stranslate_region_internal);
+#if IGNORE_RUST_PORT
   defsubr (&Sdelete_region);
   defsubr (&Sdelete_and_extract_region);
   defsubr (&Swiden);
+#endif // IGNORE_RUST_PORT
   defsubr (&Snarrow_to_region);
+#if IGNORE_RUST_PORT
   defsubr (&Ssave_restriction);
+#endif // IGNORE_RUST_PORT
   defsubr (&Stranspose_regions);
 }

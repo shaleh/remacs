@@ -93,9 +93,7 @@ static bool scrolling (struct frame *);
 static void set_window_cursor_after_update (struct window *);
 static void adjust_frame_glyphs_for_window_redisplay (struct frame *);
 static void adjust_frame_glyphs_for_frame_redisplay (struct frame *);
-#if IGNORE_RUST_PORT
-static void set_window_update_flags (struct window *w, bool on_p);
-#endif // IGNORE_RUST_PORT
+extern void set_window_update_flags (struct window *w, bool on_p);
 
 /* True means last display completed.  False means it was preempted.  */
 

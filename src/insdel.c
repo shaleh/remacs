@@ -651,6 +651,7 @@ copy_text (const unsigned char *from_addr, unsigned char *to_addr,
     }
 }
 
+#if IGNORE_RUST_PORT
 /* Insert a string of specified length before point.
    This function judges multibyteness based on
    enable_multibyte_characters in the current buffer;
@@ -671,7 +672,9 @@ insert (const char *string, ptrdiff_t nbytes)
       update_compositions (opoint, PT, CHECK_BORDER);
     }
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 /* Likewise, but inherit text properties from neighboring characters.  */
 
 void
@@ -686,6 +689,7 @@ insert_and_inherit (const char *string, ptrdiff_t nbytes)
       update_compositions (opoint, PT, CHECK_BORDER);
     }
 }
+#endif // IGNORE_RUST_PORT
 
 /* Insert the character C before point.  Do not inherit text properties.  */
 
@@ -714,6 +718,7 @@ insert_string (const char *s)
   insert (s, strlen (s));
 }
 
+#if IGNORE_RUST_PORT
 /* Like `insert' except that all markers pointing at the place where
    the insertion happens are adjusted to point after it.
    Don't use this function to insert part of a Lisp string,
@@ -731,7 +736,9 @@ insert_before_markers (const char *string, ptrdiff_t nbytes)
       update_compositions (opoint, PT, CHECK_BORDER);
     }
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 /* Likewise, but inherit text properties from neighboring characters.  */
 
 void
@@ -747,6 +754,7 @@ insert_before_markers_and_inherit (const char *string,
       update_compositions (opoint, PT, CHECK_BORDER);
     }
 }
+#endif // IGNORE_RUST_PORT
 
 #ifdef BYTE_COMBINING_DEBUG
 
@@ -937,6 +945,7 @@ insert_1_both (const char *string,
   check_markers ();
 }
 
+#if IGNORE_RUST_PORT
 /* Insert the part of the text of STRING, a Lisp object assumed to be
    of type string, consisting of the LENGTH characters (LENGTH_BYTE bytes)
    starting at position POS / POS_BYTE.  If the text of STRING has properties,
@@ -960,7 +969,9 @@ insert_from_string (Lisp_Object string, ptrdiff_t pos, ptrdiff_t pos_byte,
   signal_after_change (opoint, 0, PT - opoint);
   update_compositions (opoint, PT, CHECK_BORDER);
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 /* Like `insert_from_string' except that all markers pointing
    at the place where the insertion happens are adjusted to point after it.  */
 
@@ -980,6 +991,7 @@ insert_from_string_before_markers (Lisp_Object string,
   signal_after_change (opoint, 0, PT - opoint);
   update_compositions (opoint, PT, CHECK_BORDER);
 }
+#endif // IGNORE_RUST_PORT
 
 /* Subroutine of the insertion functions above.  */
 

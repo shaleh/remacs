@@ -948,7 +948,7 @@ pub fn message_or_box(args: &mut [LispObject]) -> LispObject {
 
 /// Return the string currently displayed in the echo area, or nil if none.
 #[lisp_fn(name = "current-message", c_name = "current_message")]
-pub fn lisp_current_message() -> LispObject {
+pub fn current_message_lisp() -> LispObject {
     unsafe { current_message() }
 }
 
@@ -1616,7 +1616,7 @@ pub unsafe extern "C" fn insert(string: *const c_char, nbytes: ptrdiff_t) {
     }
 }
 
-/// A version of inset that takes a slice instead of pointer and length
+/// A version of insert that takes a slice instead of pointer and length
 pub fn insert_slice(string: &[u8]) {
     unsafe { insert(string.as_ptr() as *const c_char, string.len() as isize) }
 }
