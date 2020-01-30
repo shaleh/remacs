@@ -31,6 +31,7 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 
 static int internal_self_insert (int, EMACS_INT);
 
+#if IGNORE_RUST_PORT
 DEFUN ("forward-point", Fforward_point, Sforward_point, 1, 1, 0,
        doc: /* Return buffer position N characters after (before if N negative) point.  */)
   (Lisp_Object n)
@@ -39,6 +40,7 @@ DEFUN ("forward-point", Fforward_point, Sforward_point, 1, 1, 0,
 
   return make_number (PT + XINT (n));
 }
+#endif // IGNORE_RUST_POST
 
 /* Add N to point; or subtract N if FORWARD is false.  N defaults to 1.
    Validate the new location.  Return nil.  */
@@ -75,6 +77,7 @@ move_point (Lisp_Object n, bool forward)
   return Qnil;
 }
 
+#if IGNORE_RUST_PORT
 DEFUN ("forward-char", Fforward_char, Sforward_char, 0, 1, "^p",
        doc: /* Move point N characters forward (backward if N is negative).
 On reaching end or beginning of buffer, stop and signal error.
@@ -88,7 +91,9 @@ right or to the left on the screen.  This is in contrast with
 {
   return move_point (n, 1);
 }
+#endif // IGNORE_RUST_POST
 
+#if IGNORE_RUST_PORT
 DEFUN ("backward-char", Fbackward_char, Sbackward_char, 0, 1, "^p",
        doc: /* Move point N characters backward (forward if N is negative).
 On attempt to pass beginning or end of buffer, stop and signal error.
@@ -102,7 +107,9 @@ right or to the left on the screen.  This is in contrast with
 {
   return move_point (n, 0);
 }
+#endif // IGNORE_RUST_POST
 
+#if IGNORE_RUST_PORT
 DEFUN ("forward-line", Fforward_line, Sforward_line, 0, 1, "^p",
        doc: /* Move N lines forward (backward if N is negative).
 Precisely, if point is on line I, move to the start of line I + N
@@ -144,7 +151,9 @@ go to its beginning.  */)
 
   return make_number (count <= 0 ? - shortage : shortage);
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("beginning-of-line", Fbeginning_of_line, Sbeginning_of_line, 0, 1, "^p",
        doc: /* Move point to beginning of current line (in the logical order).
 With argument N not nil or 1, move forward N - 1 lines first.
@@ -168,7 +177,9 @@ instead.  For instance, `(forward-line 0)' does the same thing as
 
   return Qnil;
 }
+#endif // IGNORE_RUST_POST
 
+#if IGNORE_RUST_PORT
 DEFUN ("end-of-line", Fend_of_line, Send_of_line, 0, 1, "^p",
        doc: /* Move point to end of current line (in the logical order).
 With argument N not nil or 1, move forward N - 1 lines first.
@@ -217,7 +228,9 @@ to t.  */)
 
   return Qnil;
 }
+#endif // IGNORE_RUST_POST
 
+#if IGNORE_RUST_PORT
 DEFUN ("delete-char", Fdelete_char, Sdelete_char, 1, 2, "p\nP",
        doc: /* Delete the following N characters (previous if N is negative).
 Optional second arg KILLFLAG non-nil means kill instead (save in kill ring).
@@ -259,7 +272,9 @@ because it respects values of `delete-active-region' and `overwrite-mode'.  */)
     }
   return Qnil;
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 /* Note that there's code in command_loop_1 which typically avoids
    calling this.  */
 DEFUN ("self-insert-command", Fself_insert_command, Sself_insert_command, 1, 1, "p",
@@ -296,6 +311,7 @@ a non-nil value for the inserted character.  At the end, it runs
 
   return Qnil;
 }
+#endif // IGNORE_RUST_PORT
 
 /* Insert N times character C
 
@@ -492,6 +508,7 @@ internal_self_insert (int c, EMACS_INT n)
 
 /* module initialization */
 
+#if IGNORE_RUST_PORT
 void
 syms_of_cmds (void)
 {
@@ -524,7 +541,9 @@ This is run after inserting the character.  */);
   defsubr (&Sdelete_char);
   defsubr (&Sself_insert_command);
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 void
 keys_of_cmds (void)
 {
@@ -545,3 +564,4 @@ keys_of_cmds (void)
   initial_define_key (global_map, Ctl ('E'), "end-of-line");
   initial_define_key (global_map, Ctl ('F'), "forward-char");
 }
+#endif // IGNORE_RUST_PORT

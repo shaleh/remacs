@@ -276,7 +276,7 @@ usage: (call-process PROGRAM &optional INFILE DESTINATION DISPLAY &rest ARGS)  *
   record_unwind_protect_int (close_file_unwind, filefd);
   return unbind_to (count, call_process (nargs, args, filefd, -1));
 }
-#endif // IGNORE_RUST_POST
+#endif // IGNORE_RUST_PORT
 
 /* Like Fcall_process (NARGS, ARGS), except use FILEFD as the input file.
 

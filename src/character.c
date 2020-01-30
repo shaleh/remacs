@@ -217,6 +217,7 @@ translate_char (Lisp_Object table, int c)
   return c;
 }
 
+#if IGNORE_RUST_PORT
 DEFUN ("characterp", Fcharacterp, Scharacterp, 1, 2, 0,
        doc: /* Return non-nil if OBJECT is a character.
 In Emacs Lisp, characters are represented by character codes, which
@@ -228,7 +229,9 @@ usage: (characterp OBJECT)  */
 {
   return (CHARACTERP (object) ? Qt : Qnil);
 }
+#endif // IGNORE_RUST_POST
 
+#if IGNORE_RUST_PORT
 DEFUN ("max-char", Fmax_char, Smax_char, 0, 0, 0,
        doc: /* Return the character of the maximum code.  */
        attributes: const)
@@ -236,7 +239,9 @@ DEFUN ("max-char", Fmax_char, Smax_char, 0, 0, 0,
 {
   return make_number (MAX_CHAR);
 }
+#endif // IGNORE_RUST_POST
 
+#if IGNORE_RUST_PORT
 DEFUN ("unibyte-char-to-multibyte", Funibyte_char_to_multibyte,
        Sunibyte_char_to_multibyte, 1, 1, 0,
        doc: /* Convert the byte CH to multibyte character.  */)
@@ -251,7 +256,9 @@ DEFUN ("unibyte-char-to-multibyte", Funibyte_char_to_multibyte,
   MAKE_CHAR_MULTIBYTE (c);
   return make_number (c);
 }
+#endif // IGNORE_RUST_POST
 
+#if IGNORE_RUST_PORT
 DEFUN ("multibyte-char-to-unibyte", Fmultibyte_char_to_unibyte,
        Smultibyte_char_to_unibyte, 1, 1, 0,
        doc: /* Convert the multibyte character CH to a byte.
@@ -272,7 +279,7 @@ If the multibyte character does not represent a byte, return -1.  */)
       return make_number (cu);
     }
 }
-
+#endif // IGNORE_RUST_POST
 
 /* Return width (columns) of C considering the buffer display table DP. */
 
@@ -892,6 +899,7 @@ usage: (unibyte-string &rest BYTES)  */)
   return str;
 }
 
+#if IGNORE_RUST_PORT
 DEFUN ("char-resolve-modifiers", Fchar_resolve_modifiers,
        Schar_resolve_modifiers, 1, 1, 0,
        doc: /* Resolve modifiers in the character CHAR.
@@ -906,6 +914,7 @@ usage: (char-resolve-modifiers CHAR)  */)
   c = XINT (character);
   return make_number (char_resolve_modifier_mask (c));
 }
+#endif // IGNORE_RUST_POST
 
 DEFUN ("get-byte", Fget_byte, Sget_byte, 0, 2, 0,
        doc: /* Return a byte value of a character at point.
@@ -1076,21 +1085,27 @@ syms_of_character (void)
     hexdigit[i] -= i != '0' && !hexdigit[i];
 #endif
 
+#if IGNORE_RUST_PORT
   DEFSYM (Qcharacterp, "characterp");
+#endif // IGNORE_RUST_POST
   DEFSYM (Qauto_fill_chars, "auto-fill-chars");
 
   staticpro (&Vchar_unify_table);
   Vchar_unify_table = Qnil;
 
+#if IGNORE_RUST_PORT
   defsubr (&Smax_char);
   defsubr (&Scharacterp);
   defsubr (&Sunibyte_char_to_multibyte);
   defsubr (&Smultibyte_char_to_unibyte);
+#endif // IGNORE_RUST_POST
   defsubr (&Schar_width);
   defsubr (&Sstring_width);
   defsubr (&Sstring);
   defsubr (&Sunibyte_string);
+#if IGNORE_RUST_PORT
   defsubr (&Schar_resolve_modifiers);
+#endif // IGNORE_RUST_POST
   defsubr (&Sget_byte);
 
   DEFVAR_LISP ("translation-table-vector",  Vtranslation_table_vector,

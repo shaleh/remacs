@@ -4081,6 +4081,7 @@ extern struct re_pattern_buffer *compile_pattern (Lisp_Object,
 						  Lisp_Object, bool, bool);
 extern ptrdiff_t fast_string_match_internal (Lisp_Object, Lisp_Object,
 					     Lisp_Object);
+extern Lisp_Object get_canonical_case_table (void);
 
 INLINE ptrdiff_t
 fast_string_match (Lisp_Object regexp, Lisp_Object string)
@@ -4091,7 +4092,7 @@ fast_string_match (Lisp_Object regexp, Lisp_Object string)
 INLINE ptrdiff_t
 fast_string_match_ignore_case (Lisp_Object regexp, Lisp_Object string)
 {
-  return fast_string_match_internal (regexp, string, Vascii_canon_table);
+  return fast_string_match_internal (regexp, string, get_canonical_case_table());
 }
 
 extern ptrdiff_t fast_c_string_match_ignore_case (Lisp_Object, const char *,

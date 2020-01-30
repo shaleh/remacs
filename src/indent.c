@@ -52,7 +52,7 @@ ptrdiff_t last_known_column_point;
 EMACS_INT last_known_column_modified;
 
 static ptrdiff_t current_column_1 (void);
-static ptrdiff_t position_indentation (ptrdiff_t);
+ptrdiff_t position_indentation (ptrdiff_t);
 
 /* Get the display table to use for the current buffer.  */
 

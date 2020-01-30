@@ -101,4 +101,6 @@ pub fn char_resolve_modifiers(character: LispObject) -> EmacsInt {
     char_resolve_modifier_mask(character.into())
 }
 
+def_lisp_sym!(Qcharacterp, "characterp");
+
 include!(concat!(env!("OUT_DIR"), "/character_exports.rs"));

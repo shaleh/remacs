@@ -4014,7 +4014,7 @@ unchain_overlay (struct Lisp_Overlay *list, struct Lisp_Overlay *overlay)
 
 /* Remove OVERLAY from both overlay lists of B.  */
 
-static void
+void
 unchain_both (struct buffer *b, Lisp_Object overlay)
 {
   struct Lisp_Overlay *ov = XOVERLAY (overlay);

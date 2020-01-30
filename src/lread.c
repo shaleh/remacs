@@ -3989,11 +3989,11 @@ read_list (bool flag, Lisp_Object readcharfun)
     }
 }
 
-static Lisp_Object initial_obarray;
+Lisp_Object initial_obarray;
 
 /* `oblookup' stores the bucket number here, for the sake of Funintern.  */
 
-static size_t oblookup_last_bucket_number;
+size_t oblookup_last_bucket_number;
 
 /* Get an error if OBARRAY is not an obarray.
    If it is one, return it.  */
@@ -4301,6 +4301,7 @@ init_obarray (void)
   Vobarray = Fmake_vector (make_number (OBARRAY_SIZE), make_number (0));
   initial_obarray = Vobarray;
   staticpro (&initial_obarray);
+  oblookup_last_bucket_number = 0;
 
   for (int i = 0; i < ARRAYELTS (lispsym); i++)
     define_symbol (builtin_lisp_symbol (i), defsym_name[i]);

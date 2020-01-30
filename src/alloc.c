@@ -3646,7 +3646,7 @@ static union Lisp_Misc *marker_free_list;
 
 /* Return a newly allocated Lisp_Misc object of specified TYPE.  */
 
-static Lisp_Object
+Lisp_Object
 allocate_misc (enum Lisp_Misc_Type type)
 {
   Lisp_Object val;

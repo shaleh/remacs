@@ -172,7 +172,7 @@ it defaults to the current buffer's category table.  */)
 
 
 /* Category-table staff.  */
-
+#if IGNORE_RUST_PORT
 DEFUN ("category-table-p", Fcategory_table_p, Scategory_table_p, 1, 1, 0,
        doc: /* Return t if ARG is a category table.  */)
   (Lisp_Object arg)
@@ -182,6 +182,7 @@ DEFUN ("category-table-p", Fcategory_table_p, Scategory_table_p, 1, 1, 0,
     return Qt;
   return Qnil;
 }
+#endif // IGNORE_RUST_POST
 
 /* If TABLE is nil, return the current category table.  If TABLE is
    not nil, check the validity of TABLE as a category table.  If
@@ -197,6 +198,7 @@ check_category_table (Lisp_Object table)
   return table;
 }
 
+#if IGNORE_RUST_PORT
 DEFUN ("category-table", Fcategory_table, Scategory_table, 0, 0, 0,
        doc: /* Return the current category table.
 This is the one specified by the current buffer.  */)
@@ -204,6 +206,7 @@ This is the one specified by the current buffer.  */)
 {
   return BVAR (current_buffer, category_table);
 }
+#endif // IGNORE_RUST_POST
 
 DEFUN ("standard-category-table", Fstandard_category_table,
    Sstandard_category_table, 0, 0, 0,
@@ -504,8 +507,10 @@ See the documentation of the variable `word-combining-categories'.  */);
   defsubr (&Sdefine_category);
   defsubr (&Scategory_docstring);
   defsubr (&Sget_unused_category);
+#if IGNORE_RUST_PORT
   defsubr (&Scategory_table_p);
   defsubr (&Scategory_table);
+#endif // IGNORE_RUST_POST
   defsubr (&Sstandard_category_table);
   defsubr (&Scopy_category_table);
   defsubr (&Smake_category_table);

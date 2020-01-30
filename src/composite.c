@@ -1789,6 +1789,7 @@ for the composition.  See `compose-region' for more details.  */)
   return Qnil;
 }
 
+#if IGNORE_RUST_PORT
 DEFUN ("compose-string-internal", Fcompose_string_internal,
        Scompose_string_internal, 3, 5, 0,
        doc: /* Internal use only.
@@ -1807,6 +1808,7 @@ for the composition.  See `compose-string' for more details.  */)
   compose_text (from, to, components, modification_func, string);
   return string;
 }
+#endif // IGNORE_RUST_PORT
 
 DEFUN ("find-composition-internal", Ffind_composition_internal,
        Sfind_composition_internal, 4, 4, 0,
@@ -1993,7 +1995,9 @@ See also the documentation of `auto-composition-mode'.  */);
   Vcomposition_function_table = Fmake_char_table (Qnil, Qnil);
 
   defsubr (&Scompose_region_internal);
+#if IGNORE_RUST_PORT
   defsubr (&Scompose_string_internal);
+#endif // IGNORE_RUST_PORT
   defsubr (&Sfind_composition_internal);
   defsubr (&Scomposition_get_gstring);
   defsubr (&Sclear_composition_cache);

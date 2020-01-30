@@ -18,6 +18,8 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 
+#if IGNORE_RUST_PORT
+
 #include <config.h>
 
 #include "lisp.h"
@@ -300,3 +302,5 @@ syms_of_casetab (void)
   defsubr (&Sset_case_table);
   defsubr (&Sset_standard_case_table);
 }
+
+#endif // IGNORE_RUST_POST

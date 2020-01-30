@@ -2993,6 +2993,7 @@ window_to_frame_hpos (struct window *w, int hpos)
 			    Redrawing Frames
  **********************************************************************/
 
+#if IGNORE_RUST_PORT
 /* Redraw frame F.  */
 
 void
@@ -3013,7 +3014,9 @@ redraw_frame (struct frame *f)
   set_window_update_flags (XWINDOW (FRAME_ROOT_WINDOW (f)), true);
   f->garbaged = false;
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("redraw-frame", Fredraw_frame, Sredraw_frame, 0, 1, 0,
        doc: /* Clear frame FRAME and output again what is supposed to appear on it.
 If FRAME is omitted or nil, the selected frame is used.  */)
@@ -3022,7 +3025,9 @@ If FRAME is omitted or nil, the selected frame is used.  */)
   redraw_frame (decode_live_frame (frame));
   return Qnil;
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("redraw-display", Fredraw_display, Sredraw_display, 0, 0, "",
        doc: /* Clear and redisplay all visible frames.  */)
   (void)
@@ -3035,7 +3040,7 @@ DEFUN ("redraw-display", Fredraw_display, Sredraw_display, 0, 0, "",
 
   return Qnil;
 }
-
+#endif // IGNORE_RUST_PORT
 
 
 /***********************************************************************
@@ -3959,7 +3964,7 @@ set_window_cursor_after_update (struct window *w)
   output_cursor_to (w, vpos, hpos, cy, cx);
 }
 
-
+#if IGNORE_RUST_PORT
 /* Set WINDOW->must_be_updated_p to ON_P for all windows in
    the window tree rooted at W.  */
 
@@ -3976,7 +3981,7 @@ set_window_update_flags (struct window *w, bool on_p)
       w = NILP (w->next) ? 0 : XWINDOW (w->next);
     }
 }
-
+#endif // IGNORE_RUST_PORT
 
 
 /***********************************************************************
@@ -5668,7 +5673,9 @@ when TERMINAL is nil.  */)
   return Qnil;
 }
 
+void ding_internal (void);
 
+#if IGNORE_RUST_PORT
 DEFUN ("ding", Fding, Sding, 0, 1, 0,
        doc: /* Beep, or flash the screen.
 Also, unless an argument is given,
@@ -5683,13 +5690,15 @@ terminate any keyboard macro currently executing.  */)
 	ring_bell (XFRAME (selected_frame));
     }
   else
-    bitch_at_user ();
+    ding_internal ();
 
   return Qnil;
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 void
-bitch_at_user (void)
+ding_internal (void)
 {
   if (noninteractive)
     putchar_unlocked (07);
@@ -5702,13 +5711,13 @@ bitch_at_user (void)
   else
     ring_bell (XFRAME (selected_frame));
 }
-
+#endif // IGNORE_RUST_PORT
 
 
 /***********************************************************************
 			  Sleeping, Waiting
  ***********************************************************************/
-
+#if IGNORE_RUST_PORT
 DEFUN ("sleep-for", Fsleep_for, Ssleep_for, 1, 2, 0,
        doc: /* Pause, without updating display, for SECONDS seconds.
 SECONDS may be a floating-point value, meaning that you can wait for a
@@ -5742,7 +5751,7 @@ additional wait period, in milliseconds; this is for backwards compatibility.
 
   return Qnil;
 }
-
+#endif // IGNORE_RUST_PORT
 
 /* This is just like wait_reading_process_output, except that
    it does redisplay.
@@ -5808,7 +5817,7 @@ sit_for (Lisp_Object timeout, bool reading, int display_option)
   return detect_input_pending () ? Qnil : Qt;
 }
 
-
+#if IGNORE_RUST_PORT
 DEFUN ("redisplay", Fredisplay, Sredisplay, 0, 1, 0,
        doc: /* Perform redisplay.
 Optional arg FORCE, if non-nil, prevents redisplay from being
@@ -5835,7 +5844,7 @@ immediately by pending input.  */)
   unbind_to (count, Qnil);
   return Qt;
 }
-
+#endif // IGNORE_RUST_PORT
 
 
 /***********************************************************************
@@ -6178,6 +6187,7 @@ init_display (void)
 
 
 
+#if IGNORE_RUST_PORT
 /***********************************************************************
 			   Blinking cursor
  ***********************************************************************/
@@ -6196,8 +6206,9 @@ don't show a cursor.  */)
     decode_any_window (window)->cursor_off_p = NILP (show);
   return Qnil;
 }
+#endif // IGNORE_RUST_PORT
 
-
+#if IGNORE_RUST_PORT
 DEFUN ("internal-show-cursor-p", Finternal_show_cursor_p,
        Sinternal_show_cursor_p, 0, 1, 0,
        doc: /* Value is non-nil if next redisplay will display a cursor in WINDOW.
@@ -6206,6 +6217,7 @@ WINDOW nil or omitted means report on the selected window.  */)
 {
   return decode_any_window (window)->cursor_off_p ? Qnil : Qt;
 }
+#endif // IGNORE_RUST_PORT
 
 /***********************************************************************
 			    Initialization
@@ -6214,16 +6226,22 @@ WINDOW nil or omitted means report on the selected window.  */)
 void
 syms_of_display (void)
 {
+#if IGNORE_RUST_PORT
   defsubr (&Sredraw_frame);
   defsubr (&Sredraw_display);
+#endif // IGNORE_RUST_PORT
   defsubr (&Sframe_or_buffer_changed_p);
   defsubr (&Sopen_termscript);
+#if IGNORE_RUST_PORT
   defsubr (&Sding);
   defsubr (&Sredisplay);
   defsubr (&Ssleep_for);
+#endif // IGNORE_RUST_PORT
   defsubr (&Ssend_string_to_terminal);
+#if IGNORE_RUST_PORT
   defsubr (&Sinternal_show_cursor);
   defsubr (&Sinternal_show_cursor_p);
+#endif // IGNORE_RUST_PORT
 
 #ifdef GLYPH_DEBUG
   defsubr (&Sdump_redisplay_history);

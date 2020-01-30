@@ -430,8 +430,8 @@ Do NOT use this function to compare file names for equality.  */)
 #endif /* !__STDC_ISO_10646__, !WINDOWSNT */
 }
 
-static Lisp_Object concat (ptrdiff_t nargs, Lisp_Object *args,
-			   enum Lisp_Type target_type, bool last_special);
+Lisp_Object concat (ptrdiff_t nargs, Lisp_Object *args,
+                    enum Lisp_Type target_type, bool last_special);
 
 /* ARGSUSED */
 Lisp_Object
@@ -523,7 +523,7 @@ struct textprop_rec
   ptrdiff_t to;			/* refer to VAL (the target string) */
 };
 
-static Lisp_Object
+Lisp_Object
 concat (ptrdiff_t nargs, Lisp_Object *args,
 	enum Lisp_Type target_type, bool last_special)
 {
@@ -3278,6 +3278,7 @@ base64_encode_1 (const char *from, char *to, ptrdiff_t length,
 }
 #endif // IGNORE_RUST_POST
 
+#if IGNORE_RUST_PORT
 DEFUN ("base64-decode-region", Fbase64_decode_region, Sbase64_decode_region,
        2, 2, "r",
        doc: /* Base64-decode the region between BEG and END.
@@ -3339,7 +3340,9 @@ If the region can't be decoded, signal an error and don't modify the buffer.  */
 
   return make_number (inserted_chars);
 }
+#endif // IGNORE_RUST_POST
 
+#if IGNORE_RUST_PORT
 DEFUN ("base64-decode-string", Fbase64_decode_string, Sbase64_decode_string,
        1, 1, 0,
        doc: /* Base64-decode STRING and return the result.  */)
@@ -3372,6 +3375,7 @@ DEFUN ("base64-decode-string", Fbase64_decode_string, Sbase64_decode_string,
 
   return decoded_string;
 }
+#endif // IGNORE_RUST_POST
 
 #if IGNORE_RUST_PORT
 /* Base64-decode the data at FROM of LENGTH bytes into TO.  If

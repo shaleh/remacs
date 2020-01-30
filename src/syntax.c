@@ -179,7 +179,7 @@ static ptrdiff_t find_start_begv;
 static EMACS_INT find_start_modiff;
 
 
-static Lisp_Object scan_lists (EMACS_INT, EMACS_INT, EMACS_INT, bool);
+Lisp_Object scan_lists (EMACS_INT, EMACS_INT, EMACS_INT, bool);
 static void scan_sexps_forward (struct lisp_parse_state *,
                                 ptrdiff_t, ptrdiff_t, ptrdiff_t, EMACS_INT,
                                 bool, int);
@@ -2615,7 +2615,7 @@ syntax_multibyte (int c, bool multibyte_symbol_p)
   return ASCII_CHAR_P (c) || !multibyte_symbol_p ? SYNTAX (c) : Ssymbol;
 }
 
-static Lisp_Object
+Lisp_Object
 scan_lists (EMACS_INT from, EMACS_INT count, EMACS_INT depth, bool sexpflag)
 {
   Lisp_Object val;

@@ -48,11 +48,17 @@ INTFWDP (union Lisp_Fwd *a)
 {
   return XFWDTYPE (a) == Lisp_Fwd_Int;
 }
+
+bool KBOARD_OBJFWDP (union Lisp_Fwd *a);
+
+#if IGNORE_RUST_PORT
 static bool
 KBOARD_OBJFWDP (union Lisp_Fwd *a)
 {
   return XFWDTYPE (a) == Lisp_Fwd_Kboard_Obj;
 }
+#endif // IGNORE_RUST_PORT
+
 static bool
 OBJFWDP (union Lisp_Fwd *a)
 {
@@ -179,6 +185,7 @@ circular_list (Lisp_Object list)
 
 /* Data type predicates.  */
 
+#if IGNORE_RUST_PORT
 DEFUN ("eq", Feq, Seq, 2, 2, 0,
        doc: /* Return t if the two args are the same Lisp object.  */
        attributes: const)
@@ -188,7 +195,9 @@ DEFUN ("eq", Feq, Seq, 2, 2, 0,
     return Qt;
   return Qnil;
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("null", Fnull, Snull, 1, 1, 0,
        doc: /* Return t if OBJECT is nil, and return nil otherwise.  */
        attributes: const)
@@ -198,7 +207,9 @@ DEFUN ("null", Fnull, Snull, 1, 1, 0,
     return Qt;
   return Qnil;
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("type-of", Ftype_of, Stype_of, 1, 1, 0,
        doc: /* Return a symbol representing the type of OBJECT.
 The symbol returned names the object's basic type;
@@ -292,7 +303,9 @@ for example, (type-of 1) returns `integer'.  */)
       emacs_abort ();
     }
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("consp", Fconsp, Sconsp, 1, 1, 0,
        doc: /* Return t if OBJECT is a cons cell.  */
        attributes: const)
@@ -302,7 +315,9 @@ DEFUN ("consp", Fconsp, Sconsp, 1, 1, 0,
     return Qt;
   return Qnil;
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("atom", Fatom, Satom, 1, 1, 0,
        doc: /* Return t if OBJECT is not a cons cell.  This includes nil.  */
        attributes: const)
@@ -312,7 +327,9 @@ DEFUN ("atom", Fatom, Satom, 1, 1, 0,
     return Qnil;
   return Qt;
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("listp", Flistp, Slistp, 1, 1, 0,
        doc: /* Return t if OBJECT is a list, that is, a cons cell or nil.
 Otherwise, return nil.  */
@@ -323,7 +340,9 @@ Otherwise, return nil.  */
     return Qt;
   return Qnil;
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("nlistp", Fnlistp, Snlistp, 1, 1, 0,
        doc: /* Return t if OBJECT is not a list.  Lists include nil.  */
        attributes: const)
@@ -333,7 +352,9 @@ DEFUN ("nlistp", Fnlistp, Snlistp, 1, 1, 0,
     return Qnil;
   return Qt;
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("symbolp", Fsymbolp, Ssymbolp, 1, 1, 0,
        doc: /* Return t if OBJECT is a symbol.  */
        attributes: const)
@@ -343,7 +364,9 @@ DEFUN ("symbolp", Fsymbolp, Ssymbolp, 1, 1, 0,
     return Qt;
   return Qnil;
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("keywordp", Fkeywordp, Skeywordp, 1, 1, 0,
        doc: /* Return t if OBJECT is a keyword.
 This means that it is a symbol with a print name beginning with `:'
@@ -356,7 +379,9 @@ interned in the initial obarray.  */)
     return Qt;
   return Qnil;
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("vectorp", Fvectorp, Svectorp, 1, 1, 0,
        doc: /* Return t if OBJECT is a vector.  */)
   (Lisp_Object object)
@@ -365,7 +390,9 @@ DEFUN ("vectorp", Fvectorp, Svectorp, 1, 1, 0,
     return Qt;
   return Qnil;
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("recordp", Frecordp, Srecordp, 1, 1, 0,
        doc: /* Return t if OBJECT is a record.  */)
   (Lisp_Object object)
@@ -374,7 +401,9 @@ DEFUN ("recordp", Frecordp, Srecordp, 1, 1, 0,
     return Qt;
   return Qnil;
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("stringp", Fstringp, Sstringp, 1, 1, 0,
        doc: /* Return t if OBJECT is a string.  */
        attributes: const)
@@ -384,7 +413,9 @@ DEFUN ("stringp", Fstringp, Sstringp, 1, 1, 0,
     return Qt;
   return Qnil;
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("multibyte-string-p", Fmultibyte_string_p, Smultibyte_string_p,
        1, 1, 0,
        doc: /* Return t if OBJECT is a multibyte string.
@@ -395,7 +426,9 @@ Return nil if OBJECT is either a unibyte string, or not a string.  */)
     return Qt;
   return Qnil;
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("char-table-p", Fchar_table_p, Schar_table_p, 1, 1, 0,
        doc: /* Return t if OBJECT is a char-table.  */)
   (Lisp_Object object)
@@ -404,7 +437,9 @@ DEFUN ("char-table-p", Fchar_table_p, Schar_table_p, 1, 1, 0,
     return Qt;
   return Qnil;
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("vector-or-char-table-p", Fvector_or_char_table_p,
        Svector_or_char_table_p, 1, 1, 0,
        doc: /* Return t if OBJECT is a char-table or vector.  */)
@@ -414,7 +449,9 @@ DEFUN ("vector-or-char-table-p", Fvector_or_char_table_p,
     return Qt;
   return Qnil;
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("bool-vector-p", Fbool_vector_p, Sbool_vector_p, 1, 1, 0,
        doc: /* Return t if OBJECT is a bool-vector.  */)
   (Lisp_Object object)
@@ -423,7 +460,9 @@ DEFUN ("bool-vector-p", Fbool_vector_p, Sbool_vector_p, 1, 1, 0,
     return Qt;
   return Qnil;
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("arrayp", Farrayp, Sarrayp, 1, 1, 0,
        doc: /* Return t if OBJECT is an array (string or vector).  */)
   (Lisp_Object object)
@@ -432,7 +471,9 @@ DEFUN ("arrayp", Farrayp, Sarrayp, 1, 1, 0,
     return Qt;
   return Qnil;
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("sequencep", Fsequencep, Ssequencep, 1, 1, 0,
        doc: /* Return t if OBJECT is a sequence (list or array).  */)
   (register Lisp_Object object)
@@ -441,7 +482,9 @@ DEFUN ("sequencep", Fsequencep, Ssequencep, 1, 1, 0,
     return Qt;
   return Qnil;
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("bufferp", Fbufferp, Sbufferp, 1, 1, 0,
        doc: /* Return t if OBJECT is an editor buffer.  */)
   (Lisp_Object object)
@@ -450,7 +493,9 @@ DEFUN ("bufferp", Fbufferp, Sbufferp, 1, 1, 0,
     return Qt;
   return Qnil;
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("markerp", Fmarkerp, Smarkerp, 1, 1, 0,
        doc: /* Return t if OBJECT is a marker (editor pointer).  */)
   (Lisp_Object object)
@@ -459,6 +504,7 @@ DEFUN ("markerp", Fmarkerp, Smarkerp, 1, 1, 0,
     return Qt;
   return Qnil;
 }
+#endif // IGNORE_RUST_PORT
 
 #ifdef HAVE_MODULES
 DEFUN ("user-ptrp", Fuser_ptrp, Suser_ptrp, 1, 1, 0,
@@ -471,6 +517,7 @@ DEFUN ("user-ptrp", Fuser_ptrp, Suser_ptrp, 1, 1, 0,
 }
 #endif
 
+#if IGNORE_RUST_PORT
 DEFUN ("subrp", Fsubrp, Ssubrp, 1, 1, 0,
        doc: /* Return t if OBJECT is a built-in function.  */)
   (Lisp_Object object)
@@ -479,7 +526,9 @@ DEFUN ("subrp", Fsubrp, Ssubrp, 1, 1, 0,
     return Qt;
   return Qnil;
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("byte-code-function-p", Fbyte_code_function_p, Sbyte_code_function_p,
        1, 1, 0,
        doc: /* Return t if OBJECT is a byte-compiled function object.  */)
@@ -489,6 +538,7 @@ DEFUN ("byte-code-function-p", Fbyte_code_function_p, Sbyte_code_function_p,
     return Qt;
   return Qnil;
 }
+#endif // IGNORE_RUST_PORT
 
 DEFUN ("module-function-p", Fmodule_function_p, Smodule_function_p, 1, 1, NULL,
        doc: /* Return t if OBJECT is a function loaded from a dynamic module.  */
@@ -498,6 +548,7 @@ DEFUN ("module-function-p", Fmodule_function_p, Smodule_function_p, 1, 1, NULL,
   return MODULE_FUNCTIONP (object) ? Qt : Qnil;
 }
 
+#if IGNORE_RUST_PORT
 DEFUN ("char-or-string-p", Fchar_or_string_p, Schar_or_string_p, 1, 1, 0,
        doc: /* Return t if OBJECT is a character or a string.  */
        attributes: const)
@@ -507,7 +558,9 @@ DEFUN ("char-or-string-p", Fchar_or_string_p, Schar_or_string_p, 1, 1, 0,
     return Qt;
   return Qnil;
 }
+#endif // IGNORE_RUST_POST
 
+#if IGNORE_RUST_PORT
 DEFUN ("integerp", Fintegerp, Sintegerp, 1, 1, 0,
        doc: /* Return t if OBJECT is an integer.  */
        attributes: const)
@@ -517,7 +570,9 @@ DEFUN ("integerp", Fintegerp, Sintegerp, 1, 1, 0,
     return Qt;
   return Qnil;
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("integer-or-marker-p", Finteger_or_marker_p, Sinteger_or_marker_p, 1, 1, 0,
        doc: /* Return t if OBJECT is an integer or a marker (editor pointer).  */)
   (register Lisp_Object object)
@@ -526,7 +581,9 @@ DEFUN ("integer-or-marker-p", Finteger_or_marker_p, Sinteger_or_marker_p, 1, 1, 
     return Qt;
   return Qnil;
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("natnump", Fnatnump, Snatnump, 1, 1, 0,
        doc: /* Return t if OBJECT is a nonnegative integer.  */
        attributes: const)
@@ -536,7 +593,9 @@ DEFUN ("natnump", Fnatnump, Snatnump, 1, 1, 0,
     return Qt;
   return Qnil;
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("numberp", Fnumberp, Snumberp, 1, 1, 0,
        doc: /* Return t if OBJECT is a number (floating point or integer).  */
        attributes: const)
@@ -547,7 +606,9 @@ DEFUN ("numberp", Fnumberp, Snumberp, 1, 1, 0,
   else
     return Qnil;
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("number-or-marker-p", Fnumber_or_marker_p,
        Snumber_or_marker_p, 1, 1, 0,
        doc: /* Return t if OBJECT is a number or a marker.  */)
@@ -557,7 +618,9 @@ DEFUN ("number-or-marker-p", Fnumber_or_marker_p,
     return Qt;
   return Qnil;
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("floatp", Ffloatp, Sfloatp, 1, 1, 0,
        doc: /* Return t if OBJECT is a floating point number.  */
        attributes: const)
@@ -567,7 +630,9 @@ DEFUN ("floatp", Ffloatp, Sfloatp, 1, 1, 0,
     return Qt;
   return Qnil;
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("threadp", Fthreadp, Sthreadp, 1, 1, 0,
        doc: /* Return t if OBJECT is a thread.  */)
   (Lisp_Object object)
@@ -576,7 +641,9 @@ DEFUN ("threadp", Fthreadp, Sthreadp, 1, 1, 0,
     return Qt;
   return Qnil;
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("mutexp", Fmutexp, Smutexp, 1, 1, 0,
        doc: /* Return t if OBJECT is a mutex.  */)
   (Lisp_Object object)
@@ -585,7 +652,9 @@ DEFUN ("mutexp", Fmutexp, Smutexp, 1, 1, 0,
     return Qt;
   return Qnil;
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("condition-variable-p", Fcondition_variable_p, Scondition_variable_p,
        1, 1, 0,
        doc: /* Return t if OBJECT is a condition variable.  */)
@@ -595,9 +664,11 @@ DEFUN ("condition-variable-p", Fcondition_variable_p, Scondition_variable_p,
     return Qt;
   return Qnil;
 }
+#endif // IGNORE_RUST_PORT
 
 /* Extract and set components of lists.  */
 
+#if IGNORE_RUST_PORT
 DEFUN ("car", Fcar, Scar, 1, 1, 0,
        doc: /* Return the car of LIST.  If arg is nil, return nil.
 Error if arg is not nil and not a cons cell.  See also `car-safe'.
@@ -608,14 +679,18 @@ Lisp concepts such as car, cdr, cons cell and list.  */)
 {
   return CAR (list);
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("car-safe", Fcar_safe, Scar_safe, 1, 1, 0,
        doc: /* Return the car of OBJECT if it is a cons cell, or else nil.  */)
   (Lisp_Object object)
 {
   return CAR_SAFE (object);
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("cdr", Fcdr, Scdr, 1, 1, 0,
        doc: /* Return the cdr of LIST.  If arg is nil, return nil.
 Error if arg is not nil and not a cons cell.  See also `cdr-safe'.
@@ -626,14 +701,18 @@ Lisp concepts such as cdr, car, cons cell and list.  */)
 {
   return CDR (list);
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("cdr-safe", Fcdr_safe, Scdr_safe, 1, 1, 0,
        doc: /* Return the cdr of OBJECT if it is a cons cell, or else nil.  */)
   (Lisp_Object object)
 {
   return CDR_SAFE (object);
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("setcar", Fsetcar, Ssetcar, 2, 2, 0,
        doc: /* Set the car of CELL to be NEWCAR.  Returns NEWCAR.  */)
   (register Lisp_Object cell, Lisp_Object newcar)
@@ -643,7 +722,9 @@ DEFUN ("setcar", Fsetcar, Ssetcar, 2, 2, 0,
   XSETCAR (cell, newcar);
   return newcar;
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("setcdr", Fsetcdr, Ssetcdr, 2, 2, 0,
        doc: /* Set the cdr of CELL to be NEWCDR.  Returns NEWCDR.  */)
   (register Lisp_Object cell, Lisp_Object newcdr)
@@ -653,9 +734,10 @@ DEFUN ("setcdr", Fsetcdr, Ssetcdr, 2, 2, 0,
   XSETCDR (cell, newcdr);
   return newcdr;
 }
+#endif // IGNORE_RUST_PORT
 
 /* Extract and set components of symbols.  */
-
+#if IGNORE_RUST_PORT
 DEFUN ("boundp", Fboundp, Sboundp, 1, 1, 0,
        doc: /* Return t if SYMBOL's value is not void.
 Note that if `lexical-binding' is in effect, this refers to the
@@ -695,7 +777,9 @@ global value outside of any lexical scope.  */)
 
   return (EQ (valcontents, Qunbound) ? Qnil : Qt);
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 /* It has been previously suggested to make this function an alias for
    symbol-function, but upon discussion at Bug#23957, there is a risk
    breaking backward compatibility, as some users of fboundp may
@@ -707,7 +791,9 @@ DEFUN ("fboundp", Ffboundp, Sfboundp, 1, 1, 0,
   CHECK_SYMBOL (symbol);
   return NILP (XSYMBOL (symbol)->u.s.function) ? Qnil : Qt;
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("makunbound", Fmakunbound, Smakunbound, 1, 1, 0,
        doc: /* Make SYMBOL's value be void.
 Return SYMBOL.  */)
@@ -719,7 +805,9 @@ Return SYMBOL.  */)
   Fset (symbol, Qunbound);
   return symbol;
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("fmakunbound", Ffmakunbound, Sfmakunbound, 1, 1, 0,
        doc: /* Make SYMBOL's function definition be nil.
 Return SYMBOL.  */)
@@ -731,7 +819,9 @@ Return SYMBOL.  */)
   set_symbol_function (symbol, Qnil);
   return symbol;
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("symbol-function", Fsymbol_function, Ssymbol_function, 1, 1, 0,
        doc: /* Return SYMBOL's function definition, or nil if that is void.  */)
   (Lisp_Object symbol)
@@ -739,7 +829,9 @@ DEFUN ("symbol-function", Fsymbol_function, Ssymbol_function, 1, 1, 0,
   CHECK_SYMBOL (symbol);
   return XSYMBOL (symbol)->u.s.function;
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("symbol-plist", Fsymbol_plist, Ssymbol_plist, 1, 1, 0,
        doc: /* Return SYMBOL's property list.  */)
   (Lisp_Object symbol)
@@ -747,7 +839,9 @@ DEFUN ("symbol-plist", Fsymbol_plist, Ssymbol_plist, 1, 1, 0,
   CHECK_SYMBOL (symbol);
   return XSYMBOL (symbol)->u.s.plist;
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("symbol-name", Fsymbol_name, Ssymbol_name, 1, 1, 0,
        doc: /* Return SYMBOL's name, a string.  */)
   (register Lisp_Object symbol)
@@ -758,7 +852,9 @@ DEFUN ("symbol-name", Fsymbol_name, Ssymbol_name, 1, 1, 0,
   name = SYMBOL_NAME (symbol);
   return name;
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("fset", Ffset, Sfset, 2, 2, 0,
        doc: /* Set SYMBOL's function definition to DEFINITION, and return DEFINITION.  */)
   (register Lisp_Object symbol, Lisp_Object definition)
@@ -786,7 +882,9 @@ DEFUN ("fset", Ffset, Sfset, 2, 2, 0,
 
   return definition;
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("defalias", Fdefalias, Sdefalias, 2, 3, 0,
        doc: /* Set SYMBOL's function definition to DEFINITION.
 Associates the function with the current load file, if any.
@@ -834,7 +932,9 @@ The return value is undefined.  */)
      (bug#11686).  */
   return symbol;
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("setplist", Fsetplist, Ssetplist, 2, 2, 0,
        doc: /* Set SYMBOL's property list to NEWPLIST, and return NEWPLIST.  */)
   (register Lisp_Object symbol, Lisp_Object newplist)
@@ -843,7 +943,9 @@ DEFUN ("setplist", Fsetplist, Ssetplist, 2, 2, 0,
   set_symbol_plist (symbol, newplist);
   return newplist;
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("subr-arity", Fsubr_arity, Ssubr_arity, 1, 1, 0,
        doc: /* Return minimum and maximum number of args allowed for SUBR.
 SUBR must be a built-in function.
@@ -861,7 +963,9 @@ function with `&rest' args, or `unevalled' for a special form.  */)
 		: maxargs == UNEVALLED ? Qunevalled
 		:                        make_number (maxargs));
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("subr-name", Fsubr_name, Ssubr_name, 1, 1, 0,
        doc: /* Return name of subroutine SUBR.
 SUBR must be a built-in function.  */)
@@ -872,6 +976,7 @@ SUBR must be a built-in function.  */)
   name = XSUBR (subr)->symbol_name;
   return build_string (name);
 }
+#endif // IGNORE_RUST_PORT
 
 DEFUN ("interactive-form", Finteractive_form, Sinteractive_form, 1, 1, 0,
        doc: /* Return the interactive form of CMD or nil if none.
@@ -958,7 +1063,7 @@ indirect_variable (struct Lisp_Symbol *symbol)
   return hare;
 }
 
-
+#if IGNORE_RUST_PORT
 DEFUN ("indirect-variable", Findirect_variable, Sindirect_variable, 1, 1, 0,
        doc: /* Return the variable at the end of OBJECT's variable chain.
 If OBJECT is a symbol, follow its variable indirections (if any), and
@@ -976,8 +1081,9 @@ chain of aliases, signal a `cyclic-variable-indirection' error.  */)
     }
   return object;
 }
+#endif // IGNORE_RUST_PORT
 
-
+#if IGNORE_RUST_PORT
 /* Given the raw contents of a symbol value cell,
    return the Lisp value of the symbol.
    This does not handle buffer-local variables; use
@@ -1020,6 +1126,7 @@ do_symval_forwarding (register union Lisp_Fwd *valcontents)
     default: emacs_abort ();
     }
 }
+#endif // IGNORE_RUST_PORT
 
 /* Used to signal a user-friendly error when symbol WRONG is
    not a member of CHOICE, which should be a list of symbols.  */
@@ -1054,7 +1161,7 @@ wrong_choice (Lisp_Object choice, Lisp_Object wrong)
 /* Used to signal a user-friendly error if WRONG is not a number or
    integer/floating-point number outsize of inclusive MIN..MAX range.  */
 
-static void
+void
 wrong_range (Lisp_Object min, Lisp_Object max, Lisp_Object wrong)
 {
   AUTO_STRING (value_should_be_from, "Value should be from ");
@@ -1065,6 +1172,10 @@ wrong_range (Lisp_Object min, Lisp_Object max, Lisp_Object wrong)
 	    wrong);
 }
 
+void
+store_symval_forwarding (union Lisp_Fwd *valcontents, register Lisp_Object newval, struct buffer *buf);
+
+#if IGNORE_RUST_PORT
 /* Store NEWVAL into SYMBOL, where VALCONTENTS is found in the value cell
    of SYMBOL.  If SYMBOL is buffer-local, VALCONTENTS should be the
    buffer-independent contents of the value cell: forwarded just one
@@ -1164,6 +1275,7 @@ store_symval_forwarding (union Lisp_Fwd *valcontents, register Lisp_Object newva
       emacs_abort (); /* goto def; */
     }
 }
+#endif // IGNORE_RUST_PORT
 
 /* Set up SYMBOL to refer to its global binding.  This makes it safe
    to alter the status of other bindings.  BEWARE: this may be called
@@ -1230,6 +1342,7 @@ swap_in_symval_forwarding (struct Lisp_Symbol *symbol, struct Lisp_Buffer_Local_
     }
 }
 
+#if IGNORE_RUST_PORT
 /* Find the value of a symbol, returning Qunbound if it's not bound.
    This is helpful for code which just wants to get a variable's value
    if it has one, without signaling an error.
@@ -1260,7 +1373,9 @@ find_symbol_value (Lisp_Object symbol)
     default: emacs_abort ();
     }
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("symbol-value", Fsymbol_value, Ssymbol_value, 1, 1, 0,
        doc: /* Return SYMBOL's value.  Error if that is void.
 Note that if `lexical-binding' is in effect, this returns the
@@ -1275,7 +1390,9 @@ global value outside of any lexical scope.  */)
 
   xsignal1 (Qvoid_variable, symbol);
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("set", Fset, Sset, 2, 2, 0,
        doc: /* Set SYMBOL's value to NEWVAL, and return NEWVAL.  */)
   (register Lisp_Object symbol, Lisp_Object newval)
@@ -1283,6 +1400,7 @@ DEFUN ("set", Fset, Sset, 2, 2, 0,
   set_internal (symbol, newval, Qnil, SET_INTERNAL_SET);
   return newval;
 }
+#endif // IGNORE_RUST_PORT
 
 /* Store the value NEWVAL into SYMBOL.
    If buffer-locality is an issue, WHERE specifies which context to use.
@@ -1469,6 +1587,7 @@ harmonize_variable_watchers (Lisp_Object alias, Lisp_Object base_variable)
       (alias, XSYMBOL (base_variable)->u.s.trapped_write);
 }
 
+#if IGNORE_RUST_PORT
 DEFUN ("add-variable-watcher", Fadd_variable_watcher, Sadd_variable_watcher,
        2, 2, 0,
        doc: /* Cause WATCH-FUNCTION to be called when SYMBOL is set.
@@ -1494,7 +1613,9 @@ All writes to aliases of SYMBOL will call WATCH-FUNCTION too.  */)
     Fput (symbol, Qwatchers, Fcons (watch_function, watchers));
   return Qnil;
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("remove-variable-watcher", Fremove_variable_watcher, Sremove_variable_watcher,
        2, 2, 0,
        doc: /* Undo the effect of `add-variable-watcher'.
@@ -1513,7 +1634,9 @@ SYMBOL (or its aliases) are set.  */)
   Fput (symbol, Qwatchers, watchers);
   return Qnil;
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("get-variable-watchers", Fget_variable_watchers, Sget_variable_watchers,
        1, 1, 0,
        doc: /* Return a list of SYMBOL's active watchers.  */)
@@ -1523,6 +1646,7 @@ DEFUN ("get-variable-watchers", Fget_variable_watchers, Sget_variable_watchers,
     ? Fget (Findirect_variable (symbol), Qwatchers)
     : Qnil;
 }
+#endif // IGNORE_RUST_PORT
 
 void
 notify_variable_watchers (Lisp_Object symbol,
@@ -1616,6 +1740,7 @@ default_value (Lisp_Object symbol)
     }
 }
 
+#if IGNORE_RUST_PORT
 DEFUN ("default-boundp", Fdefault_boundp, Sdefault_boundp, 1, 1, 0,
        doc: /* Return t if SYMBOL has a non-void default value.
 This is the value that is seen in buffers that do not have their own values
@@ -1627,7 +1752,9 @@ for this variable.  */)
   value = default_value (symbol);
   return (EQ (value, Qunbound) ? Qnil : Qt);
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("default-value", Fdefault_value, Sdefault_value, 1, 1, 0,
        doc: /* Return SYMBOL's default value.
 This is the value that is seen in buffers that do not have their own values
@@ -1641,6 +1768,7 @@ local bindings in certain buffers.  */)
 
   xsignal1 (Qvoid_variable, symbol);
 }
+#endif // IGNORE_RUST_PORT
 
 void
 set_default_internal (Lisp_Object symbol, Lisp_Object value,
@@ -1723,6 +1851,7 @@ set_default_internal (Lisp_Object symbol, Lisp_Object value,
     }
 }
 
+#if IGNORE_RUST_PORT
 DEFUN ("set-default", Fset_default, Sset_default, 2, 2, 0,
        doc: /* Set SYMBOL's default value to VALUE.  SYMBOL and VALUE are evaluated.
 The default value is seen in buffers that do not have their own values
@@ -1732,6 +1861,7 @@ for this variable.  */)
   set_default_internal (symbol, value, SET_INTERNAL_SET);
   return value;
 }
+#endif // IGNORE_RUST_PORT
 
 DEFUN ("setq-default", Fsetq_default, Ssetq_default, 0, UNEVALLED, 0,
        doc: /* Set the default value of variable VAR to VALUE.
@@ -2032,7 +2162,7 @@ From now on the default value will apply in this buffer.  Return VARIABLE.  */)
 }
 
 /* Lisp functions for creating and removing buffer-local variables.  */
-
+#if IGNORE_RUST_PORT
 DEFUN ("local-variable-p", Flocal_variable_p, Slocal_variable_p,
        1, 2, 0,
        doc: /* Non-nil if VARIABLE has a local binding in buffer BUFFER.
@@ -2083,7 +2213,9 @@ BUFFER defaults to the current buffer.  */)
     default: emacs_abort ();
     }
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("local-variable-if-set-p", Flocal_variable_if_set_p, Slocal_variable_if_set_p,
        1, 2, 0,
        doc: /* Non-nil if VARIABLE is local in buffer BUFFER when set there.
@@ -2118,7 +2250,9 @@ value in BUFFER, or if VARIABLE is automatically buffer-local (see
     default: emacs_abort ();
     }
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("variable-binding-locus", Fvariable_binding_locus, Svariable_binding_locus,
        1, 1, 0,
        doc: /* Return a value indicating where VARIABLE's current binding comes from.
@@ -2161,6 +2295,7 @@ If the current binding is global (the default), the value is nil.  */)
     default: emacs_abort ();
     }
 }
+#endif // IGNORE_RUST_PORT
 
 /* This code is disabled now that we use the selected frame to return
    keyboard-local-values.  */
@@ -2238,6 +2373,7 @@ indirect_function (register Lisp_Object object)
   return hare;
 }
 
+#if IGNORE_RUST_PORT
 DEFUN ("indirect-function", Findirect_function, Sindirect_function, 1, 2, 0,
        doc: /* Return the function at the end of OBJECT's function chain.
 If OBJECT is not a symbol, just return it.  Otherwise, follow all
@@ -2258,7 +2394,9 @@ function chain of symbols.  */)
 
   return Qnil;
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 /* Extract and set vector and string elements.  */
 
 DEFUN ("aref", Faref, Saref, 2, 2, 0,
@@ -2311,6 +2449,7 @@ or a byte-code object.  IDX starts at 0.  */)
       return AREF (array, idxval);
     }
 }
+#endif // IGNORE_RUST_PORT
 
 #ifdef IGNORE_RUST_PORT
 DEFUN ("aset", Faset, Saset, 3, 3, 0,
@@ -2532,6 +2671,7 @@ arithcompare_driver (ptrdiff_t nargs, Lisp_Object *args,
   return Qt;
 }
 
+#if IGNORE_RUST_PORT
 DEFUN ("=", Feqlsign, Seqlsign, 1, MANY, 0,
        doc: /* Return t if args, all numbers or markers, are equal.
 usage: (= NUMBER-OR-MARKER &rest NUMBERS-OR-MARKERS)  */)
@@ -2539,7 +2679,9 @@ usage: (= NUMBER-OR-MARKER &rest NUMBERS-OR-MARKERS)  */)
 {
   return arithcompare_driver (nargs, args, ARITH_EQUAL);
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("<", Flss, Slss, 1, MANY, 0,
        doc: /* Return t if each arg (a number or marker), is less than the next arg.
 usage: (< NUMBER-OR-MARKER &rest NUMBERS-OR-MARKERS)  */)
@@ -2547,7 +2689,9 @@ usage: (< NUMBER-OR-MARKER &rest NUMBERS-OR-MARKERS)  */)
 {
   return arithcompare_driver (nargs, args, ARITH_LESS);
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN (">", Fgtr, Sgtr, 1, MANY, 0,
        doc: /* Return t if each arg (a number or marker) is greater than the next arg.
 usage: (> NUMBER-OR-MARKER &rest NUMBERS-OR-MARKERS)  */)
@@ -2555,7 +2699,9 @@ usage: (> NUMBER-OR-MARKER &rest NUMBERS-OR-MARKERS)  */)
 {
   return arithcompare_driver (nargs, args, ARITH_GRTR);
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("<=", Fleq, Sleq, 1, MANY, 0,
        doc: /* Return t if each arg (a number or marker) is less than or equal to the next.
 usage: (<= NUMBER-OR-MARKER &rest NUMBERS-OR-MARKERS)  */)
@@ -2563,7 +2709,9 @@ usage: (<= NUMBER-OR-MARKER &rest NUMBERS-OR-MARKERS)  */)
 {
   return arithcompare_driver (nargs, args, ARITH_LESS_OR_EQUAL);
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN (">=", Fgeq, Sgeq, 1, MANY, 0,
        doc: /* Return t if each arg (a number or marker) is greater than or equal to the next.
 usage: (>= NUMBER-OR-MARKER &rest NUMBERS-OR-MARKERS)  */)
@@ -2571,13 +2719,16 @@ usage: (>= NUMBER-OR-MARKER &rest NUMBERS-OR-MARKERS)  */)
 {
   return arithcompare_driver (nargs, args, ARITH_GRTR_OR_EQUAL);
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("/=", Fneq, Sneq, 2, 2, 0,
        doc: /* Return t if first arg is not equal to second arg.  Both must be numbers or markers.  */)
   (register Lisp_Object num1, Lisp_Object num2)
 {
   return arithcompare (num1, num2, ARITH_NOTEQUAL);
 }
+#endif // IGNORE_RUST_PORT
 
 /* Convert the integer I to a cons-of-integers, where I is not in
    fixnum range.  */
@@ -2732,6 +2883,7 @@ NUMBER may be an integer or a floating point number.  */)
   return make_unibyte_string (buffer, len);
 }
 
+#if IGNORE_RUST_PORT
 DEFUN ("string-to-number", Fstring_to_number, Sstring_to_number, 1, 2, 0,
        doc: /* Parse STRING as a decimal number and return the number.
 Ignore leading spaces and tabs, and all trailing chars.  Return 0 if
@@ -2765,6 +2917,7 @@ If the base used is not 10, STRING is always parsed as an integer.  */)
   val = string_to_number (p, b, 1);
   return NILP (val) ? make_number (0) : val;
 }
+#endif // IGNORE_RUST_PORT
 
 enum arithop
   {
@@ -2923,7 +3076,7 @@ float_arith_driver (double accum, ptrdiff_t argnum, enum arithop code,
   return make_float (accum);
 }
 
-
+#if IGNORE_RUST_PORT
 DEFUN ("+", Fplus, Splus, 0, MANY, 0,
        doc: /* Return sum of any number of arguments, which are numbers or markers.
 usage: (+ &rest NUMBERS-OR-MARKERS)  */)
@@ -2931,7 +3084,9 @@ usage: (+ &rest NUMBERS-OR-MARKERS)  */)
 {
   return arith_driver (Aadd, nargs, args);
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("-", Fminus, Sminus, 0, MANY, 0,
        doc: /* Negate number or subtract numbers or markers and return the result.
 With one arg, negates it.  With more than one arg,
@@ -2941,7 +3096,9 @@ usage: (- &optional NUMBER-OR-MARKER &rest MORE-NUMBERS-OR-MARKERS)  */)
 {
   return arith_driver (Asub, nargs, args);
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("*", Ftimes, Stimes, 0, MANY, 0,
        doc: /* Return product of any number of arguments, which are numbers or markers.
 usage: (* &rest NUMBERS-OR-MARKERS)  */)
@@ -2949,7 +3106,9 @@ usage: (* &rest NUMBERS-OR-MARKERS)  */)
 {
   return arith_driver (Amult, nargs, args);
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("/", Fquo, Squo, 1, MANY, 0,
        doc: /* Divide number by divisors and return the result.
 With two or more arguments, return first argument divided by the rest.
@@ -2964,7 +3123,9 @@ usage: (/ NUMBER &rest DIVISORS)  */)
       return float_arith_driver (0, 0, Adiv, nargs, args);
   return arith_driver (Adiv, nargs, args);
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("%", Frem, Srem, 2, 2, 0,
        doc: /* Return remainder of X divided by Y.
 Both must be integers or markers.  */)
@@ -2981,7 +3142,9 @@ Both must be integers or markers.  */)
   XSETINT (val, XINT (x) % XINT (y));
   return val;
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("mod", Fmod, Smod, 2, 2, 0,
        doc: /* Return X modulo Y.
 The result falls between zero (inclusive) and Y (exclusive).
@@ -3012,6 +3175,7 @@ Both X and Y must be numbers or markers.  */)
   XSETINT (val, i1);
   return val;
 }
+#endif // IGNORE_RUST_PORT
 
 static Lisp_Object
 minmax_driver (ptrdiff_t nargs, Lisp_Object *args,
@@ -3031,6 +3195,7 @@ minmax_driver (ptrdiff_t nargs, Lisp_Object *args,
   return accum;
 }
 
+#if IGNORE_RUST_PORT
 DEFUN ("max", Fmax, Smax, 1, MANY, 0,
        doc: /* Return largest of all the arguments (which must be numbers or markers).
 The value is always a number; markers are converted to numbers.
@@ -3039,7 +3204,9 @@ usage: (max NUMBER-OR-MARKER &rest NUMBERS-OR-MARKERS)  */)
 {
   return minmax_driver (nargs, args, ARITH_GRTR);
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("min", Fmin, Smin, 1, MANY, 0,
        doc: /* Return smallest of all the arguments (which must be numbers or markers).
 The value is always a number; markers are converted to numbers.
@@ -3048,7 +3215,9 @@ usage: (min NUMBER-OR-MARKER &rest NUMBERS-OR-MARKERS)  */)
 {
   return minmax_driver (nargs, args, ARITH_LESS);
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("logand", Flogand, Slogand, 0, MANY, 0,
        doc: /* Return bitwise-and of all the arguments.
 Arguments may be integers, or markers converted to integers.
@@ -3057,7 +3226,9 @@ usage: (logand &rest INTS-OR-MARKERS)  */)
 {
   return arith_driver (Alogand, nargs, args);
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("logior", Flogior, Slogior, 0, MANY, 0,
        doc: /* Return bitwise-or of all the arguments.
 Arguments may be integers, or markers converted to integers.
@@ -3066,7 +3237,9 @@ usage: (logior &rest INTS-OR-MARKERS)  */)
 {
   return arith_driver (Alogior, nargs, args);
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("logxor", Flogxor, Slogxor, 0, MANY, 0,
        doc: /* Return bitwise-exclusive-or of all the arguments.
 Arguments may be integers, or markers converted to integers.
@@ -3075,6 +3248,7 @@ usage: (logxor &rest INTS-OR-MARKERS)  */)
 {
   return arith_driver (Alogxor, nargs, args);
 }
+#endif // IGNORE_RUST_PORT
 
 static Lisp_Object
 ash_lsh_impl (Lisp_Object value, Lisp_Object count, bool lsh)
@@ -3117,6 +3291,7 @@ In this case, zeros are shifted in on the left.  */)
   return ash_lsh_impl (value, count, true);
 }
 
+#if IGNORE_RUST_PORT
 DEFUN ("1+", Fadd1, Sadd1, 1, 1, 0,
        doc: /* Return NUMBER plus one.  NUMBER may be a number or a marker.
 Markers are converted to integers.  */)
@@ -3130,7 +3305,9 @@ Markers are converted to integers.  */)
   XSETINT (number, XINT (number) + 1);
   return number;
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("1-", Fsub1, Ssub1, 1, 1, 0,
        doc: /* Return NUMBER minus one.  NUMBER may be a number or a marker.
 Markers are converted to integers.  */)
@@ -3144,7 +3321,9 @@ Markers are converted to integers.  */)
   XSETINT (number, XINT (number) - 1);
   return number;
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("lognot", Flognot, Slognot, 1, 1, 0,
        doc: /* Return the bitwise complement of NUMBER.  NUMBER must be an integer.  */)
   (register Lisp_Object number)
@@ -3153,7 +3332,9 @@ DEFUN ("lognot", Flognot, Slognot, 1, 1, 0,
   XSETINT (number, ~XINT (number));
   return number;
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("byteorder", Fbyteorder, Sbyteorder, 0, 0, 0,
        doc: /* Return the byteorder for the machine.
 Returns 66 (ASCII uppercase B) for big endian machines or 108 (ASCII
@@ -3166,6 +3347,7 @@ lowercase l) for small endian machines.  */
 
   return make_number (order);
 }
+#endif // IGNORE_RUST_PORT
 
 /* Because we round up the bool vector allocate size to word_size
    units, we can safely read past the "end" of the vector in the
@@ -3220,13 +3402,7 @@ count_one_bits_word (bits_word w)
     }
 }
 
-enum bool_vector_op { bool_vector_exclusive_or,
-                      bool_vector_union,
-                      bool_vector_intersection,
-                      bool_vector_set_difference,
-                      bool_vector_subsetp };
-
-static Lisp_Object
+Lisp_Object
 bool_vector_binop_driver (Lisp_Object a,
                           Lisp_Object b,
                           Lisp_Object dest,
@@ -3401,6 +3577,7 @@ bits_word_to_host_endian (bits_word val)
 #endif
 }
 
+#if IGNORE_RUST_PORT
 DEFUN ("bool-vector-exclusive-or", Fbool_vector_exclusive_or,
        Sbool_vector_exclusive_or, 2, 3, 0,
        doc: /* Return A ^ B, bitwise exclusive or.
@@ -3411,7 +3588,9 @@ Return the destination vector if it changed or nil otherwise.  */)
 {
   return bool_vector_binop_driver (a, b, c, bool_vector_exclusive_or);
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("bool-vector-union", Fbool_vector_union,
        Sbool_vector_union, 2, 3, 0,
        doc: /* Return A | B, bitwise or.
@@ -3422,7 +3601,9 @@ Return the destination vector if it changed or nil otherwise.  */)
 {
   return bool_vector_binop_driver (a, b, c, bool_vector_union);
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("bool-vector-intersection", Fbool_vector_intersection,
        Sbool_vector_intersection, 2, 3, 0,
        doc: /* Return A & B, bitwise and.
@@ -3433,7 +3614,9 @@ Return the destination vector if it changed or nil otherwise.  */)
 {
   return bool_vector_binop_driver (a, b, c, bool_vector_intersection);
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("bool-vector-set-difference", Fbool_vector_set_difference,
        Sbool_vector_set_difference, 2, 3, 0,
        doc: /* Return A &~ B, set difference.
@@ -3444,7 +3627,9 @@ Return the destination vector if it changed or nil otherwise.  */)
 {
   return bool_vector_binop_driver (a, b, c, bool_vector_set_difference);
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("bool-vector-subsetp", Fbool_vector_subsetp,
        Sbool_vector_subsetp, 2, 2, 0,
        doc: /* Return t if every t value in A is also t in B, nil otherwise.
@@ -3453,6 +3638,7 @@ A and B must be bool vectors of the same length.  */)
 {
   return bool_vector_binop_driver (a, b, b, bool_vector_subsetp);
 }
+#endif // IGNORE_RUST_PORT
 
 DEFUN ("bool-vector-not", Fbool_vector_not,
        Sbool_vector_not, 1, 2, 0,
@@ -3808,37 +3994,17 @@ syms_of_data (void)
   DEFSYM (Qinteractive_form, "interactive-form");
   DEFSYM (Qdefalias_fset_function, "defalias-fset-function");
 
+#if IGNORE_RUST_PORT
   defsubr (&Sindirect_variable);
+#endif // IGNORE_RUST_PORT
   defsubr (&Sinteractive_form);
+#if IGNORE_RUST_PORT
   defsubr (&Seq);
   defsubr (&Snull);
   defsubr (&Stype_of);
   defsubr (&Slistp);
   defsubr (&Snlistp);
   defsubr (&Sconsp);
-  defsubr (&Satom);
-  defsubr (&Sintegerp);
-  defsubr (&Sinteger_or_marker_p);
-  defsubr (&Snumberp);
-  defsubr (&Snumber_or_marker_p);
-  defsubr (&Sfloatp);
-  defsubr (&Snatnump);
-  defsubr (&Ssymbolp);
-  defsubr (&Skeywordp);
-  defsubr (&Sstringp);
-  defsubr (&Smultibyte_string_p);
-  defsubr (&Svectorp);
-  defsubr (&Srecordp);
-  defsubr (&Schar_table_p);
-  defsubr (&Svector_or_char_table_p);
-  defsubr (&Sbool_vector_p);
-  defsubr (&Sarrayp);
-  defsubr (&Ssequencep);
-  defsubr (&Sbufferp);
-  defsubr (&Smarkerp);
-  defsubr (&Ssubrp);
-  defsubr (&Sbyte_code_function_p);
-  defsubr (&Smodule_function_p);
   defsubr (&Schar_or_string_p);
   defsubr (&Sthreadp);
   defsubr (&Smutexp);
@@ -3865,22 +4031,26 @@ syms_of_data (void)
   defsubr (&Sdefault_boundp);
   defsubr (&Sdefault_value);
   defsubr (&Sset_default);
+#endif // IGNORE_RUST_PORT
   defsubr (&Ssetq_default);
   defsubr (&Smake_variable_buffer_local);
   defsubr (&Smake_local_variable);
   defsubr (&Skill_local_variable);
+#if IGNORE_RUST_PORT
   defsubr (&Slocal_variable_p);
   defsubr (&Slocal_variable_if_set_p);
   defsubr (&Svariable_binding_locus);
+#endif // IGNORE_RUST_PORT
 #if 0                           /* XXX Remove this. --lorentey */
   defsubr (&Sterminal_local_value);
   defsubr (&Sset_terminal_local_value);
 #endif
-  defsubr (&Saref);
 #if IGNORE_RUST_PORT
+  defsubr (&Saref);
   defsubr (&Saset);
 #endif
   defsubr (&Snumber_to_string);
+#if IGNORE_RUST_PORT
   defsubr (&Sstring_to_number);
   defsubr (&Seqlsign);
   defsubr (&Slss);
@@ -3899,24 +4069,31 @@ syms_of_data (void)
   defsubr (&Slogand);
   defsubr (&Slogior);
   defsubr (&Slogxor);
+#endif // IGNORE_RUST_PORT
   defsubr (&Slsh);
   defsubr (&Sash);
+#if IGNORE_RUST_PORT
   defsubr (&Sadd1);
   defsubr (&Ssub1);
   defsubr (&Slognot);
   defsubr (&Sbyteorder);
   defsubr (&Ssubr_arity);
   defsubr (&Ssubr_name);
+#endif // IGNORE_RUST_PORT
 #ifdef HAVE_MODULES
   defsubr (&Suser_ptrp);
 #endif
 
+#if IGNORE_RUST_PORT
   defsubr (&Sbool_vector_exclusive_or);
   defsubr (&Sbool_vector_union);
   defsubr (&Sbool_vector_intersection);
   defsubr (&Sbool_vector_set_difference);
+#endif // IGNORE_RUST_PORT
   defsubr (&Sbool_vector_not);
+#if IGNORE_RUST_PORT
   defsubr (&Sbool_vector_subsetp);
+#endif // IGNORE_RUST_PORT
   defsubr (&Sbool_vector_count_consecutive);
   defsubr (&Sbool_vector_count_population);
 
@@ -3937,9 +4114,14 @@ This variable cannot be set; trying to do so will signal an error.  */);
   DEFSYM (Qwatchers, "watchers");
   DEFSYM (Qmakunbound, "makunbound");
   DEFSYM (Qunlet, "unlet");
+#if IGNORE_RUST_PORT
   DEFSYM (Qset, "set");
   DEFSYM (Qset_default, "set-default");
+#endif // IGNORE_RUST_PORT
+
+#if IGNORE_RUST_PORT
   defsubr (&Sadd_variable_watcher);
   defsubr (&Sremove_variable_watcher);
   defsubr (&Sget_variable_watchers);
+#endif // IGNORE_RUST_PORT
 }

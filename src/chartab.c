@@ -516,6 +516,7 @@ char_table_set_range (Lisp_Object table, int from, int to, Lisp_Object val)
 }
 
 
+#if IGNORE_RUST_PORT
 DEFUN ("char-table-subtype", Fchar_table_subtype, Schar_table_subtype,
        1, 1, 0,
        doc: /*
@@ -526,7 +527,9 @@ Return the subtype of char-table CHAR-TABLE.  The value is a symbol.  */)
 
   return XCHAR_TABLE (char_table)->purpose;
 }
+#endif // IGNORE_RUST_POST
 
+#if IGNORE_RUST_PORT
 DEFUN ("char-table-parent", Fchar_table_parent, Schar_table_parent,
        1, 1, 0,
        doc: /* Return the parent char-table of CHAR-TABLE.
@@ -540,7 +543,9 @@ then the actual applicable value is inherited from the parent char-table
 
   return XCHAR_TABLE (char_table)->parent;
 }
+#endif // IGNORE_RUST_POST
 
+#if IGNORE_RUST_PORT
 DEFUN ("set-char-table-parent", Fset_char_table_parent, Sset_char_table_parent,
        2, 2, 0,
        doc: /* Set the parent char-table of CHAR-TABLE to PARENT.
@@ -564,6 +569,7 @@ Return PARENT.  PARENT must be either nil or another char-table.  */)
 
   return parent;
 }
+#endif // IGNORE_RUST_POST
 
 DEFUN ("char-table-extra-slot", Fchar_table_extra_slot, Schar_table_extra_slot,
        2, 2, 0,
@@ -1369,9 +1375,11 @@ syms_of_chartab (void)
   DEFSYM (Qchar_code_property_table, "char-code-property-table");
 
   defsubr (&Smake_char_table);
+#if IGNORE_RUST_PORT
   defsubr (&Schar_table_parent);
   defsubr (&Schar_table_subtype);
   defsubr (&Sset_char_table_parent);
+#endif // IGNORE_RUST_POST
   defsubr (&Schar_table_extra_slot);
   defsubr (&Sset_char_table_extra_slot);
   defsubr (&Schar_table_range);

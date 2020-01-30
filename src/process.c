@@ -282,7 +282,7 @@ static Lisp_Object chan_process[FD_SETSIZE];
 static void wait_for_socket_fds (Lisp_Object, char const *);
 
 /* Alist of elements (NAME . PROCESS).  */
-static Lisp_Object Vprocess_alist;
+Lisp_Object Vprocess_alist;
 
 /* Buffered-ahead input char from process, indexed by channel.
    -1 means empty (no char is buffered).
@@ -466,7 +466,7 @@ add_non_keyboard_read_fd (int fd)
     max_desc = fd;
 }
 
-static void
+void
 add_process_read_fd (int fd)
 {
   add_non_keyboard_read_fd (fd);
@@ -6526,7 +6526,7 @@ set up yet, this function will block until socket setup has completed.  */)
 
 /* Return the foreground process group for the tty/pty that
    the process P uses.  */
-static pid_t
+pid_t
 emacs_get_tty_pgrp (struct Lisp_Process *p)
 {
   pid_t gid = -1;

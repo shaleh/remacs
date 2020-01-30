@@ -21,7 +21,7 @@ use crate::{
     objects::equal,
     remacs_sys::Vautoload_queue,
     remacs_sys::{
-        concat as lisp_concat, copy_char_table, globals, make_uninit_bool_vector,
+        concat as c_concat, copy_char_table, globals, make_uninit_bool_vector,
         make_uninit_multibyte_string, make_uninit_string, make_uninit_vector, message1,
         redisplay_preserve_echo_area,
     },
@@ -255,7 +255,7 @@ def_lisp_sym!(Qrequire, "require");
 #[lisp_fn]
 pub fn append(args: &mut [LispObject]) -> LispObject {
     unsafe {
-        lisp_concat(
+        c_concat(
             args.len() as isize,
             args.as_mut_ptr() as *mut LispObject,
             Lisp_Type::Lisp_Cons,
@@ -271,7 +271,7 @@ pub fn append(args: &mut [LispObject]) -> LispObject {
 #[lisp_fn]
 pub fn concat(args: &mut [LispObject]) -> LispObject {
     unsafe {
-        lisp_concat(
+        c_concat(
             args.len() as isize,
             args.as_mut_ptr() as *mut LispObject,
             Lisp_Type::Lisp_String,
@@ -287,7 +287,7 @@ pub fn concat(args: &mut [LispObject]) -> LispObject {
 #[lisp_fn]
 pub fn vconcat(args: &mut [LispObject]) -> LispObject {
     unsafe {
-        lisp_concat(
+        c_concat(
             args.len() as isize,
             args.as_mut_ptr(),
             Lisp_Type::Lisp_Vectorlike,
@@ -460,7 +460,7 @@ pub fn copy_alist(mut alist: LispObject) -> LispObject {
         return alist;
     }
 
-    let new_alist = unsafe { lisp_concat(1, &mut alist, Lisp_Type::Lisp_Cons, false) };
+    let new_alist = unsafe { c_concat(1, &mut alist, Lisp_Type::Lisp_Cons, false) };
 
     for elt in new_alist.iter_tails(LispConsEndChecks::off, LispConsCircularChecks::off) {
         let front = elt.car();
@@ -592,7 +592,7 @@ pub fn copy_sequence(mut arg: LispObject) -> LispObject {
         new.as_mut_slice().copy_from_slice(boolvec.as_slice());
         new.into()
     } else if arg.is_cons() || arg.is_vector() || arg.is_string() {
-        unsafe { lisp_concat(1, &mut arg, arg.get_type(), false) }
+        unsafe { c_concat(1, &mut arg, arg.get_type(), false) }
     } else {
         wrong_type!(Qsequencep, arg);
     }

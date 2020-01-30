@@ -55,7 +55,7 @@ Lisp_Object last_minibuf_string;
 
 /* Prompt to display in front of the mini-buffer contents.  */
 
-static Lisp_Object minibuf_prompt;
+Lisp_Object minibuf_prompt;
 
 /* Width of current mini-buffer prompt.  Only set after display_line
    of the line that contains the prompt.  */
@@ -362,7 +362,7 @@ If the current buffer is not a minibuffer, return its entire contents.  */)
    if INHERIT_INPUT_METHOD, the minibuffer inherits the
    current input method.  */
 
-static Lisp_Object
+Lisp_Object
 read_minibuf (Lisp_Object map, Lisp_Object initial, Lisp_Object prompt,
 	      bool expflag,
 	      Lisp_Object histvar, Lisp_Object histpos, Lisp_Object defalt,
@@ -1924,6 +1924,7 @@ void
 init_minibuf_once (void)
 {
   Vminibuffer_list = Qnil;
+  minibuf_prompt = Qnil;
   staticpro (&Vminibuffer_list);
 }
 

@@ -613,14 +613,14 @@ load_charset (struct charset *charset, int control_flag)
     load_charset_map_from_vector (charset, map, control_flag);
 }
 
-
+#if IGNORE_RUST_PORT
 DEFUN ("charsetp", Fcharsetp, Scharsetp, 1, 1, 0,
        doc: /* Return non-nil if and only if OBJECT is a charset.*/)
   (Lisp_Object object)
 {
   return (CHARSETP (object) ? Qt : Qnil);
 }
-
+#endif // IGNORE_RUST_POST
 
 static void
 map_charset_for_dump (void (*c_function) (Lisp_Object, Lisp_Object),
@@ -2077,7 +2077,7 @@ DIMENSION, CHARS, and FINAL-CHAR.  */)
   return (id >= 0 ? CHARSET_NAME (CHARSET_FROM_ID (id)) : Qnil);
 }
 
-
+#if IGNORE_RUST_PORT
 DEFUN ("clear-charset-maps", Fclear_charset_maps, Sclear_charset_maps,
        0, 0, 0,
        doc: /*
@@ -2097,6 +2097,7 @@ It should be called only from temacs invoked for dumping.  */)
 
   return Qnil;
 }
+#endif // IGNORE_RUST_POST
 
 DEFUN ("charset-priority-list", Fcharset_priority_list,
        Scharset_priority_list, 0, 1, 0,
@@ -2332,7 +2333,9 @@ syms_of_charset (void)
   charset_table_size = ARRAYELTS (charset_table_init);
   charset_table_used = 0;
 
+#if IGNORE_RUST_PORT
   defsubr (&Scharsetp);
+#endif // IGNORE_RUST_POST
   defsubr (&Smap_charset_chars);
   defsubr (&Sdefine_charset_internal);
   defsubr (&Sdefine_charset_alias);
@@ -2350,7 +2353,9 @@ syms_of_charset (void)
   defsubr (&Schar_charset);
   defsubr (&Scharset_after);
   defsubr (&Siso_charset);
+#if IGNORE_RUST_PORT
   defsubr (&Sclear_charset_maps);
+#endif // IGNORE_RUST_POST
   defsubr (&Scharset_priority_list);
   defsubr (&Sset_charset_priority);
   defsubr (&Scharset_id_internal);

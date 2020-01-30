@@ -18,8 +18,8 @@ use crate::{
     lists::list,
     multibyte::LispStringRef,
     remacs_sys::{
-        build_string, compile_pattern, decode_file_name, file_attributes_c_internal,
-        filemode_string, globals, re_pattern_buffer, re_search,
+        build_string, compile_pattern, decode_file_name, file_attributes, filemode_string, globals,
+        re_pattern_buffer, re_search,
     },
     remacs_sys::{
         Qdirectory_files, Qdirectory_files_and_attributes, Qfile_attributes, Qfile_missing, Qnil,
@@ -623,7 +623,7 @@ impl FileAttrs {
             let (dir, f) = self.fpath.to_dir_f();
             let name = CString::new(self.fpath.clone().as_str()).unwrap();
             return unsafe {
-                file_attributes_c_internal(
+                file_attributes(
                     name.as_ptr(),
                     dir.as_str().into(),
                     f.as_str().into(),

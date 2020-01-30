@@ -21,12 +21,13 @@ use crate::{
     remacs_sys::Vautoload_queue,
     remacs_sys::{
         aset_multibyte_string, bool_vector_binop_driver, buffer_defaults, build_string, globals,
-        rust_count_one_bits, set_default_internal, set_internal, string_to_number,
-        symbol_trapped_write, valid_lisp_object_p, wrong_choice, wrong_range, CHAR_TABLE_SET,
-        CHECK_IMPURE,
+        set_default_internal, set_internal, string_to_number, symbol_trapped_write,
+        valid_lisp_object_p, wrong_choice, wrong_range, CHAR_TABLE_SET, CHECK_IMPURE,
+    },
+    remacs_sys::{
+        bool_vector_op, pvec_type, EmacsInt, Lisp_Misc_Type, Lisp_Type, Set_Internal_Bind,
     },
     remacs_sys::{per_buffer_default, symbol_redirect},
-    remacs_sys::{pvec_type, BoolVectorOp, EmacsInt, Lisp_Misc_Type, Lisp_Type, Set_Internal_Bind},
     remacs_sys::{Lisp_Buffer, Lisp_Subr_Lang},
     remacs_sys::{
         Qarrayp, Qautoload, Qbool_vector, Qbuffer, Qchar_table, Qchoice, Qcompiled_function,
@@ -642,7 +643,7 @@ unsafe fn update_buffer_defaults(objvar: *const LispObject, newval: LispObject) 
 /// Return the destination vector if it changed or nil otherwise.
 #[lisp_fn(min = "2")]
 pub fn bool_vector_exclusive_or(a: LispObject, b: LispObject, c: LispObject) -> LispObject {
-    unsafe { bool_vector_binop_driver(a, b, c, BoolVectorOp::BoolVectorExclusiveOr) }
+    unsafe { bool_vector_binop_driver(a, b, c, bool_vector_op::bool_vector_exclusive_or) }
 }
 
 /// Return A | B, bitwise or.
@@ -651,7 +652,7 @@ pub fn bool_vector_exclusive_or(a: LispObject, b: LispObject, c: LispObject) -> 
 /// Return the destination vector if it changed or nil otherwise.
 #[lisp_fn(min = "2")]
 pub fn bool_vector_union(a: LispObject, b: LispObject, c: LispObject) -> LispObject {
-    unsafe { bool_vector_binop_driver(a, b, c, BoolVectorOp::BoolVectorUnion) }
+    unsafe { bool_vector_binop_driver(a, b, c, bool_vector_op::bool_vector_union) }
 }
 
 /// Return A & B, bitwise and.
@@ -660,7 +661,7 @@ pub fn bool_vector_union(a: LispObject, b: LispObject, c: LispObject) -> LispObj
 /// Return the destination vector if it changed or nil otherwise.
 #[lisp_fn(min = "2")]
 pub fn bool_vector_intersection(a: LispObject, b: LispObject, c: LispObject) -> LispObject {
-    unsafe { bool_vector_binop_driver(a, b, c, BoolVectorOp::BoolVectorIntersection) }
+    unsafe { bool_vector_binop_driver(a, b, c, bool_vector_op::bool_vector_intersection) }
 }
 
 /// Return A &~ B, set difference.
@@ -669,14 +670,14 @@ pub fn bool_vector_intersection(a: LispObject, b: LispObject, c: LispObject) -> 
 /// Return the destination vector if it changed or nil otherwise.
 #[lisp_fn(min = "2")]
 pub fn bool_vector_set_difference(a: LispObject, b: LispObject, c: LispObject) -> LispObject {
-    unsafe { bool_vector_binop_driver(a, b, c, BoolVectorOp::BoolVectorSetDifference) }
+    unsafe { bool_vector_binop_driver(a, b, c, bool_vector_op::bool_vector_set_difference) }
 }
 
 /// Return t if every t value in A is also t in B, nil otherwise.
 /// A and B must be bool vectors of the same length.
 #[lisp_fn]
 pub fn bool_vector_subsetp(a: LispObject, b: LispObject) -> LispObject {
-    unsafe { bool_vector_binop_driver(a, b, b, BoolVectorOp::BoolVectorSubsetp) }
+    unsafe { bool_vector_binop_driver(a, b, b, bool_vector_op::bool_vector_subsetp) }
 }
 
 /// Set SYMBOL's value to NEWVAL, and return NEWVAL.
@@ -776,16 +777,6 @@ pub fn get_variable_watchers(symbol: LispSymbolRef) -> LispObject {
     }
 }
 
-/// Return population count of VALUE.
-/// This is the number of one bits in the two's complement representation
-/// of VALUE.  If VALUE is negative, return the number of zero bits in the
-/// representation.
-#[lisp_fn]
-pub fn logcount(value: EmacsInt) -> i32 {
-    let value = if value < 0 { -1 - value } else { value };
-    unsafe { rust_count_one_bits(value as usize) }
-}
-
 /// Set SYMBOL's function definition to DEFINITION, and return DEFINITION.
 #[lisp_fn]
 pub fn fset(mut symbol: LispSymbolRef, definition: LispObject) -> LispObject {
@@ -852,5 +843,8 @@ pub fn string_to_number_lisp(mut string: LispStringRef, base: Option<EmacsInt>) 
         n => n,
     }
 }
+
+def_lisp_sym!(Qset, "set");
+def_lisp_sym!(Qset_default, "set-default");
 
 include!(concat!(env!("OUT_DIR"), "/data_exports.rs"));

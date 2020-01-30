@@ -2744,7 +2744,6 @@ See `file-symlink-p' to distinguish symlinks.  */)
   return file_directory_p (SSDATA (absname)) ? Qt : Qnil;
 }
 
-#ifdef IGNORE_RUST_PORT
 /* Return true if FILE is a directory or a symlink to a directory.  */
 bool
 file_directory_p (char const *file)
@@ -2757,7 +2756,6 @@ file_directory_p (char const *file)
   return stat (file, &st) == 0 && S_ISDIR (st.st_mode);
 #endif
 }
-#endif
 
 DEFUN ("file-accessible-directory-p", Ffile_accessible_directory_p,
        Sfile_accessible_directory_p, 1, 1, 0,

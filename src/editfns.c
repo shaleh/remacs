@@ -74,7 +74,7 @@ static Lisp_Object format_time_string (char const *, ptrdiff_t, struct timespec,
 				       Lisp_Object, struct tm *);
 static long int tm_gmtoff (struct tm *);
 static int tm_diff (struct tm *, struct tm *);
-static void update_buffer_properties (ptrdiff_t, ptrdiff_t);
+void update_buffer_properties (ptrdiff_t, ptrdiff_t);
 
 #ifndef HAVE_TM_GMTOFF
 # define HAVE_TM_GMTOFF false
@@ -2822,7 +2822,7 @@ make_buffer_string_both (ptrdiff_t start, ptrdiff_t start_byte,
 /* Call Vbuffer_access_fontify_functions for the range START ... END
    in the current buffer, if necessary.  */
 
-static void
+void
 update_buffer_properties (ptrdiff_t start, ptrdiff_t end)
 {
   /* If this buffer has some access functions,

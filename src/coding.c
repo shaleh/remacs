@@ -8484,7 +8484,7 @@ to_unicode (Lisp_Object str, Lisp_Object *buf)
 
 #ifdef emacs
 /*** 8. Emacs Lisp library functions ***/
-
+#if IGNORE_RUST_PORT
 DEFUN ("coding-system-p", Fcoding_system_p, Scoding_system_p, 1, 1, 0,
        doc: /* Return t if OBJECT is nil or a coding-system.
 See the documentation of `define-coding-system' for information
@@ -8499,6 +8499,7 @@ about coding-system objects.  */)
     return Qnil;
   return Qt;
 }
+#endif // IGNORE_RUST_PORT
 
 DEFUN ("read-non-nil-coding-system", Fread_non_nil_coding_system,
        Sread_non_nil_coding_system, 1, 1, 0,
@@ -8515,6 +8516,7 @@ DEFUN ("read-non-nil-coding-system", Fread_non_nil_coding_system,
   return (Fintern (val, Qnil));
 }
 
+#if IGNORE_RUST_PORT
 DEFUN ("read-coding-system", Fread_coding_system, Sread_coding_system, 1, 2, 0,
        doc: /* Read a coding system from the minibuffer, prompting with string PROMPT.
 If the user enters null input, return second argument DEFAULT-CODING-SYSTEM.
@@ -8534,7 +8536,9 @@ are lower-case).  */)
   unbind_to (count, Qnil);
   return (SCHARS (val) == 0 ? Qnil : Fintern (val, Qnil));
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("check-coding-system", Fcheck_coding_system, Scheck_coding_system,
        1, 1, 0,
        doc: /* Check validity of CODING-SYSTEM.
@@ -8555,6 +8559,7 @@ function `define-coding-system'.  */)
     return coding_system;
   xsignal1 (Qcoding_system_error, coding_system);
 }
+#endif // IGNORE_RUST_PORT
 
 
 /* Detect how the bytes at SRC of length SRC_BYTES are encoded.  If
@@ -9387,7 +9392,6 @@ code_convert_region (Lisp_Object start, Lisp_Object end,
 	  : coding.dst_object);
 }
 
-
 DEFUN ("decode-coding-region", Fdecode_coding_region, Sdecode_coding_region,
        3, 4, "r\nzCoding system: ",
        doc: /* Decode the current region from the specified coding system.
@@ -9548,6 +9552,7 @@ encode_file_name (Lisp_Object fname)
 #endif
 }
 
+#if IGNORE_RUST_PORT
 DEFUN ("decode-coding-string", Fdecode_coding_string, Sdecode_coding_string,
        2, 4, 0,
        doc: /* Decode STRING which is encoded in CODING-SYSTEM, and return the result.
@@ -9569,7 +9574,9 @@ not fully specified.)  */)
   return code_convert_string (string, coding_system, buffer,
 			      0, ! NILP (nocopy), 0);
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("encode-coding-string", Fencode_coding_string, Sencode_coding_string,
        2, 4, 0,
        doc: /* Encode STRING to CODING-SYSTEM, and return the result.
@@ -9589,6 +9596,7 @@ not fully specified.)  */)
   return code_convert_string (string, coding_system, buffer,
 			      1, ! NILP (nocopy), 0);
 }
+#endif // IGNORE_RUST_PORT
 
 
 DEFUN ("decode-sjis-char", Fdecode_sjis_char, Sdecode_sjis_char, 1, 1, 0,
@@ -10718,7 +10726,7 @@ DEFUN ("coding-system-plist", Fcoding_system_plist, Scoding_system_plist,
   return CODING_ATTR_PLIST (attrs);
 }
 
-
+#if IGNORE_RUST_PORT
 DEFUN ("coding-system-aliases", Fcoding_system_aliases, Scoding_system_aliases,
        1, 1, 0,
        doc: /* Return the list of aliases of CODING-SYSTEM.  */)
@@ -10731,6 +10739,7 @@ DEFUN ("coding-system-aliases", Fcoding_system_aliases, Scoding_system_aliases,
   CHECK_CODING_SYSTEM_GET_SPEC (coding_system, spec);
   return AREF (spec, 1);
 }
+#endif // IGNORE_RUST_PORT
 
 DEFUN ("coding-system-eol-type", Fcoding_system_eol_type,
        Scoding_system_eol_type, 1, 1, 0,
@@ -10961,10 +10970,14 @@ syms_of_coding (void)
      symbol as a coding system.  */
   DEFSYM (Qcoding_system_define_form, "coding-system-define-form");
 
+#if IGNORE_RUST_PORT
   defsubr (&Scoding_system_p);
   defsubr (&Sread_coding_system);
+#endif // IGNORE_RUST_PORT
   defsubr (&Sread_non_nil_coding_system);
+#if IGNORE_RUST_PORT
   defsubr (&Scheck_coding_system);
+#endif // IGNORE_RUST_PORT
   defsubr (&Sdetect_coding_region);
   defsubr (&Sdetect_coding_string);
   defsubr (&Sfind_coding_systems_region_internal);
@@ -10972,8 +10985,10 @@ syms_of_coding (void)
   defsubr (&Scheck_coding_systems_region);
   defsubr (&Sdecode_coding_region);
   defsubr (&Sencode_coding_region);
+#if IGNORE_RUST_PORT
   defsubr (&Sdecode_coding_string);
   defsubr (&Sencode_coding_string);
+#endif // IGNORE_RUST_PORT
   defsubr (&Sdecode_sjis_char);
   defsubr (&Sencode_sjis_char);
   defsubr (&Sdecode_big5_char);
@@ -10986,11 +11001,15 @@ syms_of_coding (void)
   defsubr (&Sfind_operation_coding_system);
   defsubr (&Sset_coding_system_priority);
   defsubr (&Sdefine_coding_system_internal);
+#if IGNORE_RUST_PORT
   defsubr (&Sdefine_coding_system_alias);
+#endif // IGNORE_RUST_PORT
   defsubr (&Scoding_system_put);
   defsubr (&Scoding_system_base);
   defsubr (&Scoding_system_plist);
+#if IGNORE_RUST_PORT
   defsubr (&Scoding_system_aliases);
+#endif // IGNORE_RUST_PORT
   defsubr (&Scoding_system_eol_type);
   defsubr (&Scoding_system_priority_list);
 

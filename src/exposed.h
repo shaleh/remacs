@@ -5,6 +5,7 @@
 
 #include "lisp.h"
 #include "buffer.h"
+#include "keymap.h"
 
 // This is used in help and describe output.
 enum Lisp_Subr_Lang
@@ -17,17 +18,19 @@ struct face;
 
 // alloc.c
 
+Lisp_Object allocate_misc (enum Lisp_Misc_Type type);
 struct Lisp_Vector * allocate_record (EMACS_INT count);
 Lisp_Object bounded_number (EMACS_INT number);
 Lisp_Object purecopy (Lisp_Object obj);
 
 // buffer.c
 
+char buffer_permanent_local_flags[MAX_PER_BUFFER_VARS];
+
 void alloc_buffer_text (struct buffer *b, ptrdiff_t nbytes);
 Lisp_Object buffer_fundamental_string(void);
 void modify_overlay (struct buffer *buf, ptrdiff_t start, ptrdiff_t end);
-
-char buffer_permanent_local_flags[MAX_PER_BUFFER_VARS];
+void unchain_both (struct buffer *b, Lisp_Object overlay);
 
 // callproc.c
 
@@ -88,8 +91,23 @@ Lisp_Object uniprop_table_uncompress (Lisp_Object table, int idx);
 
 // data.c
 
+enum bool_vector_op { bool_vector_exclusive_or,
+                      bool_vector_union,
+                      bool_vector_intersection,
+                      bool_vector_set_difference,
+                      bool_vector_subsetp };
+
+Lisp_Object bool_vector_binop_driver (Lisp_Object a, Lisp_Object b, Lisp_Object dest,
+                                      enum bool_vector_op op);
 void aset_multibyte_string(register Lisp_Object array, EMACS_INT idxval, int c);
 void swap_in_symval_forwarding (struct Lisp_Symbol *, struct Lisp_Buffer_Local_Value *);
+void wrong_range (Lisp_Object min, Lisp_Object max, Lisp_Object wrong);
+
+// dired.c
+
+Lisp_Object file_attributes (char const *name, Lisp_Object dirname, Lisp_Object filename,
+                             Lisp_Object id_format);
+Lisp_Object filemode_string(Lisp_Object filename);
 
 // dispnew.c
 
@@ -98,6 +116,7 @@ bool update_frame (struct frame *f, bool force_p, bool inhibit_hairy_id_p);
 // editfns.c
 
 Lisp_Object styled_format (ptrdiff_t nargs, Lisp_Object *args, bool message);
+void update_buffer_properties (ptrdiff_t, ptrdiff_t);
 
 // emacs.c
 
@@ -116,8 +135,13 @@ Lisp_Object signal_or_quit (Lisp_Object, Lisp_Object, bool);
 
 bool check_executable (char *filename);
 bool check_existing (const char *filename);
+bool file_directory_p (char const *file);
 bool file_name_absolute_p (const char *filename);
 bool file_name_case_insensitive_p (const char *filename);
+
+// fns.c
+
+Lisp_Object concat (ptrdiff_t nargs, Lisp_Object *args, enum Lisp_Type target_type, bool last_special);
 
 // font.c
 
@@ -173,6 +197,8 @@ void describe_vector (Lisp_Object vector, Lisp_Object prefix, Lisp_Object args,
                       bool partial, Lisp_Object shadow, Lisp_Object entire_map,
                       bool keymap_p, bool mention_shadow);
 void map_keymap_call (Lisp_Object key, Lisp_Object val, Lisp_Object fun, void *dummy);
+void map_keymap_char_table_item (Lisp_Object args, Lisp_Object key, Lisp_Object val);
+void map_keymap_item (map_keymap_function_t fun, Lisp_Object args, Lisp_Object key, Lisp_Object val, void *data);
 
 // lread.c
 
@@ -192,6 +218,8 @@ struct infile
 };
 
 extern struct infile *infile;
+extern Lisp_Object initial_obarray;
+extern size_t oblookup_last_bucket_number;
 
 Lisp_Object intern_sym (Lisp_Object sym, Lisp_Object obarray, Lisp_Object index);
 void readevalloop (Lisp_Object readcharfun,
@@ -203,7 +231,6 @@ void readevalloop (Lisp_Object readcharfun,
 Lisp_Object read_filtered_event (bool no_switch_frame, bool ascii_required,
                                  bool error_nonascii, bool input_method, Lisp_Object seconds);
 Lisp_Object read_internal_start (Lisp_Object stream, Lisp_Object start, Lisp_Object end);
-
 // marker.c
 
 extern ptrdiff_t cached_charpos;
@@ -211,8 +238,20 @@ extern ptrdiff_t cached_bytepos;
 extern struct buffer *cached_buffer;
 extern EMACS_INT cached_modiff;
 
+// minibuf.c
+
+extern Lisp_Object minibuf_prompt;
+
+Lisp_Object read_minibuf (Lisp_Object map, Lisp_Object initial, Lisp_Object prompt,
+                          bool expflag, Lisp_Object histvar, Lisp_Object histpos, Lisp_Object defalt,
+                          bool allow_props, bool inherit_input_method);
+
 // process.c
 
+extern Lisp_Object Vprocess_alist;
+
+void add_process_read_fd (int fd);
+pid_t emacs_get_tty_pgrp (struct Lisp_Process *p);
 void process_send_signal (Lisp_Object process, int signo, Lisp_Object current_group, bool nomsg);
 void send_process (Lisp_Object proc, const char *buf, ptrdiff_t len, Lisp_Object object);
 void update_status (struct Lisp_Process *p);
@@ -235,6 +274,7 @@ Lisp_Object string_match_1 (Lisp_Object regexp, Lisp_Object string, Lisp_Object 
 
 // syntax.c
 
+Lisp_Object scan_lists (EMACS_INT from, EMACS_INT count, EMACS_INT depth, bool sexpflag);
 Lisp_Object skip_chars (bool forwardp, Lisp_Object string, Lisp_Object lim, bool handle_iso_classes);
 Lisp_Object skip_syntaxes (bool forwardp, Lisp_Object string, Lisp_Object lim);
 
