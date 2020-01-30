@@ -299,7 +299,7 @@ a non-nil value for the inserted character.  At the end, it runs
 
   /* Barf if the key that invoked this was not a character.  */
   if (!CHARACTERP (last_command_event))
-    bitch_at_user ();
+    ding_internal ();
   else {
     int character = translate_char (Vtranslation_table_for_input,
 				    XINT (last_command_event));

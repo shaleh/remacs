@@ -1042,7 +1042,7 @@ Default value of `command-error-function'.  */)
       clear_message (1, 0);
       Fdiscard_input ();
       message_log_maybe_newline ();
-      bitch_at_user ();
+      ding_internal ();
 
       print_error_message (data, Qt, SSDATA (context), signal);
     }
