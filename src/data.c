@@ -176,12 +176,13 @@ args_out_of_range_3 (Lisp_Object a1, Lisp_Object a2, Lisp_Object a3)
   xsignal3 (Qargs_out_of_range, a1, a2, a3);
 }
 
+#if IGNORE_RUST_PORT
 void
 circular_list (Lisp_Object list)
 {
   xsignal1 (Qcircular_list, list);
 }
-
+#endif // IGNORE_RUST_PORT
 
 /* Data type predicates.  */
 
@@ -2340,7 +2341,7 @@ selected frame's terminal device).  */)
 #endif
 
 /* Find the function at the end of a chain of symbol function indirections.  */
-
+#if IGNORE_RUST_PORT
 /* If OBJECT is a symbol, find the end of its function chain and
    return the value found there.  If OBJECT is not a symbol, just
    return it.  If there is a cycle in the function chain, signal a
@@ -2372,6 +2373,7 @@ indirect_function (register Lisp_Object object)
 
   return hare;
 }
+#endif // IGNORE_RUST_PORT
 
 #if IGNORE_RUST_PORT
 DEFUN ("indirect-function", Findirect_function, Sindirect_function, 1, 2, 0,
@@ -2553,7 +2555,7 @@ bool-vector.  IDX starts at 0.  */)
 #endif
 
 /* Arithmetic functions */
-
+#if IGNORE_RUST_PORT
 Lisp_Object
 arithcompare (Lisp_Object num1, Lisp_Object num2,
 	      enum Arith_Comparison comparison)
@@ -2660,6 +2662,7 @@ arithcompare (Lisp_Object num1, Lisp_Object num2,
 
   return test ? Qt : Qnil;
 }
+#endif // IGNORE_RUST_PORT
 
 static Lisp_Object
 arithcompare_driver (ptrdiff_t nargs, Lisp_Object *args,

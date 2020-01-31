@@ -4872,7 +4872,7 @@ mark_window_cursors_off (struct window *w)
     }
 }
 
-
+#if IGNORE_RUST_PORT
 /**
  * window_wants_mode_line:
  *
@@ -4901,8 +4901,9 @@ window_wants_mode_line (struct window *w)
 	  ? 1
 	  : 0);
 }
+#endif // IGNORE_RUST_PORT
 
-
+#if IGNORE_RUST_PORT
 /**
  * window_wants_header_line:
  *
@@ -4935,6 +4936,7 @@ window_wants_header_line (struct window *w)
 	  ? 1
 	  : 0);
 }
+#endif // IGNORE_RUST_PORT
 
 /* Return number of lines of text in window W, not counting the mode
    line and header line, if any.  Do NOT use this for windows on GUI
