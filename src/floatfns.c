@@ -62,6 +62,7 @@ CHECK_FLOAT (Lisp_Object x)
   CHECK_TYPE (FLOATP (x), Qfloatp, x);
 }
 
+#if IGNORE_RUST_PORT
 /* Extract a Lisp number as a `double', or signal an error.  */
 
 double
@@ -70,9 +71,10 @@ extract_float (Lisp_Object num)
   CHECK_NUMBER_OR_FLOAT (num);
   return XFLOATINT (num);
 }
+#endif // IGNORE_RUST_PORT
 
 /* Trig functions.  */
-
+#if IGNORE_RUST_PORT
 DEFUN ("acos", Facos, Sacos, 1, 1, 0,
        doc: /* Return the inverse cosine of ARG.  */)
   (Lisp_Object arg)
@@ -81,7 +83,9 @@ DEFUN ("acos", Facos, Sacos, 1, 1, 0,
   d = acos (d);
   return make_float (d);
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("asin", Fasin, Sasin, 1, 1, 0,
        doc: /* Return the inverse sine of ARG.  */)
   (Lisp_Object arg)
@@ -90,7 +94,9 @@ DEFUN ("asin", Fasin, Sasin, 1, 1, 0,
   d = asin (d);
   return make_float (d);
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("atan", Fatan, Satan, 1, 2, 0,
        doc: /* Return the inverse tangent of the arguments.
 If only one argument Y is given, return the inverse tangent of Y.
@@ -110,7 +116,9 @@ and the x-axis.  */)
     }
   return make_float (d);
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("cos", Fcos, Scos, 1, 1, 0,
        doc: /* Return the cosine of ARG.  */)
   (Lisp_Object arg)
@@ -119,7 +127,9 @@ DEFUN ("cos", Fcos, Scos, 1, 1, 0,
   d = cos (d);
   return make_float (d);
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("sin", Fsin, Ssin, 1, 1, 0,
        doc: /* Return the sine of ARG.  */)
   (Lisp_Object arg)
@@ -128,7 +138,9 @@ DEFUN ("sin", Fsin, Ssin, 1, 1, 0,
   d = sin (d);
   return make_float (d);
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("tan", Ftan, Stan, 1, 1, 0,
        doc: /* Return the tangent of ARG.  */)
   (Lisp_Object arg)
@@ -137,7 +149,9 @@ DEFUN ("tan", Ftan, Stan, 1, 1, 0,
   d = tan (d);
   return make_float (d);
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("isnan", Fisnan, Sisnan, 1, 1, 0,
        doc: /* Return non nil if argument X is a NaN.  */)
   (Lisp_Object x)
@@ -145,6 +159,7 @@ DEFUN ("isnan", Fisnan, Sisnan, 1, 1, 0,
   CHECK_FLOAT (x);
   return isnan (XFLOAT_DATA (x)) ? Qt : Qnil;
 }
+#endif // IGNORE_RUST_PORT
 
 /* Although the substitute does not work on NaNs, it is good enough
    for platforms lacking the signbit macro.  */
@@ -152,6 +167,7 @@ DEFUN ("isnan", Fisnan, Sisnan, 1, 1, 0,
 # define signbit(x) ((x) < 0 || (IEEE_FLOATING_POINT && !(x) && 1 / (x) < 0))
 #endif
 
+#if IGNORE_RUST_PORT
 DEFUN ("copysign", Fcopysign, Scopysign, 2, 2, 0,
        doc: /* Copy sign of X2 to value of X1, and return the result.
 Cause an error if X1 or X2 is not a float.  */)
@@ -169,7 +185,9 @@ Cause an error if X1 or X2 is not a float.  */)
      the result is X1.  */
   return signbit (f1) != signbit (f2) ? make_float (-f1) : x1;
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("frexp", Ffrexp, Sfrexp, 1, 1, 0,
        doc: /* Get significand and exponent of a floating point number.
 Breaks the floating point number X into its binary significand SGNFCAND
@@ -187,7 +205,9 @@ If X is zero, both parts (SGNFCAND and EXP) are zero.  */)
   double sgnfcand = frexp (f, &exponent);
   return Fcons (make_float (sgnfcand), make_number (exponent));
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("ldexp", Fldexp, Sldexp, 2, 2, 0,
        doc: /* Return SGNFCAND * 2**EXPONENT, as a floating point number.
 EXPONENT must be an integer.   */)
@@ -197,6 +217,7 @@ EXPONENT must be an integer.   */)
   int e = min (max (INT_MIN, XINT (exponent)), INT_MAX);
   return make_float (ldexp (extract_float (sgnfcand), e));
 }
+#endif // IGNORE_RUST_PORT
 
 DEFUN ("exp", Fexp, Sexp, 1, 1, 0,
        doc: /* Return the exponential base e of ARG.  */)
@@ -207,6 +228,7 @@ DEFUN ("exp", Fexp, Sexp, 1, 1, 0,
   return make_float (d);
 }
 
+#if IGNORE_RUST_PORT
 DEFUN ("expt", Fexpt, Sexpt, 2, 2, 0,
        doc: /* Return the exponential ARG1 ** ARG2.  */)
   (Lisp_Object arg1, Lisp_Object arg2)
@@ -236,6 +258,7 @@ DEFUN ("expt", Fexpt, Sexpt, 2, 2, 0,
     }
   return make_float (pow (XFLOATINT (arg1), XFLOATINT (arg2)));
 }
+#endif // IGNORE_RUST_PORT
 
 DEFUN ("log", Flog, Slog, 1, 2, 0,
        doc: /* Return the natural logarithm of ARG.
@@ -305,6 +328,7 @@ ecount_leading_zeros (EMACS_UINT x)
 	  : count_leading_zeros_ll (x));
 }
 
+#if IGNORE_RUST_PORT
 DEFUN ("logb", Flogb, Slogb, 1, 1, 0,
        doc: /* Returns largest integer <= the base 2 log of the magnitude of ARG.
 This is the same as the exponent of a float.  */)
@@ -338,8 +362,9 @@ This is the same as the exponent of a float.  */)
 
   return make_number (value);
 }
+#endif // IGNORE_RUST_PORT
 
-
+#if IGNORE_RUST_PORT
 /* the rounding functions  */
 
 static Lisp_Object
@@ -387,7 +412,9 @@ rounding_driver (Lisp_Object arg, Lisp_Object divisor,
     }
   xsignal2 (Qrange_error, build_string (name), arg);
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 static EMACS_INT
 ceiling2 (EMACS_INT i1, EMACS_INT i2)
 {
@@ -420,6 +447,7 @@ round2 (EMACS_INT i1, EMACS_INT i2)
   EMACS_INT abs_r1 = eabs (i2) - abs_r;
   return q + (abs_r + (q & 1) <= abs_r1 ? 0 : (i2 ^ r) < 0 ? -1 : 1);
 }
+#endif // IGNORE_RUST_PORT
 
 /* The code uses emacs_rint, so that it works to undefine HAVE_RINT
    if `rint' exists but does not work right.  */
@@ -445,6 +473,7 @@ emacs_trunc (double d)
 }
 #endif
 
+#if IGNORE_RUST_PORT
 DEFUN ("ceiling", Fceiling, Sceiling, 1, 2, 0,
        doc: /* Return the smallest integer no less than ARG.
 This rounds the value towards +inf.
@@ -453,7 +482,9 @@ With optional DIVISOR, return the smallest integer no less than ARG/DIVISOR.  */
 {
   return rounding_driver (arg, divisor, ceil, ceiling2, "ceiling");
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("floor", Ffloor, Sfloor, 1, 2, 0,
        doc: /* Return the largest integer no greater than ARG.
 This rounds the value towards -inf.
@@ -462,7 +493,9 @@ With optional DIVISOR, return the largest integer no greater than ARG/DIVISOR.  
 {
   return rounding_driver (arg, divisor, floor, floor2, "floor");
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("round", Fround, Sround, 1, 2, 0,
        doc: /* Return the nearest integer to ARG.
 With optional DIVISOR, return the nearest integer to ARG/DIVISOR.
@@ -475,7 +508,9 @@ systems, but 2 on others.  */)
 {
   return rounding_driver (arg, divisor, emacs_rint, round2, "round");
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("truncate", Ftruncate, Struncate, 1, 2, 0,
        doc: /* Truncate a floating point number to an int.
 Rounds ARG toward zero.
@@ -485,7 +520,7 @@ With optional DIVISOR, truncate ARG/DIVISOR.  */)
   return rounding_driver (arg, divisor, emacs_trunc, truncate2,
 			  "truncate");
 }
-
+#endif // IGNORE_RUST_PORT
 
 Lisp_Object
 fmod_float (Lisp_Object x, Lisp_Object y)
@@ -526,6 +561,7 @@ DEFUN ("ffloor", Fffloor, Sffloor, 1, 1, 0,
   return make_float (d);
 }
 
+#if IGNORE_RUST_PORT
 DEFUN ("fround", Ffround, Sfround, 1, 1, 0,
        doc: /* Return the nearest integer to ARG, as a float.  */)
   (Lisp_Object arg)
@@ -535,6 +571,7 @@ DEFUN ("fround", Ffround, Sfround, 1, 1, 0,
   d = emacs_rint (d);
   return make_float (d);
 }
+#endif // IGNORE_RUST_PORT
 
 DEFUN ("ftruncate", Fftruncate, Sftruncate, 1, 1, 0,
        doc: /* Truncate a floating point number to an integral float value.
@@ -550,6 +587,7 @@ DEFUN ("ftruncate", Fftruncate, Sftruncate, 1, 1, 0,
 void
 syms_of_floatfns (void)
 {
+#if IGNORE_RUST_PORT
   defsubr (&Sacos);
   defsubr (&Sasin);
   defsubr (&Satan);
@@ -560,20 +598,27 @@ syms_of_floatfns (void)
   defsubr (&Scopysign);
   defsubr (&Sfrexp);
   defsubr (&Sldexp);
+#endif // IGNORE_RUST_PORT
   defsubr (&Sfceiling);
   defsubr (&Sffloor);
+#if IGNORE_RUST_PORT
   defsubr (&Sfround);
+#endif // IGNORE_RUST_PORT
   defsubr (&Sftruncate);
   defsubr (&Sexp);
+#if IGNORE_RUST_PORT
   defsubr (&Sexpt);
   defsubr (&Slog);
   defsubr (&Ssqrt);
+#endif // IGNORE_RUST_PORT
 
   defsubr (&Sabs);
   defsubr (&Sfloat);
+#if IGNORE_RUST_PORT
   defsubr (&Slogb);
   defsubr (&Sceiling);
   defsubr (&Sfloor);
   defsubr (&Sround);
   defsubr (&Struncate);
+#endif // IGNORE_RUST_PORT
 }

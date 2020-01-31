@@ -38,8 +38,6 @@ pub fn car_less_than_car(a: LispCons, b: LispCons) -> bool {
     arithcompare(a.car(), b.car(), ArithComparison::Less)
 }
 
-def_lisp_sym!(Qcar_less_than_car, "car-less-than-car");
-
 /// Return non-nil if NAME ends with a directory separator character.
 #[lisp_fn]
 pub fn directory_name_p(name: LispStringRef) -> bool {
@@ -140,8 +138,6 @@ pub fn file_directory_p_lisp(filename: LispStringRef) -> bool {
     }
 }
 
-def_lisp_sym!(Qfile_directory_p, "file-directory-p");
-
 /// Return t if FILENAME can be executed by you.
 /// For a directory, this means you can access files in that directory.
 /// (It is generally better to use `file-accessible-directory-p' for that purpose, though.)
@@ -193,5 +189,8 @@ pub fn make_temp_name(prefix: LispStringRef) -> LispObject {
         )
     }
 }
+
+def_lisp_sym!(Qcar_less_than_car, "car-less-than-car");
+def_lisp_sym!(Qfile_directory_p, "file-directory-p");
 
 include!(concat!(env!("OUT_DIR"), "/fileio_exports.rs"));

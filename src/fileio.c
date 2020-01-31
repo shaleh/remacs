@@ -220,6 +220,7 @@ report_file_errno (char const *string, Lisp_Object name, int errorno)
   xsignal (Fcar (data), Fcdr (data));
 }
 
+#if IGNORE_RUST_PORT
 /* Signal a file-access failure that set errno.  STRING describes the
    failure, NAME the file involved.  When invoking this function, take
    care to not use arguments such as build_string ("foo") that involve
@@ -230,6 +231,7 @@ report_file_error (char const *string, Lisp_Object name)
 {
   report_file_errno (string, name, errno);
 }
+#endif // IGNORE_RUST_PORT
 
 /* Like report_file_error, but reports a file-notify-error instead.  */
 
@@ -593,6 +595,7 @@ directory_file_name (char *dst, char *src, ptrdiff_t srclen, bool multibyte)
   return srclen;
 }
 
+#if IGNORE_RUST_PORT
 DEFUN ("directory-name-p", Fdirectory_name_p, Sdirectory_name_p, 1, 1, 0,
        doc: /* Return non-nil if NAME ends with a directory separator character.  */)
   (Lisp_Object name)
@@ -602,6 +605,7 @@ DEFUN ("directory-name-p", Fdirectory_name_p, Sdirectory_name_p, 1, 1, 0,
   unsigned char c = namelen ? SREF (name, namelen - 1) : 0;
   return IS_DIRECTORY_SEP (c) ? Qt : Qnil;
 }
+#endif // IGNORE_RUST_PORT
 
 /* Return the expansion of NEWNAME, except that if NEWNAME is a
    directory name then return the expansion of FILE's basename under
@@ -716,7 +720,7 @@ This function does not grok magic file names.  */)
   return val;
 }
 
-
+#if IGNORE_RUST_PORT
 DEFUN ("make-temp-name", Fmake_temp_name, Smake_temp_name, 1, 1, 0,
        doc: /* Generate temporary file name (string) starting with PREFIX (a string).
 
@@ -732,6 +736,7 @@ For that reason, you should normally use `make-temp-file' instead.  */)
   return Fmake_temp_file_internal (prefix, make_number (0),
 				   empty_unibyte_string, Qnil);
 }
+#endif // IGNORE_RUST_PORT
 
 DEFUN ("expand-file-name", Fexpand_file_name, Sexpand_file_name, 1, 2, 0,
        doc: /* Convert filename NAME to absolute, and canonicalize it.
@@ -2279,6 +2284,7 @@ file_name_case_insensitive_p (const char *filename)
 #endif
 }
 
+#if IGNORE_RUST_PORT
 DEFUN ("file-name-case-insensitive-p", Ffile_name_case_insensitive_p,
        Sfile_name_case_insensitive_p, 1, 1, 0,
        doc: /* Return t if file FILENAME is on a case-insensitive filesystem.
@@ -2299,6 +2305,7 @@ The arg must be a string.  */)
   filename = ENCODE_FILE (filename);
   return file_name_case_insensitive_p (SSDATA (filename)) ? Qt : Qnil;
 }
+#endif // IGNORE_RUST_PORT
 
 DEFUN ("rename-file", Frename_file, Srename_file, 2, 3,
        "fRename file: \nGRename %s to file: \np",
@@ -2530,6 +2537,7 @@ This happens for interactive use with M-x.  */)
 }
 
 
+#if IGNORE_RUST_PORT
 DEFUN ("file-name-absolute-p", Ffile_name_absolute_p, Sfile_name_absolute_p,
        1, 1, 0,
        doc: /* Return t if FILENAME is an absolute file name or starts with `~'.
@@ -2539,7 +2547,9 @@ On Unix, absolute file names start with `/'.  */)
   CHECK_STRING (filename);
   return file_name_absolute_p (SSDATA (filename)) ? Qt : Qnil;
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("file-exists-p", Ffile_exists_p, Sfile_exists_p, 1, 1, 0,
        doc: /* Return t if file FILENAME exists (whether or not you can read it).
 See also `file-readable-p' and `file-attributes'.
@@ -2567,7 +2577,9 @@ Use `file-symlink-p' to test for such links.  */)
 
   return check_existing (SSDATA (absname)) ? Qt : Qnil;
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("file-executable-p", Ffile_executable_p, Sfile_executable_p, 1, 1, 0,
        doc: /* Return t if FILENAME can be executed by you.
 For a directory, this means you can access files in that directory.
@@ -2591,6 +2603,7 @@ purpose, though.)  */)
 
   return (check_executable (SSDATA (absname)) ? Qt : Qnil);
 }
+#endif // IGNORE_RUST_PORT
 
 DEFUN ("file-readable-p", Ffile_readable_p, Sfile_readable_p, 1, 1, 0,
        doc: /* Return t if file FILENAME exists and you can read it.
@@ -2725,6 +2738,7 @@ This function does not check whether the link target exists.  */)
   return emacs_readlinkat (AT_FDCWD, SSDATA (filename));
 }
 
+#if IGNORE_RUST_PORT
 DEFUN ("file-directory-p", Ffile_directory_p, Sfile_directory_p, 1, 1, 0,
        doc: /* Return t if FILENAME names an existing directory.
 Symbolic links to directories count as directories.
@@ -2743,6 +2757,7 @@ See `file-symlink-p' to distinguish symlinks.  */)
 
   return file_directory_p (SSDATA (absname)) ? Qt : Qnil;
 }
+#endif // IGNORE_RUST_PORT
 
 /* Return true if FILE is a directory or a symlink to a directory.  */
 bool
@@ -5111,12 +5126,14 @@ write_region (Lisp_Object start, Lisp_Object end, Lisp_Object filename,
   return Qnil;
 }
 
+#if IGNORE_RUST_PORT
 DEFUN ("car-less-than-car", Fcar_less_than_car, Scar_less_than_car, 2, 2, 0,
        doc: /* Return t if (car A) is numerically less than (car B).  */)
   (Lisp_Object a, Lisp_Object b)
 {
   return arithcompare (Fcar (a), Fcar (b), ARITH_LESS);
 }
+#endif // IGNORE_RUST_PORT
 
 /* Build the complete list of annotations appropriate for writing out
    the text between START and END, by calling all the functions in
@@ -5755,6 +5772,7 @@ No auto-save file will be written until the buffer changes again.  */)
   return Qnil;
 }
 
+#if IGNORE_RUST_PORT
 DEFUN ("clear-buffer-auto-save-failure", Fclear_buffer_auto_save_failure,
        Sclear_buffer_auto_save_failure, 0, 0, 0,
        doc: /* Clear any record of a recent auto-save failure in the current buffer.  */)
@@ -5763,7 +5781,9 @@ DEFUN ("clear-buffer-auto-save-failure", Fclear_buffer_auto_save_failure,
   current_buffer->auto_save_failure_time = 0;
   return Qnil;
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("recent-auto-save-p", Frecent_auto_save_p, Srecent_auto_save_p,
        0, 0, 0,
        doc: /* Return t if current buffer has been auto-saved recently.
@@ -5776,6 +5796,7 @@ then any auto-save counts as "recent".  */)
      they're never autosaved.  */
   return (SAVE_MODIFF < BUF_AUTOSAVE_MODIFF (current_buffer) ? Qt : Qnil);
 }
+#endif // IGNORE_RUST_PORT
 
 /* Reading and completing file names.  */
 
@@ -6140,28 +6161,38 @@ This includes interactive calls to `delete-file' and
   defsubr (&Sfile_name_nondirectory);
   defsubr (&Sunhandled_file_name_directory);
   defsubr (&Sfile_name_as_directory);
+#if IGNORE_RUST_PORT
   defsubr (&Sdirectory_name_p);
+#endif // IGNORE_RUST_PORT
   defsubr (&Sdirectory_file_name);
   defsubr (&Smake_temp_file_internal);
+#if IGNORE_RUST_PORT
   defsubr (&Smake_temp_name);
+#endif // IGNORE_RUST_PORT
   defsubr (&Sexpand_file_name);
   defsubr (&Ssubstitute_in_file_name);
   defsubr (&Scopy_file);
   defsubr (&Smake_directory_internal);
   defsubr (&Sdelete_directory_internal);
   defsubr (&Sdelete_file);
+#if IGNORE_RUST_PORT
   defsubr (&Sfile_name_case_insensitive_p);
+#endif // IGNORE_RUST_PORT
   defsubr (&Srename_file);
   defsubr (&Sadd_name_to_file);
   defsubr (&Smake_symbolic_link);
+#if IGNORE_RUST_PORT
   defsubr (&Sfile_name_absolute_p);
   defsubr (&Sfile_exists_p);
   defsubr (&Sfile_executable_p);
+#endif // IGNORE_RUST_PORT
   defsubr (&Sfile_readable_p);
   defsubr (&Sfile_writable_p);
   defsubr (&Saccess_file);
   defsubr (&Sfile_symlink_p);
+#if IGNORE_RUST_PORT
   defsubr (&Sfile_directory_p);
+#endif // IGNORE_RUST_PORT
   defsubr (&Sfile_accessible_directory_p);
   defsubr (&Sfile_regular_p);
   defsubr (&Sfile_modes);
@@ -6176,14 +6207,18 @@ This includes interactive calls to `delete-file' and
   defsubr (&Sfile_newer_than_file_p);
   defsubr (&Sinsert_file_contents);
   defsubr (&Swrite_region);
+#if IGNORE_RUST_PORT
   defsubr (&Scar_less_than_car);
+#endif // IGNORE_RUST_PORT
   defsubr (&Sverify_visited_file_modtime);
   defsubr (&Svisited_file_modtime);
   defsubr (&Sset_visited_file_modtime);
   defsubr (&Sdo_auto_save);
   defsubr (&Sset_buffer_auto_saved);
+#if IGNORE_RUST_PORT
   defsubr (&Sclear_buffer_auto_save_failure);
   defsubr (&Srecent_auto_save_p);
+#endif // IGNORE_RUST_PORT
 
   defsubr (&Snext_read_file_uses_dialog_p);
 
