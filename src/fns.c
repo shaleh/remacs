@@ -3072,7 +3072,7 @@ static const short base64_char_to_value[128] =
    The octets are divided into 6 bit chunks, which are then encoded into
    base64 characters.  */
 
-extern ptrdiff_t base64_encode_1 (const char *, char *, ptrdiff_t, bool, bool);
+static ptrdiff_t base64_encode_1 (const char *, char *, ptrdiff_t, bool, bool);
 extern ptrdiff_t base64_decode_1 (const char *, char *, ptrdiff_t, bool,
 				  ptrdiff_t *);
 
@@ -3180,7 +3180,6 @@ into shorter lines.  */)
 }
 #endif // IGNORE_RUST_POST
 
-#if IGNORE_RUST_PORT
 static ptrdiff_t
 base64_encode_1 (const char *from, char *to, ptrdiff_t length,
 		 bool line_break, bool multibyte)
@@ -3276,7 +3275,6 @@ base64_encode_1 (const char *from, char *to, ptrdiff_t length,
 
   return e - to;
 }
-#endif // IGNORE_RUST_POST
 
 #if IGNORE_RUST_PORT
 DEFUN ("base64-decode-region", Fbase64_decode_region, Sbase64_decode_region,

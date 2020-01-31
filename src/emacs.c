@@ -575,6 +575,7 @@ init_cmdargs (int argc, char **argv, int skip_args, char *original_pwd)
   unbind_to (count, Qnil);
 }
 
+#if IGNORE_RUST_PORT
 DEFUN ("invocation-name", Finvocation_name, Sinvocation_name, 0, 0, 0,
        doc: /* Return the program name that was used to run Emacs.
 Any directory names are omitted.  */)
@@ -582,7 +583,9 @@ Any directory names are omitted.  */)
 {
   return Fcopy_sequence (Vinvocation_name);
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("invocation-directory", Finvocation_directory, Sinvocation_directory,
        0, 0, 0,
        doc: /* Return the directory name in which the Emacs executable was located.  */)
@@ -590,7 +593,7 @@ DEFUN ("invocation-directory", Finvocation_directory, Sinvocation_directory,
 {
   return Fcopy_sequence (Vinvocation_directory);
 }
-
+#endif // IGNORE_RUST_PORT
 
 /* Test whether the next argument in ARGV matches SSTR or a prefix of
    LSTR (at least MINLEN characters).  If so, then if VALPTR is non-null
@@ -2449,6 +2452,7 @@ decode_env_path (const char *evarname, const char *defalt, bool empty)
   return Fnreverse (lpath);
 }
 
+#if IGNORE_RUST_PORT
 DEFUN ("daemonp", Fdaemonp, Sdaemonp, 0, 0, 0,
        doc: /* Return non-nil if the current emacs process is a daemon.
 If the daemon was given a name argument, return that name. */)
@@ -2462,6 +2466,7 @@ If the daemon was given a name argument, return that name. */)
   else
     return Qnil;
 }
+#endif // IGNORE_RUST_PORT
 
 DEFUN ("daemon-initialized", Fdaemon_initialized, Sdaemon_initialized, 0, 0, 0,
        doc: /* Mark the Emacs daemon as being initialized.
@@ -2534,9 +2539,11 @@ syms_of_emacs (void)
 
   defsubr (&Skill_emacs);
 
+#if IGNORE_RUST_PORT
   defsubr (&Sinvocation_name);
   defsubr (&Sinvocation_directory);
   defsubr (&Sdaemonp);
+#endif // IGNORE_RUST_PORT
   defsubr (&Sdaemon_initialized);
 
   DEFVAR_LISP ("command-line-args", Vcommand_line_args,

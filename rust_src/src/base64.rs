@@ -19,7 +19,7 @@ use crate::{
     threads::ThreadState,
 };
 
-fn base64_encode_1(bytes: &[u8], line_break: bool, multibyte: bool) -> Result<String, ()> {
+fn base64_encode_rust(bytes: &[u8], line_break: bool, multibyte: bool) -> Result<String, ()> {
     let config = base64_crate::STANDARD;
 
     let mut encoded_string = if multibyte {
@@ -110,35 +110,35 @@ fn encode_multibyte_string(v: &[u8]) -> Vec<u8> {
 }
 
 #[test]
-fn test_simple_base64_encode_1() {
+fn test_simple_base64_encode_rust() {
     let input = "hello world";
     let mut encoded = [0u8; 20];
 
-    let encoded = base64_encode_1(input.as_bytes(), false, false).unwrap();
+    let encoded = base64_encode_rust(input.as_bytes(), false, false).unwrap();
     assert_eq!("aGVsbG8gd29ybGQ=", encoded);
 }
 
 #[test]
-fn test_multibyte_base64_encode_1() {
+fn test_multibyte_base64_encode_rust() {
     let input = "Dobrý den"; // Czech
 
     // Treat the input as unibyte, meaning just a buffer of bytes
-    let encoded = base64_encode_1(input.as_bytes(), false, false).unwrap();
+    let encoded = base64_encode_rust(input.as_bytes(), false, false).unwrap();
     assert_eq!("RG9icsO9IGRlbg==", encoded);
 
     // When we specify 'mutlibyte' we mean the input is encoded with emacs' own encoding
     let as_multibyte = encode_multibyte_string(input.as_bytes());
-    let encoded = base64_encode_1(&as_multibyte, false, true).unwrap();
+    let encoded = base64_encode_rust(&as_multibyte, false, true).unwrap();
     assert_eq!("RG9icsO9IGRlbg==", encoded);
 }
 
 #[test]
-fn test_linewrap_base64_encode_1() {
+fn test_linewrap_base64_encode_rust() {
     let input = "Emacs is a widely used tool with a long history, broad platform
 support and strong backward compatibility requirements. The core team
 is understandably cautious in making far-reaching changes.";
 
-    let encoded = base64_encode_1(input.as_bytes(), true, false).unwrap();
+    let encoded = base64_encode_rust(input.as_bytes(), true, false).unwrap();
     let expected = "RW1hY3MgaXMgYSB3aWRlbHkgdXNlZCB0b29sIHdpdGggYSBsb25nIGhpc3RvcnksIGJyb2FkIHBs
 YXRmb3JtCnN1cHBvcnQgYW5kIHN0cm9uZyBiYWNrd2FyZCBjb21wYXRpYmlsaXR5IHJlcXVpcmVt
 ZW50cy4gVGhlIGNvcmUgdGVhbQppcyB1bmRlcnN0YW5kYWJseSBjYXV0aW91cyBpbiBtYWtpbmcg
@@ -246,7 +246,7 @@ bWFpbGluZyBsaXN0cywgc2VlIDxodHRwOi8vbGlzdHMuZ251Lm9yZy8+LgoK";
 /// into shorter lines.
 #[lisp_fn(min = "1")]
 pub fn base64_encode_string(string: LispStringRef, no_line_break: bool) -> LispObject {
-    match base64_encode_1(string.as_slice(), !no_line_break, string.is_multibyte()) {
+    match base64_encode_rust(string.as_slice(), !no_line_break, string.is_multibyte()) {
         Ok(encoded) => unsafe {
             make_unibyte_string(encoded.as_ptr() as *const c_char, encoded.len() as isize)
         },
@@ -283,7 +283,7 @@ pub fn base64_encode_region(beg: LispObject, end: LispObject, no_line_break: boo
     let input = unsafe { slice::from_raw_parts(current_buffer.byte_pos_addr(begpos), length) };
 
     let multibyte = current_buffer.multibyte_characters_enabled();
-    let encoded = match base64_encode_1(input, !no_line_break, multibyte) {
+    let encoded = match base64_encode_rust(input, !no_line_break, multibyte) {
         Ok(encoded) => encoded,
         Err(_) => error!("Multibyte character in data for base64 encoding"),
     };

@@ -261,7 +261,6 @@ pub fn setq(args: LispObject) -> LispObject {
 
     val
 }
-def_lisp_sym!(Qsetq, "setq");
 
 /// Like `quote', but preferred for objects which are functions.
 /// In byte compilation, `function' causes its argument to be compiled.
@@ -308,7 +307,6 @@ pub fn function(args: LispCons) -> LispObject {
     // Simply quote the argument.
     quoted
 }
-def_lisp_sym!(Qfunction, "function");
 
 /// Make SYMBOL lexically scoped.
 /// Internal function
@@ -396,7 +394,7 @@ fn let_binding_value(obj: LispObject) -> (LispObject, LispObject) {
         if tail.is_nil() {
             (front, unsafe { eval_sub(to_eval) })
         } else {
-            signal_error("`let' bindings can have only one value-form", obj);
+            signal_error_rust("`let' bindings can have only one value-form", obj);
         }
     }
 }
@@ -631,19 +629,21 @@ pub extern "C" fn apply1(func: LispObject, arg: LispObject) -> LispObject {
     }
 }
 
-/// Signal `error' with message MSG, and additional arg ARG.
-/// If ARG is not a genuine list, make it a one-element list.
-fn signal_error(msg: &str, arg: LispObject) -> ! {
+#[no_mangle]
+pub extern "C" fn signal_error(msg: *const libc::c_char, arg: LispObject) -> ! {
     let it = arg.iter_tails(LispConsEndChecks::off, LispConsCircularChecks::safe);
     let arg = match it.last() {
         None => list!(arg),
         Some(_) => arg,
     };
 
-    xsignal!(
-        Qerror,
-        (build_string(msg.as_ptr() as *const libc::c_char), arg)
-    );
+    xsignal!(Qerror, (build_string(msg), arg));
+}
+
+/// Signal `error' with message MSG, and additional arg ARG.
+/// If ARG is not a genuine list, make it a one-element list.
+fn signal_error_rust(msg: &str, arg: LispObject) -> ! {
+    signal_error(msg.as_ptr() as *const libc::c_char, arg);
 }
 
 /// Non-nil if FUNCTION makes provisions for interactive calling.
@@ -712,8 +712,6 @@ pub fn commandp(function: LispObject, for_call_interactively: bool) -> bool {
     false
 }
 
-def_lisp_sym!(Qcommandp, "commandp");
-
 /// Define FUNCTION to autoload from FILE.
 /// FUNCTION is a symbol; FILE is a file name string to pass to `load'.
 /// Third arg DOCSTRING is documentation for the function.
@@ -753,8 +751,6 @@ pub fn autoload(
         Qnil,
     )
 }
-
-def_lisp_sym!(Qautoload, "autoload");
 
 /// Return t if OBJECT is a function.
 #[lisp_fn(name = "functionp", c_name = "functionp")]
@@ -802,17 +798,18 @@ pub extern "C" fn FUNCTIONP(object: LispObject) -> bool {
     }
 }
 
-pub unsafe extern "C" fn un_autoload(oldqueue: LispObject) {
+#[no_mangle]
+pub extern "C" fn un_autoload(oldqueue: LispObject) {
     // Queue to unwind is current value of Vautoload_queue.
     // oldqueue is the shadowed value to leave in Vautoload_queue.
-    let queue = Vautoload_queue;
-    Vautoload_queue = oldqueue;
+    let queue = unsafe { Vautoload_queue };
+    unsafe { Vautoload_queue = oldqueue };
 
     for first in queue.iter_cars(LispConsEndChecks::off, LispConsCircularChecks::off) {
         let (first, second) = first.into();
 
         if first.eq(0) {
-            globals.Vfeatures = second;
+            unsafe { globals.Vfeatures = second };
         } else {
             fset(first.into(), second);
         }
@@ -938,8 +935,8 @@ pub fn run_hooks(args: &[LispObject]) {
 /// Do not use `make-local-variable' to make a hook variable buffer-local.
 /// Instead, use `add-hook' and specify t for the LOCAL argument.
 /// usage: (run-hook-with-args HOOK &rest ARGS)
-#[lisp_fn(min = "1")]
-pub fn run_hook_with_args(args: &mut [LispObject]) -> LispObject {
+#[lisp_fn(name = "run-hook-with-args", c_name = "run_hook_with_args", min = "1")]
+pub fn run_hook_with_args_lisp(args: &mut [LispObject]) -> LispObject {
     run_hook_with_args_internal(args, funcall_nil)
 }
 
@@ -1010,7 +1007,7 @@ pub fn run_hook_wrapped(args: &mut [LispObject]) -> LispObject {
 /// Run the hook HOOK, giving each function no args.
 #[no_mangle]
 pub extern "C" fn run_hook(hook: LispObject) {
-    run_hook_with_args(&mut [hook]);
+    run_hook_with_args_lisp(&mut [hook]);
 }
 
 /// ARGS[0] should be a hook symbol.
@@ -1438,5 +1435,10 @@ pub fn defvar(args: LispCons) -> LispObject {
 
     sym_obj
 }
+
+def_lisp_sym!(Qautoload, "autoload");
+def_lisp_sym!(Qcommandp, "commandp");
+def_lisp_sym!(Qfunction, "function");
+def_lisp_sym!(Qsetq, "setq");
 
 include!(concat!(env!("OUT_DIR"), "/eval_exports.rs"));
