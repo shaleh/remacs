@@ -245,7 +245,6 @@ pub fn require(feature: LispObject, filename: LispObject, noerror: LispObject) -
 
     unbind_to(count, feature)
 }
-def_lisp_sym!(Qrequire, "require");
 
 /// Concatenate all the arguments and make the result a list.
 /// The result is a list whose elements are the elements of all the arguments.
@@ -648,5 +647,7 @@ pub extern "C" fn validate_subarray(
         *new_to = t as isize;
     }
 }
+
+def_lisp_sym!(Qrequire, "require");
 
 include!(concat!(env!("OUT_DIR"), "/fns_exports.rs"));

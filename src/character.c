@@ -43,7 +43,7 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 Lisp_Object Vchar_unify_table;
 
 
-
+#if IGNORE_RUST_PORT
 /* If character code C has modifier masks, reflect them to the
    character code if possible.  Return the resulting code.  */
 
@@ -91,8 +91,9 @@ char_resolve_modifier_mask (EMACS_INT c)
 
   return c;
 }
+#endif // IGNORE_RUST_PORT
 
-
+#if IGNORE_RUST_PORT
 /* Store multibyte form of character C at P.  If C has modifier bits,
    handle them appropriately.  */
 
@@ -139,8 +140,9 @@ char_string (unsigned int c, unsigned char *p)
 
   return bytes;
 }
+#endif // IGNORE_RUST_PORT
 
-
+#if IGNORE_RUST_PORT
 /* Return a character whose multibyte form is at P.  If LEN is not
    NULL, it must be a pointer to integer.  In that case, set *LEN to
    the byte length of the multibyte form.  If ADVANCED is not NULL, it
@@ -191,7 +193,7 @@ string_char (const unsigned char *p, const unsigned char **advanced, int *len)
     *advanced = p;
   return c;
 }
-
+#endif // IGNORE_RUST_PORT
 
 /* Translate character C by translation table TABLE.  If no translation is
    found in TABLE, return the untranslated character.  If TABLE is a list,
@@ -382,6 +384,7 @@ strwidth (const char *str, ptrdiff_t len)
   return c_string_width ((const unsigned char *) str, len, -1, NULL, NULL);
 }
 
+#if IGNORE_RUST_PORT
 /* Return width of Lisp string STRING when displayed in the current
    buffer.  The width is measured by how many columns it occupies on
    the screen while paying attention to compositions.  If PRECISION >
@@ -454,6 +457,7 @@ lisp_string_width (Lisp_Object string, ptrdiff_t precision,
 
   return width;
 }
+#endif // IGNORE_RUST_PORT
 
 DEFUN ("string-width", Fstring_width, Sstring_width, 1, 1, 0,
        doc: /* Return width of STRING when displayed in the current buffer.
@@ -513,6 +517,7 @@ multibyte_chars_in_text (const unsigned char *ptr, ptrdiff_t nbytes)
   return chars;
 }
 
+#if IGNORE_RUST_PORT
 /* Parse unibyte text at STR of LEN bytes as a multibyte text, count
    characters and bytes in it, and store them in *NCHARS and *NBYTES
    respectively.  On counting bytes, pay attention to that 8-bit
@@ -554,7 +559,9 @@ parse_str_as_multibyte (const unsigned char *str, ptrdiff_t len,
   *nbytes = bytes;
   return;
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 /* Arrange unibyte text at STR of NBYTES bytes as a multibyte text.
    It actually converts only such 8-bit characters that don't construct
    a multibyte sequence to multibyte forms of Latin-1 characters.  If
@@ -635,7 +642,9 @@ str_as_multibyte (unsigned char *str, ptrdiff_t len, ptrdiff_t nbytes,
     *nchars = chars;
   return (to - str);
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 /* Parse unibyte string at STR of LEN bytes, and return the number of
    bytes it may occupy when converted to multibyte string by
    `str_to_multibyte'.  */
@@ -654,8 +663,9 @@ count_size_as_multibyte (const unsigned char *str, ptrdiff_t len)
     }
   return bytes;
 }
+#endif // IGNORE_RUST_PORT
 
-
+#if IGNORE_RUST_PORT
 /* Convert unibyte text at STR of BYTES bytes to a multibyte text
    that contains the same single-byte characters.  It actually
    converts all 8-bit characters to multibyte forms.  It is assured
@@ -686,7 +696,9 @@ str_to_multibyte (unsigned char *str, ptrdiff_t len, ptrdiff_t bytes)
     }
   return (to - str);
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 /* Arrange multibyte text at STR of LEN bytes as a unibyte text.  It
    actually converts characters in the range 0x80..0xFF to
    unibyte.  */
@@ -723,7 +735,9 @@ str_as_unibyte (unsigned char *str, ptrdiff_t bytes)
     }
   return (to - str);
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 /* Convert eight-bit chars in SRC (in multibyte form) to the
    corresponding byte and store in DST.  CHARS is the number of
    characters in SRC.  The value is the number of bytes stored in DST.
@@ -747,7 +761,7 @@ str_to_unibyte (const unsigned char *src, unsigned char *dst, ptrdiff_t chars)
     }
   return i;
 }
-
+#endif // IGNORE_RUST_PORT
 
 static ptrdiff_t
 string_count_byte8 (Lisp_Object string)

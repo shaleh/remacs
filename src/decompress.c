@@ -31,6 +31,7 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 # include <windows.h>
 # include "w32.h"
 
+#if IGNORE_RUST_PORT
 DEF_DLL_FN (int, inflateInit2_,
 	    (z_streamp strm, int windowBits, const char *version,
 	     int stream_size));
@@ -52,6 +53,7 @@ init_zlib_functions (void)
   LOAD_DLL_FN (library, inflateEnd);
   return true;
 }
+#endif // IGNORE_RUST_PORT
 
 # undef inflate
 # undef inflateEnd
@@ -70,6 +72,7 @@ struct decompress_unwind_data
   z_stream *stream;
 };
 
+#if IGNORE_RUST_PORT
 static void
 unwind_decompress (void *ddata)
 {
@@ -85,6 +88,7 @@ unwind_decompress (void *ddata)
      point-max.  */
   SET_PT (min (data->old_point, ZV));
 }
+#endif // IGNORE_RUST_PORT
 
 DEFUN ("zlib-available-p", Fzlib_available_p, Szlib_available_p, 0, 0, 0,
        doc: /* Return t if zlib decompression is available in this instance of Emacs.  */)
@@ -107,6 +111,7 @@ DEFUN ("zlib-available-p", Fzlib_available_p, Szlib_available_p, 0, 0, 0,
 #endif
 }
 
+#if IGNORE_RUST_PORT
 DEFUN ("zlib-decompress-region", Fzlib_decompress_region,
        Szlib_decompress_region,
        2, 2, 0,
@@ -200,6 +205,7 @@ This function can be called only in unibyte buffers.  */)
 
   return unbind_to (count, Qt);
 }
+#endif // IGNORE_RUST_PORT
 
 
 /***********************************************************************
@@ -208,7 +214,9 @@ This function can be called only in unibyte buffers.  */)
 void
 syms_of_decompress (void)
 {
+#if IGNORE_RUST_PORT
   defsubr (&Szlib_decompress_region);
+#endif // IGNORE_RUST_PORT
   defsubr (&Szlib_available_p);
 }
 

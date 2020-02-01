@@ -4190,7 +4190,9 @@ alist of active lexical bindings.  */);
   defsubr (&Sprog1);
   defsubr (&Sprog2);
   defsubr (&Ssetq);
+#if IGNORE_RUST_PORT
   defsubr (&Squote);
+#endif // IGNORE_RUST_PORT
   defsubr (&Sfunction);
 #endif // IGNORE_RUST_PORT
   defsubr (&Sdefault_toplevel_value);

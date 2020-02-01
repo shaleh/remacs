@@ -32,6 +32,9 @@ ptrdiff_t cached_bytepos;
 struct buffer *cached_buffer;
 EMACS_INT cached_modiff;
 
+#if IGNORE_RUST_PORT
+// The whole file has been ported.
+
 /* Juanma Barranquero <lekktu@gmail.com> reported ~3x increased
    bootstrap time when byte_char_debug_check is enabled; so this
    is never turned on by --enable-checking configure option.  */
@@ -69,14 +72,12 @@ byte_char_debug_check (struct buffer *b, ptrdiff_t charpos, ptrdiff_t bytepos)
 
 #endif /* MARKER_DEBUG */
 
-#ifdef IGNORE_RUST_PORT
 void
 clear_charpos_cache (struct buffer *b)
 {
   if (cached_buffer == b)
     cached_buffer = 0;
 }
-#endif // IGNORE_RUST_PORT
 
 /* Converting between character positions and byte positions.  */
 
@@ -135,7 +136,6 @@ CHECK_MARKER (Lisp_Object x)
   CHECK_TYPE (MARKERP (x), Qmarkerp, x);
 }
 
-#if IGNORE_RUST_PORT
 /* Return the byte position corresponding to CHARPOS in B.  */
 
 ptrdiff_t
@@ -242,7 +242,6 @@ buf_charpos_to_bytepos (struct buffer *b, ptrdiff_t charpos)
       return best_above_byte;
     }
 }
-#endif
 
 #undef CONSIDER
 
@@ -289,7 +288,6 @@ buf_charpos_to_bytepos (struct buffer *b, ptrdiff_t charpos)
     }									\
 }
 
-#if IGNORE_RUST_PORT
 /* Return the character position corresponding to BYTEPOS in B.  */
 
 ptrdiff_t
@@ -391,12 +389,10 @@ buf_bytepos_to_charpos (struct buffer *b, ptrdiff_t bytepos)
       return best_above;
     }
 }
-#endif // IGNORE_RUST_PORT
 
 #undef CONSIDER
 
 /* Operations on markers. */
-
 DEFUN ("marker-buffer", Fmarker_buffer, Smarker_buffer, 1, 1, 0,
        doc: /* Return the buffer that MARKER points into, or nil if none.
 Returns nil if MARKER points into a dead buffer.  */)
@@ -541,16 +537,13 @@ editing in any buffer.  Returns MARKER.  */)
 
 /* Like the above, but won't let the position be outside the visible part.  */
 
-#if IGNORE_RUST_PORT
 Lisp_Object
 set_marker_restricted (Lisp_Object marker, Lisp_Object position,
 		       Lisp_Object buffer)
 {
   return set_marker_internal (marker, position, buffer, true);
 }
-#endif // IGNORE_RUST_PORT
 
-#if IGNORE_RUST_PORT
 /* Set the position of MARKER, specifying both the
    character position and the corresponding byte position.  */
 
@@ -570,9 +563,7 @@ set_marker_both (Lisp_Object marker, Lisp_Object buffer,
     unchain_marker (m);
   return marker;
 }
-#endif // IGNORE_RUST_PORT
 
-#if IGNORE_RUST_PORT
 /* Like the above, but won't let the position be outside the visible part.  */
 
 Lisp_Object
@@ -596,7 +587,6 @@ set_marker_restricted_both (Lisp_Object marker, Lisp_Object buffer,
     unchain_marker (m);
   return marker;
 }
-#endif // IGNORE_RUST_PORT
 
 /* Detach a marker so that it no longer points anywhere and no longer
    slows down editing.  Do not free the marker, though, as a change
@@ -607,7 +597,6 @@ detach_marker (Lisp_Object marker)
   Fset_marker (marker, Qnil, Qnil);
 }
 
-#if IGNORE_RUST_PORT
 /* Remove MARKER from the chain of whatever buffer it is in,
    leaving it points to nowhere.  This is called during garbage
    collection, so we must be careful to ignore and preserve
@@ -650,9 +639,7 @@ unchain_marker (register struct Lisp_Marker *marker)
       eassert (tail != NULL);
     }
 }
-#endif // IGNORE_RUST_PORT
 
-#if IGNORE_RUST_PORT
 /* Return the char position of marker MARKER, as a C integer.  */
 
 ptrdiff_t
@@ -668,9 +655,7 @@ marker_position (Lisp_Object marker)
 
   return m->charpos;
 }
-#endif // IGNORE_RUST_PORT
 
-#if IGNORE_RUST_PORT
 /* Return the byte position of marker MARKER, as a C integer.  */
 
 ptrdiff_t
@@ -686,7 +671,6 @@ marker_byte_position (Lisp_Object marker)
 
   return m->bytepos;
 }
-#endif // IGNORE_RUST_PORT
 
 DEFUN ("copy-marker", Fcopy_marker, Scopy_marker, 0, 2, 0,
        doc: /* Return a new marker pointing at the same place as MARKER.
@@ -784,6 +768,7 @@ verify_bytepos (ptrdiff_t charpos)
 }
 
 #endif /* MARKER_DEBUG */
+#endif // IGNORE_RUST_PORT
 
 void
 init_marker (bool initialized)
@@ -794,6 +779,7 @@ init_marker (bool initialized)
   cached_modiff = 0;
 }
 
+#if IGNORE_RUST_PORT
 void
 syms_of_marker (void)
 {
@@ -805,3 +791,5 @@ syms_of_marker (void)
   defsubr (&Sset_marker_insertion_type);
   defsubr (&Sbuffer_has_markers_at);
 }
+
+#endif // IGNORE_RUST_PORT

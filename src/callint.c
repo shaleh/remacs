@@ -862,6 +862,7 @@ invoke it.  If KEYS is omitted or nil, the return value of
   }
 }
 
+#if IGNORE_RUST_PORT
 DEFUN ("prefix-numeric-value", Fprefix_numeric_value, Sprefix_numeric_value,
        1, 1, 0,
        doc: /* Return numeric meaning of raw prefix argument RAW.
@@ -884,6 +885,7 @@ Its numeric meaning is what you would get from `(interactive "p")'.  */)
 
   return val;
 }
+#endif // IGNORE_RUST_PORT
 
 void
 syms_of_callint (void)
@@ -973,6 +975,6 @@ a way to turn themselves off when a mouse command switches windows.  */);
   defsubr (&Scall_interactively);
 #if IGNORE_RUST_PORT
   defsubr (&Sfuncall_interactively);
-#endif // IGNORE_RUST_POST
   defsubr (&Sprefix_numeric_value);
+#endif // IGNORE_RUST_POST
 }

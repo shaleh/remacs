@@ -13,7 +13,7 @@ use crate::{
     remacs_sys::{
         cached_buffer, equal_kind, EmacsInt, Lisp_Buffer, Lisp_Marker, Lisp_Misc_Type, Lisp_Type,
     },
-    remacs_sys::{Qinteger_or_marker_p, Qmarkerp},
+    remacs_sys::{Qinteger_or_marker_p, Qmarkerp, Qnil},
     threads::ThreadState,
     util::clip_to_bounds,
 };
@@ -663,5 +663,16 @@ pub extern "C" fn clear_charpos_cache(b: *mut Lisp_Buffer) {
         }
     }
 }
+
+/// Detach a marker so that it no longer points anywhere and no longer
+/// slows down editing.  Do not free the marker, though, as a change
+/// function could have inserted it into an undo list (Bug#30931).
+#[no_mangle]
+pub extern "C" fn detach_marker(marker: LispObject) {
+    set_marker(marker.into(), Qnil, Qnil);
+}
+
+#[no_mangle]
+pub extern "C" fn syms_of_marker() {}
 
 include!(concat!(env!("OUT_DIR"), "/marker_exports.rs"));

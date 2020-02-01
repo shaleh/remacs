@@ -1754,6 +1754,7 @@ set_point (ptrdiff_t charpos)
   set_point_both (charpos, buf_charpos_to_bytepos (current_buffer, charpos));
 }
 
+#if IGNORE_RUST_PORT
 /* Set PT from MARKER's clipped position.  */
 
 void
@@ -1770,6 +1771,7 @@ set_point_from_marker (Lisp_Object marker)
     bytepos = clip_to_bounds (BEGV_BYTE, bytepos, ZV_BYTE);
   set_point_both (charpos, bytepos);
 }
+#endif // IGNORE_RUST_PORT
 
 /* If there's an invisible character at position POS + TEST_OFFS in the
    current buffer, and the invisible property has a `stickiness' such that

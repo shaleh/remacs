@@ -3836,6 +3836,7 @@ DEFUN ("make-marker", Fmake_marker, Smake_marker, 0, 0, 0,
 }
 #endif // IGNORE_RUST_POST
 
+#if IGNORE_RUST_PORT
 /* Return a newly allocated marker which points into BUF
    at character position CHARPOS and byte position BYTEPOS.  */
 
@@ -3862,6 +3863,7 @@ build_marker (struct buffer *buf, ptrdiff_t charpos, ptrdiff_t bytepos)
   BUF_MARKERS (buf) = m;
   return obj;
 }
+#endif // IGNORE_RUST_PORT
 
 
 /* Return a newly created vector or string with specified arguments as
