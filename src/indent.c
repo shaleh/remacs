@@ -300,7 +300,7 @@ skip_invisible (ptrdiff_t pos, ptrdiff_t *next_boundary_p, ptrdiff_t to, Lisp_Ob
       }									\
   } while (0)
 
-
+#if IGNORE_RUST_PORT
 DEFUN ("current-column", Fcurrent_column, Scurrent_column, 0, 0, 0,
        doc: /* Return the horizontal position of point.  Beginning of line is column 0.
 This is calculated by adding together the widths of all the displayed
@@ -319,7 +319,9 @@ Text that has an invisible property is considered as having width 0, unless
   XSETFASTINT (temp, current_column ());
   return temp;
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 /* Cancel any recorded value of the horizontal position.  */
 
 void
@@ -327,6 +329,7 @@ invalidate_current_column (void)
 {
   last_known_column_point = 0;
 }
+#endif // IGNORE_RUST_PORT
 
 ptrdiff_t
 current_column (void)
@@ -808,6 +811,7 @@ string_display_width (Lisp_Object string, Lisp_Object beg, Lisp_Object end)
 #endif /* 0 */
 
 
+#if IGNORE_RUST_PORT
 DEFUN ("indent-to", Findent_to, Sindent_to, 1, 2, "NIndent to column: ",
        doc: /* Indent from point with tabs and spaces until COLUMN is reached.
 Optional second argument MINIMUM says always do at least MINIMUM spaces
@@ -854,8 +858,10 @@ The return value is the column where the insertion ends.  */)
   XSETINT (column, mincol);
   return column;
 }
+#endif // IGNORE_RUST_PORT
 
 
+#if IGNORE_RUST_PORT
 DEFUN ("current-indentation", Fcurrent_indentation, Scurrent_indentation,
        0, 0, 0,
        doc: /* Return the indentation of the current line.
@@ -868,6 +874,7 @@ following any initial whitespace.  */)
   find_newline (PT, PT_BYTE, BEGV, BEGV_BYTE, -1, NULL, &posbyte, 1);
   return make_number (position_indentation (posbyte));
 }
+#endif // IGNORE_RUST_PORT
 
 ptrdiff_t
 position_indentation (ptrdiff_t pos_byte)
@@ -969,6 +976,7 @@ indented_beyond_p (ptrdiff_t pos, ptrdiff_t pos_byte, EMACS_INT column)
   return position_indentation (pos_byte) >= column;
 }
 
+#if IGNORE_RUST_PORT
 DEFUN ("move-to-column", Fmove_to_column, Smove_to_column, 1, 2,
        "NMove to column: ",
        doc: /* Move point to column COLUMN in the current line.
@@ -1045,6 +1053,7 @@ The return value is the current column.  */)
 
   return make_number (col);
 }
+#endif // IGNORE_RUST_PORT
 
 /* compute_motion: compute buffer posn given screen posn and vice versa */
 
@@ -1703,7 +1712,7 @@ compute_motion (ptrdiff_t from, ptrdiff_t frombyte, EMACS_INT fromvpos,
   return &val_compute_motion;
 }
 
-
+#if IGNORE_RUST_PORT
 DEFUN ("compute-motion", Fcompute_motion, Scompute_motion, 7, 7, 0,
        doc: /* Scan through the current buffer, calculating screen position.
 Scan the current buffer forward from offset FROM,
@@ -1815,6 +1824,7 @@ visible section of the buffer, and pass LINE and COL as TOPOS.  */)
 
   return list5 (bufpos, hpos, vpos, prevhpos, pos->contin ? Qt : Qnil);
 }
+#endif // IGNORE_RUST_PORT
 
 /* Fvertical_motion and vmotion.  */
 
@@ -2375,11 +2385,15 @@ syms_of_indent (void)
 
   DEFSYM (Qcolumns, "columns");
 
+#if IGNORE_RUST_PORT
   defsubr (&Scurrent_indentation);
   defsubr (&Sindent_to);
   defsubr (&Scurrent_column);
   defsubr (&Smove_to_column);
+#endif // IGNORE_RUST_PORT
   defsubr (&Sline_number_display_width);
   defsubr (&Svertical_motion);
+#if IGNORE_RUST_PORT
   defsubr (&Scompute_motion);
+#endif // IGNORE_RUST_PORT
 }

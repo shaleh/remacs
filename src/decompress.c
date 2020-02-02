@@ -90,6 +90,7 @@ unwind_decompress (void *ddata)
 }
 #endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("zlib-available-p", Fzlib_available_p, Szlib_available_p, 0, 0, 0,
        doc: /* Return t if zlib decompression is available in this instance of Emacs.  */)
      (void)
@@ -110,6 +111,7 @@ DEFUN ("zlib-available-p", Fzlib_available_p, Szlib_available_p, 0, 0, 0,
   return Qt;
 #endif
 }
+#endif // IGNORE_RUST_PORT
 
 #if IGNORE_RUST_PORT
 DEFUN ("zlib-decompress-region", Fzlib_decompress_region,
@@ -216,8 +218,8 @@ syms_of_decompress (void)
 {
 #if IGNORE_RUST_PORT
   defsubr (&Szlib_decompress_region);
-#endif // IGNORE_RUST_PORT
   defsubr (&Szlib_available_p);
+#endif // IGNORE_RUST_PORT
 }
 
 #endif /* HAVE_ZLIB */

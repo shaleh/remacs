@@ -3176,6 +3176,7 @@ static ptrdiff_t base64_encode_1 (const char *, char *, ptrdiff_t, bool, bool);
 extern ptrdiff_t base64_decode_1 (const char *, char *, ptrdiff_t, bool,
 				  ptrdiff_t *);
 
+#if IGNORE_RUST_PORT
 DEFUN ("base64-encode-region", Fbase64_encode_region, Sbase64_encode_region,
        2, 3, "r",
        doc: /* Base64-encode the region between BEG and END.
@@ -3235,6 +3236,7 @@ into shorter lines.  */)
   /* We return the length of the encoded text. */
   return make_number (encoded_length);
 }
+#endif // IGNORE_RUST_PORT
 
 #if IGNORE_RUST_PORT
 DEFUN ("base64-encode-string", Fbase64_encode_string, Sbase64_encode_string,
@@ -4665,22 +4667,23 @@ usage: (make-hash-table &rest KEYWORD-ARGS)  */)
                           pure);
 }
 
-
+#if IGNORE_RUST_PORT
 DEFUN ("copy-hash-table", Fcopy_hash_table, Scopy_hash_table, 1, 1, 0,
        doc: /* Return a copy of hash table TABLE.  */)
   (Lisp_Object table)
 {
   return copy_hash_table (check_hash_table (table));
 }
+#endif // IGNORE_RUST_PORT
 
-
+#if IGNORE_RUST_PORT
 DEFUN ("hash-table-count", Fhash_table_count, Shash_table_count, 1, 1, 0,
        doc: /* Return the number of elements in TABLE.  */)
   (Lisp_Object table)
 {
   return make_number (check_hash_table (table)->count);
 }
-
+#endif // IGNORE_RUST_PORT
 
 DEFUN ("hash-table-rehash-size", Fhash_table_rehash_size,
        Shash_table_rehash_size, 1, 1, 0,
@@ -4697,7 +4700,7 @@ DEFUN ("hash-table-rehash-size", Fhash_table_rehash_size,
     return make_float (rehash_size + 1);
 }
 
-
+#if IGNORE_RUST_PORT
 DEFUN ("hash-table-rehash-threshold", Fhash_table_rehash_threshold,
        Shash_table_rehash_threshold, 1, 1, 0,
        doc: /* Return the current rehash threshold of TABLE.  */)
@@ -4705,8 +4708,9 @@ DEFUN ("hash-table-rehash-threshold", Fhash_table_rehash_threshold,
 {
   return make_float (check_hash_table (table)->rehash_threshold);
 }
+#endif // IGNORE_RUST_PORT
 
-
+#if IGNORE_RUST_PORT
 DEFUN ("hash-table-size", Fhash_table_size, Shash_table_size, 1, 1, 0,
        doc: /* Return the size of TABLE.
 The size can be used as an argument to `make-hash-table' to create
@@ -4717,16 +4721,18 @@ without need for resizing.  */)
   struct Lisp_Hash_Table *h = check_hash_table (table);
   return make_number (HASH_TABLE_SIZE (h));
 }
+#endif // IGNORE_RUST_PORT
 
-
+#if IGNORE_RUST_PORT
 DEFUN ("hash-table-test", Fhash_table_test, Shash_table_test, 1, 1, 0,
        doc: /* Return the test TABLE uses.  */)
   (Lisp_Object table)
 {
   return check_hash_table (table)->test.name;
 }
+#endif // IGNORE_RUST_PORT
 
-
+#if IGNORE_RUST_PORT
 DEFUN ("hash-table-weakness", Fhash_table_weakness, Shash_table_weakness,
        1, 1, 0,
        doc: /* Return the weakness of TABLE.  */)
@@ -4734,16 +4740,18 @@ DEFUN ("hash-table-weakness", Fhash_table_weakness, Shash_table_weakness,
 {
   return check_hash_table (table)->weak;
 }
+#endif // IGNORE_RUST_PORT
 
-
+#if IGNORE_RUST_PORT
 DEFUN ("hash-table-p", Fhash_table_p, Shash_table_p, 1, 1, 0,
        doc: /* Return t if OBJ is a Lisp hash table object.  */)
   (Lisp_Object obj)
 {
   return HASH_TABLE_P (obj) ? Qt : Qnil;
 }
+#endif // IGNORE_RUST_PORT
 
-
+#if IGNORE_RUST_PORT
 DEFUN ("clrhash", Fclrhash, Sclrhash, 1, 1, 0,
        doc: /* Clear hash table TABLE and return it.  */)
   (Lisp_Object table)
@@ -4754,8 +4762,9 @@ DEFUN ("clrhash", Fclrhash, Sclrhash, 1, 1, 0,
   /* Be compatible with XEmacs.  */
   return table;
 }
+#endif // IGNORE_RUST_PORT
 
-
+#if IGNORE_RUST_PORT
 DEFUN ("gethash", Fgethash, Sgethash, 2, 3, 0,
        doc: /* Look up KEY in TABLE and return its associated value.
 If KEY is not found, return DFLT which defaults to nil.  */)
@@ -4765,8 +4774,9 @@ If KEY is not found, return DFLT which defaults to nil.  */)
   ptrdiff_t i = hash_lookup (h, key, NULL);
   return i >= 0 ? HASH_VALUE (h, i) : dflt;
 }
+#endif // IGNORE_RUST_PORT
 
-
+#if IGNORE_RUST_PORT
 DEFUN ("puthash", Fputhash, Sputhash, 3, 3, 0,
        doc: /* Associate KEY with VALUE in hash table TABLE.
 If KEY is already present in table, replace its current value with
@@ -4786,8 +4796,9 @@ VALUE.  In any case, return VALUE.  */)
 
   return value;
 }
+#endif // IGNORE_RUST_PORT
 
-
+#if IGNORE_RUST_PORT
 DEFUN ("remhash", Fremhash, Sremhash, 2, 2, 0,
        doc: /* Remove KEY from TABLE.  */)
   (Lisp_Object key, Lisp_Object table)
@@ -4797,8 +4808,9 @@ DEFUN ("remhash", Fremhash, Sremhash, 2, 2, 0,
   hash_remove_from_table (h, key);
   return Qnil;
 }
+#endif // IGNORE_RUST_PORT
 
-
+#if IGNORE_RUST_PORT
 DEFUN ("maphash", Fmaphash, Smaphash, 2, 2, 0,
        doc: /* Call FUNCTION for all entries in hash table TABLE.
 FUNCTION is called with two arguments, KEY and VALUE.
@@ -4813,8 +4825,9 @@ FUNCTION is called with two arguments, KEY and VALUE.
 
   return Qnil;
 }
+#endif // IGNORE_RUST_PORT
 
-
+#if IGNORE_RUST_PORT
 DEFUN ("define-hash-table-test", Fdefine_hash_table_test,
        Sdefine_hash_table_test, 3, 3, 0,
        doc: /* Define a new hash table test with name NAME, a symbol.
@@ -4831,7 +4844,7 @@ returns nil, then (funcall TEST x1 x2) also returns nil.  */)
 {
   return Fput (name, Qhash_table_test, list2 (test, hash));
 }
-
+#endif // IGNORE_RUST_PORT
 
 
 /************************************************************************
@@ -5251,9 +5264,12 @@ syms_of_fns (void)
   defsubr (&Ssxhash_eql);
   defsubr (&Ssxhash_equal);
   defsubr (&Smake_hash_table);
+#if IGNORE_RUST_PORT
   defsubr (&Scopy_hash_table);
   defsubr (&Shash_table_count);
+#endif // IGNORE_RUST_PORT
   defsubr (&Shash_table_rehash_size);
+#if IGNORE_RUST_PORT
   defsubr (&Shash_table_rehash_threshold);
   defsubr (&Shash_table_size);
   defsubr (&Shash_table_test);
@@ -5265,6 +5281,7 @@ syms_of_fns (void)
   defsubr (&Sremhash);
   defsubr (&Smaphash);
   defsubr (&Sdefine_hash_table_test);
+#endif // IGNORE_RUST_PORT
 
   /* Crypto and hashing stuff.  */
   DEFSYM (Qiv_auto, "iv-auto");

@@ -135,6 +135,7 @@ check_window_system (struct frame *f)
 	 : "Window system is not in use or not initialized");
 }
 
+#if IGNORE_RUST_PORT
 /* Return the value of frame parameter PROP in frame FRAME.  */
 
 Lisp_Object
@@ -147,7 +148,7 @@ get_frame_param (register struct frame *frame, Lisp_Object prop)
     return tem;
   return Fcdr (tem);
 }
-
+#endif // IGNORE_RUST_PORT
 
 void
 frame_size_history_add (struct frame *f, Lisp_Object fun_symbol,
@@ -237,6 +238,7 @@ set_menu_bar_lines (struct frame *f, Lisp_Object value, Lisp_Object oldval)
 Lisp_Object Vframe_list;
 
 
+#if IGNORE_RUST_PORT
 DEFUN ("framep", Fframep, Sframep, 1, 1, 0,
        doc: /* Return non-nil if OBJECT is a frame.
 Value is:
@@ -267,7 +269,9 @@ See also `frame-live-p'.  */)
       emacs_abort ();
     }
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("frame-live-p", Fframe_live_p, Sframe_live_p, 1, 1, 0,
        doc: /* Return non-nil if OBJECT is a frame which has not been deleted.
 Value is nil if OBJECT is not a live frame.  If object is a live
@@ -281,7 +285,9 @@ return values.  */)
 	  ? Fframep (object)
 	  : Qnil);
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("window-system", Fwindow_system, Swindow_system, 0, 1, 0,
        doc: /* The name of the window system that FRAME is displaying through.
 The value is a symbol:
@@ -312,6 +318,7 @@ predicates which report frame's specific UI-related capabilities.  */)
   else
     return type;
 }
+#endif // IGNORE_RUST_PORT
 
 /* Placeholder used by temacs -nw before window.el is loaded.  */
 DEFUN ("frame-windows-min-size", Fframe_windows_min_size,
@@ -1473,12 +1480,14 @@ to that frame.  */)
   return value;
 }
 
+#if IGNORE_RUST_PORT
 DEFUN ("selected-frame", Fselected_frame, Sselected_frame, 0, 0, 0,
        doc: /* Return the frame that is now selected.  */)
   (void)
 {
   return selected_frame;
 }
+#endif // IGNORE_RUST_PORT
 
 #ifdef IGNORE_RUST_PORT
 DEFUN ("frame-list", Fframe_list, Sframe_list,
@@ -1672,7 +1681,7 @@ prev_frame (Lisp_Object frame, Lisp_Object minibuf)
     return prev;
 }
 
-
+#if IGNORE_RUST_PORT
 DEFUN ("next-frame", Fnext_frame, Snext_frame, 0, 2, 0,
        doc: /* Return the next frame in the frame list after FRAME.
 It considers only frames on the same terminal as FRAME.
@@ -1691,7 +1700,9 @@ Otherwise, include all frames.  */)
   CHECK_LIVE_FRAME (frame);
   return next_frame (frame, miniframe);
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("previous-frame", Fprevious_frame, Sprevious_frame, 0, 2, 0,
        doc: /* Return the previous frame in the frame list before FRAME.
 It considers only frames on the same terminal as FRAME.
@@ -1710,6 +1721,7 @@ Otherwise, include all frames.  */)
   CHECK_LIVE_FRAME (frame);
   return prev_frame (frame, miniframe);
 }
+#endif // IGNORE_RUST_PORT
 
 DEFUN ("last-nonminibuffer-frame", Flast_nonminibuf_frame,
        Slast_nonminibuf_frame, 0, 0, 0,
@@ -2167,6 +2179,7 @@ delete_frame (Lisp_Object frame, Lisp_Object force)
   return Qnil;
 }
 
+#if IGNORE_RUST_PORT
 DEFUN ("delete-frame", Fdelete_frame, Sdelete_frame, 0, 2, "",
        doc: /* Delete FRAME, permanently eliminating it from use.
 FRAME must be a live frame and defaults to the selected one.
@@ -2183,6 +2196,7 @@ The functions are run with one argument, the frame to be deleted.  */)
 {
   return delete_frame (frame, !NILP (force) ? Qt : Qnil);
 }
+#endif // IGNORE_RUST_PORT
 
 #ifdef HAVE_WINDOW_SYSTEM
 /**
@@ -2528,6 +2542,7 @@ make_frame_visible_1 (Lisp_Object window)
     }
 }
 
+#if IGNORE_RUST_PORT
 DEFUN ("make-frame-invisible", Fmake_frame_invisible, Smake_frame_invisible,
        0, 2, "",
        doc: /* Make the frame FRAME invisible.
@@ -2562,6 +2577,7 @@ displayed in the terminal.  */)
 
   return Qnil;
 }
+#endif // IGNORE_RUST_PORT
 
 DEFUN ("iconify-frame", Ficonify_frame, Siconify_frame,
        0, 1, "",
@@ -2610,6 +2626,7 @@ for how to proceed.  */)
   return Qnil;
 }
 
+#if IGNORE_RUST_PORT
 DEFUN ("frame-visible-p", Fframe_visible_p, Sframe_visible_p,
        1, 1, 0,
        doc: /* Return t if FRAME is \"visible\" (actually in use for display).
@@ -2631,7 +2648,9 @@ currently being displayed on the terminal.  */)
     return Qicon;
   return Qnil;
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("visible-frame-list", Fvisible_frame_list, Svisible_frame_list,
        0, 0, 0,
        doc: /* Return a list of all frames now \"visible\" (being updated).  */)
@@ -2645,7 +2664,7 @@ DEFUN ("visible-frame-list", Fvisible_frame_list, Svisible_frame_list,
 
   return value;
 }
-
+#endif // IGNORE_RUST_PORT
 
 DEFUN ("raise-frame", Fraise_frame, Sraise_frame, 0, 1, "",
        doc: /* Bring FRAME to the front, so it occludes any frames it overlaps.
@@ -2732,7 +2751,7 @@ The redirection lasts until `redirect-frame-focus' is called to change it.  */)
   return Qnil;
 }
 
-
+#if IGNORE_RUST_PORT
 DEFUN ("frame-focus", Fframe_focus, Sframe_focus, 0, 1, 0,
        doc: /* Return the frame to which FRAME's keystrokes are currently being sent.
 If FRAME is omitted or nil, the selected frame is used.
@@ -2742,7 +2761,9 @@ See `redirect-frame-focus'.  */)
 {
   return FRAME_FOCUS_FRAME (decode_live_frame (frame));
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("x-focus-frame", Fx_focus_frame, Sx_focus_frame, 1, 2, 0,
        doc: /* Set the input focus to FRAME.
 FRAME nil means use the selected frame.  Optional argument NOACTIVATE
@@ -2756,7 +2777,9 @@ If there is no window system support, this function does nothing.  */)
 #endif
   return Qnil;
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("frame-after-make-frame",
        Fframe_after_make_frame,
        Sframe_after_make_frame, 2, 2, 0,
@@ -2777,6 +2800,7 @@ otherwise used with utter care to avoid that running functions on
   f->inhibit_vertical_resize = false;
   return made;
 }
+#endif // IGNORE_RUST_PORT
 
 
 /* Discard BUFFER from the buffer-list and buried-buffer-list of each frame.  */
@@ -3223,6 +3247,7 @@ list, but are otherwise ignored.  */)
   return Qnil;
 }
 
+#if IGNORE_RUST_PORT
 DEFUN ("frame-char-height", Fframe_char_height, Sframe_char_height,
        0, 1, 0,
        doc: /* Height in pixels of a line in the font in frame FRAME.
@@ -3239,8 +3264,9 @@ For a terminal frame, the value is always 1.  */)
 #endif
     return make_number (1);
 }
+#endif // IGNORE_RUST_PORT
 
-
+#if IGNORE_RUST_PORT
 DEFUN ("frame-char-width", Fframe_char_width, Sframe_char_width,
        0, 1, 0,
        doc: /* Width in pixels of characters in the font in frame FRAME.
@@ -3258,6 +3284,7 @@ For a terminal screen, the value is always 1.  */)
 #endif
     return make_number (1);
 }
+#endif // IGNORE_RUST_PORT
 
 DEFUN ("frame-native-width", Fframe_native_width,
        Sframe_native_width, 0, 1, 0,
@@ -3319,47 +3346,59 @@ is used.  */)
   return make_number (0);
 }
 
+#if IGNORE_RUST_PORT
 DEFUN ("frame-text-cols", Fframe_text_cols, Sframe_text_cols, 0, 1, 0,
        doc: /* Return width in columns of FRAME's text area.  */)
   (Lisp_Object frame)
 {
   return make_number (FRAME_COLS (decode_any_frame (frame)));
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("frame-text-lines", Fframe_text_lines, Sframe_text_lines, 0, 1, 0,
        doc: /* Return height in lines of FRAME's text area.  */)
   (Lisp_Object frame)
 {
   return make_number (FRAME_LINES (decode_any_frame (frame)));
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("frame-total-cols", Fframe_total_cols, Sframe_total_cols, 0, 1, 0,
        doc: /* Return number of total columns of FRAME.  */)
   (Lisp_Object frame)
 {
   return make_number (FRAME_TOTAL_COLS (decode_any_frame (frame)));
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("frame-total-lines", Fframe_total_lines, Sframe_total_lines, 0, 1, 0,
        doc: /* Return number of total lines of FRAME.  */)
   (Lisp_Object frame)
 {
   return make_number (FRAME_TOTAL_LINES (decode_any_frame (frame)));
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("frame-text-width", Fframe_text_width, Sframe_text_width, 0, 1, 0,
        doc: /* Return text area width of FRAME in pixels.  */)
   (Lisp_Object frame)
 {
   return make_number (FRAME_TEXT_WIDTH (decode_any_frame (frame)));
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("frame-text-height", Fframe_text_height, Sframe_text_height, 0, 1, 0,
        doc: /* Return text area height of FRAME in pixels.  */)
   (Lisp_Object frame)
 {
   return make_number (FRAME_TEXT_HEIGHT (decode_any_frame (frame)));
 }
+#endif // IGNORE_RUST_PORT
 
 DEFUN ("frame-scroll-bar-width", Fscroll_bar_width, Sscroll_bar_width, 0, 1, 0,
        doc: /* Return scroll bar width of FRAME in pixels.  */)
@@ -3382,12 +3421,14 @@ DEFUN ("frame-fringe-width", Ffringe_width, Sfringe_width, 0, 1, 0,
   return make_number (FRAME_TOTAL_FRINGE_WIDTH (decode_any_frame (frame)));
 }
 
+#if IGNORE_RUST_PORT
 DEFUN ("frame-internal-border-width", Fframe_internal_border_width, Sframe_internal_border_width, 0, 1, 0,
        doc: /* Return width of FRAME's internal border in pixels.  */)
   (Lisp_Object frame)
 {
   return make_number (FRAME_INTERNAL_BORDER_WIDTH (decode_any_frame (frame)));
 }
+#endif // IGNORE_RUST_PORT
 
 DEFUN ("frame-right-divider-width", Fright_divider_width, Sright_divider_width, 0, 1, 0,
        doc: /* Return width (in pixels) of vertical window dividers on FRAME.  */)
@@ -3479,6 +3520,7 @@ font height.  */)
   return Qnil;
 }
 
+#if IGNORE_RUST_PORT
 DEFUN ("frame-position", Fframe_position,
        Sframe_position, 0, 1, 0,
        doc: /* Return top left corner of FRAME in pixels.
@@ -3492,6 +3534,7 @@ display.  */)
 
   return Fcons (make_number (f->left_pos), make_number (f->top_pos));
 }
+#endif // IGNORE_RUST_PORT
 
 DEFUN ("set-frame-position", Fset_frame_position,
        Sset_frame_position, 3, 3, 0,
@@ -5518,6 +5561,7 @@ frame_make_pointer_visible (struct frame *f)
     }
 }
 
+#if IGNORE_RUST_PORT
 DEFUN ("frame-pointer-visible-p", Fframe_pointer_visible_p,
        Sframe_pointer_visible_p, 0, 1, 0,
        doc: /* Return t if the mouse pointer displayed on FRAME is visible.
@@ -5527,7 +5571,7 @@ selected frame.  This is useful when `make-pointer-invisible' is set.  */)
 {
   return decode_any_frame (frame)->pointer_invisible ? Qnil : Qt;
 }
-
+#endif // IGNORE_RUST_PORT
 
 
 /***********************************************************************
@@ -6086,23 +6130,29 @@ iconify the top level frame instead.  */);
 
   staticpro (&Vframe_list);
 
+#if IGNORE_RUST_PORT
   defsubr (&Sframep);
   defsubr (&Sframe_live_p);
   defsubr (&Swindow_system);
+#endif // IGNORE_RUST_PORT
   defsubr (&Sframe_windows_min_size);
   defsubr (&Smake_terminal_frame);
   defsubr (&Shandle_switch_frame);
   defsubr (&Sselect_frame);
-  defsubr (&Sselected_frame);
 #ifdef IGNORE_RUST_PORT
+  defsubr (&Sselected_frame);
   defsubr (&Sframe_list);
 #endif
   defsubr (&Sframe_parent);
   defsubr (&Sframe_ancestor_p);
+#if IGNORE_RUST_PORT
   defsubr (&Snext_frame);
   defsubr (&Sprevious_frame);
+#endif // IGNORE_RUST_PORT
   defsubr (&Slast_nonminibuf_frame);
+#if IGNORE_RUST_PORT
   defsubr (&Sdelete_frame);
+#endif // IGNORE_RUST_PORT
   defsubr (&Smouse_position);
   defsubr (&Smouse_pixel_position);
   defsubr (&Sset_mouse_position);
@@ -6112,42 +6162,60 @@ iconify the top level frame instead.  */);
   defsubr (&Srestore_frame_configuration);
 #endif
   defsubr (&Smake_frame_visible);
+#if IGNORE_RUST_PORT
   defsubr (&Smake_frame_invisible);
+#endif // IGNORE_RUST_PORT
   defsubr (&Siconify_frame);
+#if IGNORE_RUST_PORT
   defsubr (&Sframe_visible_p);
   defsubr (&Svisible_frame_list);
+#endif // IGNORE_RUST_PORT
   defsubr (&Sraise_frame);
   defsubr (&Slower_frame);
+#if IGNORE_RUST_PORT
   defsubr (&Sx_focus_frame);
   defsubr (&Sframe_after_make_frame);
+#endif // IGNORE_RUST_PORT
   defsubr (&Sredirect_frame_focus);
+#if IGNORE_RUST_PORT
   defsubr (&Sframe_focus);
+#endif // IGNORE_RUST_PORT
   defsubr (&Sframe_parameters);
   defsubr (&Sframe_parameter);
   defsubr (&Smodify_frame_parameters);
+#if IGNORE_RUST_PORT
   defsubr (&Sframe_char_height);
   defsubr (&Sframe_char_width);
+#endif // IGNORE_RUST_PORT
   defsubr (&Sframe_native_height);
   defsubr (&Sframe_native_width);
+#if IGNORE_RUST_PORT
   defsubr (&Sframe_text_cols);
   defsubr (&Sframe_text_lines);
   defsubr (&Sframe_total_cols);
   defsubr (&Sframe_total_lines);
   defsubr (&Sframe_text_width);
   defsubr (&Sframe_text_height);
+#endif // IGNORE_RUST_PORT
   defsubr (&Sscroll_bar_width);
   defsubr (&Sscroll_bar_height);
   defsubr (&Sfringe_width);
+#if IGNORE_RUST_PORT
   defsubr (&Sframe_internal_border_width);
+#endif // IGNORE_RUST_PORT
   defsubr (&Sright_divider_width);
   defsubr (&Sbottom_divider_width);
   defsubr (&Stool_bar_pixel_width);
   defsubr (&Sset_frame_height);
   defsubr (&Sset_frame_width);
   defsubr (&Sset_frame_size);
+#if IGNORE_RUST_PORT
   defsubr (&Sframe_position);
+#endif // IGNORE_RUST_PORT
   defsubr (&Sset_frame_position);
+#if IGNORE_RUST_PORT
   defsubr (&Sframe_pointer_visible_p);
+#endif // IGNORE_RUST_PORT
 
 #ifdef HAVE_WINDOW_SYSTEM
   defsubr (&Sx_get_resource);

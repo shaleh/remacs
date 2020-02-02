@@ -942,13 +942,16 @@ free_dns_request (Lisp_Object proc)
 #endif
 
 
+#if IGNORE_RUST_PORT
 DEFUN ("processp", Fprocessp, Sprocessp, 1, 1, 0,
        doc: /* Return t if OBJECT is a process.  */)
   (Lisp_Object object)
 {
   return PROCESSP (object) ? Qt : Qnil;
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("get-process", Fget_process, Sget_process, 1, 1, 0,
        doc: /* Return the process named NAME, or nil if there is none.  */)
   (register Lisp_Object name)
@@ -958,6 +961,7 @@ DEFUN ("get-process", Fget_process, Sget_process, 1, 1, 0,
   CHECK_STRING (name);
   return Fcdr (Fassoc (name, Vprocess_alist, Qnil));
 }
+#endif // IGNORE_RUST_PORT
 
 /* This is how commands for the user decode process arguments.  It
    accepts a process, a process name, a buffer, a buffer name, or nil.
@@ -1083,6 +1087,7 @@ nil, indicating the current buffer's process.  */)
   return Qnil;
 }
 
+#if IGNORE_RUST_PORT
 DEFUN ("process-status", Fprocess_status, Sprocess_status, 1, 1, 0,
        doc: /* Return the status of PROCESS.
 The returned value is one of the following symbols:
@@ -1128,7 +1133,9 @@ nil, indicating the current buffer's process.  */)
     }
   return status;
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("process-exit-status", Fprocess_exit_status, Sprocess_exit_status,
        1, 1, 0,
        doc: /* Return the exit status of PROCESS or the signal number that killed it.
@@ -1142,7 +1149,9 @@ If PROCESS has not yet exited or died, return 0.  */)
     return XCAR (XCDR (XPROCESS (process)->status));
   return make_number (0);
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("process-id", Fprocess_id, Sprocess_id, 1, 1, 0,
        doc: /* Return the process id of PROCESS.
 This is the pid of the external process which PROCESS uses or talks to.
@@ -1155,7 +1164,9 @@ For a network, serial, and pipe connections, this value is nil.  */)
   pid = XPROCESS (process)->pid;
   return (pid ? make_fixnum_or_float (pid) : Qnil);
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("process-name", Fprocess_name, Sprocess_name, 1, 1, 0,
        doc: /* Return the name of PROCESS, as a string.
 This is the name of the program invoked in PROCESS,
@@ -1165,7 +1176,9 @@ possibly modified to make it unique among process names.  */)
   CHECK_PROCESS (process);
   return XPROCESS (process)->name;
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("process-command", Fprocess_command, Sprocess_command, 1, 1, 0,
        doc: /* Return the command that was executed to start PROCESS.
 This is a list of strings, the first string being the program executed
@@ -1177,7 +1190,9 @@ or t (process is stopped).  */)
   CHECK_PROCESS (process);
   return XPROCESS (process)->command;
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("process-tty-name", Fprocess_tty_name, Sprocess_tty_name, 1, 1, 0,
        doc: /* Return the name of the terminal PROCESS uses, or nil if none.
 This is the terminal that the process itself reads and writes on,
@@ -1187,7 +1202,9 @@ not the name of the pty that Emacs uses to talk with that terminal.  */)
   CHECK_PROCESS (process);
   return XPROCESS (process)->tty_name;
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("set-process-buffer", Fset_process_buffer, Sset_process_buffer,
        2, 2, 0,
        doc: /* Set buffer associated with PROCESS to BUFFER (a buffer, or nil).
@@ -1206,7 +1223,9 @@ Return BUFFER.  */)
   setup_process_coding_systems (process);
   return buffer;
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("process-buffer", Fprocess_buffer, Sprocess_buffer,
        1, 1, 0,
        doc: /* Return the buffer PROCESS is associated with.
@@ -1216,7 +1235,9 @@ The default process filter inserts output from PROCESS into this buffer.  */)
   CHECK_PROCESS (process);
   return XPROCESS (process)->buffer;
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("process-mark", Fprocess_mark, Sprocess_mark,
        1, 1, 0,
        doc: /* Return the marker for the end of the last output from PROCESS.  */)
@@ -1225,6 +1246,7 @@ DEFUN ("process-mark", Fprocess_mark, Sprocess_mark,
   CHECK_PROCESS (process);
   return XPROCESS (process)->mark;
 }
+#endif // IGNORE_RUST_PORT
 
 static void
 set_process_filter_masks (struct Lisp_Process *p)
@@ -1237,6 +1259,7 @@ set_process_filter_masks (struct Lisp_Process *p)
     add_process_read_fd (p->infd);
 }
 
+#if IGNORE_RUST_PORT
 DEFUN ("set-process-filter", Fset_process_filter, Sset_process_filter,
        2, 2, 0,
        doc: /* Give PROCESS the filter function FILTER; nil means default.
@@ -1288,7 +1311,9 @@ The string argument is normally a multibyte string, except:
   setup_process_coding_systems (process);
   return filter;
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("process-filter", Fprocess_filter, Sprocess_filter,
        1, 1, 0,
        doc: /* Return the filter function of PROCESS.
@@ -1298,7 +1323,9 @@ See `set-process-filter' for more info on filter functions.  */)
   CHECK_PROCESS (process);
   return XPROCESS (process)->filter;
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("set-process-sentinel", Fset_process_sentinel, Sset_process_sentinel,
        2, 2, 0,
        doc: /* Give PROCESS the sentinel SENTINEL; nil for default.
@@ -1319,7 +1346,9 @@ It gets two arguments: the process, and a string describing the change.  */)
     pset_childp (p, Fplist_put (p->childp, QCsentinel, sentinel));
   return sentinel;
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("process-sentinel", Fprocess_sentinel, Sprocess_sentinel,
        1, 1, 0,
        doc: /* Return the sentinel of PROCESS.
@@ -1329,6 +1358,7 @@ See `set-process-sentinel' for more info on sentinels.  */)
   CHECK_PROCESS (process);
   return XPROCESS (process)->sentinel;
 }
+#endif // IGNORE_RUST_PORT
 
 DEFUN ("set-process-thread", Fset_process_thread, Sset_process_thread,
        2, 2, 0,
@@ -1358,6 +1388,7 @@ If THREAD is nil, the process is unlocked.  */)
   return thread;
 }
 
+#if IGNORE_RUST_PORT
 DEFUN ("process-thread", Fprocess_thread, Sprocess_thread,
        1, 1, 0,
        doc: /* Return the locking thread of PROCESS.
@@ -1367,6 +1398,7 @@ If PROCESS is unlocked, this function returns nil.  */)
   CHECK_PROCESS (process);
   return XPROCESS (process)->thread;
 }
+#endif // IGNORE_RUST_PORT
 
 DEFUN ("set-process-window-size", Fset_process_window_size,
        Sset_process_window_size, 3, 3, 0,
@@ -1417,6 +1449,7 @@ This function returns FLAG.  */)
   return flag;
 }
 
+#if IGNORE_RUST_PORT
 DEFUN ("set-process-query-on-exit-flag",
        Fset_process_query_on_exit_flag, Sset_process_query_on_exit_flag,
        2, 2, 0,
@@ -1430,7 +1463,9 @@ returns FLAG.  */)
   XPROCESS (process)->kill_without_query = NILP (flag);
   return flag;
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("process-query-on-exit-flag",
        Fprocess_query_on_exit_flag, Sprocess_query_on_exit_flag,
        1, 1, 0,
@@ -1440,6 +1475,7 @@ DEFUN ("process-query-on-exit-flag",
   CHECK_PROCESS (process);
   return (XPROCESS (process)->kill_without_query ? Qnil : Qt);
 }
+#endif // IGNORE_RUST_PORT
 
 DEFUN ("process-contact", Fprocess_contact, Sprocess_contact,
        1, 2, 0,
@@ -1488,6 +1524,7 @@ set up yet, this function will block until socket setup has completed.  */)
   return Fplist_get (contact, key);
 }
 
+#if IGNORE_RUST_PORT
 DEFUN ("process-plist", Fprocess_plist, Sprocess_plist,
        1, 1, 0,
        doc: /* Return the plist of PROCESS.  */)
@@ -1496,7 +1533,9 @@ DEFUN ("process-plist", Fprocess_plist, Sprocess_plist,
   CHECK_PROCESS (process);
   return XPROCESS (process)->plist;
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("set-process-plist", Fset_process_plist, Sset_process_plist,
        2, 2, 0,
        doc: /* Replace the plist of PROCESS with PLIST.  Return PLIST.  */)
@@ -1508,6 +1547,7 @@ DEFUN ("set-process-plist", Fset_process_plist, Sset_process_plist,
   pset_plist (XPROCESS (process), plist);
   return plist;
 }
+#endif // IGNORE_RUST_PORT
 
 #if 0 /* Turned off because we don't currently record this info
 	 in the process.  Perhaps add it.  */
@@ -1521,6 +1561,7 @@ a socket connection.  */)
 }
 #endif
 
+#if IGNORE_RUST_PORT
 DEFUN ("process-type", Fprocess_type, Sprocess_type, 1, 1, 0,
        doc: /* Return the connection type of PROCESS.
 The value is either the symbol `real', `network', `serial', or `pipe'.
@@ -1532,6 +1573,7 @@ nil, indicating the current buffer's process.  */)
   proc = get_process (process);
   return XPROCESS (proc)->type;
 }
+#endif // IGNORE_RUST_PORT
 
 DEFUN ("format-network-address", Fformat_network_address, Sformat_network_address,
        1, 2, 0,
@@ -1608,12 +1650,14 @@ Return nil if format of ADDRESS is invalid.  */)
   return Qnil;
 }
 
+#if IGNORE_RUST_PORT
 DEFUN ("process-list", Fprocess_list, Sprocess_list, 0, 0, 0,
        doc: /* Return a list of all processes that are Emacs sub-processes.  */)
   (void)
 {
   return Fmapcar (Qcdr, Vprocess_alist);
 }
+#endif // IGNORE_RUST_PORT
 
 /* Starting asynchronous inferior processes.  */
 
@@ -6503,6 +6547,7 @@ set up yet, this function will block until socket setup has completed.  */)
   return Qnil;
 }
 
+#if IGNORE_RUST_PORT
 DEFUN ("process-send-string", Fprocess_send_string, Sprocess_send_string,
        2, 2, 0,
        doc: /* Send PROCESS the contents of STRING as input.
@@ -6523,6 +6568,7 @@ set up yet, this function will block until socket setup has completed.  */)
 		SBYTES (string), string);
   return Qnil;
 }
+#endif // IGNORE_RUST_PORT
 
 /* Return the foreground process group for the tty/pty that
    the process P uses.  */
@@ -6550,6 +6596,7 @@ emacs_get_tty_pgrp (struct Lisp_Process *p)
   return gid;
 }
 
+#if IGNORE_RUST_PORT
 DEFUN ("process-running-child-p", Fprocess_running_child_p,
        Sprocess_running_child_p, 0, 1, 0,
        doc: /* Return non-nil if PROCESS has given the terminal to a
@@ -6578,6 +6625,7 @@ process group.  */)
     return make_number (gid);
   return Qt;
 }
+#endif // IGNORE_RUST_PORT
 
 /* Send a signal number SIGNO to PROCESS.
    If CURRENT_GROUP is t, that means send to the process group
@@ -6729,6 +6777,7 @@ process_send_signal (Lisp_Object process, int signo, Lisp_Object current_group,
   unblock_child_signal (&oldset);
 }
 
+#if IGNORE_RUST_PORT
 DEFUN ("internal-default-interrupt-process",
        Finternal_default_interrupt_process,
        Sinternal_default_interrupt_process, 0, 2, 0,
@@ -6740,7 +6789,9 @@ See function `interrupt-process' for more details on usage.  */)
   process_send_signal (process, SIGINT, current_group, 0);
   return process;
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("interrupt-process", Finterrupt_process, Sinterrupt_process, 0, 2, 0,
        doc: /* Interrupt process PROCESS.
 PROCESS may be a process, a buffer, or the name of a process or buffer.
@@ -6761,7 +6812,9 @@ the order of the list, until one of them returns non-`nil'.  */)
   return CALLN (Frun_hook_with_args_until_success, Qinterrupt_process_functions,
 		process, current_group);
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("kill-process", Fkill_process, Skill_process, 0, 2, 0,
        doc: /* Kill process PROCESS.  May be process or name of one.
 See function `interrupt-process' for more details on usage.  */)
@@ -6770,7 +6823,9 @@ See function `interrupt-process' for more details on usage.  */)
   process_send_signal (process, SIGKILL, current_group, 0);
   return process;
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("quit-process", Fquit_process, Squit_process, 0, 2, 0,
        doc: /* Send QUIT signal to process PROCESS.  May be process or name of one.
 See function `interrupt-process' for more details on usage.  */)
@@ -6779,7 +6834,9 @@ See function `interrupt-process' for more details on usage.  */)
   process_send_signal (process, SIGQUIT, current_group, 0);
   return process;
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("stop-process", Fstop_process, Sstop_process, 0, 2, 0,
        doc: /* Stop process PROCESS.  May be process or name of one.
 See function `interrupt-process' for more details on usage.
@@ -6806,6 +6863,7 @@ of incoming traffic.  */)
 #endif
   return process;
 }
+#endif // IGNORE_RUST_PORT
 
 DEFUN ("continue-process", Fcontinue_process, Scontinue_process, 0, 2, 0,
        doc: /* Continue process PROCESS.  May be process or name of one.
@@ -7417,6 +7475,7 @@ encode subprocess input. */)
   return Qnil;
 }
 
+#if IGNORE_RUST_PORT
 DEFUN ("process-coding-system",
        Fprocess_coding_system, Sprocess_coding_system, 1, 1, 0,
        doc: /* Return a cons of coding systems for decoding and encoding of PROCESS.  */)
@@ -7426,6 +7485,7 @@ DEFUN ("process-coding-system",
   return Fcons (XPROCESS (process)->decode_coding_system,
 		XPROCESS (process)->encode_coding_system);
 }
+#endif // IGNORE_RUST_PORT
 
 DEFUN ("set-process-filter-multibyte", Fset_process_filter_multibyte,
        Sset_process_filter_multibyte, 2, 2, 0,
@@ -7822,6 +7882,7 @@ setup_process_coding_systems (Lisp_Object process)
 #endif
 }
 
+#if IGNORE_RUST_PORT
 DEFUN ("get-buffer-process", Fget_buffer_process, Sget_buffer_process, 1, 1, 0,
        doc: /* Return the (or a) live process associated with BUFFER.
 BUFFER may be a buffer or the name of one.
@@ -7842,7 +7903,9 @@ deleted or killed.  */)
 #endif	/* subprocesses */
   return Qnil;
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("process-inherit-coding-system-flag",
        Fprocess_inherit_coding_system_flag, Sprocess_inherit_coding_system_flag,
        1, 1, 0,
@@ -7861,6 +7924,7 @@ the process output.  */)
   return inherit_process_coding_system ? Qt : Qnil;
 #endif
 }
+#endif // IGNORE_RUST_PORT
 
 /* Kill all processes associated with `buffer'.
    If `buffer' is nil, kill all processes.  */
@@ -7884,6 +7948,7 @@ kill_buffer_processes (Lisp_Object buffer)
 #endif /* subprocesses */
 }
 
+#if IGNORE_RUST_PORT
 DEFUN ("waiting-for-user-input-p", Fwaiting_for_user_input_p,
        Swaiting_for_user_input_p, 0, 0, 0,
        doc: /* Return non-nil if Emacs is waiting for input from the user.
@@ -7896,6 +7961,7 @@ This is intended for use by asynchronous process output filters and sentinels.  
   return Qnil;
 #endif
 }
+#endif // IGNORE_RUST_PORT
 
 /* Stop reading input from keyboard sources.  */
 
@@ -7922,6 +7988,7 @@ kbd_on_hold_p (void)
 }
 
 
+#if IGNORE_RUST_PORT
 /* Enumeration of and access to system processes a-la ps(1).  */
 
 DEFUN ("list-system-processes", Flist_system_processes, Slist_system_processes,
@@ -7934,6 +8001,7 @@ See `process-attributes' for getting attributes of a process given its ID.  */)
 {
   return list_system_processes ();
 }
+#endif // IGNORE_RUST_PORT
 
 DEFUN ("process-attributes", Fprocess_attributes,
        Sprocess_attributes, 1, 1, 0,
@@ -8264,12 +8332,17 @@ returns non-`nil'.  */);
 	  "internal-default-interrupt-process");
   DEFSYM (Qinterrupt_process_functions, "interrupt-process-functions");
 
+#if IGNORE_RUST_PORT
   defsubr (&Sprocessp);
   defsubr (&Sget_process);
+#endif // IGNORE_RUST_PORT
   defsubr (&Sdelete_process);
+#if IGNORE_RUST_PORT
   defsubr (&Sprocess_status);
   defsubr (&Sprocess_exit_status);
+#if IGNORE_RUST_PORT
   defsubr (&Sprocess_id);
+#endif // IGNORE_RUST_PORT
   defsubr (&Sprocess_name);
   defsubr (&Sprocess_tty_name);
   defsubr (&Sprocess_command);
@@ -8280,16 +8353,23 @@ returns non-`nil'.  */);
   defsubr (&Sprocess_filter);
   defsubr (&Sset_process_sentinel);
   defsubr (&Sprocess_sentinel);
+#endif // IGNORE_RUST_PORT
   defsubr (&Sset_process_thread);
+#if IGNORE_RUST_PORT
   defsubr (&Sprocess_thread);
+#endif // IGNORE_RUST_PORT
   defsubr (&Sset_process_window_size);
   defsubr (&Sset_process_inherit_coding_system_flag);
+#if IGNORE_RUST_PORT
   defsubr (&Sset_process_query_on_exit_flag);
   defsubr (&Sprocess_query_on_exit_flag);
+#endif // IGNORE_RUST_PORT
   defsubr (&Sprocess_contact);
+#if IGNORE_RUST_PORT
   defsubr (&Sprocess_plist);
   defsubr (&Sset_process_plist);
   defsubr (&Sprocess_list);
+#endif // IGNORE_RUST_PORT
   defsubr (&Smake_process);
   defsubr (&Smake_pipe_process);
   defsubr (&Sserial_process_configure);
@@ -8305,22 +8385,30 @@ returns non-`nil'.  */);
 #endif
   defsubr (&Saccept_process_output);
   defsubr (&Sprocess_send_region);
+#if IGNORE_RUST_PORT
   defsubr (&Sprocess_send_string);
   defsubr (&Sinternal_default_interrupt_process);
   defsubr (&Sinterrupt_process);
   defsubr (&Skill_process);
   defsubr (&Squit_process);
   defsubr (&Sstop_process);
+#endif // IGNORE_RUST_PORT
   defsubr (&Scontinue_process);
+#if IGNORE_RUST_PORT
   defsubr (&Sprocess_running_child_p);
+#endif // IGNORE_RUST_PORT
   defsubr (&Sprocess_send_eof);
   defsubr (&Ssignal_process);
+#if IGNORE_RUST_PORT
   defsubr (&Swaiting_for_user_input_p);
   defsubr (&Sprocess_type);
+#endif // IGNORE_RUST_PORT
   defsubr (&Sinternal_default_process_sentinel);
   defsubr (&Sinternal_default_process_filter);
   defsubr (&Sset_process_coding_system);
+#if IGNORE_RUST_PORT
   defsubr (&Sprocess_coding_system);
+#endif // IGNORE_RUST_PORT
   defsubr (&Sset_process_filter_multibyte);
   defsubr (&Sprocess_filter_multibyte_p);
 
@@ -8358,8 +8446,10 @@ returns non-`nil'.  */);
 
 #endif	/* subprocesses */
 
+#if IGNORE_RUST_PORT
   defsubr (&Sget_buffer_process);
   defsubr (&Sprocess_inherit_coding_system_flag);
   defsubr (&Slist_system_processes);
+#endif // IGNORE_RUST_PORT
   defsubr (&Sprocess_attributes);
 }

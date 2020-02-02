@@ -106,6 +106,7 @@ CHECK_VECTOR_OR_CHAR_TABLE (Lisp_Object x)
 
 /* Keymap object support - constructors and predicates.			*/
 
+#if IGNORE_RUST_PORT
 DEFUN ("make-keymap", Fmake_keymap, Smake_keymap, 0, 1, 0,
        doc: /* Construct and return a new keymap, of the form (keymap CHARTABLE . ALIST).
 CHARTABLE is a char-table that holds the bindings for all characters
@@ -126,7 +127,9 @@ in case you use it as a menu with `x-popup-menu'.  */)
   return Fcons (Qkeymap,
 		Fcons (Fmake_char_table (Qkeymap, Qnil), tail));
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("make-sparse-keymap", Fmake_sparse_keymap, Smake_sparse_keymap, 0, 1, 0,
        doc: /* Construct and return a new sparse keymap.
 Its car is `keymap' and its cdr is an alist of (CHAR . DEFINITION),
@@ -146,6 +149,7 @@ in case you use it as a menu with `x-popup-menu'.  */)
     }
   return list1 (Qkeymap);
 }
+#endif // IGNORE_RUST_PORT
 
 /* This function is used for installing the standard key bindings
    at initialization time.
@@ -166,6 +170,7 @@ initial_define_lispy_key (Lisp_Object keymap, const char *keyname, const char *d
   store_in_keymap (keymap, intern_c_string (keyname), intern_c_string (defname));
 }
 
+#if IGNORE_RUST_PORT
 DEFUN ("keymapp", Fkeymapp, Skeymapp, 1, 1, 0,
        doc: /* Return t if OBJECT is a keymap.
 
@@ -178,7 +183,9 @@ is also allowed as an element.  */)
 {
   return (KEYMAPP (object) ? Qt : Qnil);
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("keymap-prompt", Fkeymap_prompt, Skeymap_prompt, 1, 1, 0,
        doc: /* Return the prompt-string of a keymap MAP.
 If non-nil, the prompt is shown in the echo-area
@@ -201,7 +208,9 @@ when reading a key-sequence to be looked-up in this keymap.  */)
     }
   return Qnil;
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 /* Check that OBJECT is a keymap (after dereferencing through any
    symbols).  If it is, return it.
 
@@ -265,7 +274,9 @@ get_keymap (Lisp_Object object, bool error_if_not_keymap, bool autoload)
     wrong_type_argument (Qkeymapp, object);
   return Qnil;
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 /* Return the parent map of KEYMAP, or nil if it has none.
    We assume that KEYMAP is a valid keymap.  */
 
@@ -287,7 +298,9 @@ keymap_parent (Lisp_Object keymap, bool autoload)
 
   return get_keymap (list, 0, autoload);
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("keymap-parent", Fkeymap_parent, Skeymap_parent, 1, 1, 0,
        doc: /* Return the parent keymap of KEYMAP.
 If KEYMAP has no parent, return nil.  */)
@@ -295,7 +308,9 @@ If KEYMAP has no parent, return nil.  */)
 {
   return keymap_parent (keymap, 1);
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 /* Check whether MAP is one of MAPS parents.  */
 static bool
 keymap_memberp (Lisp_Object map, Lisp_Object maps)
@@ -305,7 +320,9 @@ keymap_memberp (Lisp_Object map, Lisp_Object maps)
     maps = keymap_parent (maps, 0);
   return (EQ (map, maps));
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 /* Set the parent keymap of MAP to PARENT.  */
 
 DEFUN ("set-keymap-parent", Fset_keymap_parent, Sset_keymap_parent, 2, 2, 0,
@@ -345,6 +362,7 @@ Return PARENT.  PARENT should be nil or another keymap.  */)
       prev = list;
     }
 }
+#endif // IGNORE_RUST_PORT
 
 
 /* Look up IDX in MAP.  IDX may be any sort of event.
@@ -606,6 +624,7 @@ map_keymap_call (Lisp_Object key, Lisp_Object val, Lisp_Object fun, void *dummy)
   call2 (fun, key, val);
 }
 
+#if IGNORE_RUST_PORT
 /* Same as map_keymap_internal, but traverses parent keymaps as well.
    AUTOLOAD indicates that autoloaded keymaps should be loaded.  */
 void
@@ -626,6 +645,7 @@ map_keymap (Lisp_Object map, map_keymap_function_t fun, Lisp_Object args,
 	map = get_keymap (map, 0, autoload);
     }
 }
+#endif // IGNORE_RUST_PORT
 
 /* Same as map_keymap, but does it right, properly eliminating duplicate
    bindings due to inheritance.   */
@@ -639,6 +659,7 @@ map_keymap_canonical (Lisp_Object map, map_keymap_function_t fun, Lisp_Object ar
   map_keymap_internal (map, fun, args, data);
 }
 
+#if IGNORE_RUST_PORT
 DEFUN ("map-keymap-internal", Fmap_keymap_internal, Smap_keymap_internal, 2, 2, 0,
        doc: /* Call FUNCTION once for each event binding in KEYMAP.
 FUNCTION is called with two arguments: the event that is bound, and
@@ -650,7 +671,9 @@ If KEYMAP has a parent, this function returns it without processing it.  */)
   keymap = map_keymap_internal (keymap, map_keymap_call, function, NULL);
   return keymap;
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("map-keymap", Fmap_keymap, Smap_keymap, 2, 3, 0,
        doc: /* Call FUNCTION once for each event binding in KEYMAP.
 FUNCTION is called with two arguments: the event that is bound, and
@@ -668,6 +691,7 @@ usage: (map-keymap FUNCTION KEYMAP)  */)
   map_keymap (keymap, map_keymap_call, function, NULL, 1);
   return Qnil;
 }
+#endif // IGNORE_RUST_PORT
 
 /* Given OBJECT which was found in a slot in a keymap,
    trace indirect definitions to get the actual definition of that slot.
@@ -968,6 +992,7 @@ copy_keymap_1 (Lisp_Object chartable, Lisp_Object idx, Lisp_Object elt)
   Fset_char_table_range (chartable, idx, copy_keymap_item (elt));
 }
 
+#if IGNORE_RUST_PORT
 DEFUN ("copy-keymap", Fcopy_keymap, Scopy_keymap, 1, 1, 0,
        doc: /* Return a copy of the keymap KEYMAP.
 
@@ -1022,6 +1047,7 @@ is not copied.  */)
   XSETCDR (tail, keymap);
   return copy;
 }
+#endif // IGNORE_RUST_PORT
 
 /* Simple Keymap mutators and accessors.				*/
 
@@ -1190,6 +1216,7 @@ remapping in all currently active keymaps.  */)
   return INTEGERP (command) ? Qnil : command;
 }
 
+#if IGNORE_RUST_PORT
 /* Value is number if KEY is too long; nil if valid but has no definition.  */
 /* GC is possible in this function.  */
 
@@ -1251,6 +1278,7 @@ recognize the default bindings, just as `read-key-sequence' does.  */)
       maybe_quit ();
     }
 }
+#endif // IGNORE_RUST_PORT
 
 /* Make KEYMAP define event C as a keymap (i.e., as a prefix).
    Assume that currently it does not define C at all.
@@ -1600,7 +1628,7 @@ like in the respective argument of `key-binding'.  */)
 }
 
 /* GC is possible in this function if it autoloads a keymap.  */
-
+#if IGNORE_RUST_PORT
 DEFUN ("key-binding", Fkey_binding, Skey_binding, 1, 4, 0,
        doc: /* Return the binding for command KEY in current keymaps.
 KEY is a string or vector, a sequence of keystrokes.
@@ -1670,9 +1698,10 @@ specified buffer position instead of point are used.
 
   return value;
 }
+#endif // IGNORE_RUST_PORT
 
 /* GC is possible in this function if it autoloads a keymap.  */
-
+#if IGNORE_RUST_PORT
 DEFUN ("local-key-binding", Flocal_key_binding, Slocal_key_binding, 1, 2, 0,
        doc: /* Return the binding for command KEYS in current local keymap only.
 KEYS is a string or vector, a sequence of keystrokes.
@@ -1688,9 +1717,10 @@ bindings; see the description of `lookup-key' for more details about this.  */)
     return Qnil;
   return Flookup_key (map, keys, accept_default);
 }
+#endif // IGNORE_RUST_PORT
 
 /* GC is possible in this function if it autoloads a keymap.  */
-
+#if IGNORE_RUST_PORT
 DEFUN ("global-key-binding", Fglobal_key_binding, Sglobal_key_binding, 1, 2, 0,
        doc: /* Return the binding for command KEYS in current global keymap only.
 KEYS is a string or vector, a sequence of keystrokes.
@@ -1704,6 +1734,7 @@ bindings; see the description of `lookup-key' for more details about this.  */)
 {
   return Flookup_key (current_global_map, keys, accept_default);
 }
+#endif // IGNORE_RUST_PORT
 
 /* GC is possible in this function if it autoloads a keymap.  */
 
@@ -1744,6 +1775,7 @@ bindings; see the description of `lookup-key' for more details about this.  */)
   return Flist (j, maps);
 }
 
+#if IGNORE_RUST_PORT
 DEFUN ("define-prefix-command", Fdefine_prefix_command, Sdefine_prefix_command, 1, 3, 0,
        doc: /* Define COMMAND as a prefix command.  COMMAND should be a symbol.
 A new sparse keymap is stored as COMMAND's function definition and its
@@ -1766,7 +1798,9 @@ This function returns COMMAND.  */)
     Fset (command, map);
   return command;
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("use-global-map", Fuse_global_map, Suse_global_map, 1, 1, 0,
        doc: /* Select KEYMAP as the global keymap.  */)
   (Lisp_Object keymap)
@@ -1776,7 +1810,9 @@ DEFUN ("use-global-map", Fuse_global_map, Suse_global_map, 1, 1, 0,
 
   return Qnil;
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("use-local-map", Fuse_local_map, Suse_local_map, 1, 1, 0,
        doc: /* Select KEYMAP as the local keymap.
 If KEYMAP is nil, that means no local keymap.  */)
@@ -1789,7 +1825,9 @@ If KEYMAP is nil, that means no local keymap.  */)
 
   return Qnil;
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("current-local-map", Fcurrent_local_map, Scurrent_local_map, 0, 0, 0,
        doc: /* Return current buffer's local keymap, or nil if it has none.
 Normally the local keymap is set by the major mode with `use-local-map'.  */)
@@ -1797,13 +1835,16 @@ Normally the local keymap is set by the major mode with `use-local-map'.  */)
 {
   return BVAR (current_buffer, keymap);
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("current-global-map", Fcurrent_global_map, Scurrent_global_map, 0, 0, 0,
        doc: /* Return the current global keymap.  */)
   (void)
 {
   return current_global_map;
 }
+#endif // IGNORE_RUST_PORT
 
 DEFUN ("current-minor-mode-maps", Fcurrent_minor_mode_maps, Scurrent_minor_mode_maps, 0, 0, 0,
        doc: /* Return a list of keymaps for the minor modes of the current buffer.  */)
@@ -3317,6 +3358,7 @@ describe_map (Lisp_Object map, Lisp_Object prefix,
   SAFE_FREE ();
 }
 
+#if IGNORE_RUST_PORT
 static void
 describe_vector_princ (Lisp_Object elt, Lisp_Object fun)
 {
@@ -3324,7 +3366,9 @@ describe_vector_princ (Lisp_Object elt, Lisp_Object fun)
   call1 (fun, elt);
   Fterpri (Qnil, Qnil);
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("describe-vector", Fdescribe_vector, Sdescribe_vector, 1, 2, 0,
        doc: /* Insert a description of contents of VECTOR.
 This is text showing the elements of vector matched against indices.
@@ -3341,6 +3385,7 @@ DESCRIBER is the output function used; nil means use `princ'.  */)
 
   return unbind_to (count, Qnil);
 }
+#endif // IGNORE_RUST_PORT
 
 /* Insert in the current buffer a description of the contents of VECTOR.
    We call ELT_DESCRIBER to insert the description of one value found
@@ -3579,6 +3624,7 @@ apropos_accum (Lisp_Object symbol, Lisp_Object string)
     apropos_accumulate = Fcons (symbol, apropos_accumulate);
 }
 
+#if IGNORE_RUST_PORT
 DEFUN ("apropos-internal", Fapropos_internal, Sapropos_internal, 1, 2, 0,
        doc: /* Show all symbols whose names contain match for REGEXP.
 If optional 2nd arg PREDICATE is non-nil, (funcall PREDICATE SYMBOL) is done
@@ -3596,6 +3642,7 @@ Return list of symbols found.  */)
   apropos_predicate = Qnil;
   return tem;
 }
+#endif // IGNORE_RUST_PORT
 
 void
 syms_of_keymap (void)
@@ -3719,6 +3766,7 @@ be preferred.  */);
   staticpro (&where_is_cache);
   staticpro (&where_is_cache_keymaps);
 
+#if IGNORE_RUST_PORT
   defsubr (&Skeymapp);
   defsubr (&Skeymap_parent);
   defsubr (&Skeymap_prompt);
@@ -3728,28 +3776,37 @@ be preferred.  */);
   defsubr (&Smap_keymap_internal);
   defsubr (&Smap_keymap);
   defsubr (&Scopy_keymap);
+#endif // IGNORE_RUST_PORT
   defsubr (&Scommand_remapping);
+#if IGNORE_RUST_PORT
   defsubr (&Skey_binding);
   defsubr (&Slocal_key_binding);
   defsubr (&Sglobal_key_binding);
+#endif // IGNORE_RUST_PORT
   defsubr (&Sminor_mode_key_binding);
   defsubr (&Sdefine_key);
+#if IGNORE_RUST_PORT
   defsubr (&Slookup_key);
   defsubr (&Sdefine_prefix_command);
   defsubr (&Suse_global_map);
   defsubr (&Suse_local_map);
   defsubr (&Scurrent_local_map);
   defsubr (&Scurrent_global_map);
+#endif // IGNORE_RUST_PORT
   defsubr (&Scurrent_minor_mode_maps);
   defsubr (&Scurrent_active_maps);
   defsubr (&Saccessible_keymaps);
   defsubr (&Skey_description);
+#if IGNORE_RUST_PORT
   defsubr (&Sdescribe_vector);
+#endif // IGNORE_RUST_PORT
   defsubr (&Ssingle_key_description);
   defsubr (&Stext_char_description);
   defsubr (&Swhere_is_internal);
   defsubr (&Sdescribe_buffer_bindings);
+#if IGNORE_RUST_PORT
   defsubr (&Sapropos_internal);
+#endif // IGNORE_RUST_PORT
 }
 
 void

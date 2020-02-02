@@ -159,6 +159,7 @@ read_dirent (DIR *dir, Lisp_Object dirname)
     }
 }
 
+#if IGNORE_RUST_PORT
 /* Function shared by Fdirectory_files and Fdirectory_files_and_attributes.
    If not ATTRS, return a list of directory filenames;
    if ATTRS, return a list of directory filenames and their attributes.
@@ -329,8 +330,9 @@ directory_files_internal (Lisp_Object directory, Lisp_Object full,
   (void) directory_volatile;
   return list;
 }
+#endif // IGNORE_RUST_PORT
 
-#ifndef IGNORE_RUST_POST
+#if IGNORE_RUST_PORT
 DEFUN ("directory-files", Fdirectory_files, Sdirectory_files, 1, 4, 0,
        doc: /* Return a list of names of files in DIRECTORY.
 There are three optional arguments:

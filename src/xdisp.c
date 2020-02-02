@@ -687,6 +687,7 @@ bset_update_mode_line (struct buffer *b)
   b->text->redisplay = true;
 }
 
+#if IGNORE_RUST_PORT
 DEFUN ("set-buffer-redisplay", Fset_buffer_redisplay,
        Sset_buffer_redisplay, 4, 4, 0,
        doc: /* Mark the current buffer for redisplay.
@@ -697,6 +698,7 @@ This function may be passed to `add-variable-watcher'.  */)
   current_buffer->prevent_redisplay_optimizations_p = true;
   return Qnil;
 }
+#endif // IGNORE_RUST_PORT
 
 #ifdef GLYPH_DEBUG
 
@@ -25304,6 +25306,7 @@ invisible_prop (Lisp_Object propval, Lisp_Object list)
   return 0;
 }
 
+#if IGNORE_RUST_PORT
 DEFUN ("invisible-p", Finvisible_p, Sinvisible_p, 1, 1, 0,
        doc: /* Non-nil if text properties at POS cause text there to be currently invisible.
 POS should be a marker or a buffer position; the value of the `invisible'
@@ -25329,6 +25332,7 @@ display may depend on `buffer-invisibility-spec', which see.  */)
 	  : invis == 1 ? Qt
 	  : make_number (invis));
 }
+#endif // IGNORE_RUST_PORT
 
 /* Calculate a width or height in pixels from a specification using
    the following elements:
@@ -32512,7 +32516,9 @@ be let-bound around code that needs to disable messages temporarily. */);
   message_dolog_marker3 = Fmake_marker ();
   staticpro (&message_dolog_marker3);
 
+#if IGNORE_RUST_PORT
   defsubr (&Sset_buffer_redisplay);
+#endif // IGNORE_RUST_PORT
 #ifdef GLYPH_DEBUG
   defsubr (&Sdump_frame_glyph_matrix);
   defsubr (&Sdump_glyph_matrix);
@@ -32527,7 +32533,9 @@ be let-bound around code that needs to disable messages temporarily. */);
 #endif
   defsubr (&Sline_pixel_height);
   defsubr (&Sformat_mode_line);
+#if IGNORE_RUST_PORT
   defsubr (&Sinvisible_p);
+#endif // IGNORE_RUST_PORT
   defsubr (&Scurrent_bidi_paragraph_direction);
   defsubr (&Swindow_text_pixel_size);
   defsubr (&Smove_point_visually);

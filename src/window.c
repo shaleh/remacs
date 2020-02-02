@@ -239,6 +239,7 @@ decode_live_window (register Lisp_Object window)
   return XWINDOW (window);
 }
 
+#if IGNORE_RUST_PORT
 struct window *
 decode_any_window (register Lisp_Object window)
 {
@@ -251,6 +252,7 @@ decode_any_window (register Lisp_Object window)
   w = XWINDOW (window);
   return w;
 }
+#endif // IGNORE_RUST_PORT
 
 static struct window *
 decode_valid_window (register Lisp_Object window)
@@ -301,13 +303,16 @@ wset_buffer (struct window *w, Lisp_Object val)
   adjust_window_count (w, 1);
 }
 
+#if IGNORE_RUST_PORT
 DEFUN ("windowp", Fwindowp, Swindowp, 1, 1, 0,
        doc: /* Return t if OBJECT is a window and nil otherwise.  */)
   (Lisp_Object object)
 {
   return WINDOWP (object) ? Qt : Qnil;
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("window-valid-p", Fwindow_valid_p, Swindow_valid_p, 1, 1, 0,
        doc: /* Return t if OBJECT is a valid window and nil otherwise.
 A valid window is either a window that displays a buffer or an internal
@@ -316,7 +321,9 @@ window.  Windows that have been deleted are not valid.  */)
 {
   return WINDOW_VALID_P (object) ? Qt : Qnil;
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("window-live-p", Fwindow_live_p, Swindow_live_p, 1, 1, 0,
        doc: /* Return t if OBJECT is a live window and nil otherwise.
 A live window is a window that displays a buffer.
@@ -325,7 +332,9 @@ Internal windows and deleted windows are not live.  */)
 {
   return WINDOW_LIVE_P (object) ? Qt : Qnil;
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 /* Frames and windows.  */
 DEFUN ("window-frame", Fwindow_frame, Swindow_frame, 0, 1, 0,
        doc: /* Return the frame that window WINDOW is on.
@@ -334,7 +343,9 @@ WINDOW must be a valid window and defaults to the selected one.  */)
 {
   return decode_valid_window (window)->frame;
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("frame-root-window", Fframe_root_window, Sframe_root_window, 0, 1, 0,
        doc: /* Return the root window of FRAME-OR-WINDOW.
 If omitted, FRAME-OR-WINDOW defaults to the currently selected frame.
@@ -356,7 +367,9 @@ With a window argument, return the root window of that window's frame.  */)
 
   return window;
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("minibuffer-window", Fminibuffer_window, Sminibuffer_window, 0, 1, 0,
        doc: /* Return the minibuffer window for frame FRAME.
 If FRAME is omitted or nil, it defaults to the selected frame.  */)
@@ -364,7 +377,9 @@ If FRAME is omitted or nil, it defaults to the selected frame.  */)
 {
   return FRAME_MINIBUF_WINDOW (decode_live_frame (frame));
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("window-minibuffer-p", Fwindow_minibuffer_p,
        Swindow_minibuffer_p, 0, 1, 0,
        doc: /* Return non-nil if WINDOW is a minibuffer window.
@@ -373,7 +388,9 @@ WINDOW must be a valid window and defaults to the selected one.  */)
 {
   return MINI_WINDOW_P (decode_valid_window (window)) ? Qt : Qnil;
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 /* Don't move this to window.el - this must be a safe routine.  */
 DEFUN ("frame-first-window", Fframe_first_window, Sframe_first_window, 0, 1, 0,
        doc: /* Return the topmost, leftmost live window on FRAME-OR-WINDOW.
@@ -400,7 +417,9 @@ the first window of that frame.  */)
 
   return window;
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("frame-selected-window", Fframe_selected_window,
        Sframe_selected_window, 0, 1, 0,
        doc: /* Return the selected window of FRAME-OR-WINDOW.
@@ -424,7 +443,9 @@ return the selected window of that frame.  */)
 
   return window;
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("set-frame-selected-window", Fset_frame_selected_window,
        Sset_frame_selected_window, 2, 3, 0,
        doc: /* Set selected window of FRAME to WINDOW.
@@ -452,7 +473,9 @@ Return WINDOW.  */)
       return window;
     }
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("selected-window", Fselected_window, Sselected_window, 0, 0, 0,
        doc: /* Return the selected window.
 The selected window is the window in which the standard cursor for
@@ -461,6 +484,7 @@ selected windows appears and to which many commands apply.  */)
 {
   return selected_window;
 }
+#endif // IGNORE_RUST_PORT
 
 EMACS_INT window_select_count;
 
@@ -559,6 +583,7 @@ select_window_1 (Lisp_Object window, bool inhibit_point_swap)
   set_point_from_marker (XWINDOW (window)->pointm);
 }
 
+#if IGNORE_RUST_PORT
 DEFUN ("select-window", Fselect_window, Sselect_window, 1, 2, 0,
        doc: /* Select WINDOW which must be a live window.
 Also make WINDOW's frame the selected frame and WINDOW that frame's
@@ -586,7 +611,9 @@ the buffer of the selected window before each command.  */)
 {
   return select_window (window, norecord, false);
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("window-buffer", Fwindow_buffer, Swindow_buffer, 0, 1, 0,
        doc: /* Return the buffer displayed in window WINDOW.
 If WINDOW is omitted or nil, it defaults to the selected window.
@@ -596,7 +623,9 @@ Return nil for an internal window or a deleted window.  */)
   struct window *w = decode_any_window (window);
   return WINDOW_LEAF_P (w) ? w->contents : Qnil;
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("window-parent", Fwindow_parent, Swindow_parent, 0, 1, 0,
        doc: /* Return the parent window of window WINDOW.
 WINDOW must be a valid window and defaults to the selected one.
@@ -605,7 +634,9 @@ Return nil for a window with no parent (e.g. a root window).  */)
 {
   return decode_valid_window (window)->parent;
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("window-top-child", Fwindow_top_child, Swindow_top_child, 0, 1, 0,
        doc: /* Return the topmost child window of window WINDOW.
 WINDOW must be a valid window and defaults to the selected one.
@@ -617,6 +648,7 @@ horizontal combination.  */)
   struct window *w = decode_valid_window (window);
   return WINDOW_VERTICAL_COMBINATION_P (w) ? w->contents : Qnil;
 }
+#endif // IGNORE_RUST_PORT
 
 DEFUN ("window-left-child", Fwindow_left_child, Swindow_left_child, 0, 1, 0,
        doc: /* Return the leftmost child window of window WINDOW.
@@ -630,6 +662,7 @@ vertical combination.  */)
   return WINDOW_HORIZONTAL_COMBINATION_P (w) ? w->contents : Qnil;
 }
 
+#if IGNORE_RUST_PORT
 DEFUN ("window-next-sibling", Fwindow_next_sibling, Swindow_next_sibling, 0, 1, 0,
        doc: /* Return the next sibling window of window WINDOW.
 WINDOW must be a valid window and defaults to the selected one.
@@ -638,7 +671,9 @@ Return nil if WINDOW has no next sibling.  */)
 {
   return decode_valid_window (window)->next;
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("window-prev-sibling", Fwindow_prev_sibling, Swindow_prev_sibling, 0, 1, 0,
        doc: /* Return the previous sibling window of window WINDOW.
 WINDOW must be a valid window and defaults to the selected one.
@@ -647,7 +682,9 @@ Return nil if WINDOW has no previous sibling.  */)
 {
   return decode_valid_window (window)->prev;
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("window-combination-limit", Fwindow_combination_limit, Swindow_combination_limit, 1, 1, 0,
        doc: /* Return combination limit of window WINDOW.
 WINDOW must be a valid window used in horizontal or vertical combination.
@@ -664,7 +701,9 @@ WINDOW are never (re-)combined with WINDOW's siblings.  */)
     error ("Combination limit is meaningful for internal windows only");
   return w->combination_limit;
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("set-window-combination-limit", Fset_window_combination_limit, Sset_window_combination_limit, 2, 2, 0,
        doc: /* Set combination limit of window WINDOW to LIMIT; return LIMIT.
 WINDOW must be a valid window used in horizontal or vertical combination.
@@ -683,7 +722,9 @@ future use.  */)
   wset_combination_limit (w, limit);
   return limit;
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("window-use-time", Fwindow_use_time, Swindow_use_time, 0, 1, 0,
        doc: /* Return the use time of window WINDOW.
 WINDOW must be a live window and defaults to the selected one.
@@ -694,7 +735,9 @@ selected one.  */)
 {
   return make_number (decode_live_window (window)->use_time);
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("window-pixel-width", Fwindow_pixel_width, Swindow_pixel_width, 0, 1, 0,
        doc: /* Return the width of window WINDOW in pixels.
 WINDOW must be a valid window and defaults to the selected one.
@@ -707,7 +750,9 @@ spanned by its children.  */)
 {
   return make_number (decode_valid_window (window)->pixel_width);
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("window-pixel-height", Fwindow_pixel_height, Swindow_pixel_height, 0, 1, 0,
        doc: /* Return the height of window WINDOW in pixels.
 WINDOW must be a valid window and defaults to the selected one.
@@ -719,7 +764,9 @@ the height of the screen areas spanned by its children.  */)
 {
   return make_number (decode_valid_window (window)->pixel_height);
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("window-pixel-width-before-size-change",
        Fwindow_pixel_width_before_size_change,
        Swindow_pixel_width_before_size_change, 0, 1, 0,
@@ -734,7 +781,9 @@ after that.  */)
   return (make_number
 	  (decode_valid_window (window)->pixel_width_before_size_change));
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("window-pixel-height-before-size-change",
        Fwindow_pixel_height_before_size_change,
        Swindow_pixel_height_before_size_change, 0, 1, 0,
@@ -749,7 +798,9 @@ after that.  */)
   return (make_number
 	  (decode_valid_window (window)->pixel_height_before_size_change));
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("window-total-height", Fwindow_total_height, Swindow_total_height, 0, 2, 0,
        doc: /* Return the height of window WINDOW in lines.
 WINDOW must be a valid window and defaults to the selected one.
@@ -785,7 +836,9 @@ total height of WINDOW.  */)
 			  : (w->pixel_height / unit));
     }
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("window-total-width", Fwindow_total_width, Swindow_total_width, 0, 2, 0,
        doc: /* Return the total width of window WINDOW in columns.
 WINDOW must be a valid window and defaults to the selected one.
@@ -822,7 +875,9 @@ total width of WINDOW.  */)
 			  : (w->pixel_width / unit));
     }
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("window-new-total", Fwindow_new_total, Swindow_new_total, 0, 1, 0,
        doc: /* Return the new total size of window WINDOW.
 WINDOW must be a valid window and defaults to the selected one.
@@ -835,7 +890,9 @@ width (see `window-total-width').  */)
 {
   return decode_valid_window (window)->new_total;
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("window-normal-size", Fwindow_normal_size, Swindow_normal_size, 0, 2, 0,
        doc: /* Return the normal height of window WINDOW.
 WINDOW must be a valid window and defaults to the selected one.
@@ -864,7 +921,9 @@ re-enlarged to its previous size.  */)
 
   return NILP (horizontal) ? w->normal_lines : w->normal_cols;
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("window-new-normal", Fwindow_new_normal, Swindow_new_normal, 0, 1, 0,
        doc: /* Return new normal size of window WINDOW.
 WINDOW must be a valid window and defaults to the selected one.
@@ -876,7 +935,9 @@ installed as WINDOW's normal size (see `window-normal-size').  */)
 {
   return decode_valid_window (window)->new_normal;
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("window-new-pixel", Fwindow_new_pixel, Swindow_new_pixel, 0, 1, 0,
        doc: /* Return new pixel size of window WINDOW.
 WINDOW must be a valid window and defaults to the selected one.
@@ -889,7 +950,9 @@ width (see `window-pixel-width').  */)
 {
   return decode_valid_window (window)->new_pixel;
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("window-pixel-left", Fwindow_pixel_left, Swindow_pixel_left, 0, 1, 0,
        doc: /* Return left pixel edge of window WINDOW.
 WINDOW must be a valid window and defaults to the selected one.  */)
@@ -897,7 +960,9 @@ WINDOW must be a valid window and defaults to the selected one.  */)
 {
   return make_number (decode_valid_window (window)->pixel_left);
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("window-pixel-top", Fwindow_pixel_top, Swindow_pixel_top, 0, 1, 0,
        doc: /* Return top pixel edge of window WINDOW.
 WINDOW must be a valid window and defaults to the selected one.  */)
@@ -905,7 +970,9 @@ WINDOW must be a valid window and defaults to the selected one.  */)
 {
   return make_number (decode_valid_window (window)->pixel_top);
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("window-left-column", Fwindow_left_column, Swindow_left_column, 0, 1, 0,
        doc: /* Return left column of window WINDOW.
 This is the distance, in columns, between the left edge of WINDOW and
@@ -917,7 +984,9 @@ WINDOW must be a valid window and defaults to the selected one.  */)
 {
   return make_number (decode_valid_window (window)->left_col);
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("window-top-line", Fwindow_top_line, Swindow_top_line, 0, 1, 0,
        doc: /* Return top line of window WINDOW.
 This is the distance, in lines, between the top of WINDOW and the top
@@ -929,6 +998,7 @@ WINDOW must be a valid window and defaults to the selected one.  */)
 {
   return make_number (decode_valid_window (window)->top_line);
 }
+#endif // IGNORE_RUST_PORT
 
 /* Return the number of lines/pixels of W's body.  Don't count any mode
    or header line or horizontal divider of W.  Rounds down to nearest
@@ -951,6 +1021,7 @@ window_body_height (struct window *w, bool pixelwise)
 	      0);
 }
 
+#if IGNORE_RUST_PORT
 /* Return the number of columns/pixels of W's body.  Don't count columns
    occupied by the scroll bar or the divider/vertical bar separating W
    from its right sibling or margins.  On window-systems don't count
@@ -980,7 +1051,9 @@ window_body_width (struct window *w, bool pixelwise)
 	      : width / FRAME_COLUMN_WIDTH (WINDOW_XFRAME (w)),
 	      0);
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("window-body-height", Fwindow_body_height, Swindow_body_height, 0, 2, 0,
        doc: /* Return the height of WINDOW's text area.
 WINDOW must be a live window and defaults to the selected one.  Optional
@@ -997,7 +1070,9 @@ visible, that line is not counted.  */)
   return make_number (window_body_height (decode_live_window (window),
 					  !NILP (pixelwise)));
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("window-body-width", Fwindow_body_width, Swindow_body_width, 0, 2, 0,
        doc: /* Return the width of WINDOW's text area.
 WINDOW must be a live window and defaults to the selected one.  Optional
@@ -1017,6 +1092,7 @@ continuation glyph.  */)
   return make_number (window_body_width (decode_live_window (window),
 					 !NILP (pixelwise)));
 }
+#endif // IGNORE_RUST_PORT
 
 DEFUN ("window-mode-line-height", Fwindow_mode_line_height,
        Swindow_mode_line_height, 0, 1, 0,
@@ -1054,6 +1130,7 @@ WINDOW must be a live window and defaults to the selected one.  */)
   return (make_number (WINDOW_BOTTOM_DIVIDER_WIDTH (decode_live_window (window))));
 }
 
+#if IGNORE_RUST_PORT
 DEFUN ("window-scroll-bar-width", Fwindow_scroll_bar_width,
        Swindow_scroll_bar_width, 0, 1, 0,
        doc: /* Return the width in pixels of WINDOW's vertical scrollbar.
@@ -1062,7 +1139,9 @@ WINDOW must be a live window and defaults to the selected one.  */)
 {
   return (make_number (WINDOW_SCROLL_BAR_AREA_WIDTH (decode_live_window (window))));
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("window-scroll-bar-height", Fwindow_scroll_bar_height,
        Swindow_scroll_bar_height, 0, 1, 0,
        doc: /* Return the height in pixels of WINDOW's horizontal scrollbar.
@@ -1071,7 +1150,9 @@ WINDOW must be a live window and defaults to the selected one.  */)
 {
   return (make_number (WINDOW_SCROLL_BAR_AREA_HEIGHT (decode_live_window (window))));
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("window-hscroll", Fwindow_hscroll, Swindow_hscroll, 0, 1, 0,
        doc: /* Return the number of columns by which WINDOW is scrolled from left margin.
 WINDOW must be a live window and defaults to the selected one.  */)
@@ -1079,6 +1160,7 @@ WINDOW must be a live window and defaults to the selected one.  */)
 {
   return make_number (decode_live_window (window)->hscroll);
 }
+#endif // IGNORE_RUST_PORT
 
 /* Set W's horizontal scroll amount to HSCROLL clipped to a reasonable
    range, returning the new amount as a fixnum.  */
@@ -1104,6 +1186,7 @@ set_window_hscroll (struct window *w, EMACS_INT hscroll)
   return make_number (new_hscroll);
 }
 
+#if IGNORE_RUST_PORT
 DEFUN ("set-window-hscroll", Fset_window_hscroll, Sset_window_hscroll, 2, 2, 0,
        doc: /* Set number of columns WINDOW is scrolled from left margin to NCOL.
 WINDOW must be a live window and defaults to the selected one.
@@ -1117,7 +1200,9 @@ window so that the location of point moves off-window.  */)
   CHECK_NUMBER (ncol);
   return set_window_hscroll (decode_live_window (window), XINT (ncol));
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("window-redisplay-end-trigger", Fwindow_redisplay_end_trigger,
        Swindow_redisplay_end_trigger, 0, 1, 0,
        doc: /* Return WINDOW's redisplay end trigger value.
@@ -1127,7 +1212,9 @@ See `set-window-redisplay-end-trigger' for more information.  */)
 {
   return decode_live_window (window)->redisplay_end_trigger;
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("set-window-redisplay-end-trigger", Fset_window_redisplay_end_trigger,
        Sset_window_redisplay_end_trigger, 2, 2, 0,
        doc: /* Set WINDOW's redisplay end trigger value to VALUE.
@@ -1142,6 +1229,7 @@ end-trigger value is reset to nil.  */)
   wset_redisplay_end_trigger (decode_live_window (window), value);
   return value;
 }
+#endif // IGNORE_RUST_PORT
 
 /* Test if the character at column X, row Y is within window W.
    If it is not, return ON_NOTHING;
@@ -1542,6 +1630,7 @@ column 0.  */)
 				  0, false);
 }
 
+#if IGNORE_RUST_PORT
 DEFUN ("window-point", Fwindow_point, Swindow_point, 0, 1, 0,
        doc: /* Return current value of point in WINDOW.
 WINDOW must be a live window and defaults to the selected one.
@@ -1562,7 +1651,9 @@ correct to return the top-level value of `point', outside of any
   else
     return Fmarker_position (w->pointm);
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("window-old-point", Fwindow_old_point, Swindow_old_point, 0, 1, 0,
        doc: /* Return old value of point in WINDOW.
 WINDOW must be a live window and defaults to the selected one.  */)
@@ -1570,7 +1661,9 @@ WINDOW must be a live window and defaults to the selected one.  */)
 {
   return Fmarker_position (decode_live_window (window)->old_pointm);
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("window-start", Fwindow_start, Swindow_start, 0, 1, 0,
        doc: /* Return position at which display currently starts in WINDOW.
 WINDOW must be a live window and defaults to the selected one.
@@ -1579,6 +1672,7 @@ This is updated by redisplay or by calling `set-window-start'.  */)
 {
   return Fmarker_position (decode_live_window (window)->start);
 }
+#endif // IGNORE_RUST_PORT
 
 /* This is text temporarily removed from the doc string below.
 
@@ -1661,6 +1755,7 @@ if it isn't already recorded.  */)
   return value;
 }
 
+#if IGNORE_RUST_PORT
 DEFUN ("set-window-point", Fset_window_point, Sset_window_point, 2, 2, 0,
        doc: /* Make point value in WINDOW be at position POS in WINDOW's buffer.
 WINDOW must be a live window and defaults to the selected one.
@@ -1696,7 +1791,9 @@ Return POS.  */)
 
   return pos;
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("set-window-start", Fset_window_start, Sset_window_start, 2, 3, 0,
        doc: /* Make display in WINDOW start at position POS in WINDOW's buffer.
 WINDOW must be a live window and defaults to the selected one.  Return
@@ -1723,6 +1820,7 @@ winds up in a partially-visible line.  */)
 
   return pos;
 }
+#endif // IGNORE_RUST_PORT
 
 DEFUN ("pos-visible-in-window-p", Fpos_visible_in_window_p,
        Spos_visible_in_window_p, 0, 3, 0,
@@ -1900,6 +1998,7 @@ Return nil if window display is not up-to-date.  In that case, use
   return list4i (row->height + min (0, row->y) - crop, i, row->y, crop);
 }
 
+#if IGNORE_RUST_PORT
 DEFUN ("window-lines-pixel-dimensions", Fwindow_lines_pixel_dimensions, Swindow_lines_pixel_dimensions, 0, 6, 0,
        doc: /* Return pixel dimensions of WINDOW's lines.
 The return value is a list of the x- and y-coordinates of the lower
@@ -2022,7 +2121,9 @@ though when run from an idle timer with a delay of zero seconds.  */)
 
   return Fnreverse (rows);
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("window-dedicated-p", Fwindow_dedicated_p, Swindow_dedicated_p,
        0, 1, 0,
        doc: /* Return non-nil when WINDOW is dedicated to its buffer.
@@ -2045,7 +2146,9 @@ is the value returned by `window-dedicated-p' is t.  */)
 {
   return decode_live_window (window)->dedicated;
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("set-window-dedicated-p", Fset_window_dedicated_p,
        Sset_window_dedicated_p, 2, 2, 0,
        doc: /* Mark WINDOW as dedicated according to FLAG.
@@ -2070,7 +2173,9 @@ window, it also makes sure that the window is no more dedicated.  */)
   wset_dedicated (decode_live_window (window), flag);
   return flag;
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("window-prev-buffers", Fwindow_prev_buffers, Swindow_prev_buffers,
        0, 1, 0,
        doc:  /* Return buffers previously shown in WINDOW.
@@ -2083,7 +2188,9 @@ window for that buffer, and POS is a window-specific point value.  */)
 {
   return decode_live_window (window)->prev_buffers;
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("set-window-prev-buffers", Fset_window_prev_buffers,
        Sset_window_prev_buffers, 2, 2, 0,
        doc: /* Set WINDOW's previous buffers to PREV-BUFFERS.
@@ -2097,7 +2204,9 @@ window for that buffer, and POS is a window-specific point value.  */)
   wset_prev_buffers (decode_live_window (window), prev_buffers);
   return prev_buffers;
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("window-next-buffers", Fwindow_next_buffers, Swindow_next_buffers,
        0, 1, 0,
        doc:  /* Return list of buffers recently re-shown in WINDOW.
@@ -2106,7 +2215,9 @@ WINDOW must be a live window and defaults to the selected one.  */)
 {
   return decode_live_window (window)->next_buffers;
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("set-window-next-buffers", Fset_window_next_buffers,
        Sset_window_next_buffers, 2, 2, 0,
        doc: /* Set WINDOW's next buffers to NEXT-BUFFERS.
@@ -2117,7 +2228,9 @@ NEXT-BUFFERS should be a list of buffers.  */)
   wset_next_buffers (decode_live_window (window), next_buffers);
   return next_buffers;
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("window-parameters", Fwindow_parameters, Swindow_parameters,
        0, 1, 0,
        doc: /* Return the parameters of WINDOW and their values.
@@ -2127,7 +2240,9 @@ return value is a list of elements of the form (PARAMETER . VALUE).  */)
 {
   return Fcopy_alist (decode_valid_window (window)->window_parameters);
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 Lisp_Object
 window_parameter (struct window *w, Lisp_Object parameter)
 {
@@ -2135,8 +2250,9 @@ window_parameter (struct window *w, Lisp_Object parameter)
 
   return CDR_SAFE (result);
 }
+#endif // IGNORE_RUST_PORT
 
-
+#if IGNORE_RUST_PORT
 DEFUN ("window-parameter", Fwindow_parameter, Swindow_parameter,
        2, 2, 0,
        doc:  /* Return WINDOW's value for PARAMETER.
@@ -2147,7 +2263,9 @@ WINDOW can be any window and defaults to the selected one.  */)
 
   return window_parameter (w, parameter);
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("set-window-parameter", Fset_window_parameter,
        Sset_window_parameter, 3, 3, 0,
        doc: /* Set WINDOW's value of PARAMETER to VALUE.
@@ -2166,7 +2284,9 @@ Return VALUE.  */)
     Fsetcdr (old_alist_elt, value);
   return value;
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("window-display-table", Fwindow_display_table, Swindow_display_table,
        0, 1, 0,
        doc: /* Return the display-table that WINDOW is using.
@@ -2175,6 +2295,7 @@ WINDOW must be a live window and defaults to the selected one.  */)
 {
   return decode_live_window (window)->display_table;
 }
+#endif // IGNORE_RUST_PORT
 
 /* Get the display table for use on window W.  This is either W's
    display table or W's buffer's display table.  Ignore the specified
@@ -2201,6 +2322,7 @@ window_display_table (struct window *w)
   return dp;
 }
 
+#if IGNORE_RUST_PORT
 DEFUN ("set-window-display-table", Fset_window_display_table, Sset_window_display_table, 2, 2, 0,
        doc: /* Set WINDOW's display-table to TABLE.
 WINDOW must be a live window and defaults to the selected one.  */)
@@ -2209,6 +2331,7 @@ WINDOW must be a live window and defaults to the selected one.  */)
   wset_display_table (decode_live_window (window), table);
   return table;
 }
+#endif // IGNORE_RUST_PORT
 
 /* Record info on buffer window W is displaying
    when it is about to cease to display that buffer.  */
@@ -2739,7 +2862,7 @@ window_list_1 (Lisp_Object window, Lisp_Object minibuf, Lisp_Object all_frames)
   return list;
 }
 
-
+#if IGNORE_RUST_PORT
 DEFUN ("window-list", Fwindow_list, Swindow_list, 0, 3, 0,
        doc: /* Return a list of windows on FRAME, starting with WINDOW.
 FRAME nil or omitted means use the selected frame.
@@ -2761,8 +2884,9 @@ MINIBUF neither nil nor t means never include the minibuffer window.  */)
 
   return window_list_1 (window, minibuf, frame);
 }
+#endif // IGNORE_RUST_PORT
 
-
+#if IGNORE_RUST_PORT
 DEFUN ("window-list-1", Fwindow_list_1, Swindow_list_1, 0, 3, 0,
        doc: /* Return a list of all live windows.
 WINDOW specifies the first window to list and defaults to the selected
@@ -2798,6 +2922,7 @@ be listed first but no error is signaled.  */)
 {
   return window_list_1 (window, minibuf, all_frames);
 }
+#endif // IGNORE_RUST_PORT
 
 /* Look at all windows, performing an operation specified by TYPE
    with argument OBJ.
@@ -3371,6 +3496,7 @@ run_window_configuration_change_hook (struct frame *f)
   unbind_to (count, Qnil);
 }
 
+#if IGNORE_RUST_PORT
 DEFUN ("run-window-configuration-change-hook", Frun_window_configuration_change_hook,
        Srun_window_configuration_change_hook, 0, 1, 0,
        doc: /* Run `window-configuration-change-hook' for FRAME.
@@ -3380,6 +3506,7 @@ If FRAME is omitted or nil, it defaults to the selected frame.  */)
   run_window_configuration_change_hook (decode_live_frame (frame));
   return Qnil;
 }
+#endif // IGNORE_RUST_PORT
 
 DEFUN ("run-window-scroll-functions", Frun_window_scroll_functions,
        Srun_window_scroll_functions, 0, 1, 0,
@@ -3834,6 +3961,7 @@ Note: This function does not operate on any child windows of WINDOW.  */)
   return w->new_pixel;
 }
 
+#if IGNORE_RUST_PORT
 DEFUN ("set-window-new-total", Fset_window_new_total, Sset_window_new_total, 2, 3, 0,
        doc: /* Set new total size of WINDOW to SIZE.
 WINDOW must be a valid window and defaults to the selected one.
@@ -3859,6 +3987,7 @@ Note: This function does not operate on any child windows of WINDOW.  */)
 
   return w->new_total;
 }
+#endif // IGNORE_RUST_PORT
 
 DEFUN ("set-window-new-normal", Fset_window_new_normal, Sset_window_new_normal, 1, 2, 0,
        doc: /* Set new normal size of WINDOW to SIZE.
@@ -4938,6 +5067,7 @@ window_wants_header_line (struct window *w)
 }
 #endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 /* Return number of lines of text in window W, not counting the mode
    line and header line, if any.  Do NOT use this for windows on GUI
    frames; use window_body_height instead.  This function is only for
@@ -4956,6 +5086,7 @@ window_internal_height (struct window *w)
 
   return ht;
 }
+#endif // IGNORE_RUST_PORT
 
 
 /************************************************************************
@@ -5668,6 +5799,7 @@ scroll_command (Lisp_Object n, int direction)
   unbind_to (count, Qnil);
 }
 
+#if IGNORE_RUST_PORT
 DEFUN ("scroll-up", Fscroll_up, Sscroll_up, 0, 1, "^P",
        doc: /* Scroll text of selected window upward ARG lines.
 If ARG is omitted or nil, scroll upward by a near full screen.
@@ -5680,7 +5812,9 @@ When calling from a program, supply as argument a number, nil, or `-'.  */)
   scroll_command (arg, 1);
   return Qnil;
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("scroll-down", Fscroll_down, Sscroll_down, 0, 1, "^P",
        doc: /* Scroll text of selected window down ARG lines.
 If ARG is omitted or nil, scroll down by a near full screen.
@@ -5693,6 +5827,7 @@ When calling from a program, supply as argument a number, nil, or `-'.  */)
   scroll_command (arg, -1);
   return Qnil;
 }
+#endif // IGNORE_RUST_PORT
 
 DEFUN ("other-window-for-scrolling", Fother_window_for_scrolling, Sother_window_for_scrolling, 0, 0, 0,
        doc: /* Return the other window for \"other window scroll\" commands.
@@ -5788,6 +5923,7 @@ specifies the window to scroll.  This takes precedence over
   return Qnil;
 }
 
+#if IGNORE_RUST_PORT
 DEFUN ("scroll-left", Fscroll_left, Sscroll_left, 0, 2, "^P\np",
        doc: /* Scroll selected window display ARG columns left.
 Default for ARG is window width minus 2.
@@ -5812,7 +5948,9 @@ by this function.  This happens in an interactive call.  */)
 
   return result;
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("scroll-right", Fscroll_right, Sscroll_right, 0, 2, "^P\np",
        doc: /* Scroll selected window display ARG columns right.
 Default for ARG is window width minus 2.
@@ -5837,7 +5975,9 @@ by this function.  This happens in an interactive call.  */)
 
   return result;
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("minibuffer-selected-window", Fminibuffer_selected_window, Sminibuffer_selected_window, 0, 0, 0,
        doc: /* Return window selected just before minibuffer window was selected.
 Return nil if the selected window is not a minibuffer window.  */)
@@ -5850,6 +5990,7 @@ Return nil if the selected window is not a minibuffer window.  */)
 
   return Qnil;
 }
+#endif // IGNORE_RUST_PORT
 
 /* Value is the number of lines actually displayed in window W,
    as opposed to its height.  */
@@ -6243,13 +6384,16 @@ from the top of the window.  */)
 #define SAVED_WINDOW_N(swv,n) \
   ((struct saved_window *) (XVECTOR ((swv)->contents[(n)])))
 
+#if IGNORE_RUST_PORT
 DEFUN ("window-configuration-p", Fwindow_configuration_p, Swindow_configuration_p, 1, 1, 0,
        doc: /* Return t if OBJECT is a window-configuration object.  */)
   (Lisp_Object object)
 {
   return WINDOW_CONFIGURATIONP (object) ? Qt : Qnil;
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("window-configuration-frame", Fwindow_configuration_frame, Swindow_configuration_frame, 1, 1, 0,
        doc: /* Return the frame that CONFIG, a window-configuration object, is about.  */)
   (Lisp_Object config)
@@ -6263,6 +6407,7 @@ DEFUN ("window-configuration-frame", Fwindow_configuration_frame, Swindow_config
   saved_windows = XVECTOR (data->saved_windows);
   return XWINDOW (SAVED_WINDOW_N (saved_windows, 0)->window)->frame;
 }
+#endif // IGNORE_RUST_PORT
 
 DEFUN ("set-window-configuration", Fset_window_configuration,
        Sset_window_configuration, 1, 1, 0,
@@ -7042,7 +7187,7 @@ changed and nil otherwise.  */)
   return w ? (apply_window_adjustment (w), Qt) : Qnil;
 }
 
-
+#if IGNORE_RUST_PORT
 DEFUN ("window-margins", Fwindow_margins, Swindow_margins,
        0, 1, 0,
        doc: /* Get width of marginal areas of window WINDOW.
@@ -7059,7 +7204,7 @@ as nil.  */)
 		w->right_margin_cols
 		? make_number (w->right_margin_cols) : Qnil);
 }
-
+#endif // IGNORE_RUST_PORT
 
 
 /***********************************************************************
@@ -7133,7 +7278,7 @@ changed and nil otherwise.  */)
   return w ? (apply_window_adjustment (w), Qt) : Qnil;
 }
 
-
+#if IGNORE_RUST_PORT
 DEFUN ("window-fringes", Fwindow_fringes, Swindow_fringes,
        0, 1, 0,
        doc: /* Get width of fringes of window WINDOW.
@@ -7148,7 +7293,7 @@ Value is a list of the form (LEFT-WIDTH RIGHT-WIDTH OUTSIDE-MARGINS).  */)
 		make_number (WINDOW_RIGHT_FRINGE_WIDTH (w)),
 		WINDOW_HAS_FRINGES_OUTSIDE_MARGINS (w) ? Qt : Qnil);
 }
-
+#endif // IGNORE_RUST_PORT
 
 
 /***********************************************************************
@@ -7398,7 +7543,7 @@ foreach_window_1 (struct window *w, bool (*fn) (struct window *, void *),
 /***********************************************************************
 			    Initialization
  ***********************************************************************/
-
+#if IGNORE_RUST_PORT
 /* Return true if window configurations CONFIGURATION1 and CONFIGURATION2
    describe the same state of affairs.  This is used by Fequal.
 
@@ -7487,7 +7632,9 @@ compare_window_configurations (Lisp_Object configuration1,
 
   return true;
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("compare-window-configurations", Fcompare_window_configurations,
        Scompare_window_configurations, 2, 2, 0,
        doc: /* Compare two window configurations as regards the structure of windows.
@@ -7499,6 +7646,7 @@ and scrolling positions.  */)
     return Qt;
   return Qnil;
 }
+#endif // IGNORE_RUST_PORT
 
 void
 init_window_once (void)
@@ -7739,6 +7887,7 @@ Note that this optimization can cause the portion of the buffer
 displayed after a scrolling operation to be somewhat inaccurate.  */);
   Vfast_but_imprecise_scrolling = false;
 
+#if IGNORE_RUST_PORT
   defsubr (&Sselected_window);
   defsubr (&Sminibuffer_window);
   defsubr (&Swindow_minibuffer_p);
@@ -7748,14 +7897,20 @@ displayed after a scrolling operation to be somewhat inaccurate.  */);
   defsubr (&Swindow_frame);
   defsubr (&Sframe_root_window);
   defsubr (&Sframe_first_window);
+#endif // IGNORE_RUST_PORT
+#if IGNORE_RUST_PORT
   defsubr (&Sframe_selected_window);
   defsubr (&Sset_frame_selected_window);
+#endif // IGNORE_RUST_PORT
   defsubr (&Spos_visible_in_window_p);
   defsubr (&Swindow_line_height);
+#if IGNORE_RUST_PORT
   defsubr (&Swindow_buffer);
   defsubr (&Swindow_parent);
   defsubr (&Swindow_top_child);
+#endif // IGNORE_RUST_PORT
   defsubr (&Swindow_left_child);
+#if IGNORE_RUST_PORT
   defsubr (&Swindow_next_sibling);
   defsubr (&Swindow_prev_sibling);
   defsubr (&Swindow_combination_limit);
@@ -7775,29 +7930,39 @@ displayed after a scrolling operation to be somewhat inaccurate.  */);
   defsubr (&Swindow_pixel_top);
   defsubr (&Swindow_left_column);
   defsubr (&Swindow_top_line);
+#endif // IGNORE_RUST_PORT
   defsubr (&Sset_window_new_pixel);
+#if IGNORE_RUST_PORT
   defsubr (&Sset_window_new_total);
+#endif // IGNORE_RUST_PORT
   defsubr (&Sset_window_new_normal);
   defsubr (&Swindow_resize_apply);
   defsubr (&Swindow_resize_apply_total);
+#if IGNORE_RUST_PORT
   defsubr (&Swindow_body_height);
   defsubr (&Swindow_body_width);
   defsubr (&Swindow_hscroll);
   defsubr (&Sset_window_hscroll);
   defsubr (&Swindow_redisplay_end_trigger);
   defsubr (&Sset_window_redisplay_end_trigger);
+#endif // IGNORE_RUST_PORT
   defsubr (&Swindow_mode_line_height);
   defsubr (&Swindow_header_line_height);
   defsubr (&Swindow_right_divider_width);
   defsubr (&Swindow_bottom_divider_width);
+#if IGNORE_RUST_PORT
   defsubr (&Swindow_scroll_bar_width);
   defsubr (&Swindow_scroll_bar_height);
+#endif // IGNORE_RUST_PORT
   defsubr (&Scoordinates_in_window_p);
   defsubr (&Swindow_at);
+#if IGNORE_RUST_PORT
   defsubr (&Swindow_point);
   defsubr (&Swindow_old_point);
   defsubr (&Swindow_start);
+#endif // IGNORE_RUST_PORT
   defsubr (&Swindow_end);
+#if IGNORE_RUST_PORT
   defsubr (&Sset_window_point);
   defsubr (&Sset_window_start);
   defsubr (&Swindow_dedicated_p);
@@ -7805,6 +7970,7 @@ displayed after a scrolling operation to be somewhat inaccurate.  */);
   defsubr (&Sset_window_dedicated_p);
   defsubr (&Swindow_display_table);
   defsubr (&Sset_window_display_table);
+#endif // IGNORE_RUST_PORT
   defsubr (&Snext_window);
   defsubr (&Sprevious_window);
   defsubr (&Sget_buffer_window);
@@ -7812,34 +7978,49 @@ displayed after a scrolling operation to be somewhat inaccurate.  */);
   defsubr (&Sdelete_window_internal);
   defsubr (&Sresize_mini_window_internal);
   defsubr (&Sset_window_buffer);
+#if IGNORE_RUST_PORT
   defsubr (&Srun_window_configuration_change_hook);
+#endif // IGNORE_RUST_PORT
   defsubr (&Srun_window_scroll_functions);
+#if IGNORE_RUST_PORT
   defsubr (&Sselect_window);
+#endif // IGNORE_RUST_PORT
   defsubr (&Sforce_window_update);
   defsubr (&Ssplit_window_internal);
+#if IGNORE_RUST_PORT
   defsubr (&Sscroll_up);
   defsubr (&Sscroll_down);
   defsubr (&Sscroll_left);
   defsubr (&Sscroll_right);
+#endif // IGNORE_RUST_PORT
   defsubr (&Sother_window_for_scrolling);
   defsubr (&Sscroll_other_window);
+#if IGNORE_RUST_PORT
   defsubr (&Sminibuffer_selected_window);
+#endif // IGNORE_RUST_PORT
   defsubr (&Srecenter);
   defsubr (&Swindow_text_width);
   defsubr (&Swindow_text_height);
   defsubr (&Smove_to_window_line);
+#if IGNORE_RUST_PORT
   defsubr (&Swindow_configuration_p);
   defsubr (&Swindow_configuration_frame);
+#endif // IGNORE_RUST_PORT
   defsubr (&Sset_window_configuration);
   defsubr (&Scurrent_window_configuration);
   defsubr (&Sset_window_margins);
+#if IGNORE_RUST_PORT
   defsubr (&Swindow_margins);
+#endif // IGNORE_RUST_PORT
   defsubr (&Sset_window_fringes);
+#if IGNORE_RUST_PORT
   defsubr (&Swindow_fringes);
+#endif // IGNORE_RUST_PORT
   defsubr (&Sset_window_scroll_bars);
   defsubr (&Swindow_scroll_bars);
   defsubr (&Swindow_vscroll);
   defsubr (&Sset_window_vscroll);
+#if IGNORE_RUST_PORT
   defsubr (&Scompare_window_configurations);
   defsubr (&Swindow_list);
   defsubr (&Swindow_list_1);
@@ -7850,6 +8031,7 @@ displayed after a scrolling operation to be somewhat inaccurate.  */);
   defsubr (&Swindow_parameters);
   defsubr (&Swindow_parameter);
   defsubr (&Sset_window_parameter);
+#endif // IGNORE_RUST_PORT
 }
 
 void

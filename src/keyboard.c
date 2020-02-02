@@ -722,6 +722,7 @@ force_auto_save_soon (void)
 }
 #endif
 
+#if IGNORE_RUST_PORT
 DEFUN ("recursive-edit", Frecursive_edit, Srecursive_edit, 0, 0, "",
        doc: /* Invoke the editor command loop recursively.
 To get out of the recursive edit, a command can throw to `exit' -- for
@@ -765,6 +766,7 @@ This function is called by the editor initialization to begin editing.  */)
   recursive_edit_1 ();
   return unbind_to (count, Qnil);
 }
+#endif // IGNORE_RUST_PORT
 
 void
 recursive_edit_unwind (Lisp_Object buffer)
@@ -1006,6 +1008,7 @@ cmd_error_internal (Lisp_Object data, const char *context)
   Vsignaling_function = Qnil;
 }
 
+#if IGNORE_RUST_PORT
 DEFUN ("command-error-default-function", Fcommand_error_default_function,
        Scommand_error_default_function, 3, 3, 0,
        doc: /* Produce default output for unhandled error message.
@@ -1048,6 +1051,7 @@ Default value of `command-error-function'.  */)
     }
   return Qnil;
 }
+#endif // IGNORE_RUST_PORT
 
 static Lisp_Object command_loop_2 (Lisp_Object);
 static Lisp_Object top_level_1 (Lisp_Object);
@@ -1131,6 +1135,7 @@ top_level_1 (Lisp_Object ignore)
   return Qnil;
 }
 
+#if IGNORE_RUST_PORT
 DEFUN ("top-level", Ftop_level, Stop_level, 0, 0, "",
        doc: /* Exit all recursive editing levels.
 This also exits all active minibuffers.  */
@@ -1148,6 +1153,7 @@ This also exits all active minibuffers.  */
 
   Fthrow (Qtop_level, Qnil);
 }
+#endif // IGNORE_RUST_PORT
 
 static _Noreturn void
 user_error (const char *msg)
@@ -1155,6 +1161,7 @@ user_error (const char *msg)
   xsignal1 (Quser_error, build_string (msg));
 }
 
+#if IGNORE_RUST_PORT
 /* _Noreturn will be added to prototype by make-docfile.  */
 DEFUN ("exit-recursive-edit", Fexit_recursive_edit, Sexit_recursive_edit, 0, 0, "",
        doc: /* Exit from the innermost recursive edit or minibuffer.  */
@@ -1166,7 +1173,9 @@ DEFUN ("exit-recursive-edit", Fexit_recursive_edit, Sexit_recursive_edit, 0, 0, 
 
   user_error ("No recursive edit is in progress");
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 /* _Noreturn will be added to prototype by make-docfile.  */
 DEFUN ("abort-recursive-edit", Fabort_recursive_edit, Sabort_recursive_edit, 0, 0, "",
        doc: /* Abort the command that requested this recursive edit or minibuffer input.  */
@@ -1178,6 +1187,7 @@ DEFUN ("abort-recursive-edit", Fabort_recursive_edit, Sabort_recursive_edit, 0, 
 
   user_error ("No recursive edit is in progress");
 }
+#endif // IGNORE_RUST_PORT
 
 /* Restore mouse tracking enablement.  See Ftrack_mouse for the only use
    of this function.  */
@@ -9872,6 +9882,7 @@ read_key_sequence_vs (Lisp_Object prompt, Lisp_Object continue_echo,
 		     (i, keybuf)));
 }
 
+#if IGNORE_RUST_PORT
 DEFUN ("read-key-sequence", Fread_key_sequence, Sread_key_sequence, 1, 5, 0,
        doc: /* Read a sequence of keystrokes and return as a string or vector.
 The sequence is sufficient to specify a non-prefix command in the
@@ -9924,7 +9935,9 @@ will read just one key sequence.  */)
   return read_key_sequence_vs (prompt, continue_echo, dont_downcase_last,
 			       can_return_switch_frame, cmd_loop, true);
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("read-key-sequence-vector", Fread_key_sequence_vector,
        Sread_key_sequence_vector, 1, 5, 0,
        doc: /* Like `read-key-sequence' but always return a vector.  */)
@@ -9933,6 +9946,7 @@ DEFUN ("read-key-sequence-vector", Fread_key_sequence_vector,
   return read_key_sequence_vs (prompt, continue_echo, dont_downcase_last,
 			       can_return_switch_frame, cmd_loop, false);
 }
+#endif // IGNORE_RUST_PORT
 
 /* Return true if input events are pending.  */
 
@@ -9989,6 +10003,7 @@ requeued_events_pending_p (void)
   return (CONSP (Vunread_command_events));
 }
 
+#if IGNORE_RUST_PORT
 DEFUN ("input-pending-p", Finput_pending_p, Sinput_pending_p, 0, 1, 0,
        doc: /* Return t if command input is currently available with no wait.
 Actually, the value is nil only if we can be sure that no input is available;
@@ -10010,6 +10025,7 @@ If CHECK-TIMERS is non-nil, timers that are ready to run will do so.  */)
 			     | READABLE_EVENTS_FILTER_EVENTS)
 	  ? Qt : Qnil);
 }
+#endif // IGNORE_RUST_PORT
 
 DEFUN ("recent-keys", Frecent_keys, Srecent_keys, 0, 1, 0,
        doc: /* Return vector of last few events, not counting those from keyboard macros.
@@ -10784,6 +10800,7 @@ The elements of this list correspond to the arguments of
   return list4 (interrupt, flow, meta, quit);
 }
 
+#if IGNORE_RUST_PORT
 DEFUN ("posn-at-x-y", Fposn_at_x_y, Sposn_at_x_y, 2, 4, 0,
        doc: /* Return position information for pixel coordinates X and Y.
 By default, X and Y are relative to text area of the selected window.
@@ -10824,7 +10841,9 @@ The `posn-' functions access elements of such lists.  */)
 
   return make_lispy_position (XFRAME (frame_or_window), x, y, 0);
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("posn-at-point", Fposn_at_point, Sposn_at_point, 0, 2, 0,
        doc: /* Return position information for buffer position POS in WINDOW.
 POS defaults to point in WINDOW; WINDOW defaults to the selected window.
@@ -10866,6 +10885,7 @@ The `posn-' functions access elements of such lists.  */)
 
   return tem;
 }
+#endif // IGNORE_RUST_PORT
 
 /* Set up a new kboard object with reasonable initial values.
    TYPE is a window system for which this keyboard is used.  */
@@ -11313,11 +11333,15 @@ syms_of_keyboard (void)
   defsubr (&Scurrent_idle_time);
   defsubr (&Sevent_symbol_parse_modifiers);
   defsubr (&Sevent_convert_list);
+#if IGNORE_RUST_PORT
   defsubr (&Sread_key_sequence);
   defsubr (&Sread_key_sequence_vector);
   defsubr (&Srecursive_edit);
+#endif // IGNORE_RUST_PORT
   defsubr (&Strack_mouse);
+#if IGNORE_RUST_PORT
   defsubr (&Sinput_pending_p);
+#endif // IGNORE_RUST_PORT
   defsubr (&Srecent_keys);
   defsubr (&Sthis_command_keys);
   defsubr (&Sthis_command_keys_vector);
@@ -11326,11 +11350,15 @@ syms_of_keyboard (void)
   defsubr (&Sset__this_command_keys);
   defsubr (&Sclear_this_command_keys);
   defsubr (&Ssuspend_emacs);
+#if IGNORE_RUST_PORT
   defsubr (&Sabort_recursive_edit);
   defsubr (&Sexit_recursive_edit);
+#endif // IGNORE_RUST_PORT
   defsubr (&Srecursion_depth);
+#if IGNORE_RUST_PORT
   defsubr (&Scommand_error_default_function);
   defsubr (&Stop_level);
+#endif // IGNORE_RUST_PORT
   defsubr (&Sdiscard_input);
   defsubr (&Sopen_dribble_file);
   defsubr (&Sset_input_interrupt_mode);
@@ -11339,8 +11367,10 @@ syms_of_keyboard (void)
   defsubr (&Sset_quit_char);
   defsubr (&Sset_input_mode);
   defsubr (&Scurrent_input_mode);
+#if IGNORE_RUST_PORT
   defsubr (&Sposn_at_point);
   defsubr (&Sposn_at_x_y);
+#endif // IGNORE_RUST_PORT
 
   DEFVAR_LISP ("last-command-event", last_command_event,
 		     doc: /* Last input event that was part of a command.  */);

@@ -685,6 +685,7 @@ clear_face_cache (bool clear_fonts_p)
 #endif /* HAVE_WINDOW_SYSTEM */
 }
 
+#if IGNORE_RUST_PORT
 DEFUN ("clear-face-cache", Fclear_face_cache, Sclear_face_cache, 0, 1, 0,
        doc: /* Clear face caches on all frames.
 Optional THOROUGHLY non-nil means try to free unused fonts, too.  */)
@@ -695,6 +696,7 @@ Optional THOROUGHLY non-nil means try to free unused fonts, too.  */)
   windows_or_buffers_changed = 53;
   return Qnil;
 }
+#endif // IGNORE_RUST_PORT
 
 
 /***********************************************************************
@@ -1062,7 +1064,7 @@ If FRAME is nil or omitted, use the selected frame.  */)
 	  ? Qt : Qnil);
 }
 
-
+#if IGNORE_RUST_PORT
 DEFUN ("color-supported-p", Fcolor_supported_p,
        Scolor_supported_p, 1, 3, 0,
        doc: /* Return non-nil if COLOR can be displayed on FRAME.
@@ -1077,7 +1079,7 @@ COLOR must be a valid color name.  */)
 				  SSDATA (color), !NILP (background_p))
 	  ? Qt : Qnil);
 }
-
+#endif // IGNORE_RUST_PORT
 
 static unsigned long
 load_color2 (struct frame *f, struct face *face, Lisp_Object name,
@@ -3899,7 +3901,7 @@ If FRAME is omitted or nil, use the selected frame.  */)
   return i == LFACE_VECTOR_SIZE ? Qt : Qnil;
 }
 
-
+#if IGNORE_RUST_PORT
 DEFUN ("frame-face-alist", Fframe_face_alist, Sframe_face_alist,
        0, 1, 0,
        doc: /* Return an alist of frame-local faces defined on FRAME.
@@ -3908,7 +3910,7 @@ For internal use only.  */)
 {
   return decode_live_frame (frame)->face_alist;
 }
-
+#endif // IGNORE_RUST_PORT
 
 /* Return a hash code for Lisp string STRING with case ignored.  Used
    below in computing a hash value for a Lisp face.  */
@@ -6476,7 +6478,9 @@ syms_of_xfaces (void)
   defsubr (&Sinternal_set_lisp_face_attribute_from_resource);
 #endif
   defsubr (&Scolor_gray_p);
+#if IGNORE_RUST_PORT
   defsubr (&Scolor_supported_p);
+#endif // IGNORE_RUST_PORT
 #ifndef HAVE_X_WINDOWS
   defsubr (&Sx_load_color_file);
 #endif
@@ -6489,7 +6493,9 @@ syms_of_xfaces (void)
   defsubr (&Sinternal_copy_lisp_face);
   defsubr (&Sinternal_merge_in_global_face);
   defsubr (&Sface_font);
+#if IGNORE_RUST_PORT
   defsubr (&Sframe_face_alist);
+#endif // IGNORE_RUST_PORT
   defsubr (&Sdisplay_supports_face_attributes_p);
   defsubr (&Scolor_distance);
   defsubr (&Sinternal_set_font_selection_order);
@@ -6500,7 +6506,9 @@ syms_of_xfaces (void)
   defsubr (&Sdump_face);
   defsubr (&Sshow_face_resources);
 #endif /* GLYPH_DEBUG */
+#if IGNORE_RUST_PORT
   defsubr (&Sclear_face_cache);
+#endif // IGNORE_RUST_PORT
   defsubr (&Stty_suppress_bold_inverse_default_colors);
 
 #if defined DEBUG_X_COLORS && defined HAVE_X_WINDOWS

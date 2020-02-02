@@ -266,6 +266,7 @@ xml_cleanup_parser (void)
     xmlCleanupParser ();
 }
 
+#if IGNORE_RUST_PORT
 DEFUN ("libxml-parse-html-region", Flibxml_parse_html_region,
        Slibxml_parse_html_region,
        2, 4, 0,
@@ -278,7 +279,9 @@ If DISCARD-COMMENTS is non-nil, all HTML comments are discarded. */)
     return parse_region (start, end, base_url, discard_comments, true);
   return Qnil;
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("libxml-parse-xml-region", Flibxml_parse_xml_region,
        Slibxml_parse_xml_region,
        2, 4, 0,
@@ -291,6 +294,7 @@ If DISCARD-COMMENTS is non-nil, all HTML comments are discarded. */)
     return parse_region (start, end, base_url, discard_comments, false);
   return Qnil;
 }
+#endif // IGNORE_RUST_PORT
 
 
 /***********************************************************************
@@ -299,8 +303,10 @@ If DISCARD-COMMENTS is non-nil, all HTML comments are discarded. */)
 void
 syms_of_xml (void)
 {
+#if IGNORE_RUST_PORT
   defsubr (&Slibxml_parse_html_region);
   defsubr (&Slibxml_parse_xml_region);
+#endif // IGNORE_RUST_PORT
 }
 
 #endif /* HAVE_LIBXML2 */

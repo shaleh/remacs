@@ -349,6 +349,7 @@ looking_at_1 (Lisp_Object string, bool posix)
   return val;
 }
 
+#if IGNORE_RUST_PORT
 DEFUN ("looking-at", Flooking_at, Slooking_at, 1, 1, 0,
        doc: /* Return t if text after point matches regular expression REGEXP.
 This function modifies the match data that `match-beginning',
@@ -358,7 +359,9 @@ data if you want to preserve them.  */)
 {
   return looking_at_1 (regexp, 0);
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("posix-looking-at", Fposix_looking_at, Sposix_looking_at, 1, 1, 0,
        doc: /* Return t if text after point matches regular expression REGEXP.
 Find the longest match, in accord with Posix regular expression rules.
@@ -369,6 +372,7 @@ data if you want to preserve them.  */)
 {
   return looking_at_1 (regexp, 1);
 }
+#endif // IGNORE_RUST_PORT
 
 Lisp_Object
 string_match_1 (Lisp_Object regexp, Lisp_Object string, Lisp_Object start,
@@ -440,6 +444,7 @@ string_match_1 (Lisp_Object regexp, Lisp_Object string, Lisp_Object start,
   return make_number (string_byte_to_char (string, val));
 }
 
+#if IGNORE_RUST_PORT
 DEFUN ("string-match", Fstring_match, Sstring_match, 2, 3, 0,
        doc: /* Return index of start of first match for REGEXP in STRING, or nil.
 Matching ignores case if `case-fold-search' is non-nil.
@@ -454,7 +459,9 @@ matched by the parenthesis constructions in REGEXP. */)
 {
   return string_match_1 (regexp, string, start, 0);
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("posix-string-match", Fposix_string_match, Sposix_string_match, 2, 3, 0,
        doc: /* Return index of start of first match for REGEXP in STRING, or nil.
 Find the longest match, in accord with Posix regular expression rules.
@@ -467,6 +474,7 @@ matched by parenthesis constructs in the pattern.  */)
 {
   return string_match_1 (regexp, string, start, 1);
 }
+#endif // IGNORE_RUST_PORT
 
 /* Match REGEXP against STRING using translation table TABLE,
    searching all of STRING, and return the index of the match,
@@ -2172,6 +2180,7 @@ set_search_regs (ptrdiff_t beg_byte, ptrdiff_t nbytes)
   XSETBUFFER (last_thing_searched, current_buffer);
 }
 
+#if IGNORE_RUST_PORT
 DEFUN ("search-backward", Fsearch_backward, Ssearch_backward, 1, 4,
        "MSearch backward: ",
        doc: /* Search backward from point for STRING.
@@ -2197,7 +2206,9 @@ See also the functions `match-beginning', `match-end' and `replace-match'.  */)
 {
   return search_command (string, bound, noerror, count, -1, 0, 0);
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("search-forward", Fsearch_forward, Ssearch_forward, 1, 4, "MSearch: ",
        doc: /* Search forward from point for STRING.
 Set point to the end of the occurrence found, and return point.
@@ -2222,7 +2233,9 @@ See also the functions `match-beginning', `match-end' and `replace-match'.  */)
 {
   return search_command (string, bound, noerror, count, 1, 0, 0);
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("re-search-backward", Fre_search_backward, Sre_search_backward, 1, 4,
        "sRE search backward: ",
        doc: /* Search backward from point for regular expression REGEXP.
@@ -2238,7 +2251,9 @@ anchor `(elisp) re-search-backward' for details.  */)
 {
   return search_command (regexp, bound, noerror, count, -1, 1, 0);
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("re-search-forward", Fre_search_forward, Sre_search_forward, 1, 4,
        "sRE search: ",
        doc: /* Search forward from point for regular expression REGEXP.
@@ -2269,7 +2284,9 @@ and `replace-match'.  */)
 {
   return search_command (regexp, bound, noerror, count, 1, 1, 0);
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("posix-search-backward", Fposix_search_backward, Sposix_search_backward, 1, 4,
        "sPosix search backward: ",
        doc: /* Search backward from point for match for regular expression REGEXP.
@@ -2297,7 +2314,9 @@ and `replace-match'.  */)
 {
   return search_command (regexp, bound, noerror, count, -1, 1, 1);
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("posix-search-forward", Fposix_search_forward, Sposix_search_forward, 1, 4,
        "sPosix search: ",
        doc: /* Search forward from point for regular expression REGEXP.
@@ -2325,6 +2344,7 @@ and `replace-match'.  */)
 {
   return search_command (regexp, bound, noerror, count, 1, 1, 1);
 }
+#endif // IGNORE_RUST_PORT
 
 DEFUN ("replace-match", Freplace_match, Sreplace_match, 1, 5, 0,
        doc: /* Replace text matched by last search with NEWTEXT.
@@ -2791,6 +2811,7 @@ match_limit (Lisp_Object num, bool beginningp)
 		                    : search_regs.end[n]));
 }
 
+#if IGNORE_RUST_PORT
 DEFUN ("match-beginning", Fmatch_beginning, Smatch_beginning, 1, 1, 0,
        doc: /* Return position of start of text matched by last search.
 SUBEXP, a number, specifies which parenthesized expression in the last
@@ -2804,7 +2825,9 @@ Return value is undefined if the last search failed.  */)
 {
   return match_limit (subexp, 1);
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("match-end", Fmatch_end, Smatch_end, 1, 1, 0,
        doc: /* Return position of end of text matched by last search.
 SUBEXP, a number, specifies which parenthesized expression in the last
@@ -2818,6 +2841,7 @@ Return value is undefined if the last search failed.  */)
 {
   return match_limit (subexp, 0);
 }
+#endif // IGNORE_RUST_PORT
 
 DEFUN ("match-data", Fmatch_data, Smatch_data, 0, 3, 0,
        doc: /* Return a list describing what the last search matched.
@@ -3425,6 +3449,7 @@ do not set the match data.  The proper way to use this variable
 is to bind it with `let' around a small expression.  */);
   Vinhibit_changing_match_data = Qnil;
 
+#if IGNORE_RUST_PORT
   defsubr (&Slooking_at);
   defsubr (&Sposix_looking_at);
   defsubr (&Sstring_match);
@@ -3435,9 +3460,12 @@ is to bind it with `let' around a small expression.  */);
   defsubr (&Sre_search_backward);
   defsubr (&Sposix_search_forward);
   defsubr (&Sposix_search_backward);
+#endif // IGNORE_RUST_PORT
   defsubr (&Sreplace_match);
+#if IGNORE_RUST_PORT
   defsubr (&Smatch_beginning);
   defsubr (&Smatch_end);
+#endif // IGNORE_RUST_PORT
   defsubr (&Smatch_data);
   defsubr (&Sset_match_data);
   defsubr (&Sregexp_quote);

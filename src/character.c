@@ -459,6 +459,7 @@ lisp_string_width (Lisp_Object string, ptrdiff_t precision,
 }
 #endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("string-width", Fstring_width, Sstring_width, 1, 1, 0,
        doc: /* Return width of STRING when displayed in the current buffer.
 Width is measured by how many columns it occupies on the screen.
@@ -475,6 +476,7 @@ usage: (string-width STRING)  */)
   XSETFASTINT (val, lisp_string_width (str, -1, NULL, NULL));
   return val;
 }
+#endif // IGNORE_RUST_PORT
 
 /* Return the number of characters in the NBYTES bytes at PTR.
    This works by looking at the contents and checking for multibyte
@@ -493,6 +495,7 @@ chars_in_text (const unsigned char *ptr, ptrdiff_t nbytes)
   return multibyte_chars_in_text (ptr, nbytes);
 }
 
+#if IGNORE_RUST_PORT
 /* Return the number of characters in the NBYTES bytes at PTR.
    This works by looking at the contents and checking for multibyte
    sequences while assuming that there's no invalid sequence.  It
@@ -516,6 +519,7 @@ multibyte_chars_in_text (const unsigned char *ptr, ptrdiff_t nbytes)
 
   return chars;
 }
+#endif // IGNORE_RUST_PORT
 
 #if IGNORE_RUST_PORT
 /* Parse unibyte text at STR of LEN bytes as a multibyte text, count
@@ -1114,7 +1118,9 @@ syms_of_character (void)
   defsubr (&Smultibyte_char_to_unibyte);
 #endif // IGNORE_RUST_POST
   defsubr (&Schar_width);
+#if IGNORE_RUST_PORT
   defsubr (&Sstring_width);
+#endif // IGNORE_RUST_PORT
   defsubr (&Sstring);
   defsubr (&Sunibyte_string);
 #if IGNORE_RUST_PORT

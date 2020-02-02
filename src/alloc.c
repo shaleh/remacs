@@ -2833,6 +2833,7 @@ listn (enum constype type, ptrdiff_t count, Lisp_Object arg, ...)
   return val;
 }
 
+#if IGNORE_RUST_PORT
 DEFUN ("list", Flist, Slist, 0, MANY, 0,
        doc: /* Return a newly created list with specified arguments as elements.
 Allows any number of arguments, including zero.
@@ -2849,8 +2850,9 @@ usage: (list &rest OBJECTS)  */)
     }
   return val;
 }
+#endif // IGNORE_RUST_PORT
 
-
+#if IGNORE_RUST_PORT
 DEFUN ("make-list", Fmake_list, Smake_list, 2, 2, 0,
        doc: /* Return a newly created list of length LENGTH, with each element being INIT.  */)
   (Lisp_Object length, Lisp_Object init)
@@ -2866,7 +2868,7 @@ DEFUN ("make-list", Fmake_list, Smake_list, 2, 2, 0,
 
   return val;
 }
-
+#endif // IGNORE_RUST_PORT
 
 
 /***********************************************************************
@@ -7563,7 +7565,9 @@ The time is in seconds as a floating point value.  */);
               doc: /* Accumulated number of garbage collections done.  */);
 
   defsubr (&Scons);
+#if IGNORE_RUST_PORT
   defsubr (&Slist);
+#endif // IGNORE_RUST_PORT
   defsubr (&Svector);
 #if IGNORE_RUST_PORT
   defsubr (&Srecord);
@@ -7572,7 +7576,9 @@ The time is in seconds as a floating point value.  */);
   defsubr (&Sbool_vector);
 #endif // IGNORE_RUST_POST
   defsubr (&Smake_byte_code);
+#if IGNORE_RUST_PORT
   defsubr (&Smake_list);
+#endif // IGNORE_RUST_PORT
   defsubr (&Smake_vector);
 #if IGNORE_RUST_PORT
   defsubr (&Smake_record);

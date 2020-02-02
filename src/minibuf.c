@@ -108,6 +108,7 @@ choose_minibuf_frame (void)
   }
 }
 
+#if IGNORE_RUST_PORT
 DEFUN ("active-minibuffer-window", Factive_minibuffer_window,
        Sactive_minibuffer_window, 0, 0, 0,
        doc: /* Return the currently active minibuffer window, or nil if none.  */)
@@ -115,7 +116,9 @@ DEFUN ("active-minibuffer-window", Factive_minibuffer_window,
 {
   return minibuf_level ? minibuf_window : Qnil;
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("set-minibuffer-window", Fset_minibuffer_window,
        Sset_minibuffer_window, 1, 1, 0,
        doc: /* Specify which minibuffer window to use for the minibuffer.
@@ -131,6 +134,7 @@ without invoking the usual minibuffer commands.  */)
 
   return window;
 }
+#endif // IGNORE_RUST_PORT
 
 
 /* Actual minibuffer invocation.  */
@@ -263,6 +267,7 @@ read_minibuf_noninteractive (Lisp_Object map, Lisp_Object initial,
   return val;
 }
 
+#if IGNORE_RUST_PORT
 DEFUN ("minibufferp", Fminibufferp,
        Sminibufferp, 0, 1, 0,
        doc: /* Return t if BUFFER is a minibuffer.
@@ -282,7 +287,9 @@ BUFFER can be a buffer or a buffer name.  */)
   tem = Fmemq (buffer, Vminibuffer_list);
   return ! NILP (tem) ? Qt : Qnil;
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("minibuffer-prompt-end", Fminibuffer_prompt_end,
        Sminibuffer_prompt_end, 0, 0, 0,
        doc: /* Return the buffer position of the end of the minibuffer prompt.
@@ -304,7 +311,9 @@ Return (point-min) if current buffer is not a minibuffer.  */)
   else
     return end;
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("minibuffer-contents", Fminibuffer_contents,
        Sminibuffer_contents, 0, 0, 0,
        doc: /* Return the user input in a minibuffer as a string.
@@ -314,7 +323,9 @@ If the current buffer is not a minibuffer, return its entire contents.  */)
   ptrdiff_t prompt_end = XINT (Fminibuffer_prompt_end ());
   return make_buffer_string (prompt_end, ZV, 1);
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("minibuffer-contents-no-properties", Fminibuffer_contents_no_properties,
        Sminibuffer_contents_no_properties, 0, 0, 0,
        doc: /* Return the user input in a minibuffer as a string, without text-properties.
@@ -324,6 +335,7 @@ If the current buffer is not a minibuffer, return its entire contents.  */)
   ptrdiff_t prompt_end = XINT (Fminibuffer_prompt_end ());
   return make_buffer_string (prompt_end, ZV, 0);
 }
+#endif // IGNORE_RUST_PORT
 
 DEFUN ("minibuffer-completion-contents", Fminibuffer_completion_contents,
        Sminibuffer_completion_contents, 0, 0, 0,
@@ -913,6 +925,7 @@ read_minibuf_unwind (void)
 }
 
 
+#if IGNORE_RUST_PORT
 DEFUN ("read-from-minibuffer", Fread_from_minibuffer,
        Sread_from_minibuffer, 1, 7, 0,
        doc: /* Read a string from the minibuffer, prompting with string PROMPT.
@@ -996,9 +1009,10 @@ and some related functions, which use zero-indexing for POSITION.  */)
 		      !NILP (inherit_input_method));
   return val;
 }
+#endif // IGNORE_RUST_PORT
 
 /* Functions that use the minibuffer to read various things.  */
-
+#if IGNORE_RUST_PORT
 DEFUN ("read-string", Fread_string, Sread_string, 1, 5, 0,
        doc: /* Read a string from the minibuffer, prompting with string PROMPT.
 If non-nil, second arg INITIAL-INPUT is a string to insert before reading.
@@ -1032,7 +1046,9 @@ Fifth arg INHERIT-INPUT-METHOD, if non-nil, means the minibuffer inherits
     val = CONSP (default_value) ? XCAR (default_value) : default_value;
   return unbind_to (count, val);
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("read-no-blanks-input", Fread_no_blanks_input, Sread_no_blanks_input, 1, 3, 0,
        doc: /* Read a string from the terminal, not allowing blanks.
 Prompt with PROMPT.  Whitespace terminates the input.  If INITIAL is
@@ -1050,7 +1066,9 @@ the current input method and the setting of`enable-multibyte-characters'.  */)
 		       0, Qminibuffer_history, make_number (0), Qnil, 0,
 		       !NILP (inherit_input_method));
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("read-command", Fread_command, Sread_command, 1, 2, 0,
        doc: /* Read the name of a command and return as a symbol.
 Prompt with PROMPT.  By default, return DEFAULT-VALUE or its first element
@@ -1073,6 +1091,7 @@ null input, return a symbol whose name is an empty string.  */)
     return name;
   return Fintern (name, Qnil);
 }
+#endif // IGNORE_RUST_PORT
 
 #ifdef NOTDEF
 DEFUN ("read-function", Fread_function, Sread_function, 1, 1, 0,
@@ -1085,6 +1104,7 @@ Prompt with PROMPT.  */)
 }
 #endif /* NOTDEF */
 
+#if IGNORE_RUST_PORT
 DEFUN ("read-variable", Fread_variable, Sread_variable, 1, 2, 0,
        doc: /* Read the name of a user option and return it as a symbol.
 Prompt with PROMPT.  By default, return DEFAULT-VALUE or its first element
@@ -1109,7 +1129,9 @@ A user option, or customizable variable, is one for which
     return name;
   return Fintern (name, Qnil);
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("read-buffer", Fread_buffer, Sread_buffer, 1, 4, 0,
        doc: /* Read the name of a buffer and return it as a string.
 Prompt with PROMPT, which should be a string ending with a colon and a space.
@@ -1181,6 +1203,7 @@ function, instead of the usual behavior.  */)
 		       predicate));
   return unbind_to (count, result);
 }
+#endif // IGNORE_RUST_PORT
 
 static Lisp_Object
 minibuf_conform_representation (Lisp_Object string, Lisp_Object basis)
@@ -1633,6 +1656,7 @@ with a space are ignored unless STRING itself starts with a space.  */)
   return Fnreverse (allmatches);
 }
 
+#if IGNORE_RUST_PORT
 DEFUN ("completing-read", Fcompleting_read, Scompleting_read, 2, 8, 0,
        doc: /* Read a string in the minibuffer, with completion.
 PROMPT is a string to prompt with; normally it ends in a colon and a space.
@@ -1700,6 +1724,8 @@ See also `completing-read-function'.  */)
 		prompt, collection, predicate, require_match, initial_input,
 		hist, def, inherit_input_method);
 }
+#endif // IGNORE_RUST_PORT
+
 
 /* Test whether TXT is an exact completion.  */
 DEFUN ("test-completion", Ftest_completion, Stest_completion, 2, 3, 0,
@@ -1904,13 +1930,16 @@ single string, rather than a cons cell whose car is a string.  */)
 }
 
 
+#if IGNORE_RUST_PORT
 DEFUN ("minibuffer-depth", Fminibuffer_depth, Sminibuffer_depth, 0, 0, 0,
        doc: /* Return current depth of activations of minibuffer, a nonnegative integer.  */)
   (void)
 {
   return make_number (minibuf_level);
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("minibuffer-prompt", Fminibuffer_prompt, Sminibuffer_prompt, 0, 0, 0,
        doc: /* Return the prompt string of the currently-active minibuffer.
 If no minibuffer is active, return nil.  */)
@@ -1918,6 +1947,7 @@ If no minibuffer is active, return nil.  */)
 {
   return Fcopy_sequence (minibuf_prompt);
 }
+#endif // IGNORE_RUST_PORT
 
 
 void
@@ -2117,27 +2147,35 @@ This variable also overrides the default character that `read-passwd'
 uses to hide passwords.  */);
   Vread_hide_char = Qnil;
 
+#if IGNORE_RUST_PORT
   defsubr (&Sactive_minibuffer_window);
   defsubr (&Sset_minibuffer_window);
   defsubr (&Sread_from_minibuffer);
   defsubr (&Sread_string);
   defsubr (&Sread_command);
   defsubr (&Sread_variable);
+#endif // IGNORE_RUST_PORT
   defsubr (&Sinternal_complete_buffer);
+#if IGNORE_RUST_PORT
   defsubr (&Sread_buffer);
   defsubr (&Sread_no_blanks_input);
   defsubr (&Sminibuffer_depth);
   defsubr (&Sminibuffer_prompt);
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
   defsubr (&Sminibufferp);
   defsubr (&Sminibuffer_prompt_end);
   defsubr (&Sminibuffer_contents);
   defsubr (&Sminibuffer_contents_no_properties);
+#endif // IGNORE_RUST_PORT
   defsubr (&Sminibuffer_completion_contents);
 
   defsubr (&Stry_completion);
   defsubr (&Sall_completions);
   defsubr (&Stest_completion);
   defsubr (&Sassoc_string);
+#if IGNORE_RUST_PORT
   defsubr (&Scompleting_read);
+#endif // IGNORE_RUST_PORT
 }

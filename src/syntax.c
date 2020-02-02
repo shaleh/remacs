@@ -967,6 +967,7 @@ back_comment (ptrdiff_t from, ptrdiff_t from_byte, ptrdiff_t stop,
   return from != comment_end;
 }
 
+#if IGNORE_RUST_PORT
 DEFUN ("syntax-table-p", Fsyntax_table_p, Ssyntax_table_p, 1, 1, 0,
        doc: /* Return t if OBJECT is a syntax table.
 Currently, any char-table counts as a syntax table.  */)
@@ -977,6 +978,7 @@ Currently, any char-table counts as a syntax table.  */)
     return Qt;
   return Qnil;
 }
+#endif // IGNORE_RUST_PORT
 
 static void
 check_syntax_table (Lisp_Object obj)
@@ -985,6 +987,7 @@ check_syntax_table (Lisp_Object obj)
 	      Qsyntax_table_p, obj);
 }
 
+#if IGNORE_RUST_PORT
 DEFUN ("syntax-table", Fsyntax_table, Ssyntax_table, 0, 0, 0,
        doc: /* Return the current syntax table.
 This is the one specified by the current buffer.  */)
@@ -992,7 +995,9 @@ This is the one specified by the current buffer.  */)
 {
   return BVAR (current_buffer, syntax_table);
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("standard-syntax-table", Fstandard_syntax_table,
    Sstandard_syntax_table, 0, 0, 0,
        doc: /* Return the standard syntax table.
@@ -1001,7 +1006,9 @@ This is the one used for new buffers.  */)
 {
   return Vstandard_syntax_table;
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("copy-syntax-table", Fcopy_syntax_table, Scopy_syntax_table, 0, 1, 0,
        doc: /* Construct a new syntax table and return it.
 It is a copy of the TABLE, which defaults to the standard syntax table.  */)
@@ -1027,7 +1034,9 @@ It is a copy of the TABLE, which defaults to the standard syntax table.  */)
     Fset_char_table_parent (copy, Vstandard_syntax_table);
   return copy;
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("set-syntax-table", Fset_syntax_table, Sset_syntax_table, 1, 1, 0,
        doc: /* Select a new syntax table for the current buffer.
 One argument, a syntax table.  */)
@@ -1041,6 +1050,7 @@ One argument, a syntax table.  */)
   SET_PER_BUFFER_VALUE_P (current_buffer, idx, 1);
   return table;
 }
+#endif // IGNORE_RUST_PORT
 
 /* Convert a letter which signifies a syntax code
  into the code it signifies.
@@ -1542,6 +1552,7 @@ scan_words (ptrdiff_t from, EMACS_INT count)
   return from;
 }
 
+#if IGNORE_RUST_PORT
 DEFUN ("forward-word", Fforward_word, Sforward_word, 0, 1, "^p",
        doc: /* Move point forward ARG words (backward if ARG is negative).
 If ARG is omitted or nil, move point forward one word.
@@ -1578,7 +1589,9 @@ instead.  See Info node `(elisp) Word Motion' for details.  */)
   SET_PT (val);
   return val == orig_val ? Qt : Qnil;
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("skip-chars-forward", Fskip_chars_forward, Sskip_chars_forward, 1, 2, 0,
        doc: /* Move point forward, stopping before a char not in STRING, or at pos LIM.
 STRING is like the inside of a `[...]' in a regular expression
@@ -1593,7 +1606,9 @@ Returns the distance traveled, either zero or positive.  */)
 {
   return skip_chars (1, string, lim, 1);
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("skip-chars-backward", Fskip_chars_backward, Sskip_chars_backward, 1, 2, 0,
        doc: /* Move point backward, stopping after a char not in STRING, or at pos LIM.
 See `skip-chars-forward' for details.
@@ -1602,7 +1617,9 @@ Returns the distance traveled, either zero or negative.  */)
 {
   return skip_chars (0, string, lim, 1);
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("skip-syntax-forward", Fskip_syntax_forward, Sskip_syntax_forward, 1, 2, 0,
        doc: /* Move point forward across chars in specified syntax classes.
 SYNTAX is a string of syntax code characters.
@@ -1613,7 +1630,9 @@ This function returns the distance traveled, either zero or positive.  */)
 {
   return skip_syntaxes (1, syntax, lim);
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("skip-syntax-backward", Fskip_syntax_backward, Sskip_syntax_backward, 1, 2, 0,
        doc: /* Move point backward across chars in specified syntax classes.
 SYNTAX is a string of syntax code characters.
@@ -1625,6 +1644,7 @@ of this is the distance traveled.  */)
 {
   return skip_syntaxes (0, syntax, lim);
 }
+#endif // IGNORE_RUST_PORT
 
 Lisp_Object
 skip_chars (bool forwardp, Lisp_Object string, Lisp_Object lim,
@@ -3010,6 +3030,7 @@ scan_lists (EMACS_INT from, EMACS_INT count, EMACS_INT depth, bool sexpflag)
 	    make_number (last_good), make_number (from));
 }
 
+#if IGNORE_RUST_PORT
 DEFUN ("scan-lists", Fscan_lists, Sscan_lists, 3, 3, 0,
        doc: /* Scan from character number FROM by COUNT lists.
 Scan forward if COUNT is positive, backward if COUNT is negative.
@@ -3037,7 +3058,9 @@ that point is zero, and signal an error if the depth is nonzero.  */)
 
   return scan_lists (XINT (from), XINT (count), XINT (depth), 0);
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("scan-sexps", Fscan_sexps, Sscan_sexps, 2, 2, 0,
        doc: /* Scan from character number FROM by COUNT balanced expressions.
 If COUNT is negative, scan backwards.
@@ -3056,6 +3079,7 @@ but before count is used up, nil is returned.  */)
 
   return scan_lists (XINT (from), XINT (count), 0, 1);
 }
+#endif // IGNORE_RUST_PORT
 
 DEFUN ("backward-prefix-chars", Fbackward_prefix_chars, Sbackward_prefix_chars,
        0, 0, 0,
@@ -3764,27 +3788,33 @@ In both cases, LIMIT bounds the search. */);
   DEFSYM (Qcomment_end_can_be_escaped, "comment-end-can-be-escaped");
   Fmake_variable_buffer_local (Qcomment_end_can_be_escaped);
 
+#if IGNORE_RUST_PORT
   defsubr (&Ssyntax_table_p);
   defsubr (&Ssyntax_table);
   defsubr (&Sstandard_syntax_table);
   defsubr (&Scopy_syntax_table);
   defsubr (&Sset_syntax_table);
+#endif // IGNORE_RUST_PORT
   defsubr (&Schar_syntax);
   defsubr (&Smatching_paren);
   defsubr (&Sstring_to_syntax);
   defsubr (&Smodify_syntax_entry);
   defsubr (&Sinternal_describe_syntax_value);
 
+#if IGNORE_RUST_PORT
   defsubr (&Sforward_word);
 
   defsubr (&Sskip_chars_forward);
   defsubr (&Sskip_chars_backward);
   defsubr (&Sskip_syntax_forward);
   defsubr (&Sskip_syntax_backward);
+#endif // IGNORE_RUST_PORT
 
   defsubr (&Sforward_comment);
+#if IGNORE_RUST_PORT
   defsubr (&Sscan_lists);
   defsubr (&Sscan_sexps);
+#endif // IGNORE_RUST_PORT
   defsubr (&Sbackward_prefix_chars);
   defsubr (&Sparse_partial_sexp);
 }

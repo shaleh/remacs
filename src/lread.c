@@ -717,6 +717,7 @@ read_filtered_event (bool no_switch_frame, bool ascii_required,
   return val;
 }
 
+#if IGNORE_RUST_PORT
 DEFUN ("read-char", Fread_char, Sread_char, 0, 3, 0,
        doc: /* Read a character event from the command input (keyboard or macro).
 It is returned as a number.
@@ -753,7 +754,9 @@ floating-point value.  */)
   return (NILP (val) ? Qnil
 	  : make_number (char_resolve_modifier_mask (XINT (val))));
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("read-event", Fread_event, Sread_event, 0, 3, 0,
        doc: /* Read an event object from the input stream.
 If the optional argument PROMPT is non-nil, display that as a prompt.
@@ -770,7 +773,9 @@ floating-point value.  */)
     message_with_string ("%s", prompt, 0);
   return read_filtered_event (0, 0, 0, ! NILP (inherit_input_method), seconds);
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("read-char-exclusive", Fread_char_exclusive, Sread_char_exclusive, 0, 3, 0,
        doc: /* Read a character event from the command input (keyboard or macro).
 It is returned as a number.  Non-character events are ignored.
@@ -801,7 +806,9 @@ floating-point value.  */)
   return (NILP (val) ? Qnil
 	  : make_number (char_resolve_modifier_mask (XINT (val))));
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("get-file-char", Fget_file_char, Sget_file_char, 0, 0, 0,
        doc: /* Don't use this yourself.  */)
   (void)
@@ -810,7 +817,7 @@ DEFUN ("get-file-char", Fget_file_char, Sget_file_char, 0, 0, 0,
     error ("get-file-char misused");
   return make_number (readbyte_from_stdio ());
 }
-
+#endif // IGNORE_RUST_PORT
 
 
 
@@ -2100,6 +2107,7 @@ This function preserves the position of point.  */)
   return Qnil;
 }
 
+#if IGNORE_RUST_PORT
 DEFUN ("eval-region", Feval_region, Seval_region, 2, 4, "r",
        doc: /* Execute the region as Lisp code.
 When called from programs, expects two arguments,
@@ -2135,8 +2143,10 @@ This function does not move point.  */)
 
   return unbind_to (count, Qnil);
 }
+#endif // IGNORE_RUST_PORT
 
 
+#if IGNORE_RUST_PORT
 DEFUN ("read", Fread, Sread, 0, 1, 0,
        doc: /* Read one Lisp expression as text from STREAM, return as Lisp object.
 If STREAM is nil, use the value of `standard-input' (which see).
@@ -2164,6 +2174,7 @@ STREAM or the value of `standard-input' may be:
 
   return read_internal_start (stream, Qnil, Qnil);
 }
+#endif // IGNORE_RUST_PORT
 
 DEFUN ("read-from-string", Fread_from_string, Sread_from_string, 1, 3, 0,
        doc: /* Read one Lisp expression which is represented as text by STRING.
@@ -3995,6 +4006,7 @@ Lisp_Object initial_obarray;
 
 size_t oblookup_last_bucket_number;
 
+#if IGNORE_RUST_PORT
 /* Get an error if OBARRAY is not an obarray.
    If it is one, return it.  */
 
@@ -4013,6 +4025,7 @@ check_obarray (Lisp_Object obarray)
     }
   return obarray;
 }
+#endif // IGNORE_RUST_PORT
 
 /* Intern symbol SYM in OBARRAY using bucket INDEX.  */
 
@@ -4038,6 +4051,7 @@ intern_sym (Lisp_Object sym, Lisp_Object obarray, Lisp_Object index)
   return sym;
 }
 
+#if IGNORE_RUST_PORT
 /* Intern a symbol with name STRING in OBARRAY using bucket INDEX.  */
 
 Lisp_Object
@@ -4045,7 +4059,9 @@ intern_driver (Lisp_Object string, Lisp_Object obarray, Lisp_Object index)
 {
   return intern_sym (Fmake_symbol (string), obarray, index);
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 /* Intern the C string STR: return a symbol with that name,
    interned in the current obarray.  */
 
@@ -4061,7 +4077,9 @@ intern_1 (const char *str, ptrdiff_t len)
 	  : intern_driver (make_unibyte_string (str, len),
 			   obarray, tem));
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 Lisp_Object
 intern_c_string_1 (const char *str, ptrdiff_t len)
 {
@@ -4077,6 +4095,7 @@ intern_c_string_1 (const char *str, ptrdiff_t len)
     }
   return tem;
 }
+#endif // IGNORE_RUST_PORT
 
 static void
 define_symbol (Lisp_Object sym, char const *str)
@@ -4095,6 +4114,7 @@ define_symbol (Lisp_Object sym, char const *str)
     }
 }
 
+#if IGNORE_RUST_PORT
 DEFUN ("intern", Fintern, Sintern, 1, 2, 0,
        doc: /* Return the canonical symbol whose name is STRING.
 If there is none, one is created by this function and returned.
@@ -4113,7 +4133,9 @@ it defaults to the value of `obarray'.  */)
 			 obarray, tem);
   return tem;
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("intern-soft", Fintern_soft, Sintern_soft, 1, 2, 0,
        doc: /* Return the canonical symbol named NAME, or nil if none exists.
 NAME may be a string or a symbol.  If it is a symbol, that exact
@@ -4141,7 +4163,9 @@ it defaults to the value of `obarray'.  */)
   else
     return tem;
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("unintern", Funintern, Sunintern, 1, 2, 0,
        doc: /* Delete the symbol named NAME, if any, from OBARRAY.
 The value is t if a symbol was found and deleted, nil otherwise.
@@ -4215,6 +4239,7 @@ usage: (unintern NAME OBARRAY)  */)
 
   return Qt;
 }
+#endif // IGNORE_RUST_PORT
 
 /* Return the symbol in OBARRAY whose names matches the string
    of SIZE characters (SIZE_BYTE bytes) at PTR.
@@ -4255,6 +4280,7 @@ oblookup (Lisp_Object obarray, register const char *ptr, ptrdiff_t size, ptrdiff
   return tem;
 }
 
+#if IGNORE_RUST_PORT
 void
 map_obarray (Lisp_Object obarray, void (*fn) (Lisp_Object, Lisp_Object), Lisp_Object arg)
 {
@@ -4274,13 +4300,17 @@ map_obarray (Lisp_Object obarray, void (*fn) (Lisp_Object, Lisp_Object), Lisp_Ob
 	  }
     }
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 static void
 mapatoms_1 (Lisp_Object sym, Lisp_Object function)
 {
   call1 (function, sym);
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("mapatoms", Fmapatoms, Smapatoms, 1, 2, 0,
        doc: /* Call FUNCTION on every symbol in OBARRAY.
 OBARRAY defaults to the value of `obarray'.  */)
@@ -4292,6 +4322,7 @@ OBARRAY defaults to the value of `obarray'.  */)
   map_obarray (obarray, mapatoms_1, function);
   return Qnil;
 }
+#endif // IGNORE_RUST_PORT
 
 #define OBARRAY_SIZE 15121
 
@@ -4344,6 +4375,7 @@ defalias (struct Lisp_Subr *sname, char *string)
 }
 #endif /* NOTDEF */
 
+#if IGNORE_RUST_PORT
 /* Define an "integer variable"; a symbol whose value is forwarded to a
    C variable of type EMACS_INT.  Sample call (with "xx" to fool make-docfile):
    DEFxxVAR_INT ("emacs-priority", &emacs_priority, "Documentation");  */
@@ -4359,7 +4391,9 @@ defvar_int (struct Lisp_Intfwd *i_fwd,
   XSYMBOL (sym)->u.s.redirect = SYMBOL_FORWARDED;
   SET_SYMBOL_FWD (XSYMBOL (sym), (union Lisp_Fwd *)i_fwd);
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 /* Similar but define a variable whose value is t if address contains 1,
    nil if address contains 0.  */
 void
@@ -4375,7 +4409,9 @@ defvar_bool (struct Lisp_Boolfwd *b_fwd,
   SET_SYMBOL_FWD (XSYMBOL (sym), (union Lisp_Fwd *)b_fwd);
   Vbyte_boolean_vars = Fcons (sym, Vbyte_boolean_vars);
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 /* Similar but define a variable whose value is the Lisp Object stored
    at address.  Two versions: with and without gc-marking of the C
    variable.  The nopro version is used when that variable will be
@@ -4393,7 +4429,9 @@ defvar_lisp_nopro (struct Lisp_Objfwd *o_fwd,
   XSYMBOL (sym)->u.s.redirect = SYMBOL_FORWARDED;
   SET_SYMBOL_FWD (XSYMBOL (sym), (union Lisp_Fwd *)o_fwd);
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 void
 defvar_lisp (struct Lisp_Objfwd *o_fwd,
 	     const char *namestring, Lisp_Object *address)
@@ -4401,7 +4439,9 @@ defvar_lisp (struct Lisp_Objfwd *o_fwd,
   defvar_lisp_nopro (o_fwd, namestring, address);
   staticpro (address);
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 /* Similar but define a variable whose value is the Lisp Object stored
    at a particular offset in the current kboard object.  */
 
@@ -4417,6 +4457,7 @@ defvar_kboard (struct Lisp_Kboard_Objfwd *ko_fwd,
   XSYMBOL (sym)->u.s.redirect = SYMBOL_FORWARDED;
   SET_SYMBOL_FWD (XSYMBOL (sym), (union Lisp_Fwd *)ko_fwd);
 }
+#endif // IGNORE_RUST_PORT
 
 /* Check that the elements of lpath exist.  */
 
@@ -4722,21 +4763,27 @@ dir_warning (char const *use, Lisp_Object dirname)
 void
 syms_of_lread (void)
 {
+#if IGNORE_RUST_PORT
   defsubr (&Sread);
+#endif // IGNORE_RUST_PORT
   defsubr (&Sread_from_string);
   defsubr (&Slread__substitute_object_in_subtree);
+#if IGNORE_RUST_PORT
   defsubr (&Sintern);
   defsubr (&Sintern_soft);
   defsubr (&Sunintern);
+#endif // IGNORE_RUST_PORT
   defsubr (&Sget_load_suffixes);
   defsubr (&Sload);
   defsubr (&Seval_buffer);
+#if IGNORE_RUST_PORT
   defsubr (&Seval_region);
   defsubr (&Sread_char);
   defsubr (&Sread_char_exclusive);
   defsubr (&Sread_event);
   defsubr (&Sget_file_char);
   defsubr (&Smapatoms);
+#endif // IGNORE_RUST_PORT
   defsubr (&Slocate_file_internal);
 
   DEFVAR_LISP ("obarray", Vobarray,

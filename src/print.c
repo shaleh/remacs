@@ -837,6 +837,7 @@ safe_debug_print (Lisp_Object arg)
 }
 
 
+#if IGNORE_RUST_PORT
 DEFUN ("error-message-string", Ferror_message_string, Serror_message_string,
        1, 1, 0,
        doc: /* Convert an error value (ERROR-SYMBOL . DATA) to an error message.
@@ -866,6 +867,7 @@ error message is constructed.  */)
 
   return value;
 }
+#endif // IGNORE_RUST_PORT
 
 /* Print an error message for the error DATA onto Lisp output stream
    STREAM (suitable for the print functions).
@@ -2427,7 +2429,9 @@ priorities.  */);
 
   defsubr (&Sprin1);
   defsubr (&Sprin1_to_string);
+#if IGNORE_RUST_PORT
   defsubr (&Serror_message_string);
+#endif // IGNORE_RUST_PORT
   defsubr (&Sprinc);
   defsubr (&Sprint);
   defsubr (&Sterpri);

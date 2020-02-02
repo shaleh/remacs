@@ -578,6 +578,7 @@ If POSITION is at the end of OBJECT, the value is nil.  */)
   return i->plist;
 }
 
+#if IGNORE_RUST_PORT
 DEFUN ("get-text-property", Fget_text_property, Sget_text_property, 2, 3, 0,
        doc: /* Return the value of POSITION's property PROP, in OBJECT.
 OBJECT should be a buffer or a string; if omitted or nil, it defaults
@@ -587,6 +588,7 @@ If POSITION is at the end of OBJECT, the value is nil.  */)
 {
   return textget (Ftext_properties_at (position, object), prop);
 }
+#endif // IGNORE_RUST_PORT
 
 /* Return the value of char's property PROP, in OBJECT at POSITION.
    OBJECT is optional and defaults to the current buffer.
@@ -658,6 +660,7 @@ get_char_property_and_overlay (Lisp_Object position, register Lisp_Object prop, 
   return Fget_text_property (position, prop, object);
 }
 
+#if IGNORE_RUST_PORT
 DEFUN ("get-char-property", Fget_char_property, Sget_char_property, 2, 3, 0,
        doc: /* Return the value of POSITION's property PROP, in OBJECT.
 Both overlay properties and text properties are checked.
@@ -671,6 +674,7 @@ overlays are considered only if they are associated with OBJECT.  */)
 {
   return get_char_property_and_overlay (position, prop, object, 0);
 }
+#endif // IGNORE_RUST_PORT
 
 DEFUN ("get-char-property-and-overlay", Fget_char_property_and_overlay,
        Sget_char_property_and_overlay, 2, 3, 0,
@@ -1290,6 +1294,7 @@ markers).  If OBJECT is a string, START and END are 0-based indices into it.  */
   return Qnil;
 }
 
+#if IGNORE_RUST_PORT
 DEFUN ("set-text-properties", Fset_text_properties,
        Sset_text_properties, 3, 4, 0,
        doc: /* Completely replace properties of text from START to END.
@@ -1303,7 +1308,7 @@ the designated part of OBJECT.  */)
 {
   return set_text_properties (start, end, properties, object, Qt);
 }
-
+#endif // IGNORE_RUST_PORT
 
 DEFUN ("add-face-text-property", Fadd_face_text_property,
        Sadd_face_text_property, 3, 5, 0,
@@ -2382,8 +2387,10 @@ inherits it if NONSTICKINESS is nil.  The `front-sticky' and
   DEFSYM (Qpoint_entered, "point-entered");
 
   defsubr (&Stext_properties_at);
+#if IGNORE_RUST_PORT
   defsubr (&Sget_text_property);
   defsubr (&Sget_char_property);
+#endif // IGNORE_RUST_PORT
   defsubr (&Sget_char_property_and_overlay);
   defsubr (&Snext_char_property_change);
   defsubr (&Sprevious_char_property_change);
@@ -2395,7 +2402,9 @@ inherits it if NONSTICKINESS is nil.  The `front-sticky' and
   defsubr (&Sprevious_single_property_change);
   defsubr (&Sadd_text_properties);
   defsubr (&Sput_text_property);
+#if IGNORE_RUST_PORT
   defsubr (&Sset_text_properties);
+#endif // IGNORE_RUST_PORT
   defsubr (&Sadd_face_text_property);
   defsubr (&Sremove_text_properties);
   defsubr (&Sremove_list_of_text_properties);

@@ -1032,7 +1032,7 @@ Value, if non-nil, is a list (interactive SPEC).  */)
 /***********************************************************************
 		Getting and Setting Values of Symbols
  ***********************************************************************/
-
+#if IGNORE_RUST_PORT
 /* Return the symbol holding SYMBOL's value.  Signal
    `cyclic-variable-indirection' if SYMBOL's chain of variable
    indirections contains a loop.  */
@@ -1063,6 +1063,7 @@ indirect_variable (struct Lisp_Symbol *symbol)
 
   return hare;
 }
+#endif // IGNORE_RUST_PORT
 
 #if IGNORE_RUST_PORT
 DEFUN ("indirect-variable", Findirect_variable, Sindirect_variable, 1, 1, 0,
@@ -1278,6 +1279,7 @@ store_symval_forwarding (union Lisp_Fwd *valcontents, register Lisp_Object newva
 }
 #endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 /* Set up SYMBOL to refer to its global binding.  This makes it safe
    to alter the status of other bindings.  BEWARE: this may be called
    during the mark phase of GC, where we assume that Lisp_Object slots
@@ -1301,6 +1303,7 @@ swap_in_global_binding (struct Lisp_Symbol *symbol)
   set_blv_where (blv, Qnil);
   set_blv_found (blv, false);
 }
+#endif // IGNORE_RUST_PORT
 
 /* Set up the buffer-local symbol SYMBOL for validity in the current buffer.
    VALCONTENTS is the contents of its value cell,

@@ -79,19 +79,23 @@ ring_bell (struct frame *f)
     (*FRAME_TERMINAL (f)->ring_bell_hook) (f);
 }
 
+#if IGNORE_RUST_PORT
 void
 update_begin (struct frame *f)
 {
   if (FRAME_TERMINAL (f)->update_begin_hook)
     (*FRAME_TERMINAL (f)->update_begin_hook) (f);
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 void
 update_end (struct frame *f)
 {
   if (FRAME_TERMINAL (f)->update_end_hook)
     (*FRAME_TERMINAL (f)->update_end_hook) (f);
 }
+#endif // IGNORE_RUST_PORT
 
 /* Specify how many text lines, from the top of the window,
    should be affected by insert-lines and delete-lines operations.
@@ -126,6 +130,7 @@ raw_cursor_to (struct frame *f, int row, int col)
 
 /* Erase operations.  */
 
+#if IGNORE_RUST_PORT
 /* Clear from cursor to end of frame.  */
 void
 clear_to_end (struct frame *f)
@@ -133,7 +138,9 @@ clear_to_end (struct frame *f)
   if (FRAME_TERMINAL (f)->clear_to_end_hook)
     (*FRAME_TERMINAL (f)->clear_to_end_hook) (f);
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 /* Clear entire frame.  */
 
 void
@@ -142,7 +149,9 @@ clear_frame (struct frame *f)
   if (FRAME_TERMINAL (f)->clear_frame_hook)
     (*FRAME_TERMINAL (f)->clear_frame_hook) (f);
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 /* Clear from cursor to end of line.
    Assume that the line is already clear starting at column first_unused_hpos.
 
@@ -154,7 +163,9 @@ clear_end_of_line (struct frame *f, int first_unused_hpos)
   if (FRAME_TERMINAL (f)->clear_end_of_line_hook)
     (*FRAME_TERMINAL (f)->clear_end_of_line_hook) (f, first_unused_hpos);
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 /* Output LEN glyphs starting at STRING at the nominal cursor position.
    Advance the nominal cursor over the text.  */
 
@@ -164,7 +175,9 @@ write_glyphs (struct frame *f, struct glyph *string, int len)
   if (FRAME_TERMINAL (f)->write_glyphs_hook)
     (*FRAME_TERMINAL (f)->write_glyphs_hook) (f, string, len);
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 /* Insert LEN glyphs from START at the nominal cursor position.
 
    If start is zero, insert blanks instead of a string at start */
@@ -178,7 +191,9 @@ insert_glyphs (struct frame *f, struct glyph *start, int len)
   if (FRAME_TERMINAL (f)->insert_glyphs_hook)
     (*FRAME_TERMINAL (f)->insert_glyphs_hook) (f, start, len);
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 /* Delete N glyphs at the nominal cursor position. */
 
 void
@@ -187,7 +202,9 @@ delete_glyphs (struct frame *f, int n)
   if (FRAME_TERMINAL (f)->delete_glyphs_hook)
     (*FRAME_TERMINAL (f)->delete_glyphs_hook) (f, n);
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 /* Insert N lines at vpos VPOS.  If N is negative, delete -N lines.  */
 
 void
@@ -196,6 +213,7 @@ ins_del_lines (struct frame *f, int vpos, int n)
   if (FRAME_TERMINAL (f)->ins_del_lines_hook)
     (*FRAME_TERMINAL (f)->ins_del_lines_hook) (f, vpos, n);
 }
+#endif // IGNORE_RUST_PORT
 
 /* Return the terminal object specified by TERMINAL.  TERMINAL may
    be a terminal object, a frame, or nil for the terminal device of
@@ -215,6 +233,7 @@ decode_terminal (Lisp_Object terminal)
   return t && t->name ? t : NULL;
 }
 
+#if IGNORE_RUST_PORT
 /* Like above, but throw an error if TERMINAL is not valid or deleted.  */
 
 struct terminal *
@@ -226,6 +245,7 @@ decode_live_terminal (Lisp_Object terminal)
     wrong_type_argument (Qterminal_live_p, terminal);
   return t;
 }
+#endif // IGNORE_RUST_PORT
 
 /* Like decode_terminal, but ensure that the resulting terminal object refers
    to a text-based terminal device.  */
@@ -468,6 +488,7 @@ DEFUN ("terminal-list", Fterminal_list, Sterminal_list, 0, 0, 0,
   return terminals;
 }
 
+#if IGNORE_RUST_PORT
 DEFUN ("terminal-name", Fterminal_name, Sterminal_name, 0, 1, 0,
        doc: /* Return the name of the terminal device TERMINAL.
 It is not guaranteed that the returned value is unique among opened devices.
@@ -480,7 +501,7 @@ selected frame's terminal). */)
 
   return t->name ? build_string (t->name) : Qnil;
 }
-
+#endif // IGNORE_RUST_PORT
 
 
 /* Set the value of terminal parameter PARAMETER in terminal D to VALUE.
@@ -666,7 +687,9 @@ or some time later.  */);
   defsubr (&Sframe_terminal);
   defsubr (&Sterminal_live_p);
   defsubr (&Sterminal_list);
+#if IGNORE_RUST_PORT
   defsubr (&Sterminal_name);
+#endif // IGNORE_RUST_PORT
   defsubr (&Sterminal_parameters);
   defsubr (&Sterminal_parameter);
   defsubr (&Sset_terminal_parameter);

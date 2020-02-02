@@ -438,6 +438,7 @@ bool profiler_memory_running;
 
 Lisp_Object memory_log;
 
+#if IGNORE_RUST_PORT
 DEFUN ("profiler-memory-start", Fprofiler_memory_start, Sprofiler_memory_start,
        0, 0, 0,
        doc: /* Start/restart the memory profiler.
@@ -458,7 +459,9 @@ See also `profiler-log-size' and `profiler-max-stack-depth'.  */)
 
   return Qt;
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("profiler-memory-stop",
        Fprofiler_memory_stop, Sprofiler_memory_stop,
        0, 0, 0,
@@ -471,7 +474,9 @@ Return non-nil if the profiler was running.  */)
   profiler_memory_running = false;
   return Qt;
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("profiler-memory-running-p",
        Fprofiler_memory_running_p, Sprofiler_memory_running_p,
        0, 0, 0,
@@ -480,7 +485,9 @@ DEFUN ("profiler-memory-running-p",
 {
   return profiler_memory_running ? Qt : Qnil;
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("profiler-memory-log",
        Fprofiler_memory_log, Sprofiler_memory_log,
        0, 0, 0,
@@ -500,6 +507,7 @@ Before returning, a new log is allocated for future samples.  */)
 		: Qnil);
   return result;
 }
+#endif // IGNORE_RUST_PORT
 
 
 /* Signals and probes.  */
@@ -606,8 +614,10 @@ to make room for new entries.  */);
   profiler_memory_running = false;
   memory_log = Qnil;
   staticpro (&memory_log);
+#if IGNORE_RUST_PORT
   defsubr (&Sprofiler_memory_start);
   defsubr (&Sprofiler_memory_stop);
   defsubr (&Sprofiler_memory_running_p);
   defsubr (&Sprofiler_memory_log);
+#endif // IGNORE_RUST_PORT
 }

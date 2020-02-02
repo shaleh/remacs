@@ -54,6 +54,7 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 # define isnan(x) ((x) != (x))
 #endif
 
+#if IGNORE_RUST_PORT
 /* Check that X is a floating point number.  */
 
 static void
@@ -61,6 +62,7 @@ CHECK_FLOAT (Lisp_Object x)
 {
   CHECK_TYPE (FLOATP (x), Qfloatp, x);
 }
+#endif // IGNORE_RUST_PORT
 
 #if IGNORE_RUST_PORT
 /* Extract a Lisp number as a `double', or signal an error.  */
@@ -219,6 +221,7 @@ EXPONENT must be an integer.   */)
 }
 #endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("exp", Fexp, Sexp, 1, 1, 0,
        doc: /* Return the exponential base e of ARG.  */)
   (Lisp_Object arg)
@@ -227,6 +230,7 @@ DEFUN ("exp", Fexp, Sexp, 1, 1, 0,
   d = exp (d);
   return make_float (d);
 }
+#endif // IGNORE_RUST_PORT
 
 #if IGNORE_RUST_PORT
 DEFUN ("expt", Fexpt, Sexpt, 2, 2, 0,
@@ -260,6 +264,7 @@ DEFUN ("expt", Fexpt, Sexpt, 2, 2, 0,
 }
 #endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("log", Flog, Slog, 1, 2, 0,
        doc: /* Return the natural logarithm of ARG.
 If the optional argument BASE is given, return log ARG using that base.  */)
@@ -284,7 +289,9 @@ If the optional argument BASE is given, return log ARG using that base.  */)
     }
   return make_float (d);
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("sqrt", Fsqrt, Ssqrt, 1, 1, 0,
        doc: /* Return the square root of ARG.  */)
   (Lisp_Object arg)
@@ -293,7 +300,9 @@ DEFUN ("sqrt", Fsqrt, Ssqrt, 1, 1, 0,
   d = sqrt (d);
   return make_float (d);
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("abs", Fabs, Sabs, 1, 1, 0,
        doc: /* Return the absolute value of ARG.  */)
   (register Lisp_Object arg)
@@ -307,7 +316,9 @@ DEFUN ("abs", Fabs, Sabs, 1, 1, 0,
 
   return arg;
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("float", Ffloat, Sfloat, 1, 1, 0,
        doc: /* Return the floating point number equal to ARG.  */)
   (register Lisp_Object arg)
@@ -319,7 +330,9 @@ DEFUN ("float", Ffloat, Sfloat, 1, 1, 0,
   else				/* give 'em the same float back */
     return arg;
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 static int
 ecount_leading_zeros (EMACS_UINT x)
 {
@@ -327,6 +340,7 @@ ecount_leading_zeros (EMACS_UINT x)
 	  : EMACS_UINT_WIDTH == ULONG_WIDTH ? count_leading_zeros_l (x)
 	  : count_leading_zeros_ll (x));
 }
+#endif // IGNORE_RUST_PORT
 
 #if IGNORE_RUST_PORT
 DEFUN ("logb", Flogb, Slogb, 1, 1, 0,
@@ -522,6 +536,7 @@ With optional DIVISOR, truncate ARG/DIVISOR.  */)
 }
 #endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 Lisp_Object
 fmod_float (Lisp_Object x, Lisp_Object y)
 {
@@ -538,7 +553,9 @@ fmod_float (Lisp_Object x, Lisp_Object y)
 
   return make_float (f1);
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("fceiling", Ffceiling, Sfceiling, 1, 1, 0,
        doc: /* Return the smallest integer no less than ARG, as a float.
 \(Round toward +inf.)  */)
@@ -549,7 +566,9 @@ DEFUN ("fceiling", Ffceiling, Sfceiling, 1, 1, 0,
   d = ceil (d);
   return make_float (d);
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("ffloor", Fffloor, Sffloor, 1, 1, 0,
        doc: /* Return the largest integer no greater than ARG, as a float.
 \(Round toward -inf.)  */)
@@ -560,6 +579,7 @@ DEFUN ("ffloor", Fffloor, Sffloor, 1, 1, 0,
   d = floor (d);
   return make_float (d);
 }
+#endif // IGNORE_RUST_PORT
 
 #if IGNORE_RUST_PORT
 DEFUN ("fround", Ffround, Sfround, 1, 1, 0,
@@ -573,6 +593,7 @@ DEFUN ("fround", Ffround, Sfround, 1, 1, 0,
 }
 #endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("ftruncate", Fftruncate, Sftruncate, 1, 1, 0,
        doc: /* Truncate a floating point number to an integral float value.
 \(Round toward zero.)  */)
@@ -583,6 +604,7 @@ DEFUN ("ftruncate", Fftruncate, Sftruncate, 1, 1, 0,
   d = emacs_trunc (d);
   return make_float (d);
 }
+#endif // IGNORE_RUST_PORT
 
 void
 syms_of_floatfns (void)
@@ -598,23 +620,17 @@ syms_of_floatfns (void)
   defsubr (&Scopysign);
   defsubr (&Sfrexp);
   defsubr (&Sldexp);
-#endif // IGNORE_RUST_PORT
   defsubr (&Sfceiling);
   defsubr (&Sffloor);
-#if IGNORE_RUST_PORT
   defsubr (&Sfround);
-#endif // IGNORE_RUST_PORT
   defsubr (&Sftruncate);
   defsubr (&Sexp);
-#if IGNORE_RUST_PORT
   defsubr (&Sexpt);
   defsubr (&Slog);
   defsubr (&Ssqrt);
-#endif // IGNORE_RUST_PORT
 
   defsubr (&Sabs);
   defsubr (&Sfloat);
-#if IGNORE_RUST_PORT
   defsubr (&Slogb);
   defsubr (&Sceiling);
   defsubr (&Sfloor);

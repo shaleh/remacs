@@ -831,6 +831,7 @@ If NAME is given, it must be a string; it names the new thread.  */)
   return result;
 }
 
+#if IGNORE_RUST_PORT
 DEFUN ("current-thread", Fcurrent_thread, Scurrent_thread, 0, 0, 0,
        doc: /* Return the current thread.  */)
   (void)
@@ -839,7 +840,9 @@ DEFUN ("current-thread", Fcurrent_thread, Scurrent_thread, 0, 0, 0,
   XSETTHREAD (result, current_thread);
   return result;
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 DEFUN ("thread-name", Fthread_name, Sthread_name, 1, 1, 0,
        doc: /* Return the name of the THREAD.
 The name is the same object that was passed to `make-thread'.  */)
@@ -852,6 +855,7 @@ The name is the same object that was passed to `make-thread'.  */)
 
   return tstate->name;
 }
+#endif // IGNORE_RUST_PORT
 
 static void
 thread_signal_callback (void *arg)
@@ -902,6 +906,7 @@ DEFUN ("thread-live-p", Fthread_live_p, Sthread_live_p, 1, 1, 0,
   return thread_live_p (tstate) ? Qt : Qnil;
 }
 
+#if IGNORE_RUST_PORT
 DEFUN ("thread--blocker", Fthread_blocker, Sthread_blocker, 1, 1, 0,
        doc: /* Return the object that THREAD is blocking on.
 If THREAD is blocked in `thread-join' on a second thread, return that
@@ -918,6 +923,7 @@ Otherwise, if THREAD is not blocked, return nil.  */)
 
   return tstate->event_object;
 }
+#endif // IGNORE_RUST_PORT
 
 static void
 thread_join_callback (void *arg)
@@ -1054,12 +1060,16 @@ syms_of_threads (void)
     {
       defsubr (&Sthread_yield);
       defsubr (&Smake_thread);
+#if IGNORE_RUST_PORT
       defsubr (&Scurrent_thread);
       defsubr (&Sthread_name);
+#endif // IGNORE_RUST_PORT
       defsubr (&Sthread_signal);
       defsubr (&Sthread_live_p);
       defsubr (&Sthread_join);
+#if IGNORE_RUST_PORT
       defsubr (&Sthread_blocker);
+#endif // IGNORE_RUST_PORT
       defsubr (&Sall_threads);
       defsubr (&Smake_mutex);
       defsubr (&Smutex_lock);

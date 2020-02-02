@@ -1618,6 +1618,7 @@ lo_time (time_t t)
   return t & ((1 << LO_TIME_BITS) - 1);
 }
 
+#if IGNORE_RUST_PORT
 DEFUN ("current-time", Fcurrent_time, Scurrent_time, 0, 0, 0,
        doc: /* Return the current time, as the number of seconds since 1970-01-01 00:00:00.
 The time is returned as a list of integers (HIGH LOW USEC PSEC).
@@ -1628,6 +1629,7 @@ picosecond counts.  */)
 {
   return make_lisp_time (current_timespec ());
 }
+#endif // IGNORE_RUST_PORT
 
 static struct lisp_time
 time_add (struct lisp_time ta, struct lisp_time tb)
@@ -1769,6 +1771,7 @@ does the same thing as `current-time'.  */)
 }
 
 
+#if IGNORE_RUST_PORT
 /* Make a Lisp list that represents the Emacs time T.  T may be an
    invalid time, with a slightly negative tv_nsec value such as
    UNKNOWN_MODTIME_NSECS; in that case, the Lisp list contains a
@@ -1780,6 +1783,7 @@ make_lisp_time (struct timespec t)
   int ns = t.tv_nsec;
   return list4i (hi_time (s), lo_time (s), ns / 1000, ns % 1000 * 1000);
 }
+#endif // IGNORE_RUST_PORT
 
 /* Decode a Lisp list SPECIFIED_TIME that represents a time.
    Set *PHIGH, *PLOW, *PUSEC, *PPSEC to its parts; do not check their values.
@@ -1875,6 +1879,7 @@ decode_float_time (double t, struct lisp_time *result)
   return true;
 }
 
+#if IGNORE_RUST_PORT
 /* From the time components HIGH, LOW, USEC and PSEC taken from a Lisp
    list, generate the corresponding time value.
    If LOW is floating point, the other components should be zero.
@@ -1955,7 +1960,9 @@ decode_time_components (Lisp_Object high, Lisp_Object low, Lisp_Object usec,
 
   return 1;
 }
+#endif // IGNORE_RUST_PORT
 
+#if IGNORE_RUST_PORT
 struct timespec
 lisp_to_timespec (struct lisp_time t)
 {
@@ -1966,6 +1973,7 @@ lisp_to_timespec (struct lisp_time t)
   int ns = t.us * 1000 + t.ps / 1000;
   return make_timespec (s, ns);
 }
+#endif // IGNORE_RUST_PORT
 
 /* Decode a Lisp list SPECIFIED_TIME that represents a time.
    Store its effective length into *PLEN.
